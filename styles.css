@@ -109,3 +109,40 @@ a[data-demo-link]:active,a[data-demo-link].demo-pressed{filter:brightness(.90);o
 
 /* Prevent the hero's decorative bottom label from extending beyond the tablet viewport. */
 @media(min-width:801px){.hero-aside{right:32px}}
+
+
+/* Cohesive monochrome vector iconography: never platform-dependent emoji glyphs. */
+.svg-defs{position:absolute!important;width:0!important;height:0!important;overflow:hidden!important;pointer-events:none}
+.rh-icon{display:inline-block;vertical-align:middle;width:16px;height:16px;flex:0 0 auto;stroke:currentColor;fill:none;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round}
+.rh-arrow{width:15px;height:15px;stroke-width:1.7}
+.top-star{display:flex;align-items:center;justify-content:center}
+.top-star .rh-icon{width:13px;height:13px;stroke-width:1.6}
+.hero-stamp .rh-icon{width:22px;height:22px;margin-top:7px;stroke-width:1.5}
+.benefit-ribbon{background:#fffdfa}
+.benefit-ribbon>div{gap:13px;line-height:1.5}
+.benefit-icon{width:45px;height:45px;display:flex;align-items:center;justify-content:center;flex:0 0 45px;border:1px solid #eadcda;border-radius:50%;background:#f8f1ee;color:#704154}
+.benefit-icon .rh-icon{width:23px;height:23px;stroke-width:1.5}
+.quote-stripe .decorative-plus{display:flex;align-items:center;justify-content:center}
+.quote-stripe .decorative-plus .rh-icon{width:33px;height:33px;color:#e2c2ce;stroke-width:1.45}
+.footer-marque .rh-icon{width:clamp(34px,5vw,72px);height:clamp(34px,5vw,72px);stroke:#664752;stroke-width:1.15}
+.round-arrow .rh-icon{width:19px;height:19px}
+.solid-button .rh-arrow,.light-button .rh-arrow{width:17px;height:17px}
+.under-button .rh-arrow,.text-link .rh-arrow{width:16px;height:16px}
+.mobile-menu>a .rh-arrow{width:20px;height:20px}
+.social-icon{width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;gap:0;padding:0;border:1px solid #ffffff65}
+.social-icon .rh-instagram{width:19px;height:19px;stroke-width:1.5}
+.mega-card .rh-arrow,.product-quick .rh-arrow{width:14px;height:14px}
+.search-field button .rh-icon,.newsletter-input button .rh-icon{width:21px;height:21px}
+@media(max-width:800px){
+ .benefit-ribbon>div{font-size:10px;gap:9px}
+ .benefit-icon{width:39px;height:39px;flex-basis:39px}
+ .benefit-icon .rh-icon{width:20px;height:20px}
+}
+@media(max-width:550px){
+ .benefit-ribbon{display:grid;grid-template-columns:1fr;padding:9px 22px}
+ .benefit-ribbon>div{min-height:59px;padding:9px 4px;justify-content:flex-start;gap:15px;text-align:left;border-right:0;border-bottom:1px solid #ece4df;font-size:10.5px;letter-spacing:1.25px}
+ .benefit-ribbon>div:last-child{border-bottom:0}
+ .benefit-icon{width:40px;height:40px;flex-basis:40px;background:#f8f0eb}
+ .benefit-icon .rh-icon{width:21px;height:21px}
+ .footer-marque .rh-icon{width:26px;height:26px}
+}
