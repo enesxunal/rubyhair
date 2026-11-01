@@ -79,7 +79,8 @@ export function CartPage(){
       </div>
       <aside className="rh-order-summary"><h2>Zusammenfassung</h2>
         <div><span>Zwischensumme (serverseitig)</span><strong>{total===null?"Wird geprüft":euros(total/100)}</strong></div>
-        <div><span>Versand</span><span>Wird vor Freigabe eingerichtet</span></div>
+        <div><span>Versand</span><span>Noch nicht bestätigt</span></div>
+        <Link className="rh-cart-shipping-link" href="/versand-zahlung/">Informationen zu Versand & Zahlung ↗</Link>
         <div><span>Gesamt (ohne Versand)</span><strong>{total===null?"Wird geprüft":euros(total/100)}</strong></div>
         {currentQuote&&<p className="rh-quote-source">Quelle: {currentQuote.source==="postgresql"?"Ruby Hair PostgreSQL":"importierte Demo-Produktdaten"}. Dieser Betrag ist unverbindlich.</p>}
         {issues.length>0&&<p role="status" className="rh-cart-stock-warning">{issues.some(x=>x.status==="unverified-stock")?"Der physische Lagerbestand ist nicht bestätigt. ":""}

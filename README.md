@@ -63,3 +63,11 @@ Database status: The local development PostgreSQL contains two product families 
 - Updated product detail guidance and linked Hair Guide/Contact; no claimed shipping price, returns policy or delivery time is invented for the future shop.
 - Public copy/facts were verified against Ruby Hair's currently published product pages, public Impressum and Hairguide on rubyhair.de on November 2, 2026. Business/legal details must be reconfirmed with the merchant before go-live.
 - The legal pages remain clearly marked as unapproved preview placeholders. The new shop is intentionally noindex and checkout disabled. Vercel remains temporary preview; WebAltyapi cutover is deferred.
+
+## Shop front-end decisions and merchant policy verification (2026-11-02)
+
+- Product pages now have keyboard-accessible image enlargement, actual selected-color thumbnails and a separately labeled generic collection image. These are not implied to be alternate photographs of the selected hair shade.
+- Unknown physical stock is explicitly shown as unconfirmed; all previews still reject real orders and payments.
+- The new /versand-zahlung information page and links from cart, checkout, both footer layouts and product descriptions clearly explain that new-site shipping, payment and return policies are not approved.
+- MERCHANT-APPROVAL.md documents source-supported existing business/product claims and important inconsistencies between the old site's AGB, return policy, Impressum and privacy notice. This is an internal approval checklist, not published legal advice.
+- Do not publish copied old legal texts without merchant and qualified German legal review. Existing WordPress production, DNS and WebAltyapi provisioning remain unchanged.

@@ -166,6 +166,7 @@ function HomeFooter(){
         <div className="footer-col"><h3>INFORMATIONEN</h3>
           <Link href="/ratgeber/">Hair Guide</Link>
           <Link href="/kontakt/">Kundenservice</Link>
+          <Link href="/versand-zahlung/">Versand & Zahlung</Link>
           <Link href="/rechtliches/widerruf/">Widerruf & Rückgabe</Link>
           <Link href="/rechtliches/agb/">AGB</Link>
         </div>

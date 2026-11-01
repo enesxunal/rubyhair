@@ -120,3 +120,23 @@ test("product pages link to care and contact routes",()=>{
   assert.ok(details.includes('href="/kontakt/"'));
   assert.ok(details.includes('rh-product-help'));
 });
+test("product preview distinguishes specific color images from editorial collection photos",()=>{
+  const product=fs.readFileSync(path.join(base,"src/components/product-detail.tsx"),"utf8");
+  for(const item of ["Vergrößerte Produktansicht","rh-gallery-thumb","Ausgewählter Farbton",
+    "Kollektion / Illustration","Unverbindlicher Demo-Preis","tatsächlicher Lagerbestand noch nicht bestätigt"]){
+    assert.ok(product.includes(item),item);
+  }
+  assert.ok(product.includes("lightbox.current?.showModal()"));
+  assert.ok(product.includes("lightbox.current?.close()"));
+});
+test("shipping and returns preview does not claim unapproved checkout conditions",()=>{
+  const shipping=fs.readFileSync(path.join(base,"app/versand-zahlung/page.tsx"),"utf8");
+  assert.ok(shipping.includes("noch keine verbindlichen Versandkosten"));
+  assert.ok(shipping.includes("noch keine Zahlungsanbieter freigeschaltet"));
+  assert.ok(shipping.includes('robots:{index:false'));
+  const merchant=fs.readFileSync(path.join(base,"MERCHANT-APPROVAL.md"),"utf8");
+  assert.ok(merchant.includes("NOT APPROVED"));
+  assert.ok(merchant.includes("conflicts"));
+  assert.ok(merchant.includes("Zweigertstrasse"));
+  assert.ok(merchant.includes("Klara Strasse"));
+});
