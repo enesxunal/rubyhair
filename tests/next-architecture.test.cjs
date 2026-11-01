@@ -34,7 +34,7 @@ test("Next.js runtime does not reference WordPress endpoints",()=>{
   };
   scan(path.join(base,"app"));
   scan(path.join(base,"src"));
-  assert.equal(fs.readFileSync(path.join(base,"public/legacy-app.js"),"utf8").includes("https://rubyhair.de/"),false);
+  assert.equal(fs.existsSync(path.join(base,"public/legacy-app.js")),false);
 });
 test("checkout is disabled until actual payment and database configured",()=>{
   const route=fs.readFileSync(path.join(base,"app/api/checkout/route.ts"),"utf8");
@@ -87,4 +87,17 @@ test("admin product content editing is authenticated and rejects unknown media f
   assert.ok(actions.includes('if(!await isAdmin())redirect("/admin/login")'));
   assert.ok(actions.includes("existsSync(join(process.cwd()"));
   assert.ok(actions.includes("productInput.safeParse"));
+});
+
+test("native homepage uses React and current server catalog, not injected HTML bridge",()=>{
+  const home=fs.readFileSync(path.join(base,"app/page.tsx"),"utf8");
+  const frontend=fs.readFileSync(path.join(base,"src/components/home-frontend.tsx"),"utf8");
+  assert.ok(home.includes("getStoreCatalog()"));
+  assert.ok(home.includes("<HomeFrontend products={products}/>"));
+  assert.ok(frontend.includes("function Favorites({products}"));
+  assert.ok(frontend.includes("aria-pressed={i===index}"));
+  assert.ok(frontend.includes("useCart()"));
+  assert.ok(!home.includes("dangerouslySetInnerHTML"));
+  assert.equal(fs.existsSync(path.join(base,"src/data/home.html")),false);
+  assert.ok(fs.existsSync(path.join(base,"archive/legacy-preview/home-approved-before-native.html")));
 });

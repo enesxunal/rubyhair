@@ -5,7 +5,7 @@ Ruby Hair has been migrated away from the WordPress/WooCommerce-based prototype 
 ## Implementation status (November 2, 2026)
 
 Implemented:
-- Quiet-luxury homepage preserved with an isolated transitional HTML-to-Next visual bridge (src/data/home.html). Category, product, cart, search, guide, checkout preview, contact and legal placeholder pages are React/Next components.
+- Quiet-luxury homepage rebuilt as native Next.js/React components (src/components/home-frontend.tsx), with dynamic featured products from the server catalog. Category, product, cart, search, guide, checkout preview, contact and legal placeholder pages are also React/Next components.
 - Independent catalog imported as src/data/products.json: 2 products, 38 variants. 32 approved-source media files imported to public/media/ and brand assets stored locally. No runtime WordPress API or WooCommerce dependencies.
 - Color and length variation selection, local images/prices and client-side cart with quantity updates and browser-local persistence.
 - Read-only /api/catalog under Next.js. Unlike the previous prototype, it reads the imported local data, not WooCommerce.
@@ -48,3 +48,9 @@ rubyhair.de production WordPress remains unchanged until Next.js go-live accepta
 - Cart summary and per-item prices now use the server quote, not the browser's editable price data.
 - Authenticated product form updates name, headline, intro, pack, material, active status and local media image. Full product and variant creation is a future UUID/cart phase.
 - Local PostgreSQL product editing/restore and quote negative paths have been tested. No real orders were created.
+
+## Customer-facing site first (November 2, 2026)
+
+The owner prioritized finishing the storefront before additional admin-panel features. The homepage is now entirely React rather than an injected HTML page with legacy JavaScript. Its hero, collection photography, shade selector, studio video and footer retain the approved design. The four product cards are resolved against the current server catalog, not manually duplicated product prices. The header cart badge reads React cart state. Mobile menu, shade buttons, image links and product routes are tested at seven breakpoints.
+
+Database status: The local development PostgreSQL contains two product families and 38 variants. The Vercel preview does not have DATABASE_URL configured and intentionally reads imported-preview product data. Real inventory quantities are unknown until client verification (38 NULL); the preview cannot accept orders or payments. No changes to rubyhair.de or WebAltyapi hosting.
