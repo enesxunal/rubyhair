@@ -6,10 +6,18 @@ A responsive, German-language homepage design concept for Ruby Hair Extensions.
 
 Open `index.html` in a browser, or run a local static server (for example `python3 -m http.server 8765`) and visit `http://localhost:8765`.
 
+## Product collection and detail pages (2026-11-02)
+
+- /kollektionen/: the two genuine WooCommerce product families.
+- /kollektionen/keratin-bondings/ and /kollektionen/tape-in-extensions/: filterable color gallery with real prices and product images.
+- /produkt/keratin-bondings/ and /produkt/tape-in-extensions/: color and length selectors, image/price changes, direct links to WooCommerce variation selection for secure checkout.
+- shop-data.json is a public catalog snapshot populated from the WooCommerce Store API and public variation forms. Pricing and stock can change: the live store is the source of truth. Refresh the catalog before delivery.
+- Every demo page is excluded from search indexing; live WordPress remains unchanged. No fake cart or payment backend.
+
 ## Preview scope
 
 - Desktop and mobile layout, branded header, product collections, color-selector concept, editorial sections, and footer.
-- Navigation anchors work inside the preview. Product/category cards, cart, customer service and search lead to the current WooCommerce shop on rubyhair.de (in a new tab); shopping is completed only on that existing store.
+- Navigation and product/category cards now lead to internal design preview pages. The order button carries color/length to the original WooCommerce product page (new tab); actual cart/checkout remain on the existing store.
 - No native checkout, authentication, orders or newsletter backend are implemented in the preview. No WordPress production data has been modified.
 - New campaign visuals are included as optimized WebP assets; some existing Ruby Hair product images, brand logo and video load from rubyhair.de.
 
