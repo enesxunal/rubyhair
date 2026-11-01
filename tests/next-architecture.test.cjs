@@ -70,3 +70,21 @@ test("server catalog queries PostgreSQL and fails closed on configured connectio
   assert.ok(source.includes('source:"imported-preview"'));
   assert.ok(!source.includes("catch("));
 });
+
+test("server cart quote validates IDs and uses server catalog prices",()=>{
+  const route=fs.readFileSync(path.join(base,"app/api/cart/quote/route.ts"),"utf8");
+  const source=fs.readFileSync(path.join(base,"src/lib/cart-quote.ts"),"utf8");
+  assert.ok(route.includes("quoteRequestSchema.safeParse"));
+  assert.ok(source.includes("getStoreCatalog()"));
+  assert.ok(source.includes("Math.round(v.price*100)"));
+  assert.ok(source.includes("checkoutEnabled:false"));
+  assert.ok(source.includes("unverified-stock"));
+  assert.ok(source.includes("out-of-stock"));
+});
+test("admin product content editing is authenticated and rejects unknown media files",()=>{
+  const actions=fs.readFileSync(path.join(base,"app/admin/actions.ts"),"utf8");
+  assert.ok(actions.includes("saveProductAction"));
+  assert.ok(actions.includes('if(!await isAdmin())redirect("/admin/login")'));
+  assert.ok(actions.includes("existsSync(join(process.cwd()"));
+  assert.ok(actions.includes("productInput.safeParse"));
+});

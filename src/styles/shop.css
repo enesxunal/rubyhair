@@ -322,3 +322,17 @@ h1 em,h2 em{font-weight:400;color:#916172}
 .rh-admin-variant-form button{padding:11px 4px;font-size:11px}
 .rh-admin-sr{position:absolute;clip:rect(0,0,0,0);width:1px;height:1px;overflow:hidden}
 @media(max-width:600px){.rh-admin-highlights{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+
+/* Product details editor and verified cart estimate */
+.rh-admin-product-details{margin:14px 0 25px;padding:16px;border:1px solid #e4d6d2;background:#faf8f6}
+.rh-admin-product-details>summary{font-weight:600;cursor:pointer;color:#593d4a}
+.rh-admin-product-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:19px}
+.rh-admin-product-form label{font-size:12px;display:flex;flex-direction:column;gap:5px}
+.rh-admin-product-form label:nth-of-type(3),.rh-admin-product-form label:nth-of-type(6){grid-column:1/-1}
+.rh-admin-product-form input:not([type=checkbox]),.rh-admin-product-form textarea{border:1px solid #d6cdc9;padding:9px;background:white;width:100%;font:inherit}
+.rh-admin-product-form .rh-admin-active{flex-direction:row;align-items:center;gap:8px}
+.rh-admin-product-form button{padding:11px;background:#603343;color:white;border:0;cursor:pointer}
+.rh-cart-stock-warning{padding:11px;background:#f7eae6;color:#784748;line-height:1.6}
+.rh-quote-source{font-size:11px;color:#716467;line-height:1.5}
+@media(max-width:670px){.rh-admin-product-form{grid-template-columns:1fr}.rh-admin-product-form label:nth-of-type(3),.rh-admin-product-form label:nth-of-type(6){grid-column:1}}

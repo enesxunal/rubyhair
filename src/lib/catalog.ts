@@ -3,7 +3,7 @@ import imported from "@/data/products.json";
 export type Variation = {
   id: number; color: string; color_label: string; length: string;
   length_label: string; price: number; available: boolean;
-  purchasable: boolean; image: string;
+  purchasable: boolean; image: string; stock_quantity?:number|null;
 };
 export type Product = {
   id: number; slug: string; name: string; original_name: string;

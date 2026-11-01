@@ -18,6 +18,7 @@ export async function getStoreCatalog():Promise<{source:"postgresql"|"imported-p
       price:v.priceCents/100,
       available:v.active&&(v.stockQuantity===null||v.stockQuantity>0),
       purchasable:v.active&&(v.stockQuantity===null||v.stockQuantity>0),
+      stock_quantity:v.stockQuantity,
       image:v.image
     }));
     const prices=variations.filter(v=>v.available).map(v=>v.price);

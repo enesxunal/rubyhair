@@ -40,3 +40,11 @@ rubyhair.de production WordPress remains unchanged until Next.js go-live accepta
 - The private /admin/login and /admin routes support bcrypt password authentication, signed HTTP-only sessions, login throttling, and editing variant price/stock/availability. Public Vercel credentials have not been provisioned yet.
 - Stock counts were unknown in the source catalog, so they were imported as NULL. Payment/order creation remains disabled.
 - Full deployment and operator setup notes: DATABASE-SETUP.md.
+
+## Server-verified cart quote and product administration (2026-11-02)
+
+- POST /api/cart/quote validates up to 30 unique variation IDs and up to 99 total units, recalculating prices in cents from the server-side PostgreSQL catalog (or explicitly labeled preview snapshot); arbitrary client prices are rejected.
+- Quotes distinguish unverified stock, insufficient inventory and unknown variants and never activate checkout.
+- Cart summary and per-item prices now use the server quote, not the browser's editable price data.
+- Authenticated product form updates name, headline, intro, pack, material, active status and local media image. Full product and variant creation is a future UUID/cart phase.
+- Local PostgreSQL product editing/restore and quote negative paths have been tested. No real orders were created.

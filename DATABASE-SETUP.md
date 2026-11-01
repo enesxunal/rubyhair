@@ -55,3 +55,10 @@ Local backup check: run pg_dump -Fc against the container, save into a protected
 - Database-backed product/variation/stock editing is implemented. Admin order management is NOT enabled, and orders/payments tables exist only as future schema.
 - Browser cart remains a preview, and future checkout must recompute price, availability and stock server-side in an atomic transaction before charging.
 - WordPress/WooCommerce is not used by the new Next.js runtime. The existing rubyhair.de production shop remains unchanged until final migration.
+
+## Cart quotation and content editing
+
+- Read-only POST /api/cart/quote validates unique IDs, quantity and product availability; it performs no write and never accepts customer-provided prices.
+- Unknown stock is reported explicitly and does not enable actual checkout. Card payments, shipping, taxes and invoices are not implemented.
+- Admin product editor restricts image paths to existing local /media files. Full new-product/new-variation support needs a UUID-safe cart model before release.
+- Final production hosting will use WebAltyapı, not Vercel; WebAltyapı database and rubyhair.de domain cutover are deferred until approved domain transition. Vercel remains a non-transactional preview.

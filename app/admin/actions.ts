@@ -2,6 +2,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import {
   isAdmin, loginAllowed, adminConfigured, recordLoginAttempt,
   checkAdminCredentials, issueAdminSession, clearAdminSession
@@ -59,4 +61,43 @@ export async function saveVariantAction(formData:FormData){
   revalidatePath("/admin");
   revalidatePath("/api/catalog");
   redirect("/admin?updated=1");
+}
+
+const productInput=z.object({
+  id:z.string().uuid(),
+  name:z.string().trim().min(3).max(120),
+  headline:z.string().trim().max(180),
+  intro:z.string().trim().min(10).max(1800),
+  pack:z.string().trim().min(1).max(100),
+  material:z.string().trim().min(1).max(100),
+  image:z.string().regex(/^\/media\/[a-zA-Z0-9_.-]+\.(?:png|jpg|jpeg|webp)$/),
+  active:z.boolean()
+});
+export async function saveProductAction(formData:FormData){
+  if(!await isAdmin())redirect("/admin/login");
+  const parsed=productInput.safeParse({
+    id:formData.get("id"),
+    name:formData.get("name"),
+    headline:formData.get("headline"),
+    intro:formData.get("intro"),
+    pack:formData.get("pack"),
+    material:formData.get("material"),
+    image:formData.get("image"),
+    active:formData.get("active")==="on"
+  });
+  if(!parsed.success)throw new Error("Ungueltige Produktangaben");
+  const {id,image,...fields}=parsed.data;
+  // Restrict editable media to known local files; do not accept remote URLs.
+  if(!existsSync(join(process.cwd(),"public",image)))throw new Error("Produktbild nicht vorhanden");
+  const db=getPrisma();
+  const product=await db.product.findUnique({where:{id},select:{slug:true}});
+  if(!product)throw new Error("Produkt nicht gefunden");
+  await db.product.update({where:{id},data:{...fields,image}});
+  revalidatePath("/kollektionen");
+  revalidatePath("/kollektionen/"+product.slug);
+  revalidatePath("/produkt/"+product.slug);
+  revalidatePath("/suche");
+  revalidatePath("/api/catalog");
+  revalidatePath("/admin");
+  redirect("/admin?productUpdated=1");
 }
