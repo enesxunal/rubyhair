@@ -78,13 +78,24 @@ export function ProductDetail({product,initialColor}:{product:Product;initialCol
           <details><summary>Wie viele Packungen brauche ich?</summary>
             <p>Ruby Hair nennt zur Orientierung 2–4 Packungen bei dünnem Haar, 4–5 bei normalem Haar und 5–6 bei dickem Haar. Die richtige Menge hängt vom gewünschten Ergebnis ab.</p>
           </details>
-          <details><summary>Pflege & Anwendung</summary><p>Du brauchst Hilfe bei der Auswahl? Sprich uns an, bevor du eine Bestellung planst.</p>
+          <details><summary>Pflege & Anwendung</summary><p>Wasche dein Haar schonend, bürste die Extensions vorsichtig und lege dich nicht mit nassem Haar schlafen. Unsere Hinweise zur täglichen Routine findest du im Hair Guide.</p>
             <Link href="/ratgeber/">Hair Guide ↗</Link></details>
-          <details><summary>Beratung & Lieferung</summary><p>Die finalen Versandoptionen werden vor der Veröffentlichung bestätigt.</p>
+          <details><summary>Beratung & Lieferung</summary><p>Du hast eine Frage zu Farbe, Länge, Methode oder Packungsanzahl? Kontaktiere Ruby Hair. Die verbindlichen Lieferkosten und Versandbedingungen des neuen Shops werden vor dem Verkaufsstart bestätigt.</p>
             <Link href="/kontakt/">Beratung kontaktieren ↗</Link></details>
         </div>
       </section>
     </div>
+    <section className="rh-product-help" aria-label="Produktberatung und Pflege">
+      <div className="rh-product-help-intro">
+        <div className="rh-eyebrow">DEIN LOOK / DEINE ENTSCHEIDUNG</div>
+        <h2>Noch Fragen zu<br/><em>deinen Extensions?</em></h2>
+        <p>Die richtige Farbwahl und Pflege machen den Unterschied. Schau in den Hair Guide oder frage uns direkt.</p>
+      </div>
+      <div className="rh-product-help-links">
+        <Link href="/ratgeber/">HAIR GUIDE & PFLEGE <span>↗</span></Link>
+        <Link href="/kontakt/">FARBE & METHODE ANFRAGEN <span>↗</span></Link>
+      </div>
+    </section>
     <div className="rh-related-inline"><div className="rh-eyebrow">NOCH MEHR ENTDECKEN</div>
       <Link href={"/produkt/"+other+"/"}>Andere Extension-Methode entdecken →</Link></div>
   </div>;

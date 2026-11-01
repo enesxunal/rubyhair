@@ -153,6 +153,7 @@ function HomeFooter(){
         <div className="footer-about">
           <img src={lightLogo} alt="Ruby Hair Extensions Logo"/>
           <p>Premium Echthaar Extensions für deinen individuellen Look. Mit Liebe zu schönem Haar – aus Essen.</p>
+          <a href="mailto:info@rubyhair.de" className="rh-footer-contact">info@rubyhair.de</a>
           <a href="https://www.instagram.com/rubyhair.de/" target="_blank" rel="noopener noreferrer"
             aria-label="Ruby Hair Instagram" className="social-icon"><Instagram size={20}/></a>
         </div>

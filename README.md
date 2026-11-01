@@ -54,3 +54,12 @@ rubyhair.de production WordPress remains unchanged until Next.js go-live accepta
 The owner prioritized finishing the storefront before additional admin-panel features. The homepage is now entirely React rather than an injected HTML page with legacy JavaScript. Its hero, collection photography, shade selector, studio video and footer retain the approved design. The four product cards are resolved against the current server catalog, not manually duplicated product prices. The header cart badge reads React cart state. Mobile menu, shade buttons, image links and product routes are tested at seven breakpoints.
 
 Database status: The local development PostgreSQL contains two product families and 38 variants. The Vercel preview does not have DATABASE_URL configured and intentionally reads imported-preview product data. Real inventory quantities are unknown until client verification (38 NULL); the preview cannot accept orders or payments. No changes to rubyhair.de or WebAltyapi hosting.
+
+## Customer-facing Hair Guide, support and product guidance (2026-11-02)
+
+- Rebuilt /ratgeber/ as a branded, responsive Hair Guide: source-based Keratin/Tape-in pack contents, selection advice, care steps (wash gently, brush damp rather than wet, dry/loose braid before bed, keep stylist appointments) and seven practical FAQs.
+- Rebuilt /kontakt/ with confirmed Ruby Hair email info@rubyhair.de, studio address Klara Strasse 19, 45130 Essen, Instagram and a map link.
+- Contact composer uses browser mailto: it opens the customer's email program with their prepared message. It does not silently send messages, store contact data or create an API request. Real SMTP/contact form will require explicit customer-approved server credentials and anti-abuse controls.
+- Updated product detail guidance and linked Hair Guide/Contact; no claimed shipping price, returns policy or delivery time is invented for the future shop.
+- Public copy/facts were verified against Ruby Hair's currently published product pages, public Impressum and Hairguide on rubyhair.de on November 2, 2026. Business/legal details must be reconfirmed with the merchant before go-live.
+- The legal pages remain clearly marked as unapproved preview placeholders. The new shop is intentionally noindex and checkout disabled. Vercel remains temporary preview; WebAltyapi cutover is deferred.

@@ -101,3 +101,22 @@ test("native homepage uses React and current server catalog, not injected HTML b
   assert.equal(fs.existsSync(path.join(base,"src/data/home.html")),false);
   assert.ok(fs.existsSync(path.join(base,"archive/legacy-preview/home-approved-before-native.html")));
 });
+test("public guide and contact do not invent order processing or email submissions",()=>{
+  const guide=fs.readFileSync(path.join(base,"app/ratgeber/page.tsx"),"utf8");
+  const contact=fs.readFileSync(path.join(base,"app/kontakt/page.tsx"),"utf8");
+  const composer=fs.readFileSync(path.join(base,"src/components/contact-composer.tsx"),"utf8");
+  for(const content of ["25 Bondings / Packung","10 Tape-ins / Packung","Pflege","faq"]) {
+    assert.ok(guide.toLowerCase().includes(content.toLowerCase()),content);
+  }
+  assert.ok(contact.includes("info@rubyhair.de"));
+  assert.ok(contact.includes("45130 Essen"));
+  assert.ok(composer.includes('mailto:'));
+  assert.ok(composer.includes("window.location.href=mailto"));
+  assert.ok(!composer.includes('fetch('));
+});
+test("product pages link to care and contact routes",()=>{
+  const details=fs.readFileSync(path.join(base,"src/components/product-detail.tsx"),"utf8");
+  assert.ok(details.includes('href="/ratgeber/"'));
+  assert.ok(details.includes('href="/kontakt/"'));
+  assert.ok(details.includes('rh-product-help'));
+});
