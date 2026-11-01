@@ -191,6 +191,7 @@ h1 em,h2 em{font-weight:400;color:#916172}
  .rh-filters label{display:block;margin-bottom:9px}
  .rh-filters input{width:100%}
  .rh-shade-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 12px}
+ .rh-shade-card>div:last-child{flex-direction:column;gap:4px}
  .rh-shade-card strong{font-size:17px}
  .rh-shade-card .rh-price-small{font-size:11px}
  .rh-detail{padding-top:24px;padding-bottom:57px}

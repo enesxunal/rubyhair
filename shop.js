@@ -153,7 +153,7 @@
       displayPrice.textContent = euro.format(selected.price);
       displayImage.src = selected.image || product.image;
       displayImage.alt = product.name + " – Farbe " + selected.color_label;
-      availability.textContent = inStock ? "Im Shop verfügbar" : "Diese Auswahl ist aktuell nicht verfügbar";
+      availability.textContent = inStock ? "Zum Datenstand verfügbar · bitte im Shop prüfen" : "Zum Datenstand nicht verfügbar · bitte im Shop prüfen";
       availability.classList.toggle("rh-not-available", !inStock);
       buy.setAttribute("aria-disabled", String(!inStock));
       buy.tabIndex = inStock ? 0 : -1;
