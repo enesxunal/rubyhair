@@ -39,14 +39,11 @@
   const searchSubmit=()=>{
     const v=$('#site-search')?.value.trim().toLowerCase()||'';
     if(!v){$('.search-feedback').textContent='Bitte gib einen Suchbegriff ein.';return;}
-    $('.search-feedback').textContent='Designvorschau: Im fertigen Shop werden hier passende Produkte angezeigt.';
+    window.open('https://rubyhair.de/?s='+encodeURIComponent(v)+'&post_type=product', '_blank', 'noopener,noreferrer');
   };
   $('#search-submit')?.addEventListener('click',searchSubmit);
   $('#site-search')?.addEventListener('keydown',e=>{if(e.key==='Enter')searchSubmit()});
-  const cart = $('#cart-panel');
-  $('#bag-toggle')?.addEventListener('click',()=>{cart.hidden=!cart.hidden});
-  $('#bag-close')?.addEventListener('click',()=>{cart.hidden=true});
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'){setSearch(false);setMobile(false);cart.hidden=true;$('.menu-item')?.classList.remove('active')}});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){setSearch(false);setMobile(false);$('.menu-item')?.classList.remove('active')}});
   const base='https://rubyhair.de/wp-content/uploads/2022/09/';
   const shades={
     brown:{src:base+'6-1-scaled.jpg',name:'Brown',num:'01'},
@@ -69,32 +66,14 @@
     $('#newsletter-feedback').textContent='Designvorschau: Newsletter-Anmeldung ist noch nicht aktiviert.';
   });
   $('#dismiss-note')?.addEventListener('click',()=>$('.prototype-note').remove());
-  // Presentation-only mode: all visual links respond to clicks, but never navigate.
-  // Existing hrefs are stored for future implementation and removed from the DOM,
-  // preventing normal, middle-click, and new-tab navigation in this concept preview.
-  document.querySelectorAll('a').forEach(link => {
-    const original = link.getAttribute('href');
-    if (original !== null) link.dataset.previewHref = original;
-    link.removeAttribute('href');
-    link.setAttribute('role', 'button');
-    link.tabIndex = 0;
-    link.setAttribute('data-demo-link', 'true');
-    const pulse = () => {
-      link.classList.remove('demo-pressed');
-      void link.offsetWidth;
-      link.classList.add('demo-pressed');
-      window.setTimeout(() => link.classList.remove('demo-pressed'), 260);
-    };
-    link.addEventListener('click', event => {
-      event.preventDefault();
-      pulse();
-    });
-    link.addEventListener('keydown', event => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        link.click();
-      }
-    });
+  // In the concept preview, connect shopping to the current WooCommerce store.
+  // The WordPress shop, not this static design, manages product variants, cart and payment.
+  document.querySelectorAll('a[data-preview-href]').forEach((link) => {
+    const url = link.dataset.previewHref;
+    link.setAttribute('href', url);
+    if (/^https?:\/\//.test(url)) {
+      link.setAttribute('target','_blank');
+      link.setAttribute('rel','noopener noreferrer');
+    }
   });
-
 })();
