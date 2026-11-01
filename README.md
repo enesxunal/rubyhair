@@ -1,40 +1,34 @@
-# Ruby Hair — Homepage Design Preview
+# Ruby Hair - independent Next.js storefront
 
-A responsive, German-language homepage design concept for Ruby Hair Extensions.
+Ruby Hair has been migrated away from the WordPress/WooCommerce-based prototype into a Next.js 16 App Router + TypeScript + React 19 project.
 
-## Preview locally
+## Implementation status (November 2, 2026)
 
-Open `index.html` in a browser, or run a local static server (for example `python3 -m http.server 8765`) and visit `http://localhost:8765`.
+Implemented:
+- Quiet-luxury homepage preserved with an isolated transitional HTML-to-Next visual bridge (src/data/home.html). Category, product, cart, search, guide, checkout preview, contact and legal placeholder pages are React/Next components.
+- Independent catalog imported as src/data/products.json: 2 products, 38 variants. 32 approved-source media files imported to public/media/ and brand assets stored locally. No runtime WordPress API or WooCommerce dependencies.
+- Color and length variation selection, local images/prices and client-side cart with quantity updates and browser-local persistence.
+- Read-only /api/catalog under Next.js. Unlike the previous prototype, it reads the imported local data, not WooCommerce.
+- Custom PostgreSQL commerce schema in db/schema.sql.
+- /api/checkout returns HTTP 503; no real orders/payments/customer data collection.
+- robots.txt denies indexing of the design preview. No approved live legal texts exist yet; placeholders are labeled.
 
-## Product collection and detail pages (2026-11-02)
+Not yet implemented:
+- Provisioned and connected PostgreSQL/Supabase project with secure catalog management and reservations.
+- Authorized admin login, catalog/stock CRUD, order management and account services.
+- Payment gateway, shipping/tax configuration, invoice/email notifications, signed webhook validation and complete transaction/refund E2E tests.
+- Merchant-approved Impressum/Datenschutz/AGB/Widerruf, final specs, SEO transition and backup/rollback.
+- Formal conversion of homepage bridge to native React sections; current layout preserved.
 
-- /kollektionen/: the two genuine WooCommerce product families.
-- /kollektionen/keratin-bondings/ and /kollektionen/tape-in-extensions/: filterable color gallery with real prices and product images.
-- /produkt/keratin-bondings/ and /produkt/tape-in-extensions/: color and length selectors, image/price changes, direct links to WooCommerce variation selection for secure checkout.
-- shop-data.json is a public catalog snapshot populated from the WooCommerce Store API and public variation forms. Pricing and stock can change: the live store is the source of truth. Refresh the catalog before delivery.
-- Every demo page is excluded from search indexing; live WordPress remains unchanged. No fake cart or payment backend.
+Previous HTML and WooCommerce code archived under archive/legacy-preview and not used by Next.js runtime.
 
-## Preview scope
+## Commands
+npm install
+npm run dev
+npm run typecheck
+npm run build
+npm test
 
-- Desktop and mobile layout, branded header, product collections, color-selector concept, editorial sections, and footer.
-- Navigation and product/category cards now lead to internal design preview pages. The order button carries color/length to the original WooCommerce product page (new tab); actual cart/checkout remain on the existing store.
-- No native checkout, authentication, orders or newsletter backend are implemented in the preview. No WordPress production data has been modified.
-- New campaign visuals are included as optimized WebP assets; some existing Ruby Hair product images, brand logo and video load from rubyhair.de.
+This preview remains non-transactional. Public prices are imported references; never enable payments until secure database-backed, server-authoritative transaction handling is implemented and tested.
 
-This is a visual demonstration only, not a production e-commerce store.
-
-## Scope and next steps (2026-11-01)
-
-- Quiet-luxury direction: low-noise hero, immediate Keratin/Tape-in access, clear category links, reduced editorial sections, responsive mobile-first shopping.
-- The existing WooCommerce site is still the only site that accepts orders. Integrate real product data, variant selection, inventory, checkout, legal pages and payment confirmations before moving the new design to rubyhair.de.
-- AI hairstyle/hair try-on is a separately scoped future phase, not part of the current delivery.
-- Preview is excluded from search indexing.
-
-## November 2 follow-up: read-only live catalog
-
-- /api/catalog is a read-only Vercel Node endpoint pulling published product details using WooCommerce public Store API and public product variation form. No private admin credentials and no remote writes. Edge cache age: 5 minutes.
-- If the source fails, the browser falls back to shop-data.json and explicitly marks the stored preview timestamp. Users must check price/stock in the actual store before buying.
-- /suche/ searches both families and color variants; homepage and inner pages link to this shop search.
-- Product details show existing verified pack quantities and indicative pack recommendations, without inventing technical specifications.
-- Run read-only validation: node --test tests/catalog.test.js
-- Full checkout/SEO/staging release plan: RELEASE-CHECKLIST.md
+rubyhair.de production WordPress remains unchanged until Next.js go-live acceptance. AI try-on remains separate future scope.
