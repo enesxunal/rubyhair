@@ -39,7 +39,7 @@
   const searchSubmit=()=>{
     const v=$('#site-search')?.value.trim().toLowerCase()||'';
     if(!v){$('.search-feedback').textContent='Bitte gib einen Suchbegriff ein.';return;}
-    window.open('https://rubyhair.de/?s='+encodeURIComponent(v)+'&post_type=product', '_blank', 'noopener,noreferrer');
+    window.location.assign('/suche/?q='+encodeURIComponent(v));
   };
   $('#search-submit')?.addEventListener('click',searchSubmit);
   $('#site-search')?.addEventListener('keydown',e=>{if(e.key==='Enter')searchSubmit()});

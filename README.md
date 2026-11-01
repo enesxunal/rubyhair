@@ -29,3 +29,12 @@ This is a visual demonstration only, not a production e-commerce store.
 - The existing WooCommerce site is still the only site that accepts orders. Integrate real product data, variant selection, inventory, checkout, legal pages and payment confirmations before moving the new design to rubyhair.de.
 - AI hairstyle/hair try-on is a separately scoped future phase, not part of the current delivery.
 - Preview is excluded from search indexing.
+
+## November 2 follow-up: read-only live catalog
+
+- /api/catalog is a read-only Vercel Node endpoint pulling published product details using WooCommerce public Store API and public product variation form. No private admin credentials and no remote writes. Edge cache age: 5 minutes.
+- If the source fails, the browser falls back to shop-data.json and explicitly marks the stored preview timestamp. Users must check price/stock in the actual store before buying.
+- /suche/ searches both families and color variants; homepage and inner pages link to this shop search.
+- Product details show existing verified pack quantities and indicative pack recommendations, without inventing technical specifications.
+- Run read-only validation: node --test tests/catalog.test.js
+- Full checkout/SEO/staging release plan: RELEASE-CHECKLIST.md

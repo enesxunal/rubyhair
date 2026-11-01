@@ -226,3 +226,25 @@ h1 em,h2 em{font-weight:400;color:#916172}
  .rh-color-options{grid-template-columns:repeat(4,minmax(0,1fr))}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}}
+
+/* Unified shopping navigation, search and catalog-data provenance */
+.rh-search{width:41px;height:41px;display:grid;place-items:center;color:#30272d}
+.rh-search svg{width:22px;height:22px}
+.rh-catalog-status{font-size:10px;line-height:1.55;letter-spacing:.1px;color:#85777a}
+.rh-catalog-status.rh-snapshot{color:#986375}
+.rh-product-info .rh-catalog-status{margin:7px 0 8px}
+.rh-search-label{font-size:10px;letter-spacing:1.5px;font-weight:700;display:block;margin-bottom:10px}
+.rh-search-input{display:block;width:100%;padding:17px 18px;background:#fffdf9;border:1px solid var(--line);font-size:15px;border-radius:0}
+.rh-search-input:focus{outline:1px solid var(--wine);border-color:var(--wine)}
+.rh-search-toolbar{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:20px 0 24px;color:#6e5c62;font-size:12px}
+@media(max-width:550px){.rh-search-toolbar{flex-direction:column;align-items:start;gap:5px}}
+/* Three compact actions must fit 320px screens without squeezing the logo. */
+@media(max-width:800px){
+  .rh-header-inner{grid-template-columns:minmax(0,1fr) auto;gap:8px}
+  .rh-actions{grid-column:2}
+}
+@media(max-width:550px){
+  .rh-actions{gap:4px}
+  .rh-search,.rh-cart,.rh-menu-toggle{width:36px;height:40px}
+}
+@media(max-width:355px){.rh-logo{width:119px}}

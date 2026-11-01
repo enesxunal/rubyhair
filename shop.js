@@ -13,7 +13,7 @@
   menuButton?.addEventListener("click", () => setMenu(mobileNav.hidden));
   mobileNav?.addEventListener("click", (event) => { if (event.target.closest("a")) setMenu(false); });
   document.addEventListener("keydown", (event) => { if (event.key === "Escape") setMenu(false); });
-  if (page !== "category" && page !== "product") return;
+  if (!["category", "product", "search"].includes(page)) return;
 
   const euro = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" });
   const image = (src, alt, loading = "lazy") => {
@@ -24,14 +24,38 @@
     result.decoding = "async";
     return result;
   };
-  async function load() {
-    const response = await fetch("/shop-data.json", { cache: "no-cache" });
-    if (!response.ok) throw new Error("Produktdaten nicht verfügbar");
-    const catalog = await response.json();
-    const slug = $("[data-product]")?.dataset.product;
-    const product = catalog.products[slug];
-    if (!product) throw new Error("Produkt nicht gefunden");
-    return product;
+  async function loadCatalog() {
+    try {
+      const response = await fetch("/api/catalog", {
+        cache: "no-cache", signal: AbortSignal.timeout(15000)
+      });
+      if (!response.ok) throw new Error("Live product data unavailable");
+      const catalog = await response.json();
+      if (catalog.source !== "live" || !catalog.products) throw new Error("Invalid catalog");
+      return catalog;
+    } catch (error) {
+      console.warn("Using saved catalog snapshot:", error.message);
+      const response = await fetch("/shop-data.json", { cache: "no-cache" });
+      if (!response.ok) throw new Error("Produktdaten nicht verfügbar");
+      const snapshot = await response.json();
+      snapshot.source = "snapshot";
+      return snapshot;
+    }
+  }
+  function sourceText(catalog) {
+    const date = new Date(catalog.synced_at);
+    const formatted = Number.isFinite(date.getTime())
+      ? date.toLocaleString("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
+      : "unbekannt";
+    return catalog.source === "live"
+      ? "Produktdaten aus dem Ruby Hair Shop · Stand: " + formatted
+      : "Gespeicherte Vorschau · Stand: " + formatted + " · Preis und Bestand im Shop prüfen";
+  }
+  function markSource(catalog) {
+    const label = $("#rh-catalog-status");
+    if (!label) return;
+    label.textContent = sourceText(catalog);
+    label.classList.toggle("rh-snapshot", catalog.source !== "live");
   }
   function colorGroups(product) {
     const groups = new Map();
@@ -168,7 +192,70 @@
     }
     refresh();
   }
-  load().then((product) => {
+  function renderSearch(catalog) {
+    const input = $("#rh-shop-search");
+    const count = $("#rh-search-count");
+    const grid = $("#rh-shade-grid");
+    const groups = [];
+    for (const product of Object.values(catalog.products)) {
+      for (const [color, variants] of colorGroups(product)) {
+        const available = variants.filter(v => v.available && v.purchasable);
+        const candidate = available[0] || variants[0];
+        if (!candidate) continue;
+        const card = document.createElement("a");
+        card.className = "rh-shade-card";
+        card.href = localProductUrl(product, color);
+        const picture = document.createElement("div");
+        picture.className = "rh-shade-image";
+        picture.append(image(candidate.image || product.image,
+          product.name + " – Farbe " + candidate.color_label));
+        const body = document.createElement("div");
+        const left = document.createElement("div");
+        const heading = document.createElement("strong");
+        heading.textContent = product.name;
+        const subtitle = document.createElement("small");
+        subtitle.textContent = "Farbe " + candidate.color_label;
+        left.append(heading, subtitle);
+        const price = document.createElement("span");
+        price.className = "rh-price-small";
+        price.textContent = available.length
+          ? "ab " + euro.format(Math.min(...available.map(v => v.price)))
+          : "Ausverkauft";
+        body.append(left, price);
+        card.append(picture, body);
+        grid.append(card);
+        groups.push({
+          card, label: (product.name + " " + product.original_name + " " +
+            candidate.color_label + " " + color).toLocaleLowerCase("de")
+        });
+      }
+    }
+    const update = () => {
+      const query = input.value.trim().toLocaleLowerCase("de");
+      let results = 0;
+      for (const item of groups) {
+        const show = !query || item.label.includes(query);
+        item.card.hidden = !show;
+        if (show) results++;
+      }
+      count.textContent = results === 1 ? "1 Ergebnis" : results + " Ergebnisse";
+      $("#rh-filter-empty").hidden = results > 0;
+      const url = new URL(location.href);
+      if (query) url.searchParams.set("q", input.value.trim());
+      else url.searchParams.delete("q");
+      history.replaceState(null, "", url.pathname + url.search);
+    };
+    input.value = new URLSearchParams(location.search).get("q") || "";
+    input.addEventListener("input", update);
+    update();
+  }
+
+  loadCatalog().then((catalog) => {
+    markSource(catalog);
+    if (page === "search") return renderSearch(catalog);
+    const slug = $("[data-product]")?.dataset.product;
+    const product = catalog.products[slug];
+    if (!product) throw new Error("Produkt nicht gefunden");
     if (page === "category") renderCategory(product);
     if (page === "product") renderProduct(product);
   }).catch((error) => {
@@ -180,7 +267,7 @@
     link.textContent = "Zum aktuellen Shop";
     link.target = "_blank";
     link.rel = "noopener noreferrer";
-    const container = $(".rh-detail-layout") || $(".rh-shades-section");
+    const container = $(".rh-detail-layout") || $(".rh-shades-section") || $(".rh-search-results");
     container?.prepend(message, link);
     console.error("Ruby Hair catalog preview:", error.message);
   });
