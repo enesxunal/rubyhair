@@ -41,9 +41,32 @@ test("checkout is disabled until actual payment and database configured",()=>{
   assert.ok(route.includes("503"));
   assert.ok(route.includes("CHECKOUT_NOT_CONFIGURED"));
 });
-test("custom postgres schema covers products variants orders and payments",()=>{
-  const sql=fs.readFileSync(path.join(base,"db/schema.sql"),"utf8");
-  for(const table of ["catalog_products","product_variants","shop_orders","order_lines","payment_events"]){
-    assert.ok(sql.includes("CREATE TABLE IF NOT EXISTS "+table),table);
+test("Prisma PostgreSQL models and migrations",()=>{
+  const schema=fs.readFileSync(path.join(base,"prisma/schema.prisma"),"utf8");
+  for(const model of ["Product","Variant","Order","OrderLine","PaymentEvent","AdminLoginAttempt"]){
+    assert.ok(schema.includes("model "+model+" {"),model);
   }
+  assert.ok(schema.includes('provider = "postgresql"'));
+  assert.ok(schema.includes("stockQuantity  Int?"));
+  const migration=path.join(base,"prisma/migrations");
+  assert.ok(fs.readdirSync(migration).some(f=>fs.existsSync(path.join(migration,f,"migration.sql"))));
+});
+test("admin authentication has signed sessions and no default credentials",()=>{
+  const auth=fs.readFileSync(path.join(base,"src/lib/admin-auth.ts"),"utf8");
+  for(const name of ["ADMIN_PASSWORD_HASH","SESSION_SECRET","httpOnly:true","jwtVerify","recordLoginAttempt"]){
+    assert.ok(auth.includes(name),name);
+  }
+});
+test("admin mutations require authentication and validated fields",()=>{
+  const source=fs.readFileSync(path.join(base,"app/admin/actions.ts"),"utf8");
+  assert.ok(source.includes("if(!await isAdmin())redirect"));
+  assert.ok(source.includes("z.string().uuid()"));
+  assert.ok(source.includes("revalidatePath"));
+});
+test("server catalog queries PostgreSQL and fails closed on configured connection errors",()=>{
+  const source=fs.readFileSync(path.join(base,"src/lib/catalog-server.ts"),"utf8");
+  assert.ok(source.includes("getPrisma().product.findMany"));
+  assert.ok(source.includes('source:"postgresql"'));
+  assert.ok(source.includes('source:"imported-preview"'));
+  assert.ok(!source.includes("catch("));
 });

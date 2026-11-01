@@ -2,16 +2,18 @@ import Link from "next/link";
 import type {Metadata} from "next";
 import {notFound} from "next/navigation";
 import ShopLayout from "@/components/site-shell";
-import {bySlug,products,euros} from "@/lib/catalog";
+import {products,euros} from "@/lib/catalog";
+import {getStoreProduct} from "@/lib/catalog-server";
+export const dynamic="force-dynamic";
 import {ShadeGrid} from "@/components/shade-grid";
 type Params={params:Promise<{slug:string}>};
 export function generateStaticParams(){return products.map(p=>({slug:p.slug}));}
 export async function generateMetadata({params}:Params):Promise<Metadata>{
-  const product=bySlug((await params).slug);
+  const product=await getStoreProduct((await params).slug);
   return {title:product?.name||"Collection"};
 }
 export default async function Category({params}:Params){
-  const product=bySlug((await params).slug);
+  const product=await getStoreProduct((await params).slug);
   if(!product)notFound();
   return <ShopLayout>
     <section className="rh-category-intro rh-shell">

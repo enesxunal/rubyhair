@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id              String    @id @default(uuid()) @db.Uuid
+  legacyId        Int?      @unique
+  slug            String    @unique
+  name            String
+  originalName    String
+  headline        String    @default("")
+  intro           String    @default("")
+  pack            String
+  material        String
+  currency        String    @default("EUR")
+  image           String
+  active          Boolean   @default(true)
+  variants        Variant[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  @@map("products")
+}
+
+model Variant {
+  id             String     @id @default(uuid()) @db.Uuid
+  legacyId       Int?       @unique
+  productId      String     @db.Uuid
+  product        Product    @relation(fields:[productId],references:[id],onDelete:Restrict)
+  colorCode      String
+  colorLabel     String
+  lengthCode     String
+  lengthLabel    String
+  priceCents     Int
+  stockQuantity  Int?       // null means original stock count is unverified
+  image          String
+  active         Boolean    @default(true)
+  orderLines     OrderLine[]
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  @@unique([productId,colorCode,lengthCode])
+  @@index([productId,active])
+  @@map("variants")
+}
+
+model Order {
+  id                String         @id @default(uuid()) @db.Uuid
+  orderNumber       BigInt         @unique @default(autoincrement())
+  status            String         @default("draft")
+  currency          String         @default("EUR")
+  subtotalCents     Int            @default(0)
+  shippingCents     Int            @default(0)
+  taxCents          Int            @default(0)
+  totalCents        Int            @default(0)
+  customerEmail     String?
+  billingAddress    Json?
+  shippingAddress   Json?
+  paymentReference  String?        @unique
+  lines             OrderLine[]
+  payments          PaymentEvent[]
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  @@index([status,createdAt(sort: Desc)])
+  @@map("orders")
+}
+
+model OrderLine {
+  id              String     @id @default(uuid()) @db.Uuid
+  orderId         String     @db.Uuid
+  order           Order      @relation(fields:[orderId],references:[id],onDelete:Restrict)
+  variantId       String     @db.Uuid
+  variant         Variant    @relation(fields:[variantId],references:[id],onDelete:Restrict)
+  quantity        Int
+  unitPriceCents  Int
+  lineTotalCents  Int
+  @@map("order_lines")
+}
+
+model PaymentEvent {
+  id                  String   @id @default(uuid()) @db.Uuid
+  orderId             String   @db.Uuid
+  order               Order    @relation(fields:[orderId],references:[id],onDelete:Restrict)
+  provider            String
+  providerEventId     String   @unique
+  eventType           String
+  receivedAt          DateTime @default(now())
+  @@map("payment_events")
+}
+
+model AdminLoginAttempt {
+  key           String   @id
+  count         Int      @default(0)
+  windowStart   DateTime @default(now())
+  @@map("admin_login_attempts")
+}

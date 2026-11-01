@@ -1,12 +1,18 @@
 import { NextResponse } from "next/server";
-import {products,productSnapshotTime} from "@/lib/catalog";
-export const dynamic="force-static";
-export function GET(){
-  return NextResponse.json({
-    source:"ruby-hair-import",
-    imported_at:productSnapshotTime,
-    products:products.map(p=>({
-      ...p,variations:p.variations.map(v=>({...v}))
-    }))
-  },{headers:{"Cache-Control":"public, max-age=60, s-maxage=300"}});
+import { getStoreCatalog } from "@/lib/catalog-server";
+export const dynamic="force-dynamic";
+export const runtime="nodejs";
+export async function GET() {
+  try {
+    const catalog=await getStoreCatalog();
+    return NextResponse.json(catalog,{
+      headers:{"Cache-Control":"no-store","X-Content-Type-Options":"nosniff"}
+    });
+  } catch(error){
+    console.error("Ruby Hair catalog database request failed",error);
+    return NextResponse.json(
+      {error:"CATALOG_UNAVAILABLE"},
+      {status:503,headers:{"Cache-Control":"no-store"}}
+    );
+  }
 }

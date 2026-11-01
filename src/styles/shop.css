@@ -282,3 +282,43 @@ h1 em,h2 em{font-weight:400;color:#916172}
 .rh-empty-cart .rh-buy-button,.rh-info-page>.rh-buy-button,.rh-checkout-preview>.rh-buy-button{max-width:380px;margin-top:35px}
 .rh-info-page .rh-product-facts{margin:30px 0 35px;max-width:700px}
 @media(max-width:760px){.rh-cart-layout{grid-template-columns:1fr;gap:30px}.rh-cart-page,.rh-info-page,.rh-checkout-preview{padding-top:45px}.rh-cart-item{grid-template-columns:92px 1fr;gap:12px}.rh-cart-item img{width:92px;height:105px}.rh-cart-item-price{grid-column:2}.rh-cart-item-info strong{font-size:19px}}
+
+/* Ruby Hair secure back-office. Admin is inaccessible unless PostgreSQL, an
+   explicit bcrypt password hash and a signing secret are configured. */
+.rh-admin-login,.rh-admin-panel{font-family:var(--sans);color:#322a31;background:#f7f3ef;min-height:100vh}
+.rh-admin-login{display:flex;align-items:center;justify-content:center;flex-direction:column;padding:32px}
+.rh-admin-login h1{font:400 40px var(--serif);margin:8px 0 25px}
+.rh-admin-eyebrow{color:#795d68;letter-spacing:2px;font-size:11px}
+.rh-admin-notice{padding:22px;background:#fff;border:1px solid #e5d5d2;max-width:470px;line-height:1.6}
+.rh-admin-notice p{font-size:13px;margin:12px 0 0}
+.rh-admin-login-form{background:white;padding:34px;width:min(100%,440px);display:grid;gap:20px;border:1px solid #ddd0ce}
+.rh-admin-login-form label{display:grid;gap:8px;font-size:13px;font-weight:600}
+.rh-admin-login-form input{padding:13px 14px;border:1px solid #cdc1bd;border-radius:0;font-size:14px}
+.rh-admin-login-form button,.rh-admin-variant-form button{background:#603343;color:white;border:0;padding:13px 20px;font-size:13px;font-weight:600}
+.rh-admin-error{color:#8f3b46;font-weight:600}
+.rh-admin-panel{padding:32px clamp(18px,5vw,90px)}
+.rh-admin-bar{display:flex;align-items:center;justify-content:space-between;gap:20px;border-bottom:1px solid #ddd3cf;margin-bottom:25px}
+.rh-admin-bar h1{font:400 37px var(--serif);margin:6px 0 22px}
+.rh-admin-bar small{letter-spacing:2px}
+.rh-admin-bar button{border:1px solid #bbaeb0;padding:9px 15px;background:white}
+.rh-admin-highlights{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
+.rh-admin-highlights>div{background:white;padding:24px 20px;display:flex;flex-direction:column;gap:4px}
+.rh-admin-highlights strong{font:400 33px var(--serif)}
+.rh-admin-highlights span{color:#786d70;font-size:12px}
+.rh-admin-warning,.rh-admin-success{background:#f5eee8;color:#6f5260;padding:12px 16px;margin:22px 0}
+.rh-admin-success{background:#eaf3ea;color:#39633c}
+.rh-admin-product{background:white;margin:26px 0;padding:22px}
+.rh-admin-product h2{font:400 28px var(--serif);margin:0 0 20px}
+.rh-admin-product h2 small{font:400 12px var(--sans);color:#786d70}
+.rh-admin-table-wrap{width:100%;overflow-x:auto}
+.rh-admin-table-wrap table{width:100%;border-collapse:collapse;min-width:710px}
+.rh-admin-table-wrap th{text-align:left;font-size:11px;letter-spacing:1px;color:#806b71;padding:9px;border-bottom:1px solid #e4d8d3}
+.rh-admin-table-wrap td{padding:12px 9px;border-bottom:1px solid #e9e3df;vertical-align:middle;font-size:12px}
+.rh-admin-table-wrap td:first-child{display:flex;align-items:center;gap:9px}
+.rh-admin-table-wrap td img{object-fit:cover}
+.rh-admin-variant-form{display:grid;grid-template-columns:minmax(92px,1fr) minmax(92px,1fr) 80px 100px;gap:10px;align-items:center}
+.rh-admin-variant-form input[type=number]{width:100%;padding:8px;border:1px solid #d6cdc9;border-radius:0;font-size:12px}
+.rh-admin-active{display:flex;gap:4px;align-items:center;font-size:11px}
+.rh-admin-variant-form button{padding:11px 4px;font-size:11px}
+.rh-admin-sr{position:absolute;clip:rect(0,0,0,0);width:1px;height:1px;overflow:hidden}
+@media(max-width:600px){.rh-admin-highlights{grid-template-columns:repeat(2,minmax(0,1fr))}}

@@ -1,9 +1,12 @@
 import Link from "next/link";
 import type {Metadata} from "next";
 import ShopLayout from "@/components/site-shell";
-import {products,euros} from "@/lib/catalog";
+import {euros} from "@/lib/catalog";
+import {getStoreCatalog} from "@/lib/catalog-server";
+export const dynamic="force-dynamic";
 export const metadata:Metadata={title:"Alle Extensions"};
-export default function Collections(){
+export default async function Collections(){
+  const {products}=await getStoreCatalog();
   return <ShopLayout>
     <section className="rh-landing"><div className="rh-shell">
       <div className="rh-eyebrow">THE RUBY EDIT / UNSERE KOLLEKTIONEN</div>

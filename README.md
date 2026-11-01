@@ -32,3 +32,11 @@ npm test
 This preview remains non-transactional. Public prices are imported references; never enable payments until secure database-backed, server-authoritative transaction handling is implemented and tested.
 
 rubyhair.de production WordPress remains unchanged until Next.js go-live acceptance. AI try-on remains separate future scope.
+
+## PostgreSQL and administrator panel (2026-11-02)
+
+- Prisma 6.19.1 PostgreSQL models, generated client, migration and confirmation-gated import in the prisma folder.
+- When DATABASE_URL is configured, storefront category/product/search and read-only API use PostgreSQL. With no DB, the design preview uses a labeled imported snapshot. A configured but unavailable database returns a 503 response rather than concealing stale pricing.
+- The private /admin/login and /admin routes support bcrypt password authentication, signed HTTP-only sessions, login throttling, and editing variant price/stock/availability. Public Vercel credentials have not been provisioned yet.
+- Stock counts were unknown in the source catalog, so they were imported as NULL. Payment/order creation remains disabled.
+- Full deployment and operator setup notes: DATABASE-SETUP.md.

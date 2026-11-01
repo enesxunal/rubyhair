@@ -1,8 +1,8 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import {products,colorsFor,euros} from "@/lib/catalog";
-export function ProductSearch({initialQuery=""}:{initialQuery?:string}){
+import {colorsFor,euros,type Product} from "@/lib/catalog";
+export function ProductSearch({initialQuery="",products}:{initialQuery?:string;products:Product[]}){
   const [query,setQuery]=useState(initialQuery);
   const items=products.flatMap(product=>Array.from(colorsFor(product),([color,variants])=>{
     const available=variants.filter(v=>v.available&&v.purchasable);

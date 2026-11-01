@@ -1,15 +1,37 @@
 "use client";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useCart } from "@/components/cart-context";
-import {byVariation, euros} from "@/lib/catalog";
+import {byVariation, euros, type Product} from "@/lib/catalog";
 export function CartPage(){
   const {lines,update,remove,clear}=useCart();
-  const items=lines.map(line=>({...line,match:byVariation(line.id)})).filter(x=>x.match!==null);
+  const [liveProducts,setLiveProducts]=useState<Product[]|null>(null);
+  const [catalogError,setCatalogError]=useState(false);
+  useEffect(()=>{
+    const controller=new AbortController();
+    fetch("/api/catalog",{cache:"no-store",signal:controller.signal})
+      .then(r=>{if(!r.ok)throw new Error("catalog offline");return r.json()})
+      .then(data=>{if(!Array.isArray(data.products))throw new Error("Invalid catalog");setLiveProducts(data.products)})
+      .catch(e=>{if(!controller.signal.aborted){console.warn("Cart catalog unavailable",e);setCatalogError(true)}});
+    return ()=>controller.abort();
+  },[]);
+  const items=lines.map(line=>{
+    let match=null;
+    if(liveProducts){
+      const product=liveProducts.find(p=>p.variations.some(v=>v.id===line.id));
+      const variation=product?.variations.find(v=>v.id===line.id);
+      if(product&&variation)match={product,variation};
+    } else if(!catalogError){
+      match=byVariation(line.id);
+    }
+    return {...line,match};
+  }).filter(item=>item.match!==null);
   const total=items.reduce((sum,item)=>sum+item.quantity*(item.match?.variation.price||0),0);
   return <section className="rh-shell rh-cart-page">
     <div className="rh-eyebrow">RUBY HAIR / WARENKORB</div>
     <h1>Deine <em>Auswahl.</em></h1>
     <p className="rh-cart-notice">Shopping-Vorschau: Deine Auswahl wird nur in diesem Browser gespeichert. Es wird keine Bestellung ausgelöst.</p>
+    {catalogError&&<p role="alert" className="rh-admin-error">Produktpreise sind gerade nicht verfügbar. Der Warenkorb ist vorübergehend nicht nutzbar.</p>}
     {items.length===0?<div className="rh-empty-cart"><p>Dein Warenkorb ist noch leer.</p>
       <Link className="rh-buy-button" href="/kollektionen/">EXTENSIONS ENTDECKEN <span>↗</span></Link></div>:
     <div className="rh-cart-layout">
