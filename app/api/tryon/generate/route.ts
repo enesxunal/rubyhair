@@ -117,8 +117,11 @@ export async function POST(request:NextRequest){
   return deny("Referenzfoto ist derzeit ungültig.",422);
  const payload=new FormData();
  payload.append("model",MODEL);
- payload.append("image[]",new Blob([new Uint8Array(imageBytes)],{type:photo.type}),"customer-original.jpg");
- payload.append("image[]",new Blob([new Uint8Array(swatch)],{type:swatchMime}),"rubyhair-shade.jpg");
+ // Keep upload filenames consistent with the actual binary/MIME type: image API validates both.
+ const originalSuffix=photo.type==="image/png"?"png":photo.type==="image/webp"?"webp":"jpg";
+ const shadeSuffix=swatchMime==="image/png"?"png":swatchMime==="image/webp"?"webp":"jpg";
+ payload.append("image[]",new Blob([new Uint8Array(imageBytes)],{type:photo.type}),"customer-original."+originalSuffix);
+ payload.append("image[]",new Blob([new Uint8Array(swatch)],{type:swatchMime}),"rubyhair-shade."+shadeSuffix);
  payload.append("prompt",promptFor(product.slug,variant.color_label,variant.length_label,density));
  payload.append("size","1024x1536");
  payload.append("quality","medium");
@@ -134,12 +137,35 @@ export async function POST(request:NextRequest){
    signal:AbortSignal.timeout(98_000)
   });
   if(!result.ok){
-   return deny(result.status===429?"Der KI-Anbieter ist derzeit ausgelastet. Bitte später erneut versuchen.":"Die KI-Bildbearbeitung ist fehlgeschlagen. Bitte später erneut versuchen.",result.status===429?429:502);
+   // Provider errors may contain sensitive request/account details. Never relay or log the raw body.
+   const failure:unknown=await result.json().catch(()=>null);
+   const rawError=(failure as {error?:{code?:unknown;type?:unknown}}|null)?.error;
+   const rawCode=rawError?.code??rawError?.type;
+   const code=typeof rawCode==="string"&&/^[a-z0-9_.-]{1,60}$/.test(rawCode)?rawCode:"unknown";
+   const reason=(()=>{
+    if(code==="invalid_api_key"||result.status===401)return "OpenAI hat den API-Schlüssel abgelehnt. Bitte den Projekt-Schlüssel in Vercel prüfen.";
+    if(code==="insufficient_quota"||code==="billing_hard_limit_reached"||code==="billing_not_active")return "OpenAI API-Guthaben oder das Ausgabenlimit reicht nicht aus. Bitte API Billing prüfen.";
+    if(code==="organization_verification_required"||code==="model_not_found"||code==="model_not_available"||code==="model_access_denied")return "Für dieses OpenAI-Projekt ist das gewählte Bildmodell nicht freigegeben. Bitte Modellzugriff und Organisation prüfen.";
+    if(result.status===403)return "OpenAI verweigert dem Projekt den Modellzugriff. Bitte API-Projektberechtigungen prüfen.";
+    if(code==="invalid_image"||code==="invalid_image_format"||code==="invalid_image_file"||code==="unsupported_image")return "OpenAI hat eines der hochgeladenen Bilder abgelehnt. Bitte eine andere JPG/PNG-Datei testen.";
+    if(result.status===400)return "OpenAI hat die Bildanfrage abgelehnt. Bitte den API-Fehlercode prüfen.";
+    if(result.status===429)return "OpenAI hat das Anbieterlimit erreicht. Bitte API-Rate-Limit und Guthaben prüfen.";
+    return "OpenAI hat die Bildbearbeitung abgelehnt.";
+   })();
+   // Structured diagnostics only: no key, private test code, photo, prompt or upstream error message.
+   console.warn("RubyHair tryon provider rejection",{
+    providerHttpStatus:result.status,providerErrorCode:code,
+    providerRequestId:result.headers.get("x-request-id")||undefined
+   });
+   const suffix=code==="unknown"?"":" / "+code;
+   return deny(reason+" (OpenAI HTTP "+result.status+suffix+")",result.status===429?429:502);
   }
   const data:unknown=await result.json();
   const base64=(data as {data?:{b64_json?:string}[]})?.data?.[0]?.b64_json;
-  if(typeof base64!=="string"||base64.length===0||base64.length>MAX_RESPONSE_BASE64||!/^[A-Za-z0-9+/=]+$/.test(base64))
+  if(typeof base64!=="string"||base64.length===0||base64.length>MAX_RESPONSE_BASE64||!/^[A-Za-z0-9+/=]+$/.test(base64)){
+   console.warn("RubyHair tryon provider invalid image response",{base64Present:typeof base64==="string",responseSize:typeof base64==="string"?base64.length:0});
    return deny("Der KI-Anbieter hat kein gültiges Bild zurückgegeben.",502);
+  }
   return NextResponse.json({image:"data:image/webp;base64,"+base64,model:MODEL,notice:"KI-Visualisierung, keine Zusage des tatsächlichen Ergebnisses."},{headers:NO_STORE});
  }catch{
   return deny("Die Bildbearbeitung konnte nicht abgeschlossen werden. Bitte erneut versuchen.",504);

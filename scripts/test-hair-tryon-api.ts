@@ -18,15 +18,15 @@ async function main(){
  let calls=0;
  function request({
   origin="http://localhost:8765",testCode=code,consent="yes",
-  variantKey=variationKey,photo=file
- }:{origin?:string;testCode?:string;consent?:string;variantKey?:string;photo?:File}={}){
+  variantKey=variationKey,photo=file,ip="127.0.0.1"
+ }:{origin?:string;testCode?:string;consent?:string;variantKey?:string;photo?:File;ip?:string}={}){
   const body=new FormData();
   body.append("photo",photo);
   body.append("variantKey",variantKey);
   body.append("density","normal");
   body.append("consent",consent);
   body.append("testCode",testCode);
-  return new NextRequest(endpoint,{method:"POST",headers:{Origin:origin},body});
+  return new NextRequest(endpoint,{method:"POST",headers:{Origin:origin,"x-real-ip":ip},body});
  }
  try{
   delete process.env.OPENAI_API_KEY;delete process.env.RUBY_TRYON_TEST_CODE;
@@ -48,7 +48,10 @@ async function main(){
    assert.ok(init?.body instanceof FormData);
    assert.equal(init.body.get("model"),"gpt-image-2.5-sunburst");
    assert.equal(init.body.get("quality"),"medium");
-   assert.equal(init.body.getAll("image[]").length,2,"Original and authentic product swatch");
+   const images=init.body.getAll("image[]") as File[];
+   assert.equal(images.length,2,"Original and authentic product swatch");
+   assert.equal(images[0].name,"customer-original.webp","Input extension must match WebP photo bytes");
+   assert.ok(images[1].name.endsWith(variant.image.split(".").pop()!=="webp"?".jpg":".webp"),"Swatch filename matches type");
    const text=String(init.body.get("prompt"));
    assert.ok(text.includes("original person's face"),"Face preservation");
    assert.ok(text.includes(variant.color_label),"Real selected tone");
@@ -67,7 +70,26 @@ async function main(){
   }
   assert.equal(calls,3);
   assert.equal((await POST(request())).status,429,"Private API limit");
-  console.log("TRYON_IMAGE_API_TEST PASS",{cases:10,mockedUpstreamCalls:calls,realProviderCalls:0,consentRequired:true,closedWithoutSecrets:true,rateLimited:true});
+  const originalWarn=console.warn;
+  try{
+   console.warn=()=>{}; // Failure tests contain only sanitized provider error categories.
+   for(const [status,codePart,expected,ip] of [
+     [429,"insufficient_quota","API-Guthaben","192.0.2.3"],
+     [400,"invalid_image","hochgeladenen Bilder","192.0.2.4"],
+     [401,"invalid_api_key","API-Schlüssel abgelehnt","192.0.2.5"]
+   ] as const){
+    globalThis.fetch=async()=>new Response(JSON.stringify({
+      error:{code:codePart,type:"invalid_request_error",message:"SECRET_DO_NOT_ECHO"}
+     }),{status,headers:{"content-type":"application/json","x-request-id":"req-test"}});
+    const res=await POST(request({ip}));
+    const body=await res.json();
+    assert.equal(res.status,status===429?429:502);
+    assert.ok(body.error.includes(expected),codePart);
+    assert.ok(body.error.includes(codePart));
+    assert.ok(!body.error.includes("SECRET_DO_NOT_ECHO"),"Never echo raw provider messages");
+   }
+  }finally{console.warn=originalWarn;}
+  console.log("TRYON_IMAGE_API_TEST PASS",{cases:13,mockedUpstreamCalls:calls,realProviderCalls:0,consentRequired:true,closedWithoutSecrets:true,rateLimited:true,providerErrorClassified:true});
  }finally{
   globalThis.fetch=oldFetch;
   if(savedKey===undefined)delete process.env.OPENAI_API_KEY;else process.env.OPENAI_API_KEY=savedKey;
