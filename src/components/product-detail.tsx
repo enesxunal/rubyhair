@@ -5,12 +5,14 @@ import Link from "next/link";
 import { useCart } from "./cart-context";
 import { colorsFor, euros, type Product } from "@/lib/catalog";
 
-export function ProductDetail({product,initialColor}:{product:Product;initialColor?:string}){
+export function ProductDetail({product,initialColor,initialLength}:{product:Product;initialColor?:string;initialLength?:string}){
   const groups=useMemo(()=>colorsFor(product),[product]);
   const colors=Array.from(groups.keys());
   const starting=initialColor&&groups.has(initialColor)?initialColor:(groups.has("ruby")?"ruby":colors[0]);
   const [color,setColor]=useState(starting);
-  const [length,setLength]=useState("");
+  const [length,setLength]=useState(
+    initialLength&&groups.get(starting)?.some(v=>v.length===initialLength)?initialLength:""
+  );
   const [quantity,setQuantity]=useState(1);
   const [added,setAdded]=useState(false);
   const [galleryIndex,setGalleryIndex]=useState(0);

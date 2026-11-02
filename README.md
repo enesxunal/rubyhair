@@ -71,3 +71,11 @@ Database status: The local development PostgreSQL contains two product families 
 - The new /versand-zahlung information page and links from cart, checkout, both footer layouts and product descriptions clearly explain that new-site shipping, payment and return policies are not approved.
 - MERCHANT-APPROVAL.md documents source-supported existing business/product claims and important inconsistencies between the old site's AGB, return policy, Impressum and privacy notice. This is an internal approval checklist, not published legal advice.
 - Do not publish copied old legal texts without merchant and qualified German legal review. Existing WordPress production, DNS and WebAltyapi provisioning remain unchanged.
+
+## November 2 - product catalogue QA and buyer-facing checkout preview
+
+- All 38 variation IDs are unique, and all 38 local product image references exist. 21 distinct pictures are reused between colors, methods or lengths. A suspected cross-shade mapping (Tape-in EVE / Keratin 1006) requires merchant verification, not an unapproved image replacement.
+- A detailed 38-line import inventory is maintained at reports/catalog-38-variants.csv with review notes at reports/catalog-review.md. No physical stock count is verified.
+- Cart shows server-checked price status and uncertainty on each item. The browser hydration loading state avoids briefly reporting an empty saved cart. The return link preserves both color and length.
+- The checkout page is a non-transactional buyer experience preview: a clear three-step process and a read-only server-quoted item summary, with no personal address/payment fields. It never creates orders and payment remains HTTP 503.
+- Final hosting remains WebAltyapi only after authorized domain transfer; the Vercel demo is a noindex staging preview.

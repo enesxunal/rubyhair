@@ -4,7 +4,7 @@ import { byVariation } from "@/lib/catalog";
 
 export type CartLine = { id:number; quantity:number };
 type CartState = {
-  lines:CartLine[]; count:number;
+  lines:CartLine[]; count:number; loaded:boolean;
   add:(id:number,quantity?:number)=>void;
   update:(id:number,quantity:number)=>void;
   remove:(id:number)=>void;
@@ -34,7 +34,7 @@ export function CartProvider({children}:{children:React.ReactNode}){
   },[]);
   useEffect(()=>{if(loaded)localStorage.setItem(KEY,JSON.stringify(lines))},[lines,loaded]);
   const value=useMemo<CartState>(()=>({
-    lines,count:lines.reduce((sum,line)=>sum+line.quantity,0),
+    lines,loaded,count:lines.reduce((sum,line)=>sum+line.quantity,0),
     add(id,quantity=1){
       if(!byVariation(id))return;
       setLines(prev=>{
@@ -50,7 +50,7 @@ export function CartProvider({children}:{children:React.ReactNode}){
     },
     remove(id){setLines(prev=>prev.filter(x=>x.id!==id))},
     clear(){setLines([])}
-  }),[lines]);
+  }),[lines,loaded]);
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }
 export function useCart(){

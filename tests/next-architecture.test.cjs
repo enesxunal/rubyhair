@@ -140,3 +140,30 @@ test("shipping and returns preview does not claim unapproved checkout conditions
   assert.ok(merchant.includes("Zweigertstrasse"));
   assert.ok(merchant.includes("Klara Strasse"));
 });
+test("checkout preview reuses authoritative cart quotation and cannot collect payment details",()=>{
+  const checkout=fs.readFileSync(path.join(base,"src/components/checkout-preview.tsx"),"utf8");
+  const quoteHook=fs.readFileSync(path.join(base,"src/hooks/use-cart-quote.ts"),"utf8");
+  const cart=fs.readFileSync(path.join(base,"src/components/cart-page.tsx"),"utf8");
+  assert.ok(quoteHook.includes('fetch("/api/cart/quote"'));
+  assert.ok(checkout.includes("useCartQuote(lines)"));
+  assert.ok(cart.includes("useCartQuote(lines)"));
+  assert.ok(checkout.includes("keine Adressen, Bestellungen oder Zahlungsdaten"));
+  assert.ok(!checkout.includes("<input"));
+  assert.ok(!checkout.includes("createOrder"));
+});
+test("cart preserves selected variant color and length for return to product",()=>{
+  const cart=fs.readFileSync(path.join(base,"src/components/cart-page.tsx"),"utf8");
+  const product=fs.readFileSync(path.join(base,"src/components/product-detail.tsx"),"utf8");
+  const page=fs.readFileSync(path.join(base,"app/produkt/[slug]/page.tsx"),"utf8");
+  assert.ok(cart.includes('encodeURIComponent(result.variation.length)'));
+  assert.ok(product.includes("initialLength"));
+  assert.ok(page.includes("initialLength={laenge}"));
+});
+test("imported catalog has a line-by-line merchant verification report",()=>{
+  const data=JSON.parse(fs.readFileSync(path.join(base,"src/data/products.json"),"utf8"));
+  const number=Object.values(data.products).reduce((n,p)=>n+p.variations.length,0);
+  assert.equal(number,38);
+  const rows=fs.readFileSync(path.join(base,"reports/catalog-38-variants.csv"),"utf8").trim().split("\n");
+  assert.equal(rows.length,number+1);
+  assert.ok(fs.readFileSync(path.join(base,"reports/catalog-review.md"),"utf8").includes("Tape-in EVE"));
+});
