@@ -4,6 +4,7 @@ import "../src/styles/styles.css";
 import "../src/styles/shop.css";
 import "../src/styles/legacy-legal.css";
 import "../src/styles/admin.css";
+import "../src/styles/tryon.css";
 
 export const metadata:Metadata={
   title:{default:"Ruby Hair Extensions",template:"%s | Ruby Hair"},

@@ -20,6 +20,7 @@ export function SiteHeader(){
         </Link>
         <nav className="rh-desktop-nav" aria-label="Shop Navigation">
           {categories.map(item=><Link key={item.href} href={item.href}>{item.title}</Link>)}
+          <Link href="/haar-anprobe/">Hair Preview Lab</Link>
         </nav>
         <div className="rh-actions">
           <Link href="/suche/" className="rh-search" aria-label="Produkte und Haarfarben suchen"><Search size={22}/></Link>
@@ -37,6 +38,7 @@ export function SiteHeader(){
         {categories.map(item=><Link key={item.href} href={item.href} onClick={()=>setOpen(false)}>{item.title}</Link>)}
         <Link href="/suche/" onClick={()=>setOpen(false)}>Produkte suchen</Link>
         <Link href="/kontakt/" onClick={()=>setOpen(false)}>Beratung & Kontakt</Link>
+        <Link href="/haar-anprobe/" onClick={()=>setOpen(false)}>Hair Preview Lab</Link>
       </nav>}
     </header>
   </>;
