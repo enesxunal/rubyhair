@@ -2,6 +2,7 @@ import {createHash} from "node:crypto";
 import type {PrismaClient} from "@prisma/client";
 import {Prisma} from "@prisma/client";
 import {z} from "zod";
+import {requireOrderTransition} from "./order-lifecycle";
 
 /**
  * INTERNAL LOCAL-ONLY stock hold prototype. It is intentionally NOT exposed
@@ -98,7 +99,8 @@ export async function reserveLocalTestOrder(db:PrismaClient,raw:unknown):Promise
       reservationExpiresAt:new Date(Date.now()+15*60*1000),
       currency:"EUR",subtotalCents:subtotal,totalCents:subtotal,
       shippingCents:0,taxCents:0,customerEmail:null,billingAddress:Prisma.JsonNull,shippingAddress:Prisma.JsonNull,
-      lines:{create:orderLines}
+      lines:{create:orderLines},
+      statusEvents:{create:{fromStatus:null,toStatus:"test_reserved",reason:"local_test_reservation"}}
     }});
     return summary(order);
   },{timeout:10000});
@@ -113,21 +115,29 @@ export async function reserveLocalTestOrder(db:PrismaClient,raw:unknown):Promise
   throw error;
  }
 }
-export async function endLocalTestReservation(db:PrismaClient,orderId:string,reason:"test_cancelled"|"test_expired"="test_cancelled"):Promise<TestOrderResult>{
+export async function endLocalTestReservation(db:PrismaClient,orderId:string,reason:"test_cancelled"|"test_expired"="test_cancelled",now=new Date()):Promise<TestOrderResult>{
  assertLocalTestMode();
  if(!z.string().uuid().safeParse(orderId).success)throw new TestOrderError("INVALID_REQUEST","Invalid test order ID");
  return db.$transaction(async tx=>{
    const order=await tx.order.findUnique({where:{id:orderId},include:{lines:true}});
    if(!order||!order.testOnly)throw new TestOrderError("NOT_FOUND","No such local test order");
    if(order.status!=="test_reserved")return summary(order,true);
+   if(reason==="test_expired"&&(!order.reservationExpiresAt||order.reservationExpiresAt>now))
+     return summary(order,true);
+   requireOrderTransition(order.status,reason,"local_test");
    const changed=await tx.order.updateMany({where:{id:orderId,testOnly:true,status:"test_reserved"},data:{status:reason}});
    if(changed.count!==1){
      const fresh=await tx.order.findUniqueOrThrow({where:{id:orderId}});
      return summary(fresh,true);
    }
    for(const line of [...order.lines].sort((a,b)=>a.variantId.localeCompare(b.variantId))){
-     await tx.variant.update({where:{id:line.variantId},data:{stockQuantity:{increment:line.quantity}}});
+     const restored=await tx.variant.updateMany({
+       where:{id:line.variantId,stockQuantity:{not:null}},
+       data:{stockQuantity:{increment:line.quantity}}
+     });
+     if(restored.count!==1)throw new TestOrderError("STOCK_RECONCILIATION_REQUIRED","Stock changed to unknown during hold");
    }
+   await tx.orderStatusEvent.create({data:{orderId,fromStatus:"test_reserved",toStatus:reason,reason:reason==="test_expired"?"reservation_timeout":"manual_test_cancel"}});
    return summary({...order,status:reason});
  });
 }
@@ -139,7 +149,7 @@ export async function expireLocalTestReservations(db:PrismaClient,now=new Date()
  });
  let expired=0;
  for(const order of orders){
-   const result=await endLocalTestReservation(db,order.id,"test_expired");
+   const result=await endLocalTestReservation(db,order.id,"test_expired",now);
    if(!result.replayed)expired++;
  }
  return expired;

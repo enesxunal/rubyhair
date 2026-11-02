@@ -1,5 +1,7 @@
 import "dotenv/config";
 import {randomUUID} from "node:crypto";
+import {execFileSync} from "node:child_process";
+import {canTransitionOrder,requireOrderTransition} from "../src/lib/order-lifecycle";
 import {PrismaClient} from "@prisma/client";
 import {
  assertLocalTestMode,reserveLocalTestOrder,endLocalTestReservation,
@@ -53,6 +55,14 @@ async function main(){
   check(hold.status==="test_reserved"&&hold.totalCents===8997,"DB-derived total, hold status");
   const fresh=await db.order.findUniqueOrThrow({where:{id:hold.id},include:{lines:true,payments:true}});
   check(fresh.testOnly&&fresh.lines.length===2&&fresh.payments.length===0,"Persisted test-only order and lines");
+  check((await db.orderStatusEvent.count({where:{orderId:hold.id}}))===1,"Initial history recorded");
+  check(canTransitionOrder("test_reserved","test_cancelled","local_test"),"Local test cancel allowed");
+  check(!canTransitionOrder("test_reserved","payment_confirmed","local_test"),"Test cannot become paid");
+  check(canTransitionOrder("pending_payment","payment_confirmed","payment_provider"),"Verified payment actor policy");
+  check(!canTransitionOrder("pending_payment","payment_confirmed","checkout"),"Browser cannot confirm payments");
+  let blocked=false;
+  try{requireOrderTransition("delivered","pending_payment","checkout");}catch{blocked=true;}
+  check(blocked,"Forbidden state transition");
   check(fresh.customerEmail===null&&fresh.billingAddress===null&&fresh.shippingAddress===null,
    "No personal data");
   check(fresh.lines.reduce((s,l)=>s+l.lineTotalCents,0)===8997,"Immutable price snapshot");
@@ -92,6 +102,7 @@ async function main(){
   const cancelled=await endLocalTestReservation(db,hold.id);
   check(cancelled.status==="test_cancelled"&&!cancelled.replayed,"Cancellation");
   check((await endLocalTestReservation(db,hold.id)).replayed,"Repeat cancellation safe");
+  check((await db.orderStatusEvent.count({where:{orderId:hold.id}}))===2,"Cancellation history exactly once");
   stocks=await readStocks();
   check(stocks[a.id]===3&&stocks[b.id]===2,"Exactly-once stock restoration");
   const expiryHold=await reserveLocalTestOrder(db,{
@@ -102,6 +113,27 @@ async function main(){
   check((await db.order.findUniqueOrThrow({where:{id:expiryHold.id}})).status==="test_expired","Expiration status");
   check((await readStocks())[a.id]===3,"Expired stock released");
   check(await expireLocalTestReservations(db)===0,"No double expiry");
+  check((await db.orderStatusEvent.count({where:{orderId:expiryHold.id}}))===2,"Expiry history recorded");
+  const autoHold=await reserveLocalTestOrder(db,{reservationKey:randomUUID(),lines:[{variantId:a.id,quantity:1}]});
+  check((await endLocalTestReservation(db,autoHold.id,"test_expired")).replayed,"Worker cannot expire a future hold");
+  await db.order.update({where:{id:autoHold.id},data:{reservationExpiresAt:new Date(Date.now()-1000)}});
+  const workerResult=execFileSync("npm",["run","orders:expire:local"],{
+    cwd:process.cwd(),env:process.env,encoding:"utf8",timeout:30000
+  });
+  check(workerResult.includes('"expired":1'),"Worker automatically expires due hold");
+  check((await db.order.findUniqueOrThrow({where:{id:autoHold.id}})).status==="test_expired","Worker persisted status");
+  check((await db.orderStatusEvent.count({where:{orderId:autoHold.id}}))===2,"Worker writes audit event");
+  check((await readStocks())[a.id]===3,"Worker returned inventory");
+  const concurrent=await reserveLocalTestOrder(db,{reservationKey:randomUUID(),lines:[{variantId:a.id,quantity:1}]});
+  const cancellations=await Promise.allSettled([
+    endLocalTestReservation(db,concurrent.id),endLocalTestReservation(db,concurrent.id)
+  ]);
+  check(cancellations.every(x=>x.status==="fulfilled"),"Concurrent cancellation requests complete");
+  check((await db.orderStatusEvent.count({where:{orderId:concurrent.id}}))===2,"Concurrent cancel does not double-record history");
+  check((await readStocks())[a.id]===3,"Concurrent cancel restores stock once");
+  let negativeBlocked=false;
+  try{await db.variant.update({where:{id:a.id},data:{stockQuantity:-1}});}catch{negativeBlocked=true;}
+  check(negativeBlocked&&((await readStocks())[a.id]===3),"Database prevents negative inventory");
   const oldFlag=process.env.RUBY_LOCAL_ORDER_TESTS;
   try{
     delete process.env.RUBY_LOCAL_ORDER_TESTS;
@@ -114,6 +146,7 @@ async function main(){
    const ids=variationIds;
    const orders=await db.order.findMany({where:{testOnly:true,lines:{some:{variantId:{in:ids}}}},select:{id:true}});
    const orderIds=orders.map(x=>x.id);
+   await db.orderStatusEvent.deleteMany({where:{orderId:{in:orderIds}}});
    await db.orderLine.deleteMany({where:{orderId:{in:orderIds}}});
    await db.order.deleteMany({where:{id:{in:orderIds},testOnly:true}});
    await db.variant.deleteMany({where:{productId}});
