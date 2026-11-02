@@ -21,6 +21,12 @@ Public source review (2 November 2026): https://rubyhair.de/ , https://rubyhair.
 - Approve final Impressum, Datenschutz, AGB, Widerrufsbelehrung, address and return instructions with a qualified legal reviewer.
 - Review privacy disclosures against actual new Next.js runtime, analytics, Google Fonts/CDN requests, email infrastructure, user data storage and selected payment provider.
 
+## November 2026 legal compliance additions
+- **§ 356a BGB — electronic withdrawal function has been required since 19 June 2026** for covered contracts concluded online. Before selling, provide a conspicuous always-accessible **Vertrag widerrufen** route, contract/customer identification, separate **Widerruf bestätigen**, and immediate durable electronic acknowledgment containing the submission date/time and content. Neither a plain link to Widerrufsbelehrung nor a fake UI is enough. The current preview has no such functioning workflow, so real checkout must stay disabled. See `reports/legal-audit-2026-11-02.md`.
+- **§ 357(2) BGB:** normally refund original standard delivery charges on statutory withdrawal; the old conflicting AGB/withdrawal texts should be reconciled and legally approved.
+- **§ 312j BGB, EGBGB Art. 246a:** before chargeable orders show accepted payments, delivery restrictions, complete item/total price, taxes/shipping and a clearly labeled paid-order button. No paid-order button in current preview.
+- **§ 5 DDG** imprint requirements, **BFSG** ecommerce accessibility (microenterprise service exception requires merchant-specific verification), consumer pricing / VAT under PAngV, actual data-processing disclosures and final merchant legal approval must all be assessed.
+
 ## Go-live constraints
 - The new Next.js Vercel domain is a noindex, non-transactional design preview, not an approved e-commerce site. Its checkout API is intentionally 503. Contact mailto invokes the customer's mail app, not a form backend.
 - Local PostgreSQL records exist, but no persistent production PostgreSQL or admin credentials are connected to Vercel.

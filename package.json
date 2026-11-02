@@ -8,6 +8,7 @@
     "start": "next start -p 8765",
     "typecheck": "tsc --noEmit",
     "test": "node --test tests/next-architecture.test.cjs",
+    "test:orders": "RUBY_LOCAL_ORDER_TESTS=LOCAL_TEST_ONLY tsx scripts/test-order-reservation.ts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",

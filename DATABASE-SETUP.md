@@ -62,3 +62,14 @@ Local backup check: run pg_dump -Fc against the container, save into a protected
 - Unknown stock is reported explicitly and does not enable actual checkout. Card payments, shipping, taxes and invoices are not implemented.
 - Admin product editor restricts image paths to existing local /media files. Full new-product/new-variation support needs a UUID-safe cart model before release.
 - Final production hosting will use WebAltyapı, not Vercel; WebAltyapı database and rubyhair.de domain cutover are deferred until approved domain transition. Vercel remains a non-transactional preview.
+
+## Internal local test order service - 2 November 2026
+
+The reviewed schema migration `20261102094500_local_test_order_reservations` adds an idempotency key, request digest, test-only flag, reservation expiration timestamp and expiry index. It was applied only to the isolated local `127.0.0.1:55439` development database, never the public WordPress or Vercel database.
+
+- `src/lib/order-reservations.ts`: `reserveLocalTestOrder(db, request)`, `endLocalTestReservation(db, id)` and `expireLocalTestReservations(db)`; no public route imports them. The existing public `POST /api/checkout` still returns HTTP 503.
+- Explicit protection requires `RUBY_LOCAL_ORDER_TESTS=LOCAL_TEST_ONLY`, a loopback PostgreSQL URL and not running on Vercel. No prices, personal information, shipping or tax values can be supplied by callers; unit and line prices are read from PostgreSQL.
+- Physical stock NULL, inactive/unavailable products and insufficient inventory fail closed. Conditional per-variant `updateMany` with `stockQuantity >= quantity` inside a single PostgreSQL transaction prevents negative inventory and rolls back partial orders. Variant locks are acquired in stable ID order.
+- Reservations use test-only `test_reserved`, `test_cancelled`, `test_expired` statuses and 15-minute hold timestamps. Duplicate idempotency keys return the original test order only when request contents match. Cancellation and manual expiration restore stock once.
+- `npm run test:orders` runs synthetic order/stock tests in local PostgreSQL: snapshots, idempotency, insufficient/missing stock, concurrent oversell prevention, cancellation, manual expiry, test gate and automatic cleanup. It cleans all synthetic test products, variants, order lines and orders. Do not run this against live merchant data.
+- **Limitations:** This is *not* real checkout. Holds are not automatically expired by a scheduled worker, shipping/tax/payment are not calculated, customer verification and payment events are not implemented. Before production, implement automatic expiry, inventory reconciliation after payment, refunds/chargebacks, fraud protections, final legal obligations, identity/address validation and approved payment integrations. No real orders until then.

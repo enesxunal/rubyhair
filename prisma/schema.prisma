@@ -60,11 +60,16 @@ model Order {
   billingAddress    Json?
   shippingAddress   Json?
   paymentReference  String?        @unique
+  testOnly          Boolean        @default(false)
+  reservationKey    String?        @unique
+  requestDigest     String?
+  reservationExpiresAt DateTime?
   lines             OrderLine[]
   payments          PaymentEvent[]
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
   @@index([status,createdAt(sort: Desc)])
+  @@index([testOnly,status,reservationExpiresAt])
   @@map("orders")
 }
 

@@ -45,7 +45,8 @@ function LegalContent({slug}:{slug:string}){
   if(slug==="widerruf")return <>
     <section className="rh-legal-section"><h2>Bisherige Widerrufsangaben</h2>
       <p>Die bisherige Widerrufsbelehrung nennt ein <strong>14-tägiges Widerrufsrecht</strong> für Verbraucher. Sie gibt an, dass Käufer die unmittelbaren Kosten der Rücksendung tragen.</p>
-      <p>Die bisherige separate Widerrufsseite enthält noch unausgefüllte Angaben zur Telefonnummer und zum möglichen Warenempfänger. Zudem widerspricht sie der AGB-Fassung bei der Erstattung der ursprünglichen Lieferkosten.</p>
+      <p>Die bisherige separate Widerrufsseite enthält noch unausgefüllte Angaben zur Telefonnummer und zum möglichen Warenempfänger. Zudem widerspricht sie der AGB-Fassung bei der Erstattung der ursprünglichen Lieferkosten. Gemäß § 357 Abs. 2 BGB sind bei einem gesetzlichen Widerruf grundsätzlich auch die Kosten der günstigsten Standardlieferung zu erstatten.</p>
+      <p><strong>Neue Pflicht seit 19. Juni 2026:</strong> Für entsprechende Online-Verbraucherverträge ist nach § 356a BGB eine leicht zugängliche elektronische Widerrufsfunktion mit zwei Bestätigungsschritten und unverzüglicher elektronischer Eingangsbestätigung erforderlich. Diese Funktion ist in der nicht-transaktionalen Vorschau noch nicht verfügbar und wird vor Aktivierung realer Bestellungen implementiert.</p>
       <p className="rh-legal-caution">Daher wird der alte Rechtstext nicht unverändert wiederverwendet. Die vollständige, rechtlich geprüfte Widerrufsbelehrung und Rücksendeanschrift des neuen Shops müssen vor dem Verkaufsstart festgelegt werden.</p>
     </section>
     <Link className="rh-legal-internal" href="/kontakt/">Rückfrage zu einer bisherigen Bestellung →</Link>

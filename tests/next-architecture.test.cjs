@@ -176,3 +176,22 @@ test("imported catalog has a line-by-line merchant verification report",()=>{
   assert.equal(rows.length,number+1);
   assert.ok(fs.readFileSync(path.join(base,"reports/catalog-review.md"),"utf8").includes("Tape-in EVE"));
 });
+test("local-only order reservation service fails closed and snapshots server-side prices",()=>{
+  const source=fs.readFileSync(path.join(base,"src/lib/order-reservations.ts"),"utf8");
+  for(const expected of ["LOCAL_TEST_ONLY","process.env.VERCEL","127.0.0.1","UNVERIFIED_STOCK",
+    "INSUFFICIENT_STOCK","decrement:line.quantity","IDEMPOTENCY_CONFLICT","test_reserved",
+    "test_cancelled","test_expired","unitPriceCents:variant.priceCents","reserveLocalTestOrder"]){
+    assert.ok(source.includes(expected),expected);
+  }
+  assert.ok(!fs.readFileSync(path.join(base,"app/api/checkout/route.ts"),"utf8").includes("reserveLocalTestOrder"));
+  assert.ok(fs.existsSync(path.join(base,"prisma/migrations/20261102094500_local_test_order_reservations/migration.sql")));
+});
+test("German withdrawal and legal compliance blockers are recorded",()=>{
+  const doc=fs.readFileSync(path.join(base,"reports/legal-audit-2026-11-02.md"),"utf8");
+  const legal=fs.readFileSync(path.join(base,"app/rechtliches/[slug]/page.tsx"),"utf8");
+  assert.ok(doc.includes("356a"));
+  assert.ok(doc.includes("312j"));
+  assert.ok(doc.includes("357(2)"));
+  assert.ok(legal.includes("19. Juni 2026"));
+  assert.ok(legal.includes("elektronische Widerrufsfunktion"));
+});
