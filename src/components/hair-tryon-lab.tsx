@@ -6,7 +6,7 @@ import {ArrowUpRight,ArrowLeftRight,Check,Clipboard,ImagePlus,LockKeyhole,Scisso
 
 type Variation={color:string;length:string;image:string;key:string};
 type Product={slug:string;name:string;pack:string;material:string;variants:Variation[]};
-type LocalPhoto={url:string;name:string};
+type LocalPhoto={url:string;name:string;file?:File};
 type Density="fein"|"normal"|"dicht";
 
 const recommendation:Record<Density,string>={
@@ -14,6 +14,24 @@ const recommendation:Record<Density,string>={
 };
 const densityLabels:Record<Density,string>={fein:"Feines Haar",normal:"Normales Haar",dicht:"Dichtes Haar"};
 function unique<T>(items:T[]):T[]{return [...new Set(items)];}
+async function shrinkImage(file:File):Promise<Blob>{
+ const bitmap=await createImageBitmap(file);
+ try{
+  const scale=Math.min(1,1280/bitmap.width,1536/bitmap.height);
+  const canvas=document.createElement("canvas");
+  canvas.width=Math.max(1,Math.round(bitmap.width*scale));
+  canvas.height=Math.max(1,Math.round(bitmap.height*scale));
+  const context=canvas.getContext("2d");
+  if(!context)throw new Error("Bilder können in diesem Browser nicht verarbeitet werden.");
+  context.drawImage(bitmap,0,0,canvas.width,canvas.height);
+  const convert=(quality:number)=>new Promise<Blob>((resolve,reject)=>
+   canvas.toBlob(result=>result?resolve(result):reject(new Error("Bildkomprimierung fehlgeschlagen.")),"image/jpeg",quality));
+  let result=await convert(.82);
+  if(result.size>3_500_000)result=await convert(.65);
+  if(result.size>3_500_000)throw new Error("Foto ist auch nach Verkleinerung zu groß.");
+  return result;
+ }finally{bitmap.close();}
+}
 function photoPrompt(product:Product,variant:Variation,density:Density){
  const method=product.slug==="keratin-bondings"
   ?"Keratin-Bondings, als einzelne fein verteilte Echthaarsträhnen mit diskreten Verbindungspunkten"
@@ -48,6 +66,11 @@ export default function HairTryonLab({products}:{products:Product[]}){
  const [issue,setIssue]=useState("");
  const [copied,setCopied]=useState(false);
  const [showAll,setShowAll]=useState(false);
+ const [aiAvailable,setAiAvailable]=useState<boolean|null>(null);
+ const [testCode,setTestCode]=useState("");
+ const [consent,setConsent]=useState(false);
+ const [generating,setGenerating]=useState(false);
+ const [aiInfo,setAiInfo]=useState("");
  const lengths=useMemo(()=>unique(product?.variants.map(v=>v.length)||[]),[product]);
  const colors=useMemo(()=>unique(product?.variants.map(v=>v.color)||[]),[product]);
  const available=product?.variants.filter(v=>v.color===color)||[];
@@ -56,8 +79,16 @@ export default function HairTryonLab({products}:{products:Product[]}){
  const currentLength=picked?.length||length;
  const colorOptions=colors.map(tone=>product.variants.find(v=>v.color===tone)!).filter(Boolean);
  const prompt=product&&picked?photoPrompt(product,picked,density):"";
- useEffect(()=>()=>{if(before)URL.revokeObjectURL(before.url);},[before]);
- useEffect(()=>()=>{if(after)URL.revokeObjectURL(after.url);},[after]);
+ useEffect(()=>()=>{if(before?.url.startsWith("blob:"))URL.revokeObjectURL(before.url);},[before]);
+ useEffect(()=>()=>{if(after?.url.startsWith("blob:"))URL.revokeObjectURL(after.url);},[after]);
+ useEffect(()=>{
+  let active=true;
+  fetch("/api/tryon/generate",{cache:"no-store"})
+   .then(response=>response.ok?response.json():null)
+   .then(data=>{if(active)setAiAvailable(data?.available===true);})
+   .catch(()=>{if(active)setAiAvailable(false);});
+  return ()=>{active=false;};
+ },[]);
  const chooseProduct=(next:string)=>{
    const p=products.find(item=>item.slug===next);
    if(!p)return;
@@ -74,10 +105,33 @@ export default function HairTryonLab({products}:{products:Product[]}){
      setIssue("Die Bilddatei darf maximal 8 MB groß sein.");event.target.value="";return;
    }
    setIssue("");
-   const photo={url:URL.createObjectURL(file),name:file.name};
+   const photo={url:URL.createObjectURL(file),name:file.name,file};
    if(kind==="before"){setBefore(photo);setAfter(null);}
    else setAfter(photo);
    setRatio(50);event.target.value="";
+ };
+ const createTryon=async()=>{
+   if(!before?.file||!picked||!aiAvailable||generating)return;
+   if(!consent){setIssue("Bitte zuerst der Übermittlung deines Fotos an OpenAI zustimmen.");return;}
+   if(testCode.trim().length<12){setIssue("Bitte den privaten Test-Zugangscode eingeben.");return;}
+   setGenerating(true);setIssue("");setAiInfo("");
+   try{
+     const compressed=await shrinkImage(before.file);
+     const payload=new FormData();
+     payload.set("photo",compressed,"hair-original.jpg");
+     payload.set("variantKey",picked.key);
+     payload.set("density",density);
+     payload.set("consent","yes");
+     payload.set("testCode",testCode.trim());
+     const response=await fetch("/api/tryon/generate",{method:"POST",body:payload,cache:"no-store",signal:AbortSignal.timeout(110000)});
+     const data=await response.json().catch(()=>null);
+     if(!response.ok)throw new Error(typeof data?.error==="string"?data.error:"Die KI-Haaranprobe ist fehlgeschlagen.");
+     if(typeof data?.image!=="string"||!data.image.startsWith("data:image/webp;base64,"))
+       throw new Error("Der KI-Dienst hat kein gültiges Bild geliefert.");
+     setAfter({url:data.image,name:"Ruby Hair KI-Vorschau"});
+     setRatio(50);setAiInfo("KI-Vorschau erstellt. Vergleiche das Original mit dem Ergebnis.");
+   }catch(error){setIssue(error instanceof Error?error.message:"Die KI-Haaranprobe ist fehlgeschlagen.");}
+   finally{setGenerating(false);}
  };
  const copyPrompt=async()=>{
    try{
@@ -91,8 +145,8 @@ export default function HairTryonLab({products}:{products:Product[]}){
     <div className="rh-tryon-hero-grid">
       <div><div className="rh-eyebrow">RUBY HAIR / VIRTUAL HAIR STUDIO</div>
        <h1>See the <em>possibility.</em></h1>
-       <p>Finde deine Extensions-Methode, Farbe und Länge. Mit unserem privaten Vergleichslabor kannst du dein Ausgangsbild und ein separat erstelltes KI-Ergebnis direkt übereinander vergleichen.</p>
-       <div className="rh-tryon-status"><LockKeyhole size={17}/><span>TESTVERSION · Bilder bleiben in diesem Browser · Keine automatische KI-Bildgenerierung</span></div>
+       <p>Finde deine Extensions-Methode, Farbe und Länge. Wähle deine Ruby Hair Extensions und teste die automatische KI-Haarverlängerung mit deinem Foto. Die Bildgenerierung ist nur im geschützten Testmodus verfügbar.</p>
+       <div className="rh-tryon-status"><LockKeyhole size={17}/><span>GESCHÜTZTER TEST · KI-Verarbeitung nur nach deiner ausdrücklichen Zustimmung</span></div>
       </div>
       <div className="rh-tryon-feature-note">
         <Sparkles size={28} strokeWidth={1.4}/><span>YOUR NEXT<br/>HAIR STORY.</span>
@@ -141,19 +195,33 @@ export default function HairTryonLab({products}:{products:Product[]}){
       <label className={"rh-tryon-photo-button secondary"+(!before?" is-disabled":"")}><ImagePlus size={17}/> {after?"Ergebnis ersetzen":"KI-Ergebnis importieren"}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={!before} onChange={e=>onPhoto(e,"after")}/></label>
       {before&&<button className="rh-tryon-clear" type="button" onClick={()=>{setBefore(null);setAfter(null);setIssue("");setRatio(50);}}><X size={15}/> Bilder entfernen</button>}
      </div>
+     <div className="rh-tryon-generate">
+      <div className="rh-tryon-generate-heading"><Sparkles size={21}/><div><strong>Extensions an dir testen</strong><small>KI verändert dein Haar passend zur gewählten Farbe und Länge.</small></div></div>
+      {aiAvailable===false&&<p role="status" className="rh-tryon-disabled">Der Bildgenerator ist noch nicht freigeschaltet. Für den Test fehlen Server-API-Schlüssel und Testzugang.</p>}
+      {aiAvailable===null&&<p role="status" className="rh-tryon-muted">KI-Verfügbarkeit wird geprüft …</p>}
+      {aiAvailable===true&&<div className="rh-tryon-ai-access">
+       <label>Privater Test-Zugangscode<input type="password" value={testCode} autoComplete="off" placeholder="Testcode eingeben" onChange={e=>setTestCode(e.target.value)} maxLength={256}/></label>
+       <label className="rh-tryon-consent"><input type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)}/><span>Ich bestätige, dass ich das Foto verwenden darf. Ich stimme zu, dass es einmalig zur KI-Haarbearbeitung an <strong>OpenAI</strong> übermittelt wird. Es wird von Ruby Hair nicht dauerhaft gespeichert. <Link href="/rechtliches/datenschutz/">Datenschutz</Link></span></label>
+      </div>}
+      <button type="button" className="rh-tryon-generate-button" disabled={!before||!aiAvailable||generating} onClick={createTryon}>
+       <Sparkles size={19}/>{generating?"KI erstellt dein Ergebnis …":"Saçımda Dene · Haare virtuell verlängern"}
+      </button>
+      {generating&&<p role="status" className="rh-tryon-muted">Dein Foto wird verarbeitet. Bitte diese Seite geöffnet lassen und den Button nicht erneut drücken.</p>}
+      {aiInfo&&<p role="status" className="rh-tryon-success">{aiInfo}</p>}
+     </div>
      {issue&&<p role="alert" className="rh-tryon-error">{issue}</p>}
      {!before?<div className="rh-tryon-placeholder"><Scissors size={49} strokeWidth={1.2}/><h3>Dein Foto. Dein Look.</h3><p>Bitte lade ein eigenes Foto mit gut sichtbaren Haaren und Schultern hoch. Keine Hüte, keine starken Filter – idealerweise von vorn oder leicht seitlich.</p><small>JPG, PNG, WebP · max. 8 MB · keine Serverübertragung</small></div>:
        <div className="rh-tryon-viewer">
         <div className="rh-tryon-before"><img src={before.url} alt="Vorher: Originalfoto" /></div>
         {after&&<><div className="rh-tryon-after" style={{clipPath:"inset(0 0 0 "+ratio+"%)"}}><img src={after.url} alt="Nachher: manuell hochgeladenes KI-Ergebnis"/></div><div className="rh-tryon-divider" style={{left:ratio+"%"}}><ArrowLeftRight size={18}/></div></>}
         <div className="rh-tryon-photo-labels"><span>VORHER</span><span>{after?"NACHHER":"ERGEBNIS FEHLT"}</span></div>
-        {!after&&<div className="rh-tryon-no-after">Ausgangsfoto bereit.<br/>Erstelle ein KI-Bild mit dem Prompt und importiere es hier für den Vergleich.</div>}
+        {!after&&<div className="rh-tryon-no-after">Ausgangsfoto bereit.<br/>Klicke auf „Saçımda Dene“ oder importiere für den Vergleich ein vorhandenes KI-Ergebnis.</div>}
        </div>}
      {before&&after&&<div className="rh-tryon-slider"><label htmlFor="rh-tryon-ratio">Vergleich verschieben</label><input id="rh-tryon-ratio" type="range" min="0" max="100" value={ratio} onChange={e=>setRatio(Number(e.target.value))} aria-valuetext={ratio+" Prozent Vorher"}/><span>{ratio}%</span></div>}
-     {(before||after)&&<p className="rh-tryon-privacy"><LockKeyhole size={15}/> Die ausgewählten Bilder werden nur vorübergehend in deinem Browser angezeigt und beim Verlassen der Seite nicht gespeichert.</p>}
+     {(before||after)&&<p className="rh-tryon-privacy"><LockKeyhole size={15}/> Die Bilder werden vorübergehend in deinem Browser angezeigt. Nur bei Klick auf „Saçımda Dene“ mit Einwilligung wird das Originalfoto zur Bildverarbeitung an OpenAI übertragen.</p>}
      <div className="rh-tryon-prompt-panel">
       <div className="rh-tryon-prompt-head"><div><span className="rh-tryon-step">05 / KI-BILDVORLAGE</span><h3>Dein Bildauftrag.</h3></div><button type="button" onClick={copyPrompt}><Clipboard size={16}/>{copied?<><Check size={13}/> Kopiert</>:"Prompt kopieren"}</button></div>
-      <p>Für den Test kannst du dein Originalfoto und das gewählte Ruby-Hair-Farbfoto zusammen mit diesem Auftrag in einem Bildeditor mit KI verwenden. Importiere danach das Ergebnis oben. Ein KI-Anbieter ist hier noch nicht angebunden.</p>
+      <p>Für den Test kannst du dein Originalfoto und das gewählte Ruby-Hair-Farbfoto zusammen mit diesem Auftrag in einem Bildeditor mit KI verwenden. Importiere danach das Ergebnis oben. Die automatische KI-Anprobe funktioniert erst nach Aktivierung des privaten Testzugangs.</p>
       <textarea readOnly aria-label="KI Prompt für die ausgewählte Ruby Hair Variante" value={prompt} rows={7} onFocus={e=>e.target.select()}/>
      </div>
      <p className="rh-tryon-final-note">Die Vorschau simuliert kein technisch exaktes Friseurergebnis. Ansatzposition, Schnitt, Farbangleichung, Tragegefühl und benötigte Menge müssen professionell beurteilt werden. Bestellungen sind auf dieser Website noch deaktiviert.</p>

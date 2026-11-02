@@ -238,7 +238,7 @@ test("admin pages use authenticated separate dashboard, product and read-only or
  assert.ok(actions.includes('redirect("/admin/produkte?productUpdated=1")'));
  assert.ok(fs.existsSync(path.join(base,"src/styles/admin.css")));
 });
-test("virtual hair lab uses the real catalog and keeps photo uploads local",()=>{
+test("virtual hair lab uses the real catalog and sends photos only with explicit consent",()=>{
  const page=fs.readFileSync(path.join(base,"app/haar-anprobe/page.tsx"),"utf8");
  const lab=fs.readFileSync(path.join(base,"src/components/hair-tryon-lab.tsx"),"utf8");
  const header=fs.readFileSync(path.join(base,"src/components/site-shell.tsx"),"utf8");
@@ -246,12 +246,20 @@ test("virtual hair lab uses the real catalog and keeps photo uploads local",()=>
  assert.ok(page.includes('import catalog from "@/data/products.json"'));
  assert.ok(page.includes("robots:{index:false"));
  assert.ok(header.includes("href=\"/haar-anprobe/\""));
- for(const marker of ["URL.createObjectURL","URL.revokeObjectURL","image/jpeg","image/png","image/webp","maximal 8 MB", "setRatio", "aria-label=\"KI Prompt", "Keine automatische KI-Bildgenerierung"]){
+ for(const marker of ["URL.createObjectURL","URL.revokeObjectURL","image/jpeg","image/png","image/webp","maximal 8 MB", "setRatio", "aria-label=\"KI Prompt", "Saçımda Dene", "RUBY HAIR"]){
    assert.ok(lab.includes(marker),marker);
  }
- for(const forbidden of ["fetch(","localStorage","sessionStorage","FormData(","/api/generate","input type=\"password\""]){
-   assert.ok(!lab.includes(forbidden),"Must not upload or store photos: "+forbidden);
+ for(const marker of ["fetch(\"/api/tryon/generate\"","new FormData()","consent","testCode","shrinkImage(before.file)"]){
+   assert.ok(lab.includes(marker),"Protected generation flow missing: "+marker);
  }
+ for(const forbidden of ["localStorage","sessionStorage","/api/generate"]){
+   assert.ok(!lab.includes(forbidden),"No persistent photo storage or unreviewed endpoints: "+forbidden);
+ }
+ const api=fs.readFileSync(path.join(base,"app/api/tryon/generate/route.ts"),"utf8");
+ for(const marker of ["RUBY_TRYON_TEST_CODE","OPENAI_API_KEY","sessionLimited","form.get(\"consent\")","authorized(form.get(\"testCode\"))","gpt-image-2.5-sunburst","image[]","no-store, private"]){
+   assert.ok(api.includes(marker),"Server-side guard missing: "+marker);
+ }
+ assert.ok(!lab.includes("OPENAI_API_KEY"),"Never expose provider key in the browser");
  assert.ok(study.includes("Keratin"));
  assert.ok(study.includes("Tape-in"));
  assert.ok(study.includes("Perfect Corp"));
