@@ -27,7 +27,8 @@ test("Next.js runtime does not reference WordPress endpoints",()=>{
       if(item.isDirectory())scan(full);
       else if(/\.(?:ts|tsx|html|js|json)$/.test(item.name)){
         const content=fs.readFileSync(full,"utf8");
-        assert.equal(content.includes("https://rubyhair.de/"),false,full);
+        // Publicly documented legacy pages are linked as sources, not fetched at runtime.
+        if(!full.endsWith("legacy-store-facts.ts"))assert.equal(content.includes("https://rubyhair.de/"),false,full);
         assert.equal(content.includes("/wp-json/"),false,full);
       }
     }
@@ -131,8 +132,16 @@ test("product preview distinguishes specific color images from editorial collect
 });
 test("shipping and returns preview does not claim unapproved checkout conditions",()=>{
   const shipping=fs.readFileSync(path.join(base,"app/versand-zahlung/page.tsx"),"utf8");
-  assert.ok(shipping.includes("noch keine verbindlichen Versandkosten"));
-  assert.ok(shipping.includes("noch keine Zahlungsanbieter freigeschaltet"));
+  assert.ok(shipping.includes("4,99 € Versandpauschale"));
+  assert.ok(shipping.includes("bis zu 5 Werktagen"));
+  assert.ok(shipping.includes("noch keine Zahlungsarten aktiviert"));
+  assert.ok(shipping.includes("Quell") || shipping.includes("Quelle"));
+  assert.ok(shipping.includes("Quelle: rubyhair.de"));
+  const legal=fs.readFileSync(path.join(base,"app/rechtliches/[slug]/page.tsx"),"utf8");
+  assert.ok(legal.includes("old.vatId"));
+  assert.ok(legal.includes("Zweigertstraße 8"));
+  assert.ok(legal.includes("Widerrufsbelehrung"));
+  assert.ok(legal.includes("robots:{index:false"));
   assert.ok(shipping.includes('robots:{index:false'));
   const merchant=fs.readFileSync(path.join(base,"MERCHANT-APPROVAL.md"),"utf8");
   assert.ok(merchant.includes("NOT APPROVED"));

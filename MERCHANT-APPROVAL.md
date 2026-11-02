@@ -16,8 +16,8 @@ Public source review (2 November 2026): https://rubyhair.de/ , https://rubyhair.
 - The old AGB text conflicts with the old standalone Widerrufsbelehrung regarding refund of initial delivery costs.
 - The old standalone Widerrufsbelehrung contains an unresolved telephone placeholder and an unresolved return-recipient/address placeholder. Do not publish that text unchanged.
 - Existing Impressum indicates Ruby Hair / Nazmi Bulganlar / Klara Strasse 19, 45130 Essen and an email. Existing privacy page elsewhere specifies Zweigertstrasse 8, 45130 Essen as the responsible-party address. Confirm the official current business and privacy contact addresses.
-- Existing AGB/Impressum references the old EU Online Dispute Resolution platform. Its applicability should be checked by qualified German legal counsel before new legal text is published.
-- Verify merchant VAT identification, business registration, official contact details and legally required consumer information, but do not copy sensitive financial account details from the current site.
+- Existing AGB/Impressum still link to the former EU ODR platform. The European Commission confirms that the ODR platform closed on 20 July 2025 under Regulation (EU) 2024/3228: https://consumer-redress.ec.europa.eu/site-relocation_en . The new site deliberately does not repeat this dead platform link; final dispute resolution wording still needs review.
+- The publicly listed old-store VAT ID is DE356097157. It has been carried into the **source-labelled preview** Impressum; confirm merchant identity, registration, VAT status and contact details before the new shop launches. No banking details were copied.
 - Approve final Impressum, Datenschutz, AGB, Widerrufsbelehrung, address and return instructions with a qualified legal reviewer.
 - Review privacy disclosures against actual new Next.js runtime, analytics, Google Fonts/CDN requests, email infrastructure, user data storage and selected payment provider.
 

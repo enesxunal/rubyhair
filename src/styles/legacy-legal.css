@@ -1,0 +1,21 @@
+/* Source-linked public company and existing-store information, not final legal terms. */
+.rh-oldstore-facts{list-style:disc;padding-left:18px;margin:17px 0 22px;color:#78696e;font-size:12px;line-height:1.8}
+.rh-oldstore-facts li{padding-bottom:9px}
+.rh-oldstore-source,.rh-legal-source{display:inline-flex;align-items:center;gap:9px;font-weight:700;letter-spacing:.45px;color:#805064;font-size:10px;text-decoration:underline;text-underline-offset:4px;line-height:1.8}
+.rh-delivery-grid article{display:flex;flex-direction:column}
+.rh-delivery-grid article h2{margin-bottom:6px}
+.rh-oldstore-source{margin-top:auto;padding-top:13px}
+.rh-legal-page{max-width:1050px;padding-top:45px;padding-bottom:105px}
+.rh-legal-page h1{font-size:clamp(42px,5.4vw,70px);line-height:1.1}
+.rh-legal-intro{color:#756770;line-height:1.8;font-size:14px}
+.rh-legal-page .rh-delivery-state{max-width:850px;margin:27px 0 40px}
+.rh-legal-section{padding:25px 0;border-top:1px solid #e5d9d3;max-width:850px}
+.rh-legal-section h2{font:400 clamp(25px,3vw,37px)/1.25 var(--serif);margin:0 0 20px}
+.rh-legal-section p{color:#6e6267;font-size:14px;line-height:1.85;margin:0 0 18px}
+.rh-legal-section p strong{color:#48333c}
+.rh-legal-section a,.rh-legal-internal{color:#805064;text-decoration:underline;text-underline-offset:4px}
+.rh-legal-caution{background:#f7eee9;padding:18px 20px;border-left:3px solid #976777;font-size:12px!important}
+.rh-legal-internal{display:block;margin:15px 0 30px;font-size:13px}
+.rh-legal-nav{display:flex;flex-wrap:wrap;gap:14px;margin-top:45px;border-top:1px solid #e4d8d3;padding-top:25px}
+.rh-legal-nav a{font-size:12px;border-bottom:1px solid #8c6674;padding-bottom:7px;color:#684459}
+@media(max-width:700px){.rh-legal-page{padding-top:25px;padding-bottom:75px}.rh-legal-section{padding:21px 0}.rh-delivery-grid article{min-height:0}.rh-legal-nav{gap:10px}}

@@ -108,7 +108,7 @@ export function ProductDetail({product,initialColor,initialLength}:{product:Prod
         <p className="rh-shop-explain">Dies ist eine unverbindliche Warenkorb-Vorschau. Bestellungen und Zahlungen sind noch deaktiviert.</p>
         <div className="rh-product-facts">
           <details open><summary>Produktdetails</summary>
-            <ul><li>Material: {product.material}</li><li>Packungsinhalt: {product.pack}</li><li>Farbe und Länge individuell auswählbar</li></ul>
+            <ul><li>Material: {product.material}</li><li>Packungsinhalt: {product.pack}</li><li>Gewicht laut bisherigem Shop: 25 g</li><li>Farbe und Länge individuell auswählbar</li></ul>
           </details>
           <details><summary>Wie viele Packungen brauche ich?</summary>
             <p>Ruby Hair nennt zur Orientierung 2–4 Packungen bei dünnem Haar, 4–5 bei normalem Haar und 5–6 bei dickem Haar. Die richtige Menge hängt vom gewünschten Ergebnis ab.</p>
