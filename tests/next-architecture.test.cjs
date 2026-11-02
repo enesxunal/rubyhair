@@ -195,3 +195,21 @@ test("German withdrawal and legal compliance blockers are recorded",()=>{
   assert.ok(legal.includes("19. Juni 2026"));
   assert.ok(legal.includes("elektronische Widerrufsfunktion"));
 });
+test("legacy policy mirrors the old shop sections without opening sales",()=>{
+  const legal=fs.readFileSync(path.join(base,"app/rechtliches/[slug]/page.tsx"),"utf8");
+  const checkout=fs.readFileSync(path.join(base,"src/components/checkout-preview.tsx"),"utf8");
+  for(const section of ["1. Geltungsbereich","2. Vertragspartner","3. Vertragsschluss",
+   "4. Widerrufsrecht","5. Preise und Versandkosten","6. Lieferung",
+   "7. Zahlung","8. Eigentumsvorbehalt","9. Streitbeilegung"]){
+    assert.ok(legal.includes(section),section);
+  }
+  assert.ok(legal.includes("14-tägige Frist"));
+  assert.ok(legal.includes("Zweigertstraße 8"));
+  assert.ok(checkout.includes("old.shipping.standardEuro"));
+  assert.ok(checkout.includes("Sie wird hier nicht berechnet oder eingezogen"));
+  const issues=fs.readFileSync(path.join(base,"reports/musteriye-sorulacak-konular-2026-11-02.md"),"utf8");
+  for(const issue of ["Kargo","AGB","Klara Straße","Zweigertstraße","Klarna","19 Haziran 2026","EVE"]){
+    assert.ok(issues.toLowerCase().includes(issue.toLowerCase()),issue);
+  }
+  assert.ok(fs.readFileSync(path.join(base,"app/api/checkout/route.ts"),"utf8").includes("503"));
+});

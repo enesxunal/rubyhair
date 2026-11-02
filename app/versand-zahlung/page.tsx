@@ -12,7 +12,8 @@ const cards=[
  {icon:Truck,no:"01",title:"Versand & Lieferung",facts:[
    "Bisherige AGB: Versand innerhalb Deutschlands mit DHL.",
    "Bisherige AGB: 4,99 € Versandpauschale pro Bestellung.",
-   "Bisherige AGB: Lieferung innerhalb Deutschlands innerhalb von bis zu 5 Werktagen."
+   "Bisherige AGB: Lieferung innerhalb Deutschlands innerhalb von bis zu 5 Werktagen.",
+   "Für Auslandszustellungen werden in den alten AGB keine verbindlichen Preise oder Fristen zugesagt."
  ],url:old.urls.terms,source:"AGB des bisherigen Shops"},
  {icon:Wallet,no:"02",title:"Zahlungsmethoden",facts:[
    "Bisherige AGB: Überweisung, PayPal, VISA und Mastercard.",

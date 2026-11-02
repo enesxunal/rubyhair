@@ -6,73 +6,76 @@ import ShopLayout from "@/components/site-shell";
 import {legacyStore as old} from "@/lib/legacy-store-facts";
 
 const pages:Record<string,{title:string;source:string}>={
-  impressum:{title:"Impressum",source:old.urls.imprint},
-  datenschutz:{title:"Datenschutzerklärung",source:old.urls.privacy},
-  agb:{title:"Allgemeine Geschäftsbedingungen",source:old.urls.terms},
-  widerruf:{title:"Widerruf & Rückgabe",source:old.urls.cancellation}
+ impressum:{title:"Impressum",source:old.urls.imprint},
+ datenschutz:{title:"Datenschutzerklärung",source:old.urls.privacy},
+ agb:{title:"Allgemeine Geschäftsbedingungen",source:old.urls.terms},
+ widerruf:{title:"Widerruf & Rückgabe",source:old.urls.cancellation}
 };
 export function generateStaticParams(){return Object.keys(pages).map(slug=>({slug}));}
 export async function generateMetadata({params}:{params:Promise<{slug:string}>}):Promise<Metadata>{
-  return {title:pages[(await params).slug]?.title||"Rechtliche Informationen",robots:{index:false,follow:false}};
+ return {title:pages[(await params).slug]?.title||"Rechtliche Informationen",robots:{index:false,follow:false}};
 }
-function Source({href}:{href:string}){
-  return <a className="rh-legal-source" href={href} target="_blank" rel="noopener noreferrer">
-    ORIGINALANGABEN AUF RUBYHAIR.DE <ExternalLink size={15}/>
-  </a>;
-}
+function Source({href}:{href:string}){return <a className="rh-legal-source" href={href} target="_blank" rel="noopener noreferrer">QUELLE: BISHERIGER SHOP AUF RUBYHAIR.DE <ExternalLink size={15}/></a>;}
+function Section({title,children}:{title:string;children:React.ReactNode}){return <section className="rh-legal-section"><h2>{title}</h2>{children}</section>;}
+function Notice(){return <p className="rh-legal-caution">Diese Angaben beschreiben den bisherigen Ruby Hair Shop. Das neue Shopsystem ist eine Vorschau ohne Bestell- oder Zahlungsfunktion. Noch offene rechtliche Punkte werden vor dem Verkaufsstart abgestimmt.</p>;}
 function LegalContent({slug}:{slug:string}){
-  if(slug==="impressum")return <>
-    <section className="rh-legal-section">
-      <h2>Angaben aus dem bisherigen Impressum</h2>
-      <p><strong>{old.business}</strong><br/>Inhaber: {old.owner}<br/>{old.street}<br/>{old.postalCity}<br/>Deutschland</p>
-      <p>E-Mail: <a href={"mailto:"+old.email}>{old.email}</a></p>
-      <p>Umsatzsteuer-Identifikationsnummer laut bisherigem Impressum: <strong>{old.vatId}</strong></p>
-      <p className="rh-legal-caution">Diese Angaben wurden aus dem derzeit veröffentlichten Impressum übernommen. Die rechtliche Vollständigkeit und Aktualität für das neue Shopsystem muss vor dessen Verkaufsstart überprüft werden.</p>
-    </section>
-    <section className="rh-legal-section"><h2>Verbraucherstreitbeilegung</h2>
-      <p>Das bisherige Impressum nennt keine Teilnahmebereitschaft an einem Verbraucherstreitbeilegungsverfahren. Veraltete Hinweise auf die frühere EU-Online-Streitbeilegungsplattform werden hier nicht übernommen; die Angaben werden für den neuen Shop rechtlich geprüft.</p>
-    </section>
-  </>;
-  if(slug==="agb")return <>
-    <section className="rh-legal-section"><h2>Bisherige AGB – Informationsübersicht</h2>
-      <p>Die bisherigen AGB nennen {old.business}, Inhaber {old.owner}, als Vertragspartner. Für Lieferungen innerhalb Deutschlands werden dort <strong>4,99 € Versandpauschale</strong>, <strong>DHL</strong> und eine Lieferzeit von bis zu <strong>5 Werktagen</strong> angegeben.</p>
-      <p>Die bisher genannten Zahlarten sind Überweisung, PayPal, VISA und Mastercard. Die alte Startseite nennt abweichend auch Klarna und SEPA.</p>
-      <p>Die Angaben zur Erstattung von Versandkosten widersprechen der separat veröffentlichten Widerrufsbelehrung. Eine Übernahme als verbindliche neue AGB wäre deshalb nicht korrekt.</p>
-      <p className="rh-legal-caution">Dies ist eine Zusammenfassung des bisherigen Shops, kein rechtsverbindlicher AGB-Text für die neue Plattform. Vor dem Verkaufsstart werden die neuen AGB fertiggestellt und rechtlich geprüft.</p>
-    </section>
-    <Link className="rh-legal-internal" href="/versand-zahlung/">Bisherige Versand- und Zahlungsangaben ansehen →</Link>
-  </>;
-  if(slug==="widerruf")return <>
-    <section className="rh-legal-section"><h2>Bisherige Widerrufsangaben</h2>
-      <p>Die bisherige Widerrufsbelehrung nennt ein <strong>14-tägiges Widerrufsrecht</strong> für Verbraucher. Sie gibt an, dass Käufer die unmittelbaren Kosten der Rücksendung tragen.</p>
-      <p>Die bisherige separate Widerrufsseite enthält noch unausgefüllte Angaben zur Telefonnummer und zum möglichen Warenempfänger. Zudem widerspricht sie der AGB-Fassung bei der Erstattung der ursprünglichen Lieferkosten. Gemäß § 357 Abs. 2 BGB sind bei einem gesetzlichen Widerruf grundsätzlich auch die Kosten der günstigsten Standardlieferung zu erstatten.</p>
-      <p><strong>Neue Pflicht seit 19. Juni 2026:</strong> Für entsprechende Online-Verbraucherverträge ist nach § 356a BGB eine leicht zugängliche elektronische Widerrufsfunktion mit zwei Bestätigungsschritten und unverzüglicher elektronischer Eingangsbestätigung erforderlich. Diese Funktion ist in der nicht-transaktionalen Vorschau noch nicht verfügbar und wird vor Aktivierung realer Bestellungen implementiert.</p>
-      <p className="rh-legal-caution">Daher wird der alte Rechtstext nicht unverändert wiederverwendet. Die vollständige, rechtlich geprüfte Widerrufsbelehrung und Rücksendeanschrift des neuen Shops müssen vor dem Verkaufsstart festgelegt werden.</p>
-    </section>
-    <Link className="rh-legal-internal" href="/kontakt/">Rückfrage zu einer bisherigen Bestellung →</Link>
-  </>;
-  return <>
-    <section className="rh-legal-section"><h2>Datenschutz für die neue Website</h2>
-      <p>Der bisherige Shop verfügt über eine Datenschutzerklärung. Da das neue Angebot auf Next.js statt WordPress/WooCommerce läuft, können dessen Angaben zu Cookies, Zahlungsdienstleistern und Datenspeicherung nicht einfach übertragen werden.</p>
-      <p>Das derzeitige Impressum nennt {old.street}, {old.postalCity}. Die bestehende Datenschutzerklärung nennt dagegen <strong>Zweigertstraße 8, 45130 Essen</strong> für die verantwortliche Stelle. Dieser Unterschied wird vor Freigabe geklärt.</p>
-      <p>In dieser Vorschau sind Bestellung und Zahlung abgeschaltet. Die unverbindliche Produktauswahl liegt im Browser; das Kontaktformular erstellt lediglich einen Entwurf im eigenen E-Mail-Programm.</p>
-      <p className="rh-legal-caution">Eine vollständige Datenschutzerklärung muss die tatsächlichen neuen Dienste, Hosting, Server-Logs, Zahlungs- und E-Mail-Verarbeitung abbilden und vor dem Verkaufsstart juristisch überprüft werden.</p>
-    </section>
-    <Link className="rh-legal-internal" href="/kontakt/">Kontakt für Datenschutzfragen →</Link>
-  </>;
+ if(slug==="impressum")return <>
+  <Section title="Anbieterangaben">
+   <p><strong>{old.business}</strong><br/>Inhaber: Herr {old.owner}<br/>{old.street}<br/>{old.postalCity}<br/>Deutschland</p>
+   <p>E-Mail: <a href={"mailto:"+old.email}>{old.email}</a></p>
+   <p>Umsatzsteuer-Identifikationsnummer: <strong>{old.vatId}</strong></p>
+   <p>Die bisherigen AGB nennen das Amtsgericht Essen als Registergericht, ohne eine Registernummer anzugeben.</p>
+  </Section>
+  <Section title="Verbraucherstreitbeilegung">
+   <p>Ruby Hair erklärt im bisherigen Impressum, weder zur Teilnahme an einer Verbraucherschlichtung verpflichtet noch hierzu bereit zu sein.</p>
+   <p>Der dortige Link zur geschlossenen EU-Online-Streitbeilegungsplattform wird nicht als aktiver Dienst übernommen.</p>
+  </Section><Notice/>
+ </>;
+ if(slug==="agb")return <>
+  <Section title="1. Geltungsbereich"><p>Die bisherigen AGB gelten für Lieferungen von Ruby Hair an Verbraucher. Verbraucher kaufen überwiegend zu privaten Zwecken und nicht im Rahmen einer gewerblichen oder selbstständigen Tätigkeit.</p></Section>
+  <Section title="2. Vertragspartner"><p>Ruby Hair, Inhaber {old.owner}, {old.street}, {old.postalCity}. Das alte Dokument nennt außerdem das Amtsgericht Essen als Registergericht.</p></Section>
+  <Section title="3. Vertragsschluss"><p>Die bisherige Produktdarstellung dient der Einladung zur Bestellung. Nach dem alten Ablauf erklärt der Kunde mit einem ausdrücklich kostenpflichtigen Bestellbutton seine verbindliche Bestellung; der Vertrag wird mit der Auftragsbestätigung per E-Mail geschlossen.</p><p>Die neue Vorschau erlaubt derzeit keine Bestellung.</p></Section>
+  <Section title="4. Widerrufsrecht"><p>Die bisherigen Bedingungen nennen für Verbraucher eine Widerrufsfrist von 14 Tagen ab Warenempfang. Die Erklärung kann gegenüber {old.owner} an der Geschäftsadresse oder per <a href={"mailto:"+old.email}>{old.email}</a> erfolgen.</p><p>Nach dem alten AGB-Text trägt der Käufer die unmittelbaren Rücksendekosten. Der alte AGB-Abschnitt nimmt die ursprünglichen Lieferkosten von der Erstattung aus; die separate Widerrufsbelehrung enthält hierzu eine andere Regelung.</p><p><Link href="/rechtliches/widerruf/">Widerrufsangaben des bisherigen Shops ansehen →</Link></p></Section>
+  <Section title="5. Preise und Versandkosten"><p>Der bisherige Shop gibt Produktpreise einschließlich gesetzlicher Mehrwertsteuer an. Für den Versand innerhalb Deutschlands wird eine Pauschale von <strong>4,99 € je Bestellung</strong> genannt. Nachnahme ist nach den bisherigen Bedingungen nicht möglich.</p></Section>
+  <Section title="6. Lieferung"><p>Die bisherigen AGB nennen den Versand innerhalb Deutschlands mit <strong>DHL</strong> und eine Lieferzeit von bis zu <strong>5 Werktagen</strong>. Für Lieferungen ins Ausland machen sie keinen verlässlichen Lieferzeitzusatz.</p></Section>
+  <Section title="7. Zahlung"><p>Als bisherige Zahlungsarten sind direkte Banküberweisung, PayPal, VISA und Mastercard angegeben. Bei Vorauszahlung erfolgt die Warenlieferung nach Eingang der Überweisung. Die alte Startseite nennt daneben Klarna und SEPA.</p><p>Für die neue Vorschau sind noch keine Zahlungsanbieter freigeschaltet.</p></Section>
+  <Section title="8. Eigentumsvorbehalt"><p>Nach den bisherigen Bedingungen bleibt die Ware bis zur vollständigen Bezahlung Eigentum von Ruby Hair.</p></Section>
+  <Section title="9. Streitbeilegung"><p>Ruby Hair erklärt, nicht zur Teilnahme an einem Verfahren vor einer Verbraucherschlichtungsstelle verpflichtet oder bereit zu sein. Die nicht mehr betriebene EU-Online-Streitbeilegungsplattform wird nicht als aktiver Kontaktweg verwendet.</p></Section>
+  <Notice/><Link className="rh-legal-internal" href="/versand-zahlung/">Versand & Zahlung ansehen →</Link>
+ </>;
+ if(slug==="widerruf")return <>
+  <Section title="Widerrufsrecht und Frist">
+   <p>Nach der eigenständigen bisherigen Widerrufsbelehrung steht Verbrauchern eine <strong>14-tägige Frist</strong> ohne Angabe von Gründen zu. Sie beginnt grundsätzlich mit dem Empfang der Ware durch den Käufer oder einen benannten Dritten.</p>
+   <p>Eine eindeutige Erklärung kann an {old.owner}, {old.street}, {old.postalCity}, oder per E-Mail an <a href={"mailto:"+old.email}>{old.email}</a> gerichtet werden. Die Mitteilung muss innerhalb der Frist abgesendet werden.</p>
+  </Section>
+  <Section title="Erstattung und Rücksendung">
+   <p>Die eigenständige alte Belehrung sieht die Rückzahlung der Zahlungen einschließlich der Kosten der günstigsten Standardlieferung vor. Zusätzliche Kosten einer teureren Versandart sind ausgenommen. Erstattungen sollen über das ursprüngliche Zahlungsmittel erfolgen.</p>
+   <p>Der Händler kann die Rückzahlung bis zum Eintreffen der Ware oder zum Nachweis ihrer Rücksendung zurückhalten. Die Ware ist nach der bisherigen Regelung innerhalb von 14 Tagen nach Erklärung zurückzusenden. Die unmittelbaren Rücksendekosten trägt der Käufer.</p>
+   <p>Ein Wertverlust ist nur zu ersetzen, wenn er auf einen Umgang mit der Ware zurückgeht, der zur Prüfung von Eigenschaften und Funktion nicht nötig war.</p>
+  </Section>
+  <Section title="Rücksendekontakt"><p>Ruby Hair, {old.owner}<br/>{old.street}<br/>{old.postalCity}<br/>E-Mail: <a href={"mailto:"+old.email}>{old.email}</a></p><p>Die bisherige Website enthält noch unvollständige Felder für eine Telefonnummer und einen möglichen abweichenden Rücksendeempfänger. Bis zur Klärung wird keine weitere Adresse behauptet.</p></Section>
+  <Section title="Elektronische Widerrufsfunktion"><p>Seit dem 19. Juni 2026 verlangt § 356a BGB für erfasste Online-Verbraucherverträge eine elektronische Widerrufsfunktion mit Bestätigung in zwei Schritten und unverzüglicher elektronischer Eingangsbestätigung. Diese wird vor dem Verkaufsstart des neuen Shops umgesetzt.</p></Section>
+  <Notice/>
+ </>;
+ return <>
+  <Section title="Verantwortliche Stelle"><p>Die bisherige Datenschutzerklärung nennt <strong>Zweigertstraße 8, 45130 Essen</strong> als Adresse der verantwortlichen Stelle; im Impressum steht dagegen {old.street}, {old.postalCity}. Für die neue Datenschutzfassung wird die richtige Anschrift überprüft.</p><p>E-Mail: <a href={"mailto:"+old.email}>{old.email}</a></p></Section>
+  <Section title="Datenschutz im bisherigen Shop"><p>Die bisherige WordPress-Datenschutzerklärung beschreibt Serverprotokolle, Cookies, Einwilligungsverwaltung, Kontaktanfragen, Aufbewahrung, verschlüsselte Datenübertragung, Versand- und Zahlungsabwicklung.</p><p>Darin werden Usercentrics, Cookie Notice & Compliance, Complianz und mehrere Zahlungsdienstleister beschrieben. Diese historischen Angaben sind nicht automatisch auf die neue Plattform übertragbar.</p></Section>
+  <Section title="Neue Next.js-Vorschau"><p>In der aktuellen Vorschau werden weder Bestellungen noch Zahlungsinformationen entgegengenommen. Die Warenkorbauswahl wird im Browser gespeichert; das Kontaktformular bereitet nur einen Entwurf im E-Mail-Programm des Besuchers vor.</p><p>Die endgültige Datenschutzerklärung wird auf tatsächlich eingesetzte Hosting-, Schrift-, Analyse-, E-Mail- und Zahlungsdienste abgestimmt.</p></Section>
+  <Notice/>
+ </>;
 }
 export default async function Legal({params}:{params:Promise<{slug:string}>}){
-  const slug=(await params).slug;
-  if(!pages[slug])notFound();
-  const page=pages[slug];
-  return <ShopLayout><section className="rh-shell rh-info-page rh-legal-page">
-    <nav className="rh-breadcrumb" aria-label="Breadcrumb"><Link href="/">Startseite</Link><span>/</span><span>{page.title}</span></nav>
-    <div className="rh-eyebrow">RUBY HAIR / BESTEHENDE ANGABEN</div>
-    <h1>{page.title}</h1>
-    <p className="rh-legal-intro">Quellengestützte Informationen aus dem bisherigen Ruby Hair Shop, abgerufen am {old.checkedOn}.</p>
-    <div className="rh-delivery-state" role="status"><strong>VORSCHAU</strong><span>Die rechtsverbindlichen Texte für den neuen Shop sind noch nicht freigegeben. Bestellungen und Zahlungen sind hier deaktiviert.</span></div>
-    <LegalContent slug={slug}/>
-    <Source href={page.source}/>
-    <div className="rh-legal-nav"><Link href="/rechtliches/impressum/">Impressum</Link><Link href="/rechtliches/datenschutz/">Datenschutz</Link><Link href="/rechtliches/agb/">AGB</Link><Link href="/rechtliches/widerruf/">Widerruf</Link></div>
-  </section></ShopLayout>;
+ const slug=(await params).slug;
+ if(!pages[slug])notFound();
+ const page=pages[slug];
+ return <ShopLayout><section className="rh-shell rh-info-page rh-legal-page">
+  <nav className="rh-breadcrumb" aria-label="Breadcrumb"><Link href="/">Startseite</Link><span>/</span><span>{page.title}</span></nav>
+  <div className="rh-eyebrow">RUBY HAIR / INFORMATIONEN AUS DEM BISHERIGEN SHOP</div>
+  <h1>{page.title}</h1>
+  <p className="rh-legal-intro">Übernommen und zusammengefasst aus dem bisherigen Ruby Hair Shop, Stand {old.checkedOn}. Die Originalfassung ist über den Quellenlink verfügbar.</p>
+  <div className="rh-delivery-state" role="status"><strong>VORSCHAU</strong><span>Keine Bestellung oder Zahlung möglich. Die endgültigen Bedingungen werden vor dem Verkaufsstart geklärt.</span></div>
+  <LegalContent slug={slug}/>
+  <Source href={page.source}/>
+  <div className="rh-legal-nav"><Link href="/rechtliches/impressum/">Impressum</Link><Link href="/rechtliches/datenschutz/">Datenschutz</Link><Link href="/rechtliches/agb/">AGB</Link><Link href="/rechtliches/widerruf/">Widerruf</Link></div>
+ </section></ShopLayout>;
 }

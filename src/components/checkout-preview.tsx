@@ -4,6 +4,7 @@ import {Check,LockKeyhole,Truck,Wallet,ArrowUpRight,ShoppingBag} from "lucide-re
 import {useCart} from "@/components/cart-context";
 import {useCartQuote} from "@/hooks/use-cart-quote";
 import {euros} from "@/lib/catalog";
+import {legacyStore as old} from "@/lib/legacy-store-facts";
 
 const process=[
   {no:"01",label:"Warenkorb",description:"Produkte, Farbe und Menge prüfen",icon:ShoppingBag},
@@ -63,8 +64,9 @@ export default function CheckoutPreview(){
             </div>
             <div className="rh-checkout-sum"><span>Artikelwert (unverbindlich)</span>
               <strong>{euros(quote.subtotalCents/100)}</strong></div>
-            <div className="rh-checkout-sum"><span>Versand & Steuern</span><strong>Noch offen</strong></div>
-            <p className="rh-checkout-policy">Alle Preise sind eine Vorschau. Es gibt noch keinen endgültigen Gesamtpreis oder eine zahlungspflichtige Bestellung.</p>
+            <div className="rh-checkout-sum"><span>Versand DE laut bisherigem Shop (DHL)</span><strong>{euros(old.shipping.standardEuro)}</strong></div>
+            <div className="rh-checkout-sum"><span>Steuern & verbindlicher Gesamtpreis</span><strong>Noch offen</strong></div>
+            <p className="rh-checkout-policy">Die Versandpauschale von {euros(old.shipping.standardEuro)} ist eine unverbindliche Angabe aus dem bisherigen Shop. Sie wird hier nicht berechnet oder eingezogen. Es gibt noch keinen endgültigen Gesamtpreis oder eine zahlungspflichtige Bestellung.</p>
           </>}
         <Link className="rh-checkout-help" href="/kontakt/">Fragen zu deiner Auswahl? Beratung anfragen ↗</Link>
       </aside>

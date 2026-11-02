@@ -6,7 +6,8 @@
 .rh-delivery-grid article h2{margin-bottom:6px}
 .rh-oldstore-source{margin-top:auto;padding-top:13px}
 .rh-legal-page{max-width:1050px;padding-top:45px;padding-bottom:105px}
-.rh-legal-page h1{font-size:clamp(42px,5.4vw,70px);line-height:1.1}
+.rh-legal-page h1{font-size:clamp(36px,5.4vw,70px);line-height:1.12;hyphens:auto;overflow-wrap:anywhere}
+.rh-legal-section h2{hyphens:auto;overflow-wrap:anywhere}
 .rh-legal-intro{color:#756770;line-height:1.8;font-size:14px}
 .rh-legal-page .rh-delivery-state{max-width:850px;margin:27px 0 40px}
 .rh-legal-section{padding:25px 0;border-top:1px solid #e5d9d3;max-width:850px}
