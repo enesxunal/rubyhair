@@ -73,3 +73,12 @@ The reviewed schema migration `20261102094500_local_test_order_reservations` add
 - Reservations use test-only `test_reserved`, `test_cancelled`, `test_expired` statuses and 15-minute hold timestamps. Duplicate idempotency keys return the original test order only when request contents match. Cancellation and manual expiration restore stock once.
 - `npm run test:orders` runs synthetic order/stock tests in local PostgreSQL: snapshots, idempotency, insufficient/missing stock, concurrent oversell prevention, cancellation, manual expiry, test gate and automatic cleanup. It cleans all synthetic test products, variants, order lines and orders. Do not run this against live merchant data.
 - **Limitations:** This is *not* real checkout. Holds are not automatically expired by a scheduled worker, shipping/tax/payment are not calculated, customer verification and payment events are not implemented. Before production, implement automatic expiry, inventory reconciliation after payment, refunds/chargebacks, fraud protections, final legal obligations, identity/address validation and approved payment integrations. No real orders until then.
+
+## Admin interface (2026-11-02, first revision)
+
+- `/admin/login` uses the existing authenticated, rate-limited signed-session login, without a default password. If database or dedicated secrets are unavailable, admin remains inaccessible by design.
+- `/admin` is a new overview showing products, variants, unknown/zero/low stock, test reservations and unverified order records. No revenue or paid-order claims are made.
+- `/admin/produkte` preserves the existing secured product/variant editing actions. Variant stock can remain null (= unknown). URL filters can show unverified, zero or recorded stocks.
+- `/admin/bestellungen` is authenticated **read-only**: filtered and paginated order records, item snapshots and order status history. There are no forms to mark orders paid, ship or refund.
+- The 2026-11-02 local Playwright QA used temporary generated credentials (never checked in), verified the unauthorized redirect for all three routes, login/logout and layout at 320/390/768/1440 px, and confirmed public checkout HTTP 503.
+- Vercel preview has no persistent DB/admin secrets; the authenticated dashboard cannot be previewed there until an approved isolated test server/DB is configured. Do not expose credentials, real customer data, or public admin preview without authorization.

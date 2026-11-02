@@ -213,3 +213,28 @@ test("legacy policy mirrors the old shop sections without opening sales",()=>{
   }
   assert.ok(fs.readFileSync(path.join(base,"app/api/checkout/route.ts"),"utf8").includes("503"));
 });
+test("admin pages use authenticated separate dashboard, product and read-only order views",()=>{
+ const dash=fs.readFileSync(path.join(base,"app/admin/page.tsx"),"utf8");
+ const products=fs.readFileSync(path.join(base,"app/admin/produkte/page.tsx"),"utf8");
+ const orders=fs.readFileSync(path.join(base,"app/admin/bestellungen/page.tsx"),"utf8");
+ const shell=fs.readFileSync(path.join(base,"app/admin/admin-shell.tsx"),"utf8");
+ const actions=fs.readFileSync(path.join(base,"app/admin/actions.ts"),"utf8");
+ for(const page of [dash,products,orders]){
+   assert.ok(page.includes('if(!await isAdmin())redirect("/admin/login")'),"Guarded admin route");
+   assert.ok(page.includes('robots:{index:false'),"Admin noindex");
+   assert.ok(page.includes('dynamic="force-dynamic"'),"No static admin HTML");
+ }
+ assert.ok(shell.includes('aria-label="Admin Navigation"'));
+ for(const href of ["/admin/produkte","/admin/bestellungen"]){assert.ok(shell.includes(href));}
+ assert.ok(products.includes('aria-label="Bestandsfilter"'));
+ assert.ok(products.includes('stockQuantity===null'));
+ assert.ok(orders.includes('testOnly:false'));
+ assert.ok(orders.includes('testOnly:true'));
+ assert.ok(orders.includes('statusEvents'));
+ assert.ok(!orders.includes('action={saveVariantAction}'));
+ assert.ok(!orders.includes('payment_confirmed:['));
+ assert.ok(dash.includes('Bestand ungeprüft'));
+ assert.ok(actions.includes('redirect("/admin/produkte?updated=1")'));
+ assert.ok(actions.includes('redirect("/admin/produkte?productUpdated=1")'));
+ assert.ok(fs.existsSync(path.join(base,"src/styles/admin.css")));
+});

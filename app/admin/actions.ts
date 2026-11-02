@@ -59,8 +59,9 @@ export async function saveVariantAction(formData:FormData){
   revalidatePath("/kollektionen/"+existing.product.slug);
   revalidatePath("/produkt/"+existing.product.slug);
   revalidatePath("/admin");
+  revalidatePath("/admin/produkte");
   revalidatePath("/api/catalog");
-  redirect("/admin?updated=1");
+  redirect("/admin/produkte?updated=1");
 }
 
 const productInput=z.object({
@@ -99,5 +100,6 @@ export async function saveProductAction(formData:FormData){
   revalidatePath("/suche");
   revalidatePath("/api/catalog");
   revalidatePath("/admin");
-  redirect("/admin?productUpdated=1");
+  revalidatePath("/admin/produkte");
+  redirect("/admin/produkte?productUpdated=1");
 }

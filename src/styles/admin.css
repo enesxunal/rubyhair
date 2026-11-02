@@ -1,0 +1,106 @@
+/* Ruby Hair internal administration — responsive, separate from the storefront */
+.rh-admin-app{--admin-wine:#633746;--admin-border:#e8dfda;--admin-ink:#382930;--admin-muted:#85747a;display:grid;grid-template-columns:252px minmax(0,1fr);min-height:100vh;background:#f8f5f2;color:var(--admin-ink);font-family:var(--sans);font-size:14px}
+.rh-admin-app *, .rh-admin-app *::before,.rh-admin-app *::after{box-sizing:border-box}
+.rh-admin-sidebar{position:sticky;top:0;align-self:start;height:100vh;background:#38252e;color:#fff8f4;display:flex;flex-direction:column;padding:36px 22px 22px;gap:20px}
+.rh-admin-brand{display:flex;gap:13px;align-items:center;color:inherit;padding:2px 7px 32px;border-bottom:1px solid #ffffff25;text-decoration:none}
+.rh-admin-brand-symbol{font:400 39px/1 var(--serif);color:#edc6ce}
+.rh-admin-brand strong{display:block;font-size:13px;font-weight:650;letter-spacing:2.1px}
+.rh-admin-brand small{font-size:9px;letter-spacing:1.6px;color:#d5bdc7}
+.rh-admin-menu-title{font-size:9px;letter-spacing:2px;color:#c9acb8;margin:15px 9px 0}
+.rh-admin-nav{display:grid;gap:5px}
+.rh-admin-nav a{color:#e1d0d5;display:flex;align-items:center;gap:13px;padding:14px 13px;text-decoration:none;font-size:13px;border-radius:7px;font-weight:500}
+.rh-admin-nav a:hover{background:#ffffff15}
+.rh-admin-nav a.is-current{background:#795060;color:white;font-weight:650}
+.rh-admin-sidebar-bottom{display:grid;gap:13px;margin-top:auto}
+.rh-admin-system-note{border:1px solid #ffffff23;padding:16px 13px;display:flex;gap:11px;align-items:flex-start;font-size:11px;line-height:1.6;color:#f5e8ee}
+.rh-admin-system-note small{color:#c7adb7;font-size:10px}
+.rh-admin-visit,.rh-admin-logout{display:flex;align-items:center;gap:10px;color:#f0dfe6;padding:12px;text-decoration:none;font-size:12px;width:100%;background:transparent;border:0;text-align:left;cursor:pointer}
+.rh-admin-visit:hover,.rh-admin-logout:hover{background:#ffffff17}
+.rh-admin-workspace{min-width:0;padding:0 clamp(20px,3.5vw,62px) 25px}
+.rh-admin-topline{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:22px 0;border-bottom:1px solid var(--admin-border);font-size:11px;color:#726269}
+.rh-admin-topline>div{display:flex;gap:9px;align-items:center}
+.rh-admin-topline-status{font-size:9px;letter-spacing:1.1px;font-weight:750;color:#8d566d;border:1px solid #e0c9d1;padding:8px 12px}
+.rh-admin-page-heading{padding:38px 0 26px}
+.rh-admin-overline{font-size:10px;letter-spacing:2px;font-weight:700;color:#a06d7d}
+.rh-admin-page-heading h1{font:400 clamp(37px,4.5vw,60px)/1.16 var(--serif);margin:13px 0}
+.rh-admin-page-heading p{font-size:13px;color:var(--admin-muted);line-height:1.75;max-width:650px;margin:0}
+.rh-admin-intro-banner{background:#eee3df;border:1px solid #e3d6d1;padding:30px 32px;display:flex;justify-content:space-between;gap:25px;align-items:center;margin-bottom:20px}
+.rh-admin-intro-banner span{color:#8a5d71;font-size:9px;font-weight:750;letter-spacing:1.8px}
+.rh-admin-intro-banner h2{font:400 clamp(25px,3vw,35px)/1.2 var(--serif);margin:13px 0}
+.rh-admin-intro-banner p{font-size:12px;line-height:1.8;color:#78666c;max-width:630px;margin:0}
+.rh-admin-intro-banner svg{color:#88536a;flex-shrink:0}
+.rh-admin-kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px;margin:20px 0}
+.rh-admin-kpi{background:#fff;padding:23px;min-width:0;border:1px solid var(--admin-border)}
+.rh-admin-kpi-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;color:#75686e;font-size:11px;min-height:29px}
+.rh-admin-kpi-top svg{color:#9e7584;flex-shrink:0}
+.rh-admin-kpi strong{display:block;font:400 40px/1.3 var(--serif);margin:12px 0 7px}
+.rh-admin-kpi small{display:block;font-size:10px;color:#98878d;line-height:1.6}
+.rh-admin-overview-columns{display:grid;grid-template-columns:1fr 1fr;gap:17px;align-items:stretch}
+.rh-admin-panel-card{background:white;border:1px solid var(--admin-border);padding:27px;min-width:0}
+.rh-admin-card-title{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:15px}
+.rh-admin-card-title>div>span{font-size:9px;font-weight:700;letter-spacing:1.5px;color:#a07685}
+.rh-admin-card-title h2{font:400 30px var(--serif);margin:8px 0 0}
+.rh-admin-card-title>a{color:#774c5e;display:flex;align-items:center;gap:6px;font-size:11px;white-space:nowrap;text-decoration:underline;text-underline-offset:4px}
+.rh-admin-card-title>span{font-size:10px;color:#97868d}
+.rh-admin-muted{font-size:12px;line-height:1.8;color:#87767c;margin:8px 0 19px}
+.rh-admin-inventory-bar{height:9px;border-radius:20px;background:#f0e7e4;overflow:hidden;margin:24px 0 10px}
+.rh-admin-inventory-bar span{display:block;background:#8b5b6a;height:100%}
+.rh-admin-inventory-figures{display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:11px;color:#8b7981;margin-bottom:24px}
+.rh-admin-inventory-figures b{color:#46323a;font-size:15px}
+.rh-admin-inventory-list{display:grid;gap:13px;border-top:1px solid #f0e9e6;padding:21px 0 22px}
+.rh-admin-inventory-list>div{display:flex;justify-content:space-between;gap:12px;font-size:12px}
+.rh-admin-inventory-list>div>span{display:flex;align-items:center;gap:9px}
+.rh-admin-dot{display:inline-block;width:9px;height:9px;border-radius:50%}
+.rh-admin-dot.unknown{background:#cfb8bf}.rh-admin-dot.zero{background:#8b465c}.rh-admin-dot.low{background:#cd986b}
+.rh-admin-primary-link{padding:14px 17px;background:#603847;color:white;display:flex;align-items:center;justify-content:space-between;text-decoration:none;font-size:12px}
+.rh-admin-primary-link:hover{background:#4a2936}
+.rh-admin-order-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:20px 0 14px}
+.rh-admin-order-metrics>div{background:#f9f6f3;padding:14px 12px;min-width:0}
+.rh-admin-order-metrics strong{display:block;font:400 28px var(--serif)}
+.rh-admin-order-metrics span{font-size:10px;color:#8e7e83;line-height:1.5;display:block;margin-top:5px}
+.rh-admin-recent-list>div{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid #eee7e2;padding:12px 0}
+.rh-admin-recent-list strong{display:block;font-size:12px}
+.rh-admin-recent-list small{display:block;margin-top:4px;color:#89747c;font-size:10px}
+.rh-admin-recent-list>div>span{font-size:11px;color:#8c7d81}
+.rh-admin-empty{text-align:center;display:flex;justify-content:center;align-items:center;gap:10px;flex-direction:column;padding:26px;color:#947d86}
+.rh-admin-empty p{font-size:12px;line-height:1.7;margin:5px 0}
+.rh-admin-empty h2{font:400 28px var(--serif);margin:4px 0}
+.rh-admin-catalog-section{margin-top:17px}
+.rh-admin-catalog-list>a{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid #f0e7e3;padding:16px 0;text-decoration:none;color:inherit}
+.rh-admin-catalog-list>a>div strong{display:block;font-size:13px}
+.rh-admin-catalog-list>a>div small{display:block;font-size:11px;color:#8e7b82;margin-top:5px}
+.rh-admin-catalog-list>a>span{display:flex;gap:10px;align-items:center;font-size:11px;color:#815064}
+.rh-admin-pill-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+.rh-admin-stat-pill{padding:10px 15px;background:#fff;border:1px solid #e4d9d4;color:#5c4b52;font-size:12px}
+.rh-admin-stat-pill.is-alert{background:#f5e7e4;color:#844c61}
+.rh-admin-app .rh-admin-warning{margin:15px 0 22px;line-height:1.8;font-size:12px}
+.rh-admin-app .rh-admin-product{margin:17px 0;border:1px solid var(--admin-border);padding:25px}
+.rh-admin-app .rh-admin-product h2{margin-bottom:17px}
+.rh-admin-app .rh-admin-product-details{margin-bottom:17px}
+.rh-admin-app .rh-admin-product-details summary{padding:2px;outline-offset:4px}
+.rh-admin-app .rh-admin-table-wrap table{min-width:690px}
+.rh-admin-orders-card{padding:25px}
+.rh-admin-orders-list{border-top:1px solid #ece4e0}
+.rh-admin-order-item{border-bottom:1px solid #ece4e0}
+.rh-admin-order-item summary{display:grid;grid-template-columns:1.2fr 1.3fr 1fr auto;gap:14px;align-items:center;cursor:pointer;padding:18px 9px;font-size:11px;list-style-position:inside;outline-offset:3px}
+.rh-admin-order-number{font-weight:750;font-size:13px}
+.rh-admin-order-number small{display:block;color:#955c6d;font-size:9px;letter-spacing:.8px;margin:5px 0 0}
+.rh-admin-order-status{background:#f3eae7;padding:8px 10px;color:#794f60;font-size:11px}
+.rh-admin-order-expanded{border-top:1px solid #eee4df;background:#fdfaf8;padding:22px}
+.rh-admin-order-expanded h3{font:400 23px var(--serif);margin:23px 0 14px}
+.rh-admin-order-meta{font-size:11px;color:#817078;line-height:1.85;overflow-wrap:anywhere}
+.rh-admin-order-meta p{margin:3px 0}
+.rh-admin-status-timeline{list-style:none;padding:0;margin:0;display:grid;gap:9px}
+.rh-admin-status-timeline li{display:flex;align-items:flex-start;gap:10px;font-size:12px;color:#5c474f}
+.rh-admin-status-timeline li small{display:block;color:#957e87;margin:3px 0}
+.rh-admin-pagination{display:flex;justify-content:center;gap:22px;align-items:center;margin:24px 0;font-size:12px}
+.rh-admin-pagination a{color:#7d5060;text-decoration:underline}
+.rh-admin-bottom-note{padding:27px 0 5px;border-top:1px solid var(--admin-border);margin-top:35px;font-size:11px;color:#a29196}
+@media(max-width:1200px){.rh-admin-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.rh-admin-overview-columns{grid-template-columns:1fr}}
+@media(max-width:850px){.rh-admin-app{grid-template-columns:minmax(0,1fr)}.rh-admin-sidebar{position:relative;height:auto;padding:15px 20px;gap:10px}.rh-admin-brand{padding:6px 0 13px}.rh-admin-brand-symbol{font-size:30px}.rh-admin-menu-title,.rh-admin-system-note{display:none}.rh-admin-sidebar-bottom{display:flex;justify-content:flex-end;gap:9px;margin:0}.rh-admin-visit,.rh-admin-logout{padding:8px 10px;width:auto;font-size:11px}.rh-admin-nav{display:flex;gap:6px;overflow-x:auto}.rh-admin-nav a{font-size:11px;white-space:nowrap;padding:11px 13px}.rh-admin-workspace{padding:0 20px 20px}.rh-admin-page-heading{padding:28px 0 20px}.rh-admin-intro-banner{padding:22px}}
+@media(max-width:560px){.rh-admin-topline{padding:13px 0}.rh-admin-topline-status{font-size:8px;padding:7px;max-width:135px;text-align:center}.rh-admin-kpi-grid{gap:9px}.rh-admin-kpi{padding:17px 14px}.rh-admin-kpi-top{font-size:10px}.rh-admin-kpi strong{font-size:33px}.rh-admin-kpi small{font-size:9px}.rh-admin-panel-card{padding:20px}.rh-admin-card-title{flex-wrap:wrap}.rh-admin-card-title h2{font-size:27px}.rh-admin-intro-banner svg{display:none}.rh-admin-order-metrics{gap:5px}.rh-admin-order-metrics>div{padding:10px 7px}.rh-admin-order-metrics strong{font-size:22px}.rh-admin-order-metrics span{font-size:9px}.rh-admin-order-item summary{grid-template-columns:1fr 1fr;gap:10px}.rh-admin-order-item summary strong{justify-self:end}.rh-admin-order-expanded{padding:15px}.rh-admin-app .rh-admin-product{padding:15px}.rh-admin-nav a{font-size:10px}.rh-admin-brand strong{font-size:12px}}
+.rh-admin-stock-filters{display:flex;gap:9px;flex-wrap:wrap;margin:17px 0}
+.rh-admin-stock-filters a{display:flex;align-items:center;gap:9px;border:1px solid #e2d6d2;background:white;padding:11px 14px;font-size:11px;color:#725d65;text-decoration:none}
+.rh-admin-stock-filters a b{color:#6a4553;font-size:12px}
+.rh-admin-stock-filters a.is-active{background:#68404e;color:white;border-color:#68404e}
+.rh-admin-stock-filters a.is-active b{color:white}

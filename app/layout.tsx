@@ -3,6 +3,7 @@ import { CartProvider } from "@/components/cart-context";
 import "../src/styles/styles.css";
 import "../src/styles/shop.css";
 import "../src/styles/legacy-legal.css";
+import "../src/styles/admin.css";
 
 export const metadata:Metadata={
   title:{default:"Ruby Hair Extensions",template:"%s | Ruby Hair"},
