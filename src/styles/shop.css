@@ -561,3 +561,31 @@ button.rh-editorial-cta{cursor:pointer}
 .rh-checkout-help{display:block;margin-top:24px;font-size:11px;color:#704756;text-decoration:underline;text-underline-offset:4px}
 .rh-checkout-empty .rh-editorial-cta{margin:12px 0}
 @media(max-width:750px){.rh-checkout-grid{grid-template-columns:1fr;gap:38px}.rh-checkout-v2{padding-top:24px;padding-bottom:70px}.rh-checkout-summary{padding:22px}}
+
+/* Ruby Hair: compact, product-aware selection guidance; keeps the existing brand system. */
+.rh-guidance{border-top:1px solid var(--line);margin:2px 0 22px}
+.rh-guidance-item{border-bottom:1px solid var(--line)}
+.rh-guidance-item summary{list-style:none;display:flex;align-items:center;gap:13px;padding:16px 0;cursor:pointer;color:var(--wine)}
+.rh-guidance-item summary::-webkit-details-marker{display:none}
+.rh-guidance-item summary>span:nth-child(2){display:flex;flex-direction:column;gap:1px;flex:1}
+.rh-guidance-item summary strong{font-size:13px;color:var(--ink);font-weight:650}
+.rh-guidance-item summary small{font-size:11px;color:var(--muted)}
+.rh-guidance-plus{font-size:21px;transition:transform .2s}
+.rh-guidance-item[open] .rh-guidance-plus{transform:rotate(45deg)}
+.rh-guidance-body{padding:0 0 20px 31px;font-size:12px;color:#6d6261;line-height:1.7}
+.rh-guidance-body p{margin:9px 0 13px}
+.rh-guidance-body>p:has(svg){display:flex;align-items:flex-start;gap:8px}
+.rh-guidance-body>p svg{flex-shrink:0;margin-top:3px}
+.rh-guidance-body>a{display:inline-block;color:var(--wine);font-weight:700;text-decoration:underline;text-underline-offset:4px;padding:6px 0}
+.rh-guidance-shade{display:grid;grid-template-columns:78px 1fr;gap:14px;align-items:start}
+.rh-guidance-shade img{width:78px;aspect-ratio:1;object-fit:cover;background:var(--sand)}
+.rh-guidance-shade b{color:var(--ink);font-size:12px}
+.rh-guidance-shade p{margin:4px 0 0}
+.rh-guidance-lengths{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.rh-guidance-lengths>div{min-width:0;border:1px solid var(--line);background:var(--paper);padding:13px;display:flex;flex-direction:column;gap:6px}
+.rh-guidance-lengths b{color:var(--ink);font-size:13px}
+.rh-guidance-lengths small{color:var(--muted);font-size:11px;line-height:1.55}
+.rh-guidance-line{height:4px;background:var(--wine);display:block;border-radius:20px}
+.rh-guidance-line-short{width:57%}.rh-guidance-line-long{width:86%}
+.rh-guidance-selected{font-size:12px}
+@media(max-width:550px){.rh-guidance-body{padding-left:0}.rh-guidance-lengths{gap:8px}.rh-guidance-lengths>div{padding:11px}.rh-guidance-item summary{min-height:58px}}

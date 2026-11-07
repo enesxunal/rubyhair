@@ -1,6 +1,6 @@
 "use client";
 import { useMemo, useRef, useState } from "react";
-import { ZoomIn } from "lucide-react";
+import { ZoomIn, Palette, Ruler, Info } from "lucide-react";
 import Link from "next/link";
 import { useCart } from "./cart-context";
 import { colorsFor, euros, type Product } from "@/lib/catalog";
@@ -90,6 +90,28 @@ export function ProductDetail({product,initialColor,initialLength}:{product:Prod
             )}
           </div>
         </fieldset>
+        <div className="rh-guidance" aria-label="Hilfe bei Farb- und Längenauswahl">
+          <details className="rh-guidance-item">
+            <summary><Palette size={18} aria-hidden="true"/><span><strong>Farbberatung</strong><small>So findest du einen passenden Farbton</small></span><span className="rh-guidance-plus" aria-hidden="true">+</span></summary>
+            <div className="rh-guidance-body">
+              <div className="rh-guidance-shade"><img src={selected?.image || product.image} alt={"Ruby Hair Farbprobe " + (selected?.color_label || "")} loading="lazy"/><div><b>Deine Auswahl: {selected?.color_label}</b><p>Vergleiche die Farbprobe bei Tageslicht mit deinen eigenen Haarlängen, besonders an den Spitzen. Produktbilder dienen als Orientierung; Bildschirmfarben können abweichen.</p></div></div>
+              <p><Info size={14} aria-hidden="true"/> Extensions hellen dein Eigenhaar nicht auf. Ein hellerer Farbton verändert nur den Look der hinzugefügten Strähnen.</p>
+              <Link href="/kontakt/">Persönliche Farbberatung anfragen →</Link>
+            </div>
+          </details>
+          <details className="rh-guidance-item">
+            <summary><Ruler size={18} aria-hidden="true"/><span><strong>Längenberater</strong><small>45–50 cm oder 55–60 cm?</small></span><span className="rh-guidance-plus" aria-hidden="true">+</span></summary>
+            <div className="rh-guidance-body">
+              <div className="rh-guidance-lengths">
+                <div><span className="rh-guidance-line rh-guidance-line-short" aria-hidden="true"/><b>45–50 cm</b><small>Meist etwa Brusthöhe, abhängig von Größe und Ansatzposition</small></div>
+                <div><span className="rh-guidance-line rh-guidance-line-long" aria-hidden="true"/><b>55–60 cm</b><small>Meist unterhalb der Brust, abhängig von Größe und Ansatzposition</small></div>
+              </div>
+              <p>Die Angaben beschreiben die Länge des Extensions-Produkts, nicht die zusätzlich gewonnene Haarlänge. Das sichtbare Ergebnis hängt von deiner Körpergröße, deinem Eigenhaar und der Einarbeitung ab.</p>
+              <p className="rh-guidance-selected">Aktuell gewählt: <strong>{selected?.length_label || "Bitte Länge wählen"}</strong></p>
+              <Link href="/kontakt/">Längenberatung anfragen →</Link>
+            </div>
+          </details>
+        </div>
         <p className={"rh-availability"+(!inStock?" rh-not-available":"")}>
           {!inStock?"Diese Kombination ist laut importiertem Katalog nicht verfügbar":
           selected?.stock_quantity==null?"Auswahl für die Vorschau möglich · tatsächlicher Lagerbestand noch nicht bestätigt":
