@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import {useEffect,useState} from "react";
+import {useEffect,useRef,useState} from "react";
 import {Search,ShoppingBag,Menu,X,ArrowUpRight,ArrowRight,Instagram,Sparkles} from "lucide-react";
 import {useCart} from "@/components/cart-context";
 import {euros,type Product,colorsFor} from "@/lib/catalog";
@@ -13,7 +13,7 @@ const nav=[
   {href:"/kollektionen/keratin-bondings/",title:"KERATIN BONDINGS"},
   {href:"/kollektionen/tape-in-extensions/",title:"TAPE-IN EXTENSIONS"},
   {href:"/suche/",title:"HAARFARBEN"},
-  {href:"#studio",title:"BERATUNG"}
+  {href:"/kontakt/",title:"BERATUNG"}
 ];
 const shades=[
   {key:"brown",title:"Brown",background:"#5e483a",image:"/media/6-1-scaled-ffe6f9676.jpg",color:"6",slug:"keratin-bondings"},
@@ -28,23 +28,42 @@ const categoryMeta=[
 
 function HomeNavigation(){
   const [menuOpen,setMenuOpen]=useState(false);
+  const menuTrigger=useRef<HTMLButtonElement>(null);
+  const menuClose=useRef<HTMLButtonElement>(null);
+  const menuPanel=useRef<HTMLElement>(null);
   const {count}=useCart();
   useEffect(()=>{
-    const esc=(e:KeyboardEvent)=>{if(e.key==="Escape")setMenuOpen(false)};
-    window.addEventListener("keydown",esc);
-    return ()=>window.removeEventListener("keydown",esc);
-  },[]);
+    if(!menuOpen)return;
+    const before=document.body.style.overflow;
+    document.body.style.overflow="hidden";
+    menuClose.current?.focus();
+    const onKey=(event:KeyboardEvent)=>{
+      if(event.key==="Escape"){
+        event.preventDefault();setMenuOpen(false);menuTrigger.current?.focus();
+      }
+      if(event.key==="Tab"){
+        const controls=Array.from(menuPanel.current?.querySelectorAll<HTMLElement>('a[href],button:not([disabled])')||[]);
+        if(!controls.length)return;
+        const first=controls[0],last=controls[controls.length-1];
+        if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
+        else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+      }
+    };
+    window.addEventListener("keydown",onKey);
+    return ()=>{document.body.style.overflow=before;window.removeEventListener("keydown",onKey);};
+  },[menuOpen]);
   return <>
+    <a href="#main" className="rh-skip-link">Zum Inhalt springen</a>
     <div className="site-top" aria-label="Markeninformation">
       <span>THE RUBY HAIR EXPERIENCE</span>
       <span className="top-star"><Sparkles size={13}/></span>
       <span>PREMIUM ECHTHAAR EXTENSIONS</span>
-      <Link href="#studio">ENTDECKE UNS IN ESSEN <ArrowUpRight size={14}/></Link>
+      <Link href="/#studio">ENTDECKE UNS IN ESSEN <ArrowUpRight size={14}/></Link>
     </div>
     <header className="site-header" id="top">
       <div className="head-main container-wide">
         <div className="head-left">
-          <button className="icon-button menu-trigger" type="button"
+          <button ref={menuTrigger} className="icon-button menu-trigger" type="button"
             aria-label="Menü öffnen" aria-controls="mobile-menu" aria-expanded={menuOpen}
             onClick={()=>setMenuOpen(true)}><Menu size={23}/></button>
           <Link className="head-search" href="/suche/" aria-label="Produktsuche öffnen">
@@ -70,8 +89,8 @@ function HomeNavigation(){
       </nav>
     </header>
     <div className="mobile-shade" hidden={!menuOpen} onClick={()=>setMenuOpen(false)}/>
-    <aside className={"mobile-menu"+(menuOpen?" open":"")} id="mobile-menu" aria-label="Mobiles Menü" aria-hidden={!menuOpen}>
-      <div className="mobile-menu-head"><img src={darkLogo} alt="Ruby Hair"/><button type="button" onClick={()=>setMenuOpen(false)} aria-label="Menü schließen"><X size={24}/></button></div>
+    <aside ref={menuPanel} className={"mobile-menu"+(menuOpen?" open":"")} id="mobile-menu" role="dialog" aria-modal={menuOpen} aria-label="Mobiles Menü" aria-hidden={!menuOpen} inert={!menuOpen}>
+      <div className="mobile-menu-head"><img src={darkLogo} alt="Ruby Hair"/><button ref={menuClose} type="button" onClick={()=>setMenuOpen(false)} aria-label="Menü schließen"><X size={24}/></button></div>
       <span className="eyebrow">RUBY HAIR</span>
       {nav.map(item=><Link key={item.href} href={item.href} onClick={()=>setMenuOpen(false)}>{item.title} <ArrowRight size={17}/></Link>)}
       <Link href="/warenkorb/" onClick={()=>setMenuOpen(false)}>WARENKORB ({count}) <ArrowRight size={17}/></Link>
@@ -171,8 +190,8 @@ function HomeFooter(){
           <Link href="/rechtliches/agb/">AGB</Link>
         </div>
         <div className="footer-col"><h3>RUBY HAIR</h3>
-          <Link href="#about">Unsere Story</Link>
-          <Link href="#studio">Studio in Essen</Link>
+          <Link href="/#about">Unsere Story</Link>
+          <Link href="/#studio">Studio in Essen</Link>
           <Link href="/kontakt/">Kontakt</Link>
           <a href="https://www.instagram.com/rubyhair.de/" target="_blank" rel="noopener noreferrer">Instagram <ArrowUpRight size={15}/></a>
         </div>
@@ -188,7 +207,7 @@ function HomeFooter(){
 export default function HomeFrontend({products}:{products:Product[]}){
   return <>
     <HomeNavigation/>
-    <main>
+    <main id="main">
       <section className="hero" id="home">
         <div className="hero-photo">
           <img className="hero-primary" src="/assets/hero-brunette.webp"
@@ -229,6 +248,17 @@ export default function HomeFrontend({products}:{products:Product[]}){
           })}
         </div>
       </div></section>
+      <section className="selection-steps" aria-labelledby="selection-steps-title">
+        <div className="container selection-steps-inner">
+          <div className="selection-steps-heading"><div className="eyebrow">DEIN WEG ZUM NEUEN LOOK</div>
+            <h2 id="selection-steps-title">In drei Schritten zu <i>deinen Extensions.</i></h2></div>
+          <div className="selection-step-list">
+            <Link href="/kollektionen/"><span>01 / METHODE</span><strong>Tape-in oder Keratin?</strong><small>Entdecke die beiden Anwendungen im direkten Vergleich.</small><ArrowUpRight size={18}/></Link>
+            <Link href="/suche/"><span>02 / FARBE</span><strong>Deinen Farbton finden</strong><small>Wähle aus echten Ruby Hair Farbvarianten.</small><ArrowUpRight size={18}/></Link>
+            <Link href="/kontakt/"><span>03 / BERATUNG</span><strong>Fragen vor der Auswahl?</strong><small>Wir helfen dir bei Farbe, Länge und Packungsanzahl.</small><ArrowUpRight size={18}/></Link>
+          </div>
+        </div>
+      </section>
       <Favorites products={products}/>
       <ShadeSelector/>
       <section className="brand-story section-pad" id="about"><div className="container brand-grid">
@@ -237,7 +267,7 @@ export default function HomeFrontend({products}:{products:Product[]}){
           <h2>Not just hair.<br/><i>A feeling.</i></h2>
           <p>Schönes Haar ist persönlich. Bei Ruby Hair dreht sich alles um die Freiheit, deinen ganz eigenen Look zu kreieren.</p>
           <p>Entdecke echte Haarqualität und persönliche Beratung direkt in unserem Studio in Essen.</p>
-          <Link href="/kontakt/" className="under-button">MEHR ÜBER RUBY HAIR <ArrowUpRight size={16}/></Link>
+          <Link href="/kontakt/" className="under-button">KONTAKT & BERATUNG <ArrowUpRight size={16}/></Link>
           <div className="brand-signature">RUBY HAIR<br/><span>EXTENSIONS · ESSEN</span></div>
         </div>
         <div className="brand-portrait">

@@ -100,10 +100,10 @@ export function ProductDetail({product,initialColor,initialLength}:{product:Prod
             </div>
           </details>
           <details className="rh-guidance-item">
-            <summary><Ruler size={18} aria-hidden="true"/><span><strong>Längenberater</strong><small>45–50 cm oder 55–60 cm?</small></span><span className="rh-guidance-plus" aria-hidden="true">+</span></summary>
+            <summary><Ruler size={18} aria-hidden="true"/><span><strong>Längenberater</strong><small>{product.slug==="tape-in-extensions"?"45–50 cm oder 55–60 cm?":"55–60 cm im Keratin-Katalog"}</small></span><span className="rh-guidance-plus" aria-hidden="true">+</span></summary>
             <div className="rh-guidance-body">
               <div className="rh-guidance-lengths">
-                <div><span className="rh-guidance-line rh-guidance-line-short" aria-hidden="true"/><b>45–50 cm</b><small>Meist etwa Brusthöhe, abhängig von Größe und Ansatzposition</small></div>
+                {product.slug==="tape-in-extensions"&&<div><span className="rh-guidance-line rh-guidance-line-short" aria-hidden="true"/><b>45–50 cm</b><small>Meist etwa Brusthöhe, abhängig von Größe und Ansatzposition</small></div>}
                 <div><span className="rh-guidance-line rh-guidance-line-long" aria-hidden="true"/><b>55–60 cm</b><small>Meist unterhalb der Brust, abhängig von Größe und Ansatzposition</small></div>
               </div>
               <p>Die Angaben beschreiben die Länge des Extensions-Produkts, nicht die zusätzlich gewonnene Haarlänge. Das sichtbare Ergebnis hängt von deiner Körpergröße, deinem Eigenhaar und der Einarbeitung ab.</p>

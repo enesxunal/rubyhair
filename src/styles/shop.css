@@ -589,3 +589,24 @@ button.rh-editorial-cta{cursor:pointer}
 .rh-guidance-line-short{width:57%}.rh-guidance-line-long{width:86%}
 .rh-guidance-selected{font-size:12px}
 @media(max-width:550px){.rh-guidance-body{padding-left:0}.rh-guidance-lengths{gap:8px}.rh-guidance-lengths>div{padding:11px}.rh-guidance-item summary{min-height:58px}}
+
+/* On-brand collection decision aid and mobile shop navigation. */
+.rh-collection-compare{padding-top:12px;padding-bottom:76px}
+.rh-compare-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.rh-compare-item{min-width:0;background:var(--paper);border:1px solid var(--line);padding:clamp(22px,3vw,38px);display:flex;flex-direction:column;align-items:flex-start}
+.rh-compare-item h3{font:400 clamp(27px,3vw,37px)/1.22 var(--serif);margin:12px 0}
+.rh-compare-item>p{color:#6b5d5e;font-size:13px;max-width:48ch;line-height:1.7}
+.rh-compare-item dl{width:100%;border-top:1px solid var(--line);margin:12px 0 20px}
+.rh-compare-item dl>div{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding:11px 0;font-size:12px;line-height:1.5}
+.rh-compare-item dt{color:#766669}.rh-compare-item dd{margin:0;text-align:right;color:var(--ink);font-weight:600}
+.rh-compare-item>a{margin-top:auto;border-bottom:1px solid var(--wine);padding:8px 0;color:var(--wine);font-size:11px;letter-spacing:.6px;font-weight:700;display:flex;gap:22px;align-items:center}
+.rh-compare-note{font-size:12px;color:#75686a;margin:21px 0 0;line-height:1.7}.rh-compare-note a{text-decoration:underline;text-underline-offset:3px;color:var(--wine)}
+.rh-mobile-backdrop{position:fixed;inset:0;background:#251b2077;border:0;width:100vw;height:100dvh;z-index:45;cursor:default}
+.rh-menu-toggle{min-height:44px;min-width:44px}
+.rh-cart,.rh-search{min-height:44px;min-width:44px}
+.rh-mobile-nav a{min-height:44px;display:flex;align-items:center}
+@media(max-width:1030px){.rh-desktop-nav{display:none}.rh-menu-toggle{display:grid}}
+@media(max-width:650px){.rh-compare-grid{grid-template-columns:1fr}.rh-collection-compare{padding-bottom:48px}.rh-compare-item{padding:23px}.rh-compare-item dl>div{flex-wrap:wrap}.rh-compare-item dd{text-align:left}}
+
+.rh-skip-link{position:fixed;top:12px;left:12px;z-index:150;transform:translateY(-150%);background:#fffdf9;color:#302a29;padding:12px 18px;border:2px solid #583a47;font-size:14px;font-weight:700;transition:transform .15s}
+.rh-skip-link:focus-visible{transform:translateY(0)}

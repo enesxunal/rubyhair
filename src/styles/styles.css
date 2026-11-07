@@ -283,3 +283,24 @@ body{background:#fcfaf7;color:#2f2829}
  .product-media{height:190px}
  .collection-caption .round-arrow{display:none}
 }
+
+/* Quiet-luxury navigation and selection journey refinements. */
+.selection-steps{background:#faf6f2;border-block:1px solid #e4dcd5}
+.selection-steps-inner{padding-top:55px;padding-bottom:55px;display:grid;grid-template-columns:minmax(225px,.7fr) minmax(0,1.7fr);gap:clamp(25px,4.5vw,65px);align-items:center}
+.selection-steps-heading h2{font:400 clamp(28px,3vw,41px)/1.2 var(--serif);max-width:390px;margin:13px 0 0;letter-spacing:-.02em}
+.selection-steps-heading h2 i{font-weight:400;color:var(--wine)}
+.selection-step-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border-left:1px solid var(--line)}
+.selection-step-list>a{padding:12px clamp(15px,2vw,27px);min-width:0;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:7px;min-height:160px;position:relative}
+.selection-step-list>a>span{font-size:9px;color:#8a6772;letter-spacing:1.5px;font-weight:700}
+.selection-step-list>a>strong{font:400 clamp(20px,2vw,27px)/1.18 var(--serif);letter-spacing:-.02em}
+.selection-step-list>a>small{font-size:12px;color:#75696b;line-height:1.55;max-width:220px}
+.selection-step-list>a>svg{position:absolute;right:10px;top:12px;color:var(--wine);opacity:.7}
+.selection-step-list>a:hover strong,.selection-step-list>a:focus-visible strong{color:var(--wine)}
+.icon-button{min-width:44px;min-height:44px}
+.shade-pills button{min-height:44px}
+.mobile-menu-head button{min-width:44px;min-height:44px;display:grid;place-items:center}
+.product-quick{pointer-events:none}
+@media(max-width:1050px){.selection-steps-inner{grid-template-columns:1fr;gap:26px}.selection-steps-heading h2{max-width:700px}}
+@media(max-width:650px){.selection-steps-inner{padding-block:38px}.selection-step-list{grid-template-columns:1fr;border-top:1px solid var(--line)}.selection-step-list>a{min-height:0;padding:19px 30px 19px 0;border-right:0;border-bottom:1px solid var(--line)}.selection-step-list>a>svg{right:0;top:22px}.selection-step-list>a>small{max-width:90%}}
+@media(hover:none){.product-quick{transform:none;opacity:1}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.collection-media img,.product-media img,.shade-visual img,.round-arrow,.mobile-menu{transition:none!important}}
