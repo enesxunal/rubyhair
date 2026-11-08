@@ -5,6 +5,7 @@ import {useCart} from "@/components/cart-context";
 import {useCartQuote} from "@/hooks/use-cart-quote";
 import {euros} from "@/lib/catalog";
 import {legacyStore as old} from "@/lib/legacy-store-facts";
+import CheckoutAddressPreview from "./checkout-address-preview";
 
 const process=[
   {no:"01",label:"Warenkorb",description:"Produkte, Farbe und Menge prüfen",icon:ShoppingBag},
@@ -29,8 +30,8 @@ export default function CheckoutPreview(){
     </div>
     <div className="rh-checkout-grid">
       <section className="rh-checkout-process">
-        <h2>So geht es später weiter.</h2>
-        <p>Diese Schritte werden erst aktiviert, wenn alle Versandbedingungen, Zahlungsarten und Sicherheitstests für den neuen Shop freigegeben sind.</p>
+        <h2>So funktioniert die Kasse.</h2>
+        <p>Die Lieferadresse kann bereits lokal geprüft werden. Eine Bestellung oder Zahlung wird noch nicht ausgelöst.</p>
         <div className="rh-checkout-steps">
           {process.map((step,i)=><article key={step.no}>
             <div className="rh-checkout-number">{step.no}</div>
@@ -39,6 +40,9 @@ export default function CheckoutPreview(){
             <span className="rh-checkout-step-state">{i===0?<Check size={18}/>:<LockKeyhole size={15}/>}</span>
           </article>)}
         </div>
+        {loaded&&lines.length>0&&<CheckoutAddressPreview/>}
+        <div className="rh-checkout-payment-preview"><h3>03 / ZAHLUNG</h3><p>Die Zahlungsart wählst du nach der Freigabe des Shops. Aktuell kann kein Kauf ausgelöst werden.</p>
+         <button type="button" disabled aria-disabled="true">Zahlungspflichtig bestellen — noch gesperrt</button></div>
         <Link className="rh-continue-shop" href="/versand-zahlung/">Versand, Zahlung & Widerruf ansehen ↗</Link>
         <Link className="rh-checkout-return" href="/warenkorb/">← ZURÜCK ZUM WARENKORB</Link>
       </section>

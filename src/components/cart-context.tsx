@@ -1,6 +1,7 @@
 "use client";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { byVariation } from "@/lib/catalog";
+import {trackRubyEvent} from "@/lib/storefront-analytics";
 
 export type CartLine = { id:number; quantity:number };
 type CartState = {
@@ -37,6 +38,7 @@ export function CartProvider({children}:{children:React.ReactNode}){
     lines,loaded,count:lines.reduce((sum,line)=>sum+line.quantity,0),
     add(id,quantity=1){
       if(!byVariation(id))return;
+      trackRubyEvent("add_to_cart");
       setLines(prev=>{
         const rest=prev.filter(x=>x.id!==id);
         const existing=prev.find(x=>x.id===id)?.quantity||0;

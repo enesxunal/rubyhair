@@ -2,7 +2,7 @@ import Link from "next/link";
 import type {Metadata} from "next";
 import ShopLayout from "@/components/site-shell";
 import {tapeInLengths,tapeInLengthHref} from "@/lib/tape-in-lengths";
-export const metadata:Metadata={title:"Tape-in Extensions – Kurz & Lang"};
+export const metadata:Metadata={title:"Tape-in Extensions – Kurz & Lang",description:"Ruby Hair Tape-in Echthaar Extensions in 45–50 cm und 55–60 cm. Wähle deine Haarlänge und den Farbton.",alternates:{canonical:"/kollektionen/"}};
 export default function Collections(){
   return <ShopLayout>
     <section className="rh-landing rh-length-landing"><div className="rh-shell">

@@ -13,7 +13,10 @@ export async function generateMetadata({params,searchParams}:Params):Promise<Met
   const product=await getStoreProduct((await params).slug);
   const {laenge}=await searchParams;
   const selected=product?.slug==="tape-in-extensions"?tapeInLengths.find(o=>o.key===laenge):undefined;
-  return {title:selected?`${selected.title} · ${selected.label}`:product?.name||"Collection"};
+  return {title:selected?`${selected.title} · ${selected.label}`:product?.name||"Collection",
+    description:selected?`${selected.title}: echte Ruby Hair Tape-in Haarverlängerungen in ${selected.label}. Farben entdecken.`:product?.intro,
+    alternates:{canonical:selected?`/kollektionen/tape-in-extensions/?laenge=${selected.key}`:`/kollektionen/${product?.slug||""}/`},
+    ...(product?.slug==="keratin-bondings"?{robots:{index:false,follow:false}}:{})};
 }
 export default async function Category({params,searchParams}:Params){
   const product=await getStoreProduct((await params).slug);

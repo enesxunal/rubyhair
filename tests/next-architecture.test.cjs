@@ -28,7 +28,7 @@ test("Next.js runtime does not reference WordPress endpoints",()=>{
       else if(/\.(?:ts|tsx|html|js|json)$/.test(item.name)){
         const content=fs.readFileSync(full,"utf8");
         // Publicly documented legacy pages are linked as sources, not fetched at runtime.
-        if(!full.endsWith("legacy-store-facts.ts"))assert.equal(content.includes("https://rubyhair.de/"),false,full);
+        if(!["legacy-store-facts.ts","seo.ts","robots.ts","sitemap.ts"].some(name=>full.endsWith(name)))assert.equal(content.includes("https://rubyhair.de/"),false,full);
         assert.equal(content.includes("/wp-json/"),false,full);
       }
     }
@@ -306,4 +306,52 @@ test("pack recommendations match approved hair density quantities across site",(
   assert.ok(lab.includes('normal:"3–4 Packungen",dicht:"6–8 Packungen"'));
   assert.ok(product.includes("3–4 bei normalem Haar und 6–8 bei dickem Haar"));
   assert.ok(guide.includes("3–4 für normales und 6–8 für dickes Haar"));
+});
+
+test("SEO is guarded until merchant-approved launch and never exposes stock offer",()=>{
+ const gate=fs.readFileSync(path.join(base,"src/lib/seo.ts"),"utf8");
+ const sitemap=fs.readFileSync(path.join(base,"app/sitemap.ts"),"utf8");
+ const robots=fs.readFileSync(path.join(base,"app/robots.ts"),"utf8");
+ const productPage=fs.readFileSync(path.join(base,"app/produkt/[slug]/page.tsx"),"utf8");
+ assert.ok(gate.includes('RUBY_SHOP_PUBLIC===\"APPROVED_PRODUCTION\"'));
+ assert.ok(sitemap.includes('if(!publicShopEnabled())return []'));
+ assert.ok(robots.includes('disallow:"/"'));
+ assert.ok(productPage.includes('"@type":"Product"'));
+ assert.ok(!productPage.includes('"@type":"Offer"'));
+});
+
+test("fulfillment writes require admin and verified provider evidence, never mark payment paid",()=>{
+ const actions=fs.readFileSync(path.join(base,"app/admin/actions.ts"),"utf8");
+ const schema=fs.readFileSync(path.join(base,"prisma/schema.prisma"),"utf8");
+ assert.ok(actions.includes('export async function updateFulfillmentAction'));
+ assert.ok(actions.includes('if(!await isAdmin())redirect("/admin/login")'));
+ assert.ok(actions.includes('p.eventType==="payment_confirmed"'));
+ assert.ok(actions.includes('p.provider!=="manual"'));
+ assert.ok(actions.includes('requireOrderTransition(order.status,data.next,"fulfillment")'));
+ assert.ok(actions.includes('testOnly:false'));
+ assert.ok(actions.includes('orderStatusEvent.create'));
+ assert.ok(schema.includes('trackingCarrier   String?'));
+ assert.ok(schema.includes('AnalyticsAggregate'));
+});
+
+test("checkout address form is browser-local and cannot initiate payment or customer order",()=>{
+ const form=fs.readFileSync(path.join(base,"src/components/checkout-address-preview.tsx"),"utf8");
+ const payment=fs.readFileSync(path.join(base,"src/components/checkout-preview.tsx"),"utf8");
+ assert.ok(form.includes('event.preventDefault()'));
+ assert.ok(form.includes('pattern="[0-9]{5}"'));
+ assert.ok(!form.includes('fetch('));
+ assert.ok(!form.includes('localStorage'));
+ assert.ok(payment.includes('disabled aria-disabled="true"'));
+});
+
+test("analytics collection is disabled by default, consent-gated and strictly categorical",()=>{
+ const server=fs.readFileSync(path.join(base,"app/api/analytics/event/route.ts"),"utf8");
+ const client=fs.readFileSync(path.join(base,"src/lib/storefront-analytics.ts"),"utf8");
+ assert.ok(server.includes('RUBY_ANALYTICS_ENABLED!=="APPROVED"'));
+ assert.ok(server.includes('request.cookies.get("ruby_analytics")'));
+ assert.ok(server.includes('allowedHosts.includes(supplied.host)'));
+ assert.ok(!server.includes('request.headers.get("x-real-ip")'));
+ assert.ok(!server.includes('customerEmail'));
+ assert.ok(client.includes('localStorage.getItem("ruby_analytics_choice")==="allow"'));
+ assert.ok(client.includes('if(!allowed.has(path))return'));
 });

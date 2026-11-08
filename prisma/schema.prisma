@@ -60,6 +60,11 @@ model Order {
   billingAddress    Json?
   shippingAddress   Json?
   paymentReference  String?        @unique
+  trackingCarrier   String?
+  trackingNumber    String?
+  fulfillmentNote   String?
+  shippedAt         DateTime?
+  deliveredAt       DateTime?
   testOnly          Boolean        @default(false)
   reservationKey    String?        @unique
   requestDigest     String?
@@ -114,4 +119,18 @@ model AdminLoginAttempt {
   count         Int      @default(0)
   windowStart   DateTime @default(now())
   @@map("admin_login_attempts")
+}
+
+// Consent-gated, anonymous aggregate event counts. No user/session IDs, IPs or addresses.
+model AnalyticsAggregate {
+  id      String   @id @default(uuid()) @db.Uuid
+  day     DateTime @db.Date
+  path    String
+  event   String
+  source  String
+  device  String
+  count   Int      @default(0)
+  @@unique([day,path,event,source,device])
+  @@index([day,event])
+  @@map("analytics_aggregates")
 }

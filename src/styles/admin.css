@@ -104,3 +104,14 @@
 .rh-admin-stock-filters a b{color:#6a4553;font-size:12px}
 .rh-admin-stock-filters a.is-active{background:#68404e;color:white;border-color:#68404e}
 .rh-admin-stock-filters a.is-active b{color:white}
+
+/* Verified paid-order fulfillment workflow (no payment capture in admin). */
+.rh-admin-fulfillment-form{display:grid;gap:12px;margin:22px 0;border:1px solid #e4d3d7;padding:18px;background:#fff}
+.rh-admin-fulfillment-form h3{margin:0!important;font-size:22px}
+.rh-admin-fulfillment-form p{font-size:11px;color:#846d76;line-height:1.7;margin:0}
+.rh-admin-fulfillment-form label{display:grid;gap:4px;font-size:12px;color:#634955}
+.rh-admin-fulfillment-form input{width:100%;min-height:44px;border:1px solid #e0d2d4;padding:10px 12px;background:white;color:#3e2c33}
+.rh-admin-fulfillment-form button{padding:12px 20px;border:0;background:#633746;color:white;min-height:44px;justify-self:start}
+
+.rh-admin-analytics-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:11px 0;border-top:1px solid #eee4e0;font-size:12px;overflow-wrap:anywhere}
+.rh-admin-analytics-row strong{font-weight:650;color:#663e4e}

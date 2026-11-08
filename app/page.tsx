@@ -4,7 +4,8 @@ import { getStoreCatalog } from "@/lib/catalog-server";
 export const dynamic="force-dynamic";
 export const metadata: Metadata = {
   title: "Ruby Hair — Premium Echthaar Extensions",
-  description: "Entdecke Tape-in Echthaar Extensions in 45–50 cm und 55–60 cm. Wähle deinen Farbton – Ruby Hair in Essen."
+  description: "Entdecke Tape-in Echthaar Extensions in 45–50 cm und 55–60 cm. Wähle deinen Farbton – Ruby Hair in Essen.",
+  alternates:{canonical:"/"}
 };
 export default async function HomePage(){
   const {products}=await getStoreCatalog();

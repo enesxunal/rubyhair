@@ -1,17 +1,18 @@
 import Link from "next/link";
-import {Boxes,LayoutDashboard,ClipboardList,ExternalLink,PackageCheck,ShieldCheck,LogOut} from "lucide-react";
+import {Boxes,LayoutDashboard,ClipboardList,BarChart3,ExternalLink,PackageCheck,ShieldCheck,LogOut} from "lucide-react";
 import {logoutAction} from "./actions";
 
 const sections=[
  {href:"/admin",label:"Übersicht",icon:LayoutDashboard},
  {href:"/admin/produkte",label:"Produkte & Bestand",icon:Boxes},
- {href:"/admin/bestellungen",label:"Bestellungen",icon:ClipboardList}
+ {href:"/admin/bestellungen",label:"Bestellungen",icon:ClipboardList},
+ {href:"/admin/analytics",label:"Statistik",icon:BarChart3}
 ] as const;
 
 export default function AdminShell({
  current,title,description,children
-}:{current:"dashboard"|"products"|"orders";title:string;description:string;children:React.ReactNode}){
- const active=current==="dashboard"?"/admin":current==="products"?"/admin/produkte":"/admin/bestellungen";
+}:{current:"dashboard"|"products"|"orders"|"analytics";title:string;description:string;children:React.ReactNode}){
+ const active=current==="dashboard"?"/admin":current==="products"?"/admin/produkte":current==="analytics"?"/admin/analytics":"/admin/bestellungen";
  return <main className="rh-admin-app">
   <aside className="rh-admin-sidebar">
    <Link href="/admin" className="rh-admin-brand" aria-label="Ruby Hair Verwaltung Startseite">
@@ -34,7 +35,7 @@ export default function AdminShell({
   </aside>
   <section className="rh-admin-workspace">
    <div className="rh-admin-topline"><div><PackageCheck size={17}/><span>Ruby Hair / Interne Verwaltung</span></div><span className="rh-admin-topline-status">TEST- UND VORSCHAUUMGEBUNG</span></div>
-   <header className="rh-admin-page-heading"><div><span className="rh-admin-overline">MANAGEMENT / {current==="dashboard"?"ÜBERSICHT":current==="products"?"SORTIMENT":"BESTELLUNGEN"}</span><h1>{title}</h1><p>{description}</p></div></header>
+   <header className="rh-admin-page-heading"><div><span className="rh-admin-overline">MANAGEMENT / {current==="dashboard"?"ÜBERSICHT":current==="products"?"SORTIMENT":current==="analytics"?"STATISTIK":"BESTELLUNGEN"}</span><h1>{title}</h1><p>{description}</p></div></header>
    {children}
    <footer className="rh-admin-bottom-note">Ruby Hair · Interne Vorschau. Zahlungseingänge und Kundenbestellungen sind nicht freigeschaltet.</footer>
   </section>
