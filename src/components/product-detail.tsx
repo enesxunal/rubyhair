@@ -133,7 +133,7 @@ export function ProductDetail({product,initialColor,initialLength}:{product:Prod
             <ul><li>Material: {product.material}</li><li>Packungsinhalt: {product.pack}</li><li>Gewicht laut bisherigem Shop: 25 g</li><li>Farbe und Länge individuell auswählbar</li></ul>
           </details>
           <details><summary>Wie viele Packungen brauche ich?</summary>
-            <p>Ruby Hair nennt zur Orientierung 2–4 Packungen bei dünnem Haar, 4–5 bei normalem Haar und 5–6 bei dickem Haar. Die richtige Menge hängt vom gewünschten Ergebnis ab.</p>
+            <p>Ruby Hair nennt zur Orientierung 2–4 Packungen bei dünnem Haar, 3–4 bei normalem Haar und 6–8 bei dickem Haar. Die richtige Menge hängt vom gewünschten Ergebnis ab.</p>
           </details>
           <details><summary>Pflege & Anwendung</summary><p>Wasche dein Haar schonend, bürste die Extensions vorsichtig und lege dich nicht mit nassem Haar schlafen. Unsere Hinweise zur täglichen Routine findest du im Hair Guide.</p>
             <Link href="/ratgeber/">Hair Guide ↗</Link></details>

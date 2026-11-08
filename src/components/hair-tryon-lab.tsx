@@ -10,7 +10,7 @@ type LocalPhoto={url:string;name:string;file?:File};
 type Density="fein"|"normal"|"dicht";
 
 const recommendation:Record<Density,string>={
- fein:"2–4 Packungen",normal:"4–5 Packungen",dicht:"5–6 Packungen"
+ fein:"2–4 Packungen",normal:"3–4 Packungen",dicht:"6–8 Packungen"
 };
 const densityLabels:Record<Density,string>={fein:"Feines Haar",normal:"Normales Haar",dicht:"Dichtes Haar"};
 function unique<T>(items:T[]):T[]{return [...new Set(items)];}

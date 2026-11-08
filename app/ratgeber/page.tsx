@@ -52,7 +52,7 @@ const faqs=[
   },
   {
     question:"Wie viele Packungen brauche ich?",
-    answer:"Als Orientierung nennt der bestehende Produktkatalog 2–4 Packungen für dünnes, 4–5 für normales und 5–6 für dickes Haar. Der tatsächliche Bedarf kann je nach Methode, Haarstruktur und gewünschter Fülle abweichen. Lass dich im Zweifel individuell beraten."
+    answer:"Als Orientierung nennt der bestehende Produktkatalog 2–4 Packungen für dünnes, 3–4 für normales und 6–8 für dickes Haar. Der tatsächliche Bedarf kann je nach Methode, Haarstruktur und gewünschter Fülle abweichen. Lass dich im Zweifel individuell beraten."
   },
   {
     question:"Kann ich mit Extensions schlafen?",

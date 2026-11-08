@@ -298,3 +298,12 @@ test("virtual hair lab uses the real catalog and sends photos only with explicit
  assert.ok(study.includes("Perfect Corp"));
  assert.ok(fs.existsSync(path.join(base,"src/styles/tryon.css")));
 });
+
+test("pack recommendations match approved hair density quantities across site",()=>{
+  const lab=fs.readFileSync(path.join(base,"src/components/hair-tryon-lab.tsx"),"utf8");
+  const product=fs.readFileSync(path.join(base,"src/components/product-detail.tsx"),"utf8");
+  const guide=fs.readFileSync(path.join(base,"app/ratgeber/page.tsx"),"utf8");
+  assert.ok(lab.includes('normal:"3–4 Packungen",dicht:"6–8 Packungen"'));
+  assert.ok(product.includes("3–4 bei normalem Haar und 6–8 bei dickem Haar"));
+  assert.ok(guide.includes("3–4 für normales und 6–8 für dickes Haar"));
+});
