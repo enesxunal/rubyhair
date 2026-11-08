@@ -56,20 +56,21 @@ function selection(key:unknown){
 }
 function promptFor(method:string,tone:string,length:string,density:string){
  const application=method==="keratin-bondings"
-  ?"Professionally installed, very small discreet strand-by-strand keratin bond hair extensions."
-  :"Professionally installed, flat sandwich tape-in hair extensions, fully concealed beneath the upper hair layer.";
+  ?"Small discreet strand-by-strand keratin bond extensions, concealed below the existing upper hair."
+  :"Flat sandwich tape-in extensions professionally attached BELOW the person's existing natural upper hair layer; attachment points remain hidden.";
  return [
- "Create one PHOTOREALISTIC AFTER image by EDITING image 1 (the actual person's photo).",
- "IMAGE 2 IS ONLY A REAL RUBY HAIR HAIR-COLOR SWATCH REFERENCE. Never copy image 2's background, person or framing.",
- "Only change hair length, extension volume and the added hair tone. The original person's face, identity, skin, eyebrows, eyes, mouth, expression, neck, body, clothes, jewelry, posture, lighting, camera perspective and background must remain essentially IDENTICAL.",
- "Maintain the original natural hairline, roots, part and texture. Preserve any natural color at the roots; blend only the new extensions toward the chosen product color.",
- "Application: "+application,
- "Desired extension hair length: "+length+" from the attachment point; actual visual endpoint depends on height and placement. Make the after appearance clearly longer and naturally fuller than image 1, with long, fine, believable strands and softly blended tips.",
- "Chosen Ruby Hair product tone: "+tone+". Match the added hair shade to the color reference in image 2 as closely as realistic lighting allows.",
- "Natural hair density category: "+density+". Proportional fullness; no wig-like outline.",
- "Show no tape joints or exposed bond beads in the hair surface. Ensure a realistic blend from natural hair to extensions, no abrupt seam or cut line.",
- "No face retouching, no makeup, no beauty filters, no changes to clothing/background, no text, no collage. Output the single edited AFTER portrait from the same camera angle.",
- "An approximate preview only, not a guaranteed salon result."
+  "EDIT IMAGE 1: PHOTOREALISTIC HAIR EXTENSION TRY-ON. Image 1 is the customer's ORIGINAL PHOTO and is the absolute reference for all existing hair and everything else in the frame.",
+  "CRITICAL, HIGHEST PRIORITY — EXISTING HAIR COLOR LOCK: Do not recolor, brighten, dye, bleach, warm, tone, highlight, soften, or regenerate the person's NATURAL EXISTING HAIR, from its ROOTS THROUGH ITS ORIGINAL TIPS. Keep every originally visible native strand the SAME color, depth, undertone, gradients, shadows, roots, mid-lengths and texture as in image 1.",
+  "The original dark/brown/black/blonde etc hair must remain visibly original THROUGH THE ENTIRE EXISTING LENGTH — protecting just the roots is NOT sufficient. Never produce new balayage, ombre, highlights, blonde mid-lengths, lighter roots, or color transitions on existing native hair unless they were ALREADY present in image 1.",
+  "ONLY ADD extension strands alongside and especially BELOW the original hair ends. The new hair should follow the existing growth direction, sit naturally underneath and among the existing tips, and extend the visible silhouette with realistic length and volume. Do not replace the existing hairstyle with a wig or repaint the person's entire hair mass.",
+  "IMAGE 2 is ONLY a Ruby Hair product color SWATCH for the ADDED strands. Never apply image 2's color to any original/native hair. Do not transfer lighting, styling, background or any other feature from image 2. If product shade differs from the person's original hair, keep the contrast restricted to NEWLY ADDED extensions; NEVER disguise the mismatch by lightening or recoloring their native hair. Color fidelity of existing hair takes priority over a perfect blend.",
+  "Keep the original face, identity, skin, eyes, brows, expression, body, clothes, pose, camera angle, crop, background and lighting unchanged. No beautification or filters.",
+  "Extension application: "+application,
+  "NEW added extension strands only: selected Ruby Hair shade "+tone+" (reference photo 2).",
+  "New extension product length "+length+" measured from attachment, not extra length beyond the original ends. Keep the length believable for the photo's body proportions.",
+  "Natural density: "+density+". Add proportional volume only; no wig, no exaggerated fullness or visible tapes.",
+  "Before completing, internally verify that the person's existing hair is still the same uncolored hair seen in image 1 along its whole original length. If the selected shade clashes, accept a natural two-tone result rather than changing the person's own hair.",
+  "Output ONE after image of the same person and the same scene; no text, no collage and no before/after layout. This is a non-binding visualization, not a guaranteed salon result."
  ].join("\n");
 }
 
@@ -93,7 +94,7 @@ export async function POST(request:NextRequest){
  if(form.get("consent")!=="yes")return deny("Bitte zuerst der einmaligen Verarbeitung des Fotos durch den KI-Anbieter zustimmen.",403);
  if(!authorized(form.get("testCode")))return deny("Ungültiger Test-Zugangscode.",401);
  const selected=selection(form.get("variantKey"));
- if(!selected)return deny("Bitte ein gültiges Ruby Hair Produkt auswählen.",400);
+ if(!selected||selected.product.slug!=="tape-in-extensions")return deny("Bitte eine gültige Ruby Hair Tape-in Variante auswählen.",400);
  const density=form.get("density");
  if(typeof density!=="string"||!VALID_DENSITIES.includes(density as typeof VALID_DENSITIES[number]))
    return deny("Ungültige Haardichte.",400);

@@ -258,6 +258,19 @@ test("admin pages use authenticated separate dashboard, product and read-only or
  assert.ok(actions.includes('redirect("/admin/produkte?productUpdated=1")'));
  assert.ok(fs.existsSync(path.join(base,"src/styles/admin.css")));
 });
+test("hair try-on hides internal prompts and explicitly locks original hair color end-to-end",()=>{
+  const lab=fs.readFileSync(path.join(base,"src/components/hair-tryon-lab.tsx"),"utf8");
+  const api=fs.readFileSync(path.join(base,"app/api/tryon/generate/route.ts"),"utf8");
+  const page=fs.readFileSync(path.join(base,"app/haar-anprobe/page.tsx"),"utf8");
+  assert.ok(!lab.includes("Prompt kopieren"));
+  assert.ok(!lab.includes("rh-tryon-prompt-panel"));
+  assert.ok(!lab.includes("photoPrompt("));
+  assert.ok(api.includes("EXISTING HAIR COLOR LOCK"));
+  assert.ok(api.includes("ROOTS THROUGH ITS ORIGINAL TIPS"));
+  assert.ok(api.includes("Color fidelity of existing hair takes priority"));
+  assert.ok(api.includes("selected.product.slug!==\"tape-in-extensions\""));
+  assert.ok(page.includes('filter(p=>p.slug==="tape-in-extensions")'));
+});
 test("virtual hair lab uses the real catalog and sends photos only with explicit consent",()=>{
  const page=fs.readFileSync(path.join(base,"app/haar-anprobe/page.tsx"),"utf8");
  const lab=fs.readFileSync(path.join(base,"src/components/hair-tryon-lab.tsx"),"utf8");
@@ -266,7 +279,7 @@ test("virtual hair lab uses the real catalog and sends photos only with explicit
  assert.ok(page.includes('import catalog from "@/data/products.json"'));
  assert.ok(page.includes("robots:{index:false"));
  assert.ok(header.includes("href=\"/haar-anprobe/\""));
- for(const marker of ["URL.createObjectURL","URL.revokeObjectURL","image/jpeg","image/png","image/webp","maximal 8 MB", "setRatio", "aria-label=\"KI Prompt", "Saçımda Dene", "RUBY HAIR"]){
+ for(const marker of ["URL.createObjectURL","URL.revokeObjectURL","image/jpeg","image/png","image/webp","maximal 8 MB", "setRatio", "Saçımda Dene", "RUBY HAIR"]){
    assert.ok(lab.includes(marker),marker);
  }
  for(const marker of ["fetch(\"/api/tryon/generate\"","new FormData()","consent","testCode","shrinkImage(before.file)"]){

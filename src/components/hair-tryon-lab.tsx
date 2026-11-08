@@ -2,7 +2,7 @@
 
 import {useEffect,useMemo,useState,type ChangeEvent} from "react";
 import Link from "next/link";
-import {ArrowUpRight,ArrowLeftRight,Check,Clipboard,ImagePlus,LockKeyhole,Scissors,Sparkles,Upload,X} from "lucide-react";
+import {ArrowUpRight,ArrowLeftRight,ImagePlus,LockKeyhole,Scissors,Sparkles,Upload,X} from "lucide-react";
 
 type Variation={color:string;length:string;image:string;key:string};
 type Product={slug:string;name:string;pack:string;material:string;variants:Variation[]};
@@ -32,31 +32,9 @@ async function shrinkImage(file:File):Promise<Blob>{
   return result;
  }finally{bitmap.close();}
 }
-function photoPrompt(product:Product,variant:Variation,density:Density){
- const method=product.slug==="keratin-bondings"
-  ?"Keratin-Bondings, als einzelne fein verteilte Echthaarsträhnen mit diskreten Verbindungspunkten"
-  :"Tape-in Extensions, als flache Tape-Wefts unter den Deckhaarschichten";
- return [
-  "FOTOREALISTISCHE HAARVERLÄNGERUNGS-VORSCHAU – RUBY HAIR",
-  "Bearbeite das zusätzlich bereitgestellte ORIGINALFOTO der Person. Ohne Ausgangsfoto nicht generieren.",
-  "Das Gesicht, die Identität, Gesichtszüge, Haut, Gesichtsausdruck, Körperproportionen, Pose, Kleidung, Licht und Hintergrund MÜSSEN unverändert bleiben.",
-  "Bearbeite ausschließlich den sichtbaren Haarbereich (einschließlich neu hinzukommender Haarlängen unterhalb der ursprünglichen Spitzen).",
-  "Bewahre die natürliche Haarlinie, den Scheitel, Haarwuchs und die Grundstruktur des Eigenhaars. Keine Perücke, keine Veränderung des Haarschnitts am Ansatz.",
-  "Produkt: "+product.name+" ("+product.material+"). Methode: "+method+".",
-  "Ziel-Länge des Extensions-Produkts: "+variant.length+". Die sichtbare Endlänge hängt von Körpergröße und Ansatzposition ab; nicht als Messwert simulieren.",
-  "Farb-Referenz aus der Ruby-Hair-Farbkarte: "+variant.color+". NUR den Haarfarbton an das ausgewählte Produkt-Farbfoto annähern und natürlich mit dem Eigenhaar verblenden.",
-  "Haardichte als grobe Orientierung: "+densityLabels[density]+". Natürliches, proportional realistisches Zusatzvolumen ohne künstlich überfüllte Silhouette.",
-  "Erstelle glaubwürdige Übergänge von Eigenhaar zu Extensions, stimmige Strähnchen, natürliche Spitzen und Schatten. Keine sichtbaren Klebestreifen oder Bondings am Deckhaar.",
-  "Keine Gesichtsretusche, kein Makeup, kein Filter, kein anderer Mensch, kein Vorher-Nachher-Collage-Layout.",
-  "Liefere EIN bearbeitetes Bild bei gleicher Perspektive und möglichst gleichem Bildausschnitt wie das Original.",
-  "Dies ist eine unverbindliche Visualisierung, keine Zusage über das tatsächliche Friseurergebnis."
- ].join("\n");
-}
-
 export default function HairTryonLab({products}:{products:Product[]}){
  const first=products[0];
- const [slug,setSlug]=useState(first?.slug||"");
- const product=products.find(p=>p.slug===slug)||first;
+ const product=first;
  const [color,setColor]=useState(first?.variants[0]?.color||"");
  const [length,setLength]=useState(first?.variants[0]?.length||"");
  const [density,setDensity]=useState<Density>("normal");
@@ -64,7 +42,6 @@ export default function HairTryonLab({products}:{products:Product[]}){
  const [after,setAfter]=useState<LocalPhoto|null>(null);
  const [ratio,setRatio]=useState(50);
  const [issue,setIssue]=useState("");
- const [copied,setCopied]=useState(false);
  const [showAll,setShowAll]=useState(false);
  const [aiAvailable,setAiAvailable]=useState<boolean|null>(null);
  const [testCode,setTestCode]=useState("");
@@ -78,7 +55,6 @@ export default function HairTryonLab({products}:{products:Product[]}){
  const currentColor=picked?.color||color;
  const currentLength=picked?.length||length;
  const colorOptions=colors.map(tone=>product.variants.find(v=>v.color===tone)!).filter(Boolean);
- const prompt=product&&picked?photoPrompt(product,picked,density):"";
  useEffect(()=>()=>{if(before?.url.startsWith("blob:"))URL.revokeObjectURL(before.url);},[before]);
  useEffect(()=>()=>{if(after?.url.startsWith("blob:"))URL.revokeObjectURL(after.url);},[after]);
  useEffect(()=>{
@@ -89,12 +65,6 @@ export default function HairTryonLab({products}:{products:Product[]}){
    .catch(()=>{if(active)setAiAvailable(false);});
   return ()=>{active=false;};
  },[]);
- const chooseProduct=(next:string)=>{
-   const p=products.find(item=>item.slug===next);
-   if(!p)return;
-   setSlug(next);setColor(p.variants[0]?.color||"");setLength(p.variants[0]?.length||"");
-   setShowAll(false);setCopied(false);
- };
  const onPhoto=(event:ChangeEvent<HTMLInputElement>,kind:"before"|"after")=>{
    const file=event.target.files?.[0];
    if(!file)return;
@@ -129,15 +99,9 @@ export default function HairTryonLab({products}:{products:Product[]}){
      if(typeof data?.image!=="string"||!data.image.startsWith("data:image/webp;base64,"))
        throw new Error("Der KI-Dienst hat kein gültiges Bild geliefert.");
      setAfter({url:data.image,name:"Ruby Hair KI-Vorschau"});
-     setRatio(50);setAiInfo("KI-Vorschau erstellt. Vergleiche das Original mit dem Ergebnis.");
+     setRatio(50);setAiInfo("KI-Vorschau erstellt. Vergleiche Haaransatz und ursprüngliche Haarlängen mit dem Original. Wenn sich deine Eigenhaarfarbe verändert hat, verwende dieses Ergebnis nicht.");
    }catch(error){setIssue(error instanceof Error?error.message:"Die KI-Haaranprobe ist fehlgeschlagen.");}
    finally{setGenerating(false);}
- };
- const copyPrompt=async()=>{
-   try{
-     await navigator.clipboard.writeText(prompt);
-     setCopied(true);setIssue("");
-   }catch{setIssue("Kopieren nicht verfügbar: Markiere den Text im Feld und kopiere ihn manuell.");}
  };
  return <>
    <section className="rh-tryon-hero rh-shell">
@@ -145,26 +109,26 @@ export default function HairTryonLab({products}:{products:Product[]}){
     <div className="rh-tryon-hero-grid">
       <div><div className="rh-eyebrow">RUBY HAIR / VIRTUAL HAIR STUDIO</div>
        <h1>See the <em>possibility.</em></h1>
-       <p>Finde deine Extensions-Methode, Farbe und Länge. Wähle deine Ruby Hair Extensions und teste die automatische KI-Haarverlängerung mit deinem Foto. Die Bildgenerierung ist nur im geschützten Testmodus verfügbar.</p>
+       <p>Wähle Farbe und Länge deiner Tape-in Extensions. Die KI soll nur Haare ergänzen – deine eigene Haarfarbe bleibt erhalten. Der Bildtest ist derzeit geschützt.</p>
        <div className="rh-tryon-status"><LockKeyhole size={17}/><span>GESCHÜTZTER TEST · KI-Verarbeitung nur nach deiner ausdrücklichen Zustimmung</span></div>
       </div>
       <div className="rh-tryon-feature-note">
         <Sparkles size={28} strokeWidth={1.4}/><span>YOUR NEXT<br/>HAIR STORY.</span>
-        <p>Ein realistischer Ausblick auf Länge, Farbwirkung und Haarvolumen – keine Garantie für das Ergebnis einer professionellen Anwendung.</p>
+        <p>Nur zusätzliche Länge und Volumen – keine virtuelle Haarfärbung.</p>
       </div>
     </div>
    </section>
    <div className="rh-shell rh-tryon-layout">
     <section className="rh-tryon-controls" aria-label="Extensions konfigurieren">
       <div className="rh-tryon-block">
-       <span className="rh-tryon-step">01 / METHODE</span>
-       <h2>Deine Extensions.</h2>
-       <div className="rh-tryon-methods">{products.map(p=><button key={p.slug} type="button" className={p.slug===slug?"is-selected":""} onClick={()=>chooseProduct(p.slug)} aria-pressed={p.slug===slug}><strong>{p.name}</strong><small>{p.pack}</small></button>)}</div>
+       <span className="rh-tryon-step">01 / PRODUKT</span>
+       <h2>Tape-in Extensions.</h2>
+       <p className="rh-tryon-muted">Wähle Farbe und Länge. Deine Naturhaarfarbe wird nicht verändert.</p>
       </div>
       <div className="rh-tryon-block">
        <span className="rh-tryon-step">02 / FARBE</span>
        <h2>Wähle deinen Ton.</h2>
-       <div className="rh-tryon-shades">{colorOptions.slice(0,showAll?undefined:12).map(v=><button key={v.color} type="button" className={currentColor===v.color?"is-selected":""} aria-pressed={currentColor===v.color} title={"Farbton "+v.color} onClick={()=>{setColor(v.color);const same=product.variants.find(x=>x.color===v.color&&x.length===length);if(!same)setLength(v.length);setCopied(false);}}>
+       <div className="rh-tryon-shades">{colorOptions.slice(0,showAll?undefined:12).map(v=><button key={v.color} type="button" className={currentColor===v.color?"is-selected":""} aria-pressed={currentColor===v.color} title={"Farbton "+v.color} onClick={()=>{setColor(v.color);const same=product.variants.find(x=>x.color===v.color&&x.length===length);if(!same)setLength(v.length);}}>
         <img src={v.image} alt="" loading="lazy"/><span>{v.color}</span>
        </button>)}</div>
        {colorOptions.length>12&&<button type="button" className="rh-tryon-expand" onClick={()=>setShowAll(x=>!x)}>{showAll?"Weniger Farbtöne":"Alle "+colorOptions.length+" Farbtöne ansehen"}</button>}
@@ -175,7 +139,7 @@ export default function HairTryonLab({products}:{products:Product[]}){
        <h2>Dein gewünschter Look.</h2>
        <div className="rh-tryon-lengths">{lengths.map(size=>{
         const has=product.variants.some(v=>v.color===currentColor&&v.length===size);
-        return <button key={size} type="button" disabled={!has} className={currentLength===size?"is-selected":""} aria-pressed={currentLength===size} onClick={()=>{setLength(size);setCopied(false);}}>{size}</button>;
+        return <button key={size} type="button" disabled={!has} className={currentLength===size?"is-selected":""} aria-pressed={currentLength===size} onClick={()=>{setLength(size);}}>{size}</button>;
        })}</div>
        <fieldset className="rh-tryon-density"><legend>Deine natürliche Haarfülle</legend>
          {(Object.keys(densityLabels) as Density[]).map(item=><label key={item}><input type="radio" name="tryon-density" checked={density===item} onChange={()=>setDensity(item)}/>{densityLabels[item]}</label>)}
@@ -196,7 +160,7 @@ export default function HairTryonLab({products}:{products:Product[]}){
       {before&&<button className="rh-tryon-clear" type="button" onClick={()=>{setBefore(null);setAfter(null);setIssue("");setRatio(50);}}><X size={15}/> Bilder entfernen</button>}
      </div>
      <div className="rh-tryon-generate">
-      <div className="rh-tryon-generate-heading"><Sparkles size={21}/><div><strong>Extensions an dir testen</strong><small>KI verändert dein Haar passend zur gewählten Farbe und Länge.</small></div></div>
+      <div className="rh-tryon-generate-heading"><Sparkles size={21}/><div><strong>Extensions an dir testen</strong><small>Die KI soll deine Eigenhaarfarbe erhalten und nur Extensions ergänzen.</small></div></div>
       {aiAvailable===false&&<p role="status" className="rh-tryon-disabled">Der Bildgenerator ist noch nicht freigeschaltet. Für den Test fehlen Server-API-Schlüssel und Testzugang.</p>}
       {aiAvailable===null&&<p role="status" className="rh-tryon-muted">KI-Verfügbarkeit wird geprüft …</p>}
       {aiAvailable===true&&<div className="rh-tryon-ai-access">
@@ -219,12 +183,7 @@ export default function HairTryonLab({products}:{products:Product[]}){
        </div>}
      {before&&after&&<div className="rh-tryon-slider"><label htmlFor="rh-tryon-ratio">Vergleich verschieben</label><input id="rh-tryon-ratio" type="range" min="0" max="100" value={ratio} onChange={e=>setRatio(Number(e.target.value))} aria-valuetext={ratio+" Prozent Vorher"}/><span>{ratio}%</span></div>}
      {(before||after)&&<p className="rh-tryon-privacy"><LockKeyhole size={15}/> Die Bilder werden vorübergehend in deinem Browser angezeigt. Nur bei Klick auf „Saçımda Dene“ mit Einwilligung wird das Originalfoto zur Bildverarbeitung an OpenAI übertragen.</p>}
-     <div className="rh-tryon-prompt-panel">
-      <div className="rh-tryon-prompt-head"><div><span className="rh-tryon-step">05 / KI-BILDVORLAGE</span><h3>Dein Bildauftrag.</h3></div><button type="button" onClick={copyPrompt}><Clipboard size={16}/>{copied?<><Check size={13}/> Kopiert</>:"Prompt kopieren"}</button></div>
-      <p>Für den Test kannst du dein Originalfoto und das gewählte Ruby-Hair-Farbfoto zusammen mit diesem Auftrag in einem Bildeditor mit KI verwenden. Importiere danach das Ergebnis oben. Die automatische KI-Anprobe funktioniert erst nach Aktivierung des privaten Testzugangs.</p>
-      <textarea readOnly aria-label="KI Prompt für die ausgewählte Ruby Hair Variante" value={prompt} rows={7} onFocus={e=>e.target.select()}/>
-     </div>
-     <p className="rh-tryon-final-note">Die Vorschau simuliert kein technisch exaktes Friseurergebnis. Ansatzposition, Schnitt, Farbangleichung, Tragegefühl und benötigte Menge müssen professionell beurteilt werden. Bestellungen sind auf dieser Website noch deaktiviert.</p>
+     <p className="rh-tryon-final-note">KI-Ergebnisse können abweichen: Falls dein vorhandenes Haar im Ergebnis heller oder anders gefärbt erscheint, ist die Vorschau nicht korrekt. Die Vorschau simuliert kein technisch exaktes Friseurergebnis. Ansatzposition, Schnitt, Farbangleichung, Tragegefühl und benötigte Menge müssen professionell beurteilt werden. Bestellungen sind auf dieser Website noch deaktiviert.</p>
     </section>
    </div>
  </>;
