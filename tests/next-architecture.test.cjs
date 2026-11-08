@@ -95,18 +95,38 @@ test("native homepage uses React and current server catalog, not injected HTML b
   const frontend=fs.readFileSync(path.join(base,"src/components/home-frontend.tsx"),"utf8");
   assert.ok(home.includes("getStoreCatalog()"));
   assert.ok(home.includes("<HomeFrontend products={products}/>"));
-  assert.ok(frontend.includes("function Favorites({products}"));
+  assert.ok(frontend.includes('className="hero rh-hero-product"'));
+  assert.ok(frontend.includes("tapeInLengths.map("));
+  assert.ok(!frontend.includes('KERATIN BONDINGS'));
   assert.ok(frontend.includes("aria-pressed={i===index}"));
   assert.ok(frontend.includes("useCart()"));
   assert.ok(!home.includes("dangerouslySetInnerHTML"));
   assert.equal(fs.existsSync(path.join(base,"src/data/home.html")),false);
   assert.ok(fs.existsSync(path.join(base,"archive/legacy-preview/home-approved-before-native.html")));
 });
+test("Tape-in storefront splits real 45-50 and 55-60 cm variants, with Keratin hidden from discovery",()=>{
+  const tape=catalog.products["tape-in-extensions"];
+  const short=tape.variations.filter(v=>v.length==="45-50-cm");
+  const long=tape.variations.filter(v=>v.length==="55-60-cm");
+  assert.equal(short.length,12);
+  assert.equal(long.length,15);
+  const home=fs.readFileSync(path.join(base,"src/components/home-frontend.tsx"),"utf8");
+  const nav=fs.readFileSync(path.join(base,"src/components/site-shell.tsx"),"utf8");
+  const grid=fs.readFileSync(path.join(base,"src/components/shade-grid.tsx"),"utf8");
+  const collection=fs.readFileSync(path.join(base,"app/kollektionen/[slug]/page.tsx"),"utf8");
+  assert.ok(home.includes('className="hero rh-hero-product"'));
+  assert.ok(home.includes('href={tapeInLengthHref(choice.key)}'));
+  assert.ok(!home.includes('keratin-bondings'));
+  assert.ok(!nav.includes('/kollektionen/keratin-bondings/'));
+  assert.ok(grid.includes('variants.filter(v=>v.length===selectedLength)'));
+  assert.ok(grid.includes('"&laenge="+encodeURIComponent(selectedLength)'));
+  assert.ok(collection.includes('selectedLength={selected?.key}'));
+});
 test("public guide and contact do not invent order processing or email submissions",()=>{
   const guide=fs.readFileSync(path.join(base,"app/ratgeber/page.tsx"),"utf8");
   const contact=fs.readFileSync(path.join(base,"app/kontakt/page.tsx"),"utf8");
   const composer=fs.readFileSync(path.join(base,"src/components/contact-composer.tsx"),"utf8");
-  for(const content of ["25 Bondings / Packung","10 Tape-ins / Packung","Pflege","faq"]) {
+  for(const content of ["Tape-in Kurz","Tape-in Lang","10 Tape-ins / Packung","Pflege","faq"]) {
     assert.ok(guide.toLowerCase().includes(content.toLowerCase()),content);
   }
   assert.ok(contact.includes("info@rubyhair.de"));

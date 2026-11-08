@@ -4,26 +4,23 @@ import Link from "next/link";
 import {useEffect,useRef,useState} from "react";
 import {Search,ShoppingBag,Menu,X,ArrowUpRight,ArrowRight,Instagram,Sparkles} from "lucide-react";
 import {useCart} from "@/components/cart-context";
-import {euros,type Product,colorsFor} from "@/lib/catalog";
+import {type Product} from "@/lib/catalog";
+import {tapeInLengths,tapeInLengthHref} from "@/lib/tape-in-lengths";
 
 const darkLogo="/media/RubyHair-WebHeader-Logo-Dunkel-70efc2b6a.png";
 const lightLogo="/media/RubyHair-WebHeader-Logo-Hell-818376d91.png";
 const nav=[
   {href:"/kollektionen/",title:"ALLE EXTENSIONS"},
-  {href:"/kollektionen/keratin-bondings/",title:"KERATIN BONDINGS"},
-  {href:"/kollektionen/tape-in-extensions/",title:"TAPE-IN EXTENSIONS"},
+  {href:tapeInLengthHref("45-50-cm"),title:"TAPE-IN KURZ"},
+  {href:tapeInLengthHref("55-60-cm"),title:"TAPE-IN LANG"},
   {href:"/suche/",title:"HAARFARBEN"},
   {href:"/kontakt/",title:"BERATUNG"}
 ];
 const shades=[
-  {key:"brown",title:"Brown",background:"#5e483a",image:"/media/6-1-scaled-ffe6f9676.jpg",color:"6",slug:"keratin-bondings"},
+  {key:"brown",title:"Brown",background:"#5e483a",image:"/media/6-1-scaled-ffe6f9676.jpg",color:"6",slug:"tape-in-extensions"},
   {key:"bronde",title:"Bronde",background:"#a28765",image:"/media/bronde-1-scaled-ae3a52b00.jpg",color:"bronde",slug:"tape-in-extensions"},
   {key:"blonde",title:"Blonde",background:"#d7c2a1",image:"/media/60-3-scaled-e99a55c0d.jpg",color:"60",slug:"tape-in-extensions"},
   {key:"ash",title:"Ash",background:"#b4ada5",image:"/media/silber-1-scaled-7627ffcff.jpg",color:"silver",slug:"tape-in-extensions"}
-];
-const categoryMeta=[
-  {slug:"keratin-bondings",tag:"LANGANHALTEND & VIELSEITIG",image:"/media/keratin-bonding-bg-2c257f54c.png"},
-  {slug:"tape-in-extensions",tag:"FLEXIBEL & NATÜRLICH",image:"/media/tape-in-extensions-bg-17a4f5094.png"}
 ];
 
 function HomeNavigation(){
@@ -99,43 +96,6 @@ function HomeNavigation(){
   </>;
 }
 
-function Favorites({products}:{products:Product[]}){
-  const cards=[
-    {slug:"keratin-bondings",color:"6",caption:"Natürliches Finish"},
-    {slug:"tape-in-extensions",color:"silver",caption:"Flexibel kombinierbar"},
-    {slug:"keratin-bondings",color:"ruby",caption:"Farbnuancen entdecken"},
-    {slug:"tape-in-extensions",color:"60",caption:"Für deinen Signature Look"}
-  ];
-  const resolved=cards.map((c,i)=>{
-    const product=products.find(p=>p.slug===c.slug);
-    const variant=product?.variations.find(v=>v.color===c.color&&v.available);
-    return {i,product,variant,caption:c.caption};
-  }).filter(item=>item.product&&item.variant);
-  return <section className="favorites section-pad" id="bestsellers">
-    <div className="container">
-      <div className="section-heading spread">
-        <div><div className="eyebrow"><span className="num">02 /</span> UNSERE FAVORITEN</div><h2>Dein neuer <i>Lieblingslook.</i></h2></div>
-        <Link className="under-button" href="/kollektionen/">Alle Extensions entdecken <ArrowUpRight size={16}/></Link>
-      </div>
-      <div className="products">
-        {resolved.map(({i,product,variant,caption})=><Link key={i} className="product"
-          href={"/produkt/"+product!.slug+"/?farbe="+encodeURIComponent(variant!.color)}>
-          <div className="product-media">
-            <img loading="lazy" src={variant!.image} alt={product!.name+" Farbe "+variant!.color_label}/>
-            {i===0&&<span className="product-label">THE RUBY EDIT</span>}
-            <span className="product-quick">FARBE ANSEHEN <ArrowUpRight size={16}/></span>
-          </div>
-          <div className="product-detail">
-            <span>{String(i+1).padStart(2,"0")} / {product!.name.toUpperCase()}</span>
-            <h3>{product!.name}</h3>
-            <p>{variant!.color_label} · ab {euros(variant!.price)} · {caption}</p>
-          </div>
-        </Link>)}
-      </div>
-    </div>
-  </section>;
-}
-
 function ShadeSelector(){
   const [index,setIndex]=useState(0);
   const active=shades[index];
@@ -143,14 +103,10 @@ function ShadeSelector(){
     <div className="container shade-grid">
       <div className="shade-visual">
         <img key={active.key} loading="lazy" src={active.image} alt={"Ruby Hair Farbton "+active.title}/>
-        <span className="shade-vertical">YOUR PERFECT SHADE</span>
-        <div className="shade-counter">{String(index+1).padStart(2,"0")} / 04</div>
       </div>
       <div className="shade-copy">
-        <div className="eyebrow"><span className="num">03 /</span> FIND YOUR SHADE</div>
-        <h2>Deine Farbe.<br/><i>Dein Moment.</i></h2>
-        <p>Von tiefem Braun bis zu kühlem Blond: Entdecke unsere Haarfarben und finde deinen persönlichen Favoriten.</p>
-        <p className="shade-caption">WÄHLE DEINE FARBFAMILIE</p>
+        <h2>Deine <i>Farbe.</i></h2>
+        <p>Finde den passenden Tape-in Farbton.</p>
         <div className="shade-pills" role="group" aria-label="Haarfarben auswählen">
           {shades.map((shade,i)=><button type="button" key={shade.key}
             className={i===index?"selected":""} aria-pressed={i===index} onClick={()=>setIndex(i)}>
@@ -159,7 +115,7 @@ function ShadeSelector(){
         </div>
         <p className="shade-disclaimer">Farbdarstellung kann je nach Bildschirm abweichen. Die Auswahl dient als Inspiration.</p>
         <Link className="solid-button shade-button" href={"/produkt/"+active.slug+"/?farbe="+active.color}>
-          FARBE {active.title.toUpperCase()} ANSEHEN <ArrowUpRight size={17}/>
+          FARBE ANSEHEN <ArrowUpRight size={17}/>
         </Link>
       </div>
     </div>
@@ -178,8 +134,8 @@ function HomeFooter(){
         </div>
         <div className="footer-col"><h3>SHOP</h3>
           <Link href="/kollektionen/">Alle Extensions</Link>
-          <Link href="/kollektionen/keratin-bondings/">Keratin Bondings</Link>
-          <Link href="/kollektionen/tape-in-extensions/">Tape-in Extensions</Link>
+          <Link href={tapeInLengthHref("45-50-cm")}>Tape-in Kurz</Link>
+          <Link href={tapeInLengthHref("55-60-cm")}>Tape-in Lang</Link>
           <Link href="/suche/">Farben entdecken</Link>
         </div>
         <div className="footer-col"><h3>INFORMATIONEN</h3>
@@ -208,58 +164,31 @@ export default function HomeFrontend({products}:{products:Product[]}){
   return <>
     <HomeNavigation/>
     <main id="main">
-      <section className="hero" id="home">
+      <Link className="hero rh-hero-product" id="home" href="/produkt/tape-in-extensions/?farbe=6&laenge=55-60-cm" aria-label="Tape-in Extensions entdecken, zum Produkt">
         <div className="hero-photo">
-          <img className="hero-primary" src="/assets/hero-brunette.webp"
-            alt="Ruby Hair Model mit schokoladenbraunen Haaren" width={1672} height={941} fetchPriority="high"/>
-          <div className="photo-number">01 / COLLECTION 2026</div>
-          <div className="hero-stamp">BEAUTY IS<br/><em>YOUR STORY.</em><Sparkles size={24}/></div>
+          <img className="hero-primary" src="/assets/hero-brunette.webp" alt="Model mit langen braunen Haaren" width={1672} height={941} fetchPriority="high"/>
         </div>
         <div className="hero-copy">
-          <div className="hero-kicker"><span className="kicker-line"/> RUBY HAIR · THE ART OF EXTENSIONS</div>
-          <h1>Beautiful hair.<br/><i>Made simple.</i></h1>
-          <p>Hochwertige Echthaar-Extensions für deinen individuellen Look. Entdecke deine Lieblingsfarbe und finde die passende Methode.</p>
-          <div className="hero-links">
-            <Link href="/kollektionen/" className="solid-button">JETZT EXTENSIONS ENTDECKEN <ArrowUpRight size={18}/></Link>
-            <Link href="/kontakt/" className="under-button">Persönliche Beratung <ArrowRight size={15}/></Link>
-          </div>
-          <div className="hero-aside"><span className="hero-scroll">SCROLL TO DISCOVER ↓</span><span>ESSEN · GERMANY</span></div>
+          <h1>Tape-in<br/><i>Extensions.</i></h1>
+          <p>Zwei Längen. Dein Look.</p>
+          <div className="hero-links"><span className="solid-button">TAPE-IN ANSEHEN <ArrowUpRight size={18} aria-hidden="true"/></span></div>
         </div>
-      </section>
-      <section id="collections" className="collections section-pad"><div className="container">
-        <div className="section-heading spread">
-          <div><div className="eyebrow"><span className="num">01 /</span> SHOP THE COLLECTION</div><h2>Finde deine <i>Extensions.</i></h2></div>
-          <p>Zwei Methoden, viele Möglichkeiten. Wähle die passende Extension für deinen Look.</p>
-        </div>
-        <div className="collection-grid">
-          {categoryMeta.map((cat,index)=>{
-            const product=products.find(p=>p.slug===cat.slug);
-            if(!product)return null;
-            return <Link href={"/kollektionen/"+cat.slug+"/"} className={index===0?"collection-large":"collection-small"} key={cat.slug}>
-              <div className="collection-media">
-                <img loading="lazy" src={cat.image} alt={product.name+" Echthaar"}/>
-                <span className="collection-index">0{index+1} / THE COLLECTION</span>
+      </Link>
+      <section id="collections" className="collections rh-length-collection section-pad" aria-labelledby="rh-home-lengths">
+        <div className="container">
+          <div className="section-heading"><h2 id="rh-home-lengths">Wähle deine <i>Länge.</i></h2></div>
+          <div className="collection-grid">
+            {tapeInLengths.map((choice,index)=><Link href={tapeInLengthHref(choice.key)} className={index===0?"collection-large":"collection-small"} key={choice.key}>
+              <div className="collection-media"><img src={choice.image} alt={choice.alt} loading="lazy"/>
+                <span className="rh-length-tag">{choice.label}</span>
               </div>
-              <div className="collection-caption">
-                <div><span>{cat.tag}</span><h3>{cat.slug==="keratin-bondings"?<>Keratin <i>Bondings.</i></>:<>Tape-in <i>Extensions.</i></>}</h3></div>
-                <span className="round-arrow"><ArrowUpRight size={21}/></span>
+              <div className="collection-caption"><h3>{index===0?<>Tape-in <i>Kurz.</i></>:<>Tape-in <i>Lang.</i></>}</h3>
+                <span className="round-arrow"><ArrowUpRight size={21} aria-hidden="true"/></span>
               </div>
-            </Link>
-          })}
-        </div>
-      </div></section>
-      <section className="selection-steps" aria-labelledby="selection-steps-title">
-        <div className="container selection-steps-inner">
-          <div className="selection-steps-heading"><div className="eyebrow">DEIN WEG ZUM NEUEN LOOK</div>
-            <h2 id="selection-steps-title">In drei Schritten zu <i>deinen Extensions.</i></h2></div>
-          <div className="selection-step-list">
-            <Link href="/kollektionen/"><span>01 / METHODE</span><strong>Tape-in oder Keratin?</strong><small>Entdecke die beiden Anwendungen im direkten Vergleich.</small><ArrowUpRight size={18}/></Link>
-            <Link href="/suche/"><span>02 / FARBE</span><strong>Deinen Farbton finden</strong><small>Wähle aus echten Ruby Hair Farbvarianten.</small><ArrowUpRight size={18}/></Link>
-            <Link href="/kontakt/"><span>03 / BERATUNG</span><strong>Fragen vor der Auswahl?</strong><small>Wir helfen dir bei Farbe, Länge und Packungsanzahl.</small><ArrowUpRight size={18}/></Link>
+            </Link>)}
           </div>
         </div>
       </section>
-      <Favorites products={products}/>
       <ShadeSelector/>
       <section className="brand-story section-pad" id="about"><div className="container brand-grid">
         <div className="brand-copy">

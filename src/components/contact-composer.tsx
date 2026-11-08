@@ -5,7 +5,6 @@ const recipient="info@rubyhair.de";
 const topics=[
   "Farbberatung",
   "Länge und Packungsanzahl",
-  "Keratin Bondings",
   "Tape-in Extensions",
   "Frage zu einer Bestellung",
   "Sonstige Frage"

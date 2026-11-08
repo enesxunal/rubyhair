@@ -19,3 +19,10 @@
 - Kontakt: Mailto-Entwurf, kein unbestätigter Serverversand.
 - Produktdaten/Shop: 2 Produkte, 38 Varianten; Bestand unverifiziert, Checkout weiterhin gesperrt.
 - Diese Arbeiten verfeinern bestehende Komponenten, keine Änderung am Live-Domain oder WordPress-System.
+
+## 8. November: Tape-in only storefront update
+- Hero is a full-image linked Tape-in product banner; copy overlays photograph on desktop and mobile.
+- First 3 product opportunities: linked hero, short Tape-in collection, long Tape-in collection.
+- Hide Keratin from public navigation, storefront listings and search; keep the existing product/data for compatibility.
+- Distinct collection-filtered routes use real Tape-in variant lengths 45-50-cm and 55-60-cm.
+- Color links carry selected length through to product detail. Existing Checkout remains disabled.

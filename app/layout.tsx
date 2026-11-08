@@ -8,7 +8,7 @@ import "../src/styles/tryon.css";
 
 export const metadata:Metadata={
   title:{default:"Ruby Hair Extensions",template:"%s | Ruby Hair"},
-  description:"Ruby Hair – Premium Echthaar Extensions in Keratin Bondings und Tape-in.",
+  description:"Ruby Hair – Premium Tape-in Echthaar Extensions in zwei Längen.",
   robots:{index:false,follow:false}
 };
 export default function RootLayout({children}:{children:React.ReactNode}){

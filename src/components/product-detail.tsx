@@ -21,7 +21,7 @@ export function ProductDetail({product,initialColor,initialLength}:{product:Prod
   const choices=groups.get(color)||[];
   const available=choices.filter(v=>v.available&&v.purchasable);
   const selected=available.find(v=>v.length===length)||available[0]||choices[0];
-  const other=product.slug==="keratin-bondings"?"tape-in-extensions":"keratin-bondings";
+  const otherLength=length==="45-50-cm"?"55-60-cm":"45-50-cm";
   const inStock=Boolean(selected?.available&&selected?.purchasable);
   const slides=[
     {src:selected?.image||product.image,label:"Ausgewählter Farbton",alt:product.name+" – Farbton "+(selected?.color_label||"")},
@@ -154,6 +154,6 @@ export function ProductDetail({product,initialColor,initialLength}:{product:Prod
       </div>
     </section>
     <div className="rh-related-inline"><div className="rh-eyebrow">NOCH MEHR ENTDECKEN</div>
-      <Link href={"/produkt/"+other+"/"}>Andere Extension-Methode entdecken →</Link></div>
+      <Link href={product.slug==="tape-in-extensions"?"/kollektionen/tape-in-extensions/?laenge="+otherLength:"/kollektionen/"}>Weitere Tape-in Längen ansehen →</Link></div>
   </div>;
 }

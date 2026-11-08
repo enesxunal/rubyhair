@@ -16,7 +16,7 @@ export function ProductSearch({initialQuery="",products}:{initialQuery?:string;p
   return <section className="rh-shell rh-shades-section rh-search-results">
     <label htmlFor="rh-shop-search" className="rh-search-label">WAS SUCHST DU?</label>
     <input id="rh-shop-search" className="rh-search-input" type="search" value={query}
-      onChange={e=>setQuery(e.target.value)} autoComplete="off" placeholder="z. B. BRONDE, Keratin, SILVER"/>
+      onChange={e=>setQuery(e.target.value)} autoComplete="off" placeholder="z. B. BRONDE, SILVER"/>
     <div className="rh-search-toolbar"><span aria-live="polite">{filtered.length} Ergebnisse</span>
       <span className="rh-catalog-status">Produktkatalog der neuen Ruby Hair Vorschau</span></div>
     <div className="rh-shade-grid">{filtered.map(x=>

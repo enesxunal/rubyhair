@@ -5,7 +5,7 @@ import ShopLayout from "@/components/site-shell";
 import ContactComposer from "@/components/contact-composer";
 export const metadata:Metadata={
   title:"Kontakt & persönliche Beratung",
-  description:"Ruby Hair Kontakt: Beratung zu Keratin Bondings, Tape-in Extensions und Haarfarben. Ruby Hair, Klara Straße 19, 45130 Essen. info@rubyhair.de."
+  description:"Ruby Hair Kontakt: Beratung zu Tape-in Extensions, Längen und Haarfarben. Ruby Hair, Klara Straße 19, 45130 Essen. info@rubyhair.de."
 };
 export default function Contact(){
   return <ShopLayout>

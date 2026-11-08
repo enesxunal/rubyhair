@@ -5,7 +5,7 @@ import { ArrowUpRight, Droplets, Brush, Moon, CalendarDays, Sparkles, HelpCircle
 
 export const metadata:Metadata={
   title:"Hair Guide – Auswahl & Pflege",
-  description:"Ruby Hair Hair Guide: Keratin Bondings oder Tape-in Extensions wählen, Echthaar richtig pflegen, waschen, bürsten und vor dem Schlafen schützen."
+  description:"Ruby Hair Hair Guide: Tape-in Extensions in kurzer und langer Variante wählen und Echthaar richtig pflegen."
 };
 const careSteps=[
   {
@@ -40,11 +40,11 @@ const careSteps=[
 const faqs=[
   {
     question:"Sind Ruby Hair Extensions aus Echthaar?",
-    answer:"Laut Ruby Hair bestehen Keratin Bondings und Tape-in Extensions aus 100 % Echthaar. Beachte die individuellen Angaben zur jeweiligen Produktvariante."
+    answer:"Ruby Hair Tape-in Extensions bestehen laut Produktangaben aus 100 % Echthaar. Beachte die Angaben zur gewählten Variante."
   },
   {
     question:"Wie viele Extensions sind in einer Packung?",
-    answer:"Im derzeitigen Produktkatalog sind bei Keratin Bondings 25 einzelne Bondings und bei Tape-in Extensions 10 einzelne Tape-in Strähnen pro Packung angegeben."
+    answer:"Im derzeitigen Ruby Hair Katalog enthält eine Packung 10 einzelne Tape-in Extensions."
   },
   {
     question:"Welche Länge ist die richtige?",
@@ -74,7 +74,7 @@ export default function HairGuide(){
         <nav className="rh-breadcrumb" aria-label="Breadcrumb"><Link href="/">Startseite</Link><span>/</span><span>Hair Guide</span></nav>
         <div className="rh-eyebrow">RUBY HAIR / THE HAIR GUIDE</div>
         <h1>Good hair.<br/><em>Great care.</em></h1>
-        <p>Dein Weg zu den passenden Extensions: Methode und Farbe auswählen, richtig pflegen und lange Freude an deinem Look haben.</p>
+        <p>Wähle Länge und Farbe deiner Tape-in Extensions. Dazu die wichtigsten Pflegetipps.</p>
         <a href="#pflege" className="rh-editorial-cta">PFLEGE ENTDECKEN <ArrowUpRight size={18}/></a>
       </div>
       <div className="rh-editorial-image">
@@ -85,22 +85,22 @@ export default function HairGuide(){
 
     <section className="rh-guide-methods rh-shell" id="methoden">
       <div className="rh-section-heading"><div><div className="rh-eyebrow">01 / DEINE METHODE</div><h2>Find your <em>fit.</em></h2></div>
-        <p>Zwei Methoden, viele Looks. Entdecke die Unterschiede und wähle die passende Produktkollektion.</p></div>
+        <p>Wähle die Länge deiner Tape-in Extensions.</p></div>
       <div className="rh-guide-method-grid">
         <article>
-          <div className="rh-guide-method-photo"><img src="/media/keratin-bonding-bg-2c257f54c.png" alt="Keratin Bondings"/></div>
-          <div className="rh-guide-method-info"><div className="rh-eyebrow">01 / KERATIN</div><h3>Keratin Bondings</h3>
-            <p>Einzelne Echthaarsträhnen mit Keratin-Verbindungsstellen. Die Auswahl der richtigen Menge und Befestigung gehört in professionelle Hände.</p>
-            <div className="rh-guide-method-facts"><span>100 % Echthaar</span><span>25 Bondings / Packung</span></div>
-            <Link href="/kollektionen/keratin-bondings/">KERATIN ENTDECKEN <ArrowUpRight size={17}/></Link>
+          <div className="rh-guide-method-photo"><img src="/media/tape-in-extensions-bg-17a4f5094.png" alt="Ruby Hair Tape-in Kurz"/></div>
+          <div className="rh-guide-method-info"><h3>Tape-in Kurz</h3>
+            <p>45–50 cm Echthaar-Extensions.</p>
+            <div className="rh-guide-method-facts"><span>100 % Echthaar</span><span>10 Tape-ins / Packung</span></div>
+            <Link href="/kollektionen/tape-in-extensions/?laenge=45-50-cm">TAPE-IN KURZ ANSEHEN <ArrowUpRight size={17}/></Link>
           </div>
         </article>
         <article>
-          <div className="rh-guide-method-photo"><img src="/media/tape-in-extensions-bg-17a4f5094.png" alt="Tape-in Extensions"/></div>
-          <div className="rh-guide-method-info"><div className="rh-eyebrow">02 / TAPE-IN</div><h3>Tape-in Extensions</h3>
-            <p>Echthaar-Extensions mit Tape-Verbindungen. Auch hier sind eine passende Platzierung und fachgerechte Anwendung wichtig.</p>
+          <div className="rh-guide-method-photo"><img src="/media/60-3-scaled-e99a55c0d.jpg" alt="Ruby Hair Tape-in Lang"/></div>
+          <div className="rh-guide-method-info"><h3>Tape-in Lang</h3>
+            <p>55–60 cm Echthaar-Extensions.</p>
             <div className="rh-guide-method-facts"><span>100 % Echthaar</span><span>10 Tape-ins / Packung</span></div>
-            <Link href="/kollektionen/tape-in-extensions/">TAPE-IN ENTDECKEN <ArrowUpRight size={17}/></Link>
+            <Link href="/kollektionen/tape-in-extensions/?laenge=55-60-cm">TAPE-IN LANG ANSEHEN <ArrowUpRight size={17}/></Link>
           </div>
         </article>
       </div>
@@ -119,9 +119,9 @@ export default function HairGuide(){
 
     <section className="rh-guide-faq rh-shell" id="faq">
       <div className="rh-section-heading"><div><div className="rh-eyebrow">03 / GUT ZU WISSEN</div>
-        <h2>Answers for <em>you.</em></h2></div><p>Antworten zu Produktarten, Pflege, Packungsinhalt und Farbwahl.</p></div>
+        <h2>Answers for <em>you.</em></h2></div><p>Antworten zu Pflege, Länge und Farbwahl.</p></div>
       <div className="rh-faq-layout">
-        <div className="rh-faq-aside"><HelpCircle size={30} strokeWidth={1.3}/><h3>Du bist unsicher?</h3><p>Wir helfen dir bei der Auswahl von Methode, Farbe und Länge.</p>
+        <div className="rh-faq-aside"><HelpCircle size={30} strokeWidth={1.3}/><h3>Du bist unsicher?</h3><p>Wir helfen dir bei Farbe und Länge.</p>
           <Link href="/kontakt/">PERSÖNLICH BERATEN LASSEN <ArrowUpRight size={17}/></Link>
         </div>
         <div className="rh-product-facts rh-faq-details">
@@ -135,7 +135,7 @@ export default function HairGuide(){
     <section className="rh-editorial-outro"><div className="rh-shell">
       <Sparkles size={26} strokeWidth={1.3}/>
       <div><span className="rh-eyebrow">NEXT STEP / YOUR SIGNATURE LOOK</span><h2>Ready for your<br/><em>new look?</em></h2></div>
-      <Link href="/kollektionen/" className="rh-editorial-cta">ALLE EXTENSIONS ENTDECKEN <ArrowUpRight size={17}/></Link>
+      <Link href="/kollektionen/" className="rh-editorial-cta">TAPE-IN LÄNGEN ENTDECKEN <ArrowUpRight size={17}/></Link>
     </div></section>
   </ShopLayout>;
 }

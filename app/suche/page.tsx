@@ -13,8 +13,8 @@ export default async function Search({searchParams}:{searchParams:Promise<{q?:st
       <nav className="rh-breadcrumb"><Link href="/">Startseite</Link><span>/</span><span>Suche</span></nav>
       <div className="rh-eyebrow">RUBY HAIR / PRODUKTSUCHE</div>
       <h1>Finde deinen <em>Shade.</em></h1>
-      <p>Suche nach Keratin, Tape-in oder deiner Lieblingshaarfarbe.</p>
+      <p>Finde deine Tape-in Farbe.</p>
     </section>
-    <ProductSearch initialQuery={q||""} products={products}/>
+    <ProductSearch initialQuery={q||""} products={products.filter(p=>p.slug==="tape-in-extensions")}/>
   </ShopLayout>;
 }
