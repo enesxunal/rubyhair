@@ -661,7 +661,7 @@ button.rh-editorial-cta{cursor:pointer}
 .rh-checkout-payment-preview button{width:100%;min-height:45px;border:1px solid #d5bdc4;background:#ded5d5;color:#695960;cursor:not-allowed}
 @media(max-width:600px){.rh-checkout-address{padding:17px}.rh-checkout-field-grid{grid-template-columns:1fr}.rh-checkout-field-full{grid-column:auto}}
 
-/* Opt-in analytics stays hidden on Vercel preview; no banner unless expressly activated. */
+/* Consent-first 1st-party analytics: no data is collected before explicit opt-in. */
 .rh-consent-panel{position:fixed;z-index:200;bottom:18px;left:18px;right:18px;max-width:550px;background:#fffdf9;border:1px solid #d3bfc6;box-shadow:0 10px 28px #33272b24;padding:21px;color:#493139}
 .rh-consent-panel strong{font:400 24px var(--serif)}
 .rh-consent-panel p{font-size:12px;line-height:1.7;color:#79666c}

@@ -353,9 +353,23 @@ test("analytics collection is disabled by default, consent-gated and strictly ca
  assert.ok(!server.includes('request.headers.get("x-real-ip")'));
  assert.ok(!server.includes('customerEmail'));
  assert.ok(client.includes('localStorage.getItem("ruby_analytics_choice")==="allow"'));
- assert.ok(client.includes('if(!allowed.has(path))return'));
+ assert.ok(client.includes('if(!isTrackableRubyPath(path))return'));
 });
 
+
+test("opt-in analytics handles page paths and purges daily aggregates after 180 days",()=>{
+ const server=fs.readFileSync(path.join(base,"app/api/analytics/event/route.ts"),"utf8");
+ const consent=fs.readFileSync(path.join(base,"src/components/analytics-consent.tsx"),"utf8");
+ const legal=fs.readFileSync(path.join(base,"app/rechtliches/[slug]/page.tsx"),"utf8");
+ assert.ok(server.includes('analyticsAggregate.deleteMany({where:{day:{lt:cutoff}}})'));
+ assert.ok(server.includes('now.getUTCDate()-180'));
+ assert.ok(consent.includes('isTrackableRubyPath(path)'));
+ assert.ok(consent.includes('ruby_analytics_choice'));
+ assert.ok(consent.includes('setOpen(true)'));
+ assert.ok(legal.includes('Freiwillige Nutzungsstatistik (nur mit Einwilligung)'));
+ assert.ok(legal.includes('180 Tage'));
+ assert.ok(!legal.includes('Anonyme Nutzungsstatistik (derzeit deaktiviert)'));
+});
 
 test("bulk variant editor requires admin, validates rows, and persists atomically",()=>{
   const source=fs.readFileSync(path.join(base,"app/admin/actions.ts"),"utf8");

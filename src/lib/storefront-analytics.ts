@@ -13,11 +13,12 @@ const source=()=>{
   return "referral";
  }catch{return "direct";}
 };
+export const isTrackableRubyPath=(path:string)=>allowed.has(path.replace(/\/$/,"")||"/");
 export const analyticsConsent=()=>enabled&&typeof window!=="undefined"&&localStorage.getItem("ruby_analytics_choice")==="allow";
 export function trackRubyEvent(event:RubyEvent){
  if(!analyticsConsent())return;
  const path=location.pathname.replace(/\/$/,"")||"/";
- if(!allowed.has(path))return;
+ if(!isTrackableRubyPath(path))return;
  // Only whitelisted categorical metadata, never URL query strings, personal fields or photo data.
  const payload=JSON.stringify({event,path,source:source(),device:innerWidth<=767?"mobile":"desktop",consent:true});
  fetch("/api/analytics/event",{method:"POST",headers:{"Content-Type":"application/json"},body:payload,credentials:"same-origin",keepalive:true,cache:"no-store"}).catch(()=>{});

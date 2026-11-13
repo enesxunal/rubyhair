@@ -12,7 +12,7 @@ const schema=z.object({
   consent:z.literal(true)
 }).strict();
 export async function POST(request:NextRequest){
- // Never collect anything on the Vercel preview or before approved GDPR setup.
+ // Collect only after explicit consent and both server/client activation flags.
  if(process.env.RUBY_ANALYTICS_ENABLED!=="APPROVED"||!databaseConfigured())
   return NextResponse.json({disabled:true},{status:503,headers:cache});
  const origin=request.headers.get("origin");
@@ -40,7 +40,11 @@ export async function POST(request:NextRequest){
  const {path,event,source,device}=parsed.data;
  const now=new Date();const day=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate()));
  try{
-  await getPrisma().analyticsAggregate.upsert({
+  const db=getPrisma();
+  // The database contains only aggregates. Delete rows older than 180 days.
+  const cutoff=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate()-180));
+  await db.analyticsAggregate.deleteMany({where:{day:{lt:cutoff}}});
+  await db.analyticsAggregate.upsert({
    where:{day_path_event_source_device:{day,path,event,source,device}},
    create:{day,path,event,source,device,count:1},update:{count:{increment:1}}
   });
