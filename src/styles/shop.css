@@ -670,3 +670,8 @@ button.rh-editorial-cta{cursor:pointer}
 .rh-consent-panel button{padding:10px 18px;border:1px solid #61404d;background:#61404d;color:white;min-height:44px}
 .rh-consent-panel button:first-child{background:white;color:#61404d}
 .rh-consent-settings{position:fixed;bottom:9px;left:10px;z-index:150;border:0;background:#fffdfaee;color:#5a4651;font-size:10px;padding:8px}
+
+/* Checkout payment method preview: display only, NEVER triggers a transaction. */
+.rh-payment-preview-heading{font-size:11px;color:#806c74;font-weight:650;margin:14px 0 9px}
+.rh-payment-preview-methods{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 20px}
+.rh-payment-preview-methods span{font-size:10px;color:#836c77;background:#faf6f4;border:1px solid #e7dbe0;padding:8px 10px}

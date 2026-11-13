@@ -115,3 +115,38 @@
 
 .rh-admin-analytics-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:11px 0;border-top:1px solid #eee4e0;font-size:12px;overflow-wrap:anywhere}
 .rh-admin-analytics-row strong{font-weight:650;color:#663e4e}
+
+/* Elmas-inspired bulk product editor and consent-only analytics dashboard */
+.rh-admin-bulk-form{display:grid;gap:13px}
+.rh-admin-bulk-top,.rh-admin-bulk-bottom{display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap}
+.rh-admin-bulk-top p,.rh-admin-bulk-bottom span{font-size:11px;color:#806b74;line-height:1.65;margin:0}
+.rh-admin-bulk-save{display:inline-flex;align-items:center;justify-content:center;gap:9px;border:0;color:#fff;background:#633746;padding:12px 17px;font-size:11px;font-weight:700;min-height:43px}
+.rh-admin-bulk-save:disabled{opacity:.45;cursor:not-allowed}
+.rh-admin-bulk-table{width:100%;min-width:630px;border-collapse:collapse}
+.rh-admin-bulk-table th{text-align:left;color:#8a717a;font-size:10px;padding:12px 11px;border-bottom:1px solid #eadfdb}
+.rh-admin-bulk-table td{padding:12px 11px;vertical-align:middle;border-bottom:1px solid #f0e8e5;color:#49373f;font-size:12px}
+.rh-admin-bulk-table td:first-child{display:flex;align-items:center;gap:10px;min-width:145px}
+.rh-admin-bulk-table td img{width:44px;height:44px;object-fit:cover}
+.rh-admin-bulk-table input[type=number]{width:100%;min-width:88px;border:1px solid #e1d6d1;padding:9px 10px;min-height:38px;color:#503d45;background:#fff}
+.rh-admin-bulk-table .rh-admin-active{white-space:nowrap}
+.rh-admin-bulk-bottom{padding:7px 2px 18px}
+.rh-admin-trend{margin:18px 0}
+.rh-admin-trend-scroll{overflow-x:auto}
+.rh-admin-trend-plot{height:215px;display:flex;align-items:end;gap:5px;padding:16px 0 28px;border-bottom:1px solid #e6d9dd}
+.rh-admin-trend-day{flex:1;min-width:9px;height:100%;position:relative;display:flex;flex-direction:column;justify-content:flex-end;align-items:center}
+.rh-admin-trend-column{display:flex;align-items:flex-end;width:min(100%,28px);height:100%;background:#f7f0f1}
+.rh-admin-trend-column i{width:100%;background:#905c70;border-radius:2px 2px 0 0}
+.rh-admin-trend-day small{position:absolute;bottom:-24px;font-size:9px;color:#8c787e;white-space:nowrap}
+.rh-admin-funnel{display:grid;gap:24px;margin:25px 0}
+.rh-admin-funnel-label{display:flex;justify-content:space-between;gap:15px;font-size:12px;color:#5c4850;margin-bottom:9px}
+.rh-admin-funnel-label small{font-weight:400;color:#927780;margin-left:8px}
+.rh-admin-funnel-bar{height:13px;border-radius:12px;background:#f1e6e8;overflow:hidden}
+.rh-admin-funnel-bar span{display:block;height:100%;background:#9b677a}
+.rh-admin-reports-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:18px}
+.rh-admin-payment-table{width:100%;border-collapse:collapse;min-width:850px;font-size:11px}
+.rh-admin-payment-table th,.rh-admin-payment-table td{text-align:left;padding:13px 9px;border-bottom:1px solid #eee3e4;vertical-align:top}
+.rh-admin-payment-table th{color:#94727d;font-size:10px}
+.rh-admin-payment-table code{font-size:10px;overflow-wrap:anywhere}
+.rh-admin-payment-wait{display:inline-block;background:#f8ece7;border:1px solid #e9d5cd;padding:6px 8px;color:#825b59;white-space:nowrap}
+@media(max-width:1050px){.rh-admin-reports-grid{grid-template-columns:1fr}}
+@media(max-width:560px){.rh-admin-bulk-top,.rh-admin-bulk-bottom{align-items:stretch}.rh-admin-bulk-save{width:100%}}

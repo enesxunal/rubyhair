@@ -4,6 +4,7 @@ import { isAdmin } from "@/lib/admin-auth";
 import { getPrisma } from "@/lib/prisma";
 import {saveVariantAction,saveProductAction} from "../actions";
 import AdminShell from "../admin-shell";
+import AdminVariantBulk from "@/components/admin-variant-bulk";
 
 export const metadata:Metadata={title:"Ruby Hair Verwaltung",robots:{index:false,follow:false}};
 export const dynamic="force-dynamic";
@@ -36,7 +37,7 @@ export default async function Admin({searchParams}:{searchParams:Promise<{update
         aria-current={mode===f.value?"page":undefined}
         className={mode===f.value?"is-active":undefined}>{f.name} <b>{f.n}</b></a>)}
     </nav>
-    {updated&&<p role="status" className="rh-admin-success">Variante gespeichert.</p>}
+    {updated&&<p role="status" className="rh-admin-success">{updated==="bulk"?"Alle Aenderungen gespeichert.":"Variante gespeichert."}</p>}
     {productUpdated&&<p role="status" className="rh-admin-success">Produkt gespeichert.</p>}
     {products.map(product=>{const visible=product.variants.filter(v=>matches(v.stockQuantity));if(!visible.length&&mode!=="alle")return null;return <section className="rh-admin-product" key={product.id} id={"produkt-"+product.id}>
       <h2>{product.name} <small>{visible.length} von {product.variants.length} Varianten</small></h2>
@@ -54,22 +55,10 @@ export default async function Admin({searchParams}:{searchParams:Promise<{update
           <button type="submit">Produkt speichern</button>
         </form>
       </details>
-      <div className="rh-admin-table-wrap"><table>
-        <thead><tr><th>Farbe</th><th>Länge</th><th>Preis (Cent)</th><th>Bestand</th><th>Aktiv</th><th>Aktion</th></tr></thead>
-        <tbody>{visible.map(v=><tr key={v.id}>
-          <td><img src={v.image} alt="" width={46} height={46}/><span>{v.colorLabel}</span></td>
-          <td>{v.lengthLabel}</td>
-          <td colSpan={4}><form action={saveVariantAction} className="rh-admin-variant-form">
-            <input type="hidden" name="id" value={v.id}/>
-            <label className="rh-admin-sr" htmlFor={"price-"+v.id}>Preis in Cent</label>
-            <input id={"price-"+v.id} aria-label="Preis in Cent" name="priceCents" type="number" min="1" max="1000000" step="1" defaultValue={v.priceCents} required/>
-            <label className="rh-admin-sr" htmlFor={"stock-"+v.id}>Bestand, leer bei unbekannt</label>
-            <input id={"stock-"+v.id} aria-label="Bestand" name="stockQuantity" type="number" min="0" max="1000000" step="1" defaultValue={v.stockQuantity??""} placeholder="Unbekannt"/>
-            <label className="rh-admin-active"><input type="checkbox" name="active" defaultChecked={v.active}/> Aktiv</label>
-            <button type="submit">Speichern</button>
-          </form></td>
-        </tr>)}</tbody>
-      </table></div>
+      <AdminVariantBulk productId={product.id} variants={visible.map(v=>({
+        id:v.id,colorLabel:v.colorLabel,lengthLabel:v.lengthLabel,image:v.image,
+        priceCents:v.priceCents,stockQuantity:v.stockQuantity,active:v.active
+      }))}/>
     </section>;})}
   </AdminShell>;
 }

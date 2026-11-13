@@ -289,7 +289,7 @@ test("virtual hair lab uses the real catalog and sends photos only with explicit
    assert.ok(!lab.includes(forbidden),"No persistent photo storage or unreviewed endpoints: "+forbidden);
  }
  const api=fs.readFileSync(path.join(base,"app/api/tryon/generate/route.ts"),"utf8");
- for(const marker of ["RUBY_TRYON_TEST_CODE","OPENAI_API_KEY","sessionLimited","form.get(\"consent\")","authorized(form.get(\"testCode\"))","gpt-image-2.5-sunburst","image[]","no-store, private"]){
+ for(const marker of ["RUBY_TRYON_TEST_CODE","OPENAI_API_KEY","form.get(\"consent\")","authorized(form.get(\"testCode\"))","gpt-image-2.5-sunburst","image[]","no-store, private"]){
    assert.ok(api.includes(marker),"Server-side guard missing: "+marker);
  }
  assert.ok(!lab.includes("OPENAI_API_KEY"),"Never expose provider key in the browser");
@@ -354,4 +354,45 @@ test("analytics collection is disabled by default, consent-gated and strictly ca
  assert.ok(!server.includes('customerEmail'));
  assert.ok(client.includes('localStorage.getItem("ruby_analytics_choice")==="allow"'));
  assert.ok(client.includes('if(!allowed.has(path))return'));
+});
+
+
+test("bulk variant editor requires admin, validates rows, and persists atomically",()=>{
+  const source=fs.readFileSync(path.join(base,"app/admin/actions.ts"),"utf8");
+  const editor=fs.readFileSync(path.join(base,"src/components/admin-variant-bulk.tsx"),"utf8");
+  const products=fs.readFileSync(path.join(base,"app/admin/produkte/page.tsx"),"utf8");
+  assert.ok(source.includes("export async function saveVariantBatchAction"));
+  assert.ok(source.includes("if(!await isAdmin())redirect"));
+  assert.ok(source.includes("await db.$transaction(async tx=>"));
+  assert.ok(source.includes("const byId=new Map"));
+  assert.ok(source.includes("where:{id:v.id,productId,priceCents:v.beforePrice"));
+  assert.ok(editor.includes('name="variantId"'));
+  assert.ok(editor.includes('name={v.id+":stockQuantity"}'));
+  assert.ok(editor.includes("Alle Änderungen speichern"));
+  assert.ok(products.includes("<AdminVariantBulk"));
+});
+
+test("payment planning never opens live checkout or duplicates WordPress credentials",()=>{
+  const page=fs.readFileSync(path.join(base,"app/admin/zahlungen/page.tsx"),"utf8");
+  const checkout=fs.readFileSync(path.join(base,"app/api/checkout/route.ts"),"utf8");
+  assert.ok(page.includes("Nicht angebunden"));
+  for(const id of ["woocommerce_payments","ppcp-gateway","klarna_payments","bacs","ppcp-trustly"])assert.ok(page.includes(id),id);
+  assert.ok(checkout.includes("CHECKOUT_NOT_CONFIGURED"));
+  assert.ok(checkout.includes("503"));
+});
+
+test("admin traffic report reads aggregate events with explicit no-sales and consent warnings",()=>{
+  const page=fs.readFileSync(path.join(base,"app/admin/analytics/page.tsx"),"utf8");
+  assert.ok(page.includes("analyticsAggregate.groupBy"));
+  assert.ok(page.includes('RUBY_ANALYTICS_ENABLED==="APPROVED"'));
+  assert.ok(page.includes("Keine eindeutigen Besucher"));
+  assert.ok(page.includes("Noch keine verifizierte PSP-Integration"));
+});
+
+test("private hair demo retains consent and access key without artificial three-attempt cap",()=>{
+  const api=fs.readFileSync(path.join(base,"app/api/tryon/generate/route.ts"),"utf8");
+  assert.ok(api.includes('form.get("consent")!=="yes"'));
+  assert.ok(api.includes('authorized(form.get("testCode"))'));
+  assert.ok(!api.includes("sessionLimited("));
+  assert.ok(!api.includes("const attempts=new Map"));
 });

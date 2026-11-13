@@ -65,6 +65,73 @@ export async function saveVariantAction(formData:FormData){
   redirect("/admin/produkte?updated=1");
 }
 
+
+// Elmas Triko-inspired single-submit product variant editor.
+// Updates are atomic and reject stale rows, so two administrators cannot silently overwrite changes.
+export async function saveVariantBatchAction(formData:FormData){
+  if(!await isAdmin())redirect("/admin/login");
+  const productId=z.string().uuid().parse(formData.get("productId"));
+  const ids=formData.getAll("variantId");
+  if(!ids.length||ids.length>80||ids.some(v=>typeof v!=="string"||!z.string().uuid().safeParse(v).success))
+    throw new Error("Ungueltige Variantenliste");
+  const names=ids as string[];
+  if(new Set(names).size!==names.length)throw new Error("Doppelte Varianten-IDs");
+  const required=(key:string)=>{
+    const value=formData.get(key);
+    if(typeof value!=="string")throw new Error("Fehlendes Feld: "+key);
+    return value;
+  };
+  const cents=(s:string)=>{
+    const match=/^(\d{1,5})(?:\.(\d{1,2}))?$/.exec(s);
+    if(!match)throw new Error("Preis muss ein Eurobetrag mit maximal zwei Dezimalstellen sein");
+    const amount=Number(match[1])*100+Number((match[2]||"").padEnd(2,"0"));
+    if(amount<1||amount>1_000_000)throw new Error("Preis ausserhalb des erlaubten Bereichs");
+    return amount;
+  };
+  const integer=(s:string)=>{
+    if(!/^\d{1,7}$/.test(s)||Number(s)>1_000_000)throw new Error("Ungueltiger Bestand");
+    return Number(s);
+  };
+  const optionalStock=(s:string)=>s===""?null:integer(s);
+  const changes=names.map(id=>{
+    const beforePrice=integer(required(id+":beforePriceCents"));
+    const beforeStock=optionalStock(required(id+":beforeStock"));
+    const beforeActive=required(id+":beforeActive")==="1";
+    const priceCents=cents(required(id+":priceEUR"));
+    const stockQuantity=optionalStock(required(id+":stockQuantity"));
+    const active=formData.get(id+":active")==="on";
+    return {id,beforePrice,beforeStock,beforeActive,priceCents,stockQuantity,active};
+  });
+  const db=getPrisma();
+  const product=await db.product.findUnique({where:{id:productId},select:{slug:true}});
+  if(!product)throw new Error("Produkt nicht gefunden");
+  await db.$transaction(async tx=>{
+    const existing=await tx.variant.findMany({
+      where:{productId,id:{in:names}},
+      select:{id:true,priceCents:true,stockQuantity:true,active:true}
+    });
+    if(existing.length!==changes.length)throw new Error("Varianten stimmen nicht mit Produkt ueberein");
+    const byId=new Map(existing.map(v=>[v.id,v]));
+    for(const v of changes){
+      const current=byId.get(v.id)!;
+      if(current.priceCents!==v.beforePrice||current.stockQuantity!==v.beforeStock||current.active!==v.beforeActive)
+        throw new Error("Daten wurden inzwischen geaendert. Bitte Seite neu laden.");
+      if(v.priceCents===v.beforePrice&&v.stockQuantity===v.beforeStock&&v.active===v.beforeActive)continue;
+      const updated=await tx.variant.updateMany({
+        where:{id:v.id,productId,priceCents:v.beforePrice,stockQuantity:v.beforeStock,active:v.beforeActive},
+        data:{priceCents:v.priceCents,stockQuantity:v.stockQuantity,active:v.active}
+      });
+      if(updated.count!==1)throw new Error("Gleichzeitige Bearbeitung. Bitte neu laden.");
+    }
+  });
+  revalidatePath("/kollektionen/"+product.slug);
+  revalidatePath("/produkt/"+product.slug);
+  revalidatePath("/admin");
+  revalidatePath("/admin/produkte");
+  revalidatePath("/api/catalog");
+  redirect("/admin/produkte?updated=bulk");
+}
+
 const productInput=z.object({
   id:z.string().uuid(),
   name:z.string().trim().min(3).max(120),

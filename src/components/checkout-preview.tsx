@@ -41,7 +41,11 @@ export default function CheckoutPreview(){
           </article>)}
         </div>
         {loaded&&lines.length>0&&<CheckoutAddressPreview/>}
-        <div className="rh-checkout-payment-preview"><h3>03 / ZAHLUNG</h3><p>Die Zahlungsart wählst du nach der Freigabe des Shops. Aktuell kann kein Kauf ausgelöst werden.</p>
+        <div className="rh-checkout-payment-preview"><h3>03 / ZAHLUNG</h3>
+          <p className="rh-payment-preview-heading">Vorgesehene Zahlungsmethoden aus dem bisherigen Shop (noch nicht aktiv)</p>
+          <div className="rh-payment-preview-methods" aria-label="Vorgesehene Zahlungsmethoden, nicht aktiv">
+            {["PayPal","Visa / Mastercard","Klarna","Banküberweisung","Trustly"].map(method=><span key={method}>{method}</span>)}
+          </div><p>Die Zahlungsart wählst du nach der Freigabe des Shops. Aktuell kann kein Kauf ausgelöst werden.</p>
          <button type="button" disabled aria-disabled="true">Zahlungspflichtig bestellen — noch gesperrt</button></div>
         <Link className="rh-continue-shop" href="/versand-zahlung/">Versand, Zahlung & Widerruf ansehen ↗</Link>
         <Link className="rh-checkout-return" href="/warenkorb/">← ZURÜCK ZUM WARENKORB</Link>

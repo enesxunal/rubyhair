@@ -14,7 +14,6 @@ const MAX_IMAGE_BYTES=3_500_000;
 const MAX_RESPONSE_BASE64=3_700_000;
 const MIME_TYPES=["image/jpeg","image/png","image/webp"] as const;
 const NO_STORE={"Cache-Control":"no-store, private","X-Robots-Tag":"noindex, nofollow"};
-const attempts=new Map<string,{until:number,count:number}>();
 const deny=(message:string,status:number)=>NextResponse.json({error:message},{status,headers:NO_STORE});
 
 function isConfigured(){
@@ -32,16 +31,6 @@ function validMagic(bytes:Buffer,mime:string){
  if(mime==="image/jpeg")return bytes.length>=3&&bytes[0]===255&&bytes[1]===216&&bytes[2]===255;
  if(mime==="image/png")return bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]));
  if(mime==="image/webp")return bytes.toString("ascii",0,4)==="RIFF"&&bytes.toString("ascii",8,12)==="WEBP";
- return false;
-}
-function sessionLimited(key:string){
- const now=Date.now();
- if(attempts.size>1000)for(const [entry,value] of attempts)if(value.until<now)attempts.delete(entry);
- const row=attempts.get(key);
- if(row&&row.until>now){
-  if(row.count>=3)return true;
-  row.count++;
- }else attempts.set(key,{count:1,until:now+20*60_000});
  return false;
 }
 const products=Object.values(catalog.products);
@@ -104,9 +93,6 @@ export async function POST(request:NextRequest){
   return deny("Bitte ein JPG-, PNG- oder WebP-Bild bis 3,5 MB hochladen.",400);
  const imageBytes=Buffer.from(await photo.arrayBuffer());
  if(!validMagic(imageBytes,photo.type))return deny("Bilddatei ist ungültig.",400);
- const clientIp=request.headers.get("x-real-ip")||request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()||"anonymous";
- const key=createHash("sha256").update(clientIp+"|"+process.env.RUBY_TRYON_TEST_CODE).digest("hex");
- if(sessionLimited(key))return deny("Testlimit erreicht: maximal drei Anproben in 20 Minuten.",429);
  const {product,variant}=selected;
  if(!variant.image.startsWith("/media/")||!/^\/media\/[a-zA-Z0-9_.-]+\.(jpg|jpeg|png|webp)$/.test(variant.image))
   return deny("Farbmuster für dieses Produkt fehlt.",422);
