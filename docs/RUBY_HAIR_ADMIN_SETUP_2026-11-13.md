@@ -25,3 +25,6 @@ Musteri PayPal/Klarna/kart PSP bilgilerini admin formlarindan girdikten sonra ba
 - Admin ayarlari Vercel'e henüz girilmediyse giriş formu acilmaz; `adminConfigured` false.
 - Sifreleme anahtari girilmediyse ödeme kodu kaydetme formu disabled olur.
 - Demo noindex ve gerçek checkout kapali kalmali.
+
+## 13.11.2026 admin login kontrolu
+Vercel production env 4 ayar mevcut, DB/API katalog PASS. Canli login sayfasi yalnizca bcrypt ADMIN_PASSWORD_HASH formatini gecersiz okuyor (diger 4 kontrol PASS). Yeni hash uretirken `node scripts/hash-admin-password.cjs` komutunun yazdigi `ADMIN_PASSWORD_HASH=$2b...` satirindan sadece `$2b...` ile baslayan 60 karakterlik gercek hash degerini Vercel Production / Secret alana yaz. Gercek giris sifren bu hash uretilirken kullandigin sifredir. Teknik olarak kod `ADMIN_PASSWORD_HASH=` prefixini de tolere ediyor ama canli env bununla ilgili degil. Kopyalarken bosluk/satir sonu/duz sifreyi hash yerine koyma. Ardindan redeploy ve /admin/login E2E. Gecici tanilama endpointi ve loglari kaldirildi.

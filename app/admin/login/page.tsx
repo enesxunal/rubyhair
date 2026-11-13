@@ -7,12 +7,6 @@ export const dynamic="force-dynamic";
 export default async function AdminLogin({searchParams}:{searchParams:Promise<{error?:string}>}){
   if(await isAdmin())redirect("/admin");
   const configured=adminConfigured();
-  if(!configured) console.warn("RUBY_ADMIN_READINESS",{
-    database: Boolean(process.env.DATABASE_URL?.startsWith("postgres")),
-    email: Boolean(process.env.ADMIN_EMAIL?.includes("@")),
-    passwordHashFormat: Boolean(process.env.ADMIN_PASSWORD_HASH?.startsWith("$2")),
-    sessionLength: (process.env.SESSION_SECRET?.length||0)>=32
-  });
   const {error}=await searchParams;
   return <main className="rh-admin-login">
     <div className="rh-admin-eyebrow">RUBY HAIR / VERWALTUNG</div>
