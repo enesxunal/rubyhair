@@ -21,7 +21,12 @@ function classifier(decision:MockDecision,confidence=0.97){
   assert.equal(body.store,false);
   assert.equal(body.model,"gpt-4.1-mini");
   assert.equal(body.input[0].content[1].type,"input_image");
-  assert.equal(body.text.format.type,"json_schema");
+  assert.equal(body.input[0].content[1].detail,"high");
+  assert.ok(body.instructions.includes("PHOTOREALISTIC synthetic/AI-generated portraits"));
+  assert.ok(body.instructions.includes("hair crown"));
+  assert.ok(body.instructions.includes("head_cropped ONLY"));
+  assert.ok(body.instructions.includes("REJECT multiple_people"));
+  assert.ok(body.text.format.type,"json_schema");
   assert.ok(body.input[0].content[1].image_url.startsWith("data:image/jpeg;base64,"));
   return visionReply(decision,confidence);
  };
@@ -140,4 +145,13 @@ test("approved photo proceeds to image editor only after passing vision",async()
   if(originalKey===undefined)delete process.env.RUBY_HAIR_OPENAI_API_KEY;
   else process.env.RUBY_HAIR_OPENAI_API_KEY=originalKey;
  }
+});
+
+
+test("photorealistic single-person demo portraits are not blocked by file-origin metadata",async()=>{
+ // The suitability API classifies actual image content. It must not reject
+ // all synthetic images: our photo-realistic test portraits are eligible.
+ const demo=Buffer.from([0xff,0xd8,0xff,0x01,0x02,0xd9]);
+ const result=await checkPhotoSuitability(demo,"image/jpeg","sk-test",classifier("suitable",0.92).fake);
+ assert.deepEqual(result,{status:"accepted"});
 });
