@@ -2,6 +2,7 @@ import {readFile} from "node:fs/promises";
 import path from "node:path";
 import {NextRequest,NextResponse} from "next/server";
 import catalog from "@/data/products.json";
+import {checkPhotoSuitability,photoSuitabilityMessage} from "@/lib/tryon-photo-suitability";
 
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
@@ -83,6 +84,19 @@ export async function POST(request:NextRequest){
   return deny("Bitte ein JPG-, PNG- oder WebP-Bild bis 3,5 MB hochladen.",400);
  const imageBytes=Buffer.from(await photo.arrayBuffer());
  if(!validMagic(imageBytes,photo.type))return deny("Bilddatei ist ungültig.",400);
+ // Reject unsuitable photos BEFORE calling the expensive hair editing endpoint.
+ // On classifier error, fail closed: never try to generate from an unchecked image.
+ const suitability=await checkPhotoSuitability(
+  imageBytes,photo.type as "image/jpeg"|"image/png"|"image/webp",
+  process.env.RUBY_HAIR_OPENAI_API_KEY!
+ );
+ if(suitability.status==="unavailable")
+  return deny("Foto-Prüfung derzeit nicht verfügbar. Bitte später erneut versuchen.",503);
+ if(suitability.status==="rejected")
+  return NextResponse.json({
+   error:photoSuitabilityMessage(suitability.reason),
+   code:"photo_unsuitable",reason:suitability.reason
+  },{status:422,headers:NO_STORE});
  const {product,variant}=selected;
  if(!variant.image.startsWith("/media/")||!/^\/media\/[a-zA-Z0-9_.-]+\.(jpg|jpeg|png|webp)$/.test(variant.image))
   return deny("Farbmuster für dieses Produkt fehlt.",422);

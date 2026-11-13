@@ -161,16 +161,16 @@ export default function HairTryonLab({products}:{products:Product[]}){
       {aiAvailable===false&&<p role="status" className="rh-tryon-disabled">Der Bildgenerator ist noch nicht verfügbar. Bitte den OpenAI API-Schlüssel auf dem Server hinterlegen.</p>}
       {aiAvailable===null&&<p role="status" className="rh-tryon-muted">KI-Verfügbarkeit wird geprüft …</p>}
       {aiAvailable===true&&<div className="rh-tryon-ai-access">
-       <label className="rh-tryon-consent"><input type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)}/><span>Ich bestätige, dass ich das Foto verwenden darf. Ich stimme zu, dass es einmalig zur KI-Haarbearbeitung an <strong>OpenAI</strong> übermittelt wird. Es wird von Ruby Hair nicht dauerhaft gespeichert. <Link href="/rechtliches/datenschutz/">Datenschutz</Link></span></label>
+       <label className="rh-tryon-consent"><input type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)}/><span>Ich bestätige, dass ich das Foto verwenden darf. Ich stimme zu, dass es für die Foto-Eignungsprüfung und die anschließende KI-Haarbearbeitung an <strong>OpenAI</strong> übermittelt wird. Es wird von Ruby Hair nicht dauerhaft gespeichert. <Link href="/rechtliches/datenschutz/">Datenschutz</Link></span></label>
       </div>}
       <button type="button" className="rh-tryon-generate-button" disabled={!before||!aiAvailable||generating} onClick={createTryon}>
        <Sparkles size={19}/>{generating?"KI erstellt dein Ergebnis …":"Saçımda Dene · Haare virtuell verlängern"}
       </button>
-      {generating&&<p role="status" className="rh-tryon-muted">Dein Foto wird verarbeitet. Bitte diese Seite geöffnet lassen und den Button nicht erneut drücken.</p>}
+      {generating&&<p role="status" className="rh-tryon-muted">Wir prüfen zuerst, ob dein Foto geeignet ist. Nur bei passendem Bild wird die KI-Haarvorschau erstellt. Bitte diese Seite geöffnet lassen.</p>}
       {aiInfo&&<p role="status" className="rh-tryon-success">{aiInfo}</p>}
      </div>
      {issue&&<p role="alert" className="rh-tryon-error">{issue}</p>}
-     {!before?<div className="rh-tryon-placeholder"><Scissors size={49} strokeWidth={1.2}/><h3>Dein Foto. Dein Look.</h3><p>Bitte lade ein eigenes Foto mit gut sichtbaren Haaren und Schultern hoch. Keine Hüte, keine starken Filter – idealerweise von vorn oder leicht seitlich.</p><small>JPG, PNG, WebP · max. 8 MB · keine Serverübertragung</small></div>:
+     {!before?<div className="rh-tryon-placeholder"><Scissors size={49} strokeWidth={1.2}/><h3>Dein Foto. Dein Look.</h3><p>Bitte ein klares Foto von genau einer Person hochladen: Kopf, Haare und Schultern gut sichtbar, von vorn, seitlich oder von hinten. Keine Gruppen, Tiere, Gegenstände, Collagen, Hüte oder starken Filter.</p><small>JPG, PNG, WebP · max. 8 MB · Übertragung nur nach Zustimmung und Klick auf „Saçımda Dene“</small></div>:
        <div className="rh-tryon-viewer">
         <div className="rh-tryon-before"><img src={before.url} alt="Vorher: Originalfoto" /></div>
         {after&&<><div className="rh-tryon-after" style={{clipPath:"inset(0 0 0 "+ratio+"%)"}}><img src={after.url} alt="Nachher: manuell hochgeladenes KI-Ergebnis"/></div><div className="rh-tryon-divider" style={{left:ratio+"%"}}><ArrowLeftRight size={18}/></div></>}

@@ -10,7 +10,11 @@
 - https://rubyhair.vercel.app/haar-anprobe/ uzerinden kendi izinli bir fotografla bir gercek test yap. Test sonucu dogal sac rengi/sekli bozulursa bunu basarili diye sunma.
 - Fotograf secimi/renk/uzunluk + acik foto isleme onayi olmadan API cagrisina izin verilmez.
 - Eski ozel giris kodu istendi mi? Hayir. 20 dakikada uc uretim siniri? Hayir.
-- Model: gpt-image-2.5-sunburst, /v1/images/edits. Ucretler ve model erisimi ilgili OpenAI API projesine aittir.
+- Iki asama: once gpt-4.1-mini ile Responses API uzerinden foto uygunluk testi (store:false), sadece 'suitable' ve confidence >= 0.85 ise gpt-image-2.5-sunburst /v1/images/edits ile sac ekleme. Bu iki modele de API projesinde erisim olmali.
+- One/yan/arkadan tek kisilik gercek fotograflar kabul edilebilir. Birden cok kisi, manzara/urun/hayvan, saci gorunmeyen, kadraj disinda kafa, cok uzak veya bulanik foto reddedilir.
+- Vision siniflandirma servisi hatali/erisilemez ise image edit denemesi BASLAMAZ. Basarisiz uygunluk denetiminde sadece foto kontrolu API maliyeti dogabilir, gorsel olusturma calismaz.
+- Foto akisi sunucuda baslangictan sona uygulanan bu kontrolu sadece istemci tarafinda saklamaz. Test kodu veya 3 kez siniri yok.
+- Tam gercek kullanici kalitesi anahtar tanimlandiktan sonra farkli pozlardaki orneklerle test edilmelidir; AI uygunluk analizi yanilabilir.
 - API public demo uzerinden cagrilabilir. Key eklendikten sonra her izinli uretim API maliyetine neden olabilir; kullanimi OpenAI projesinin Billing/Usage panelinden izle.
 - Fotograf Ruby Hair veritabaninda kalici olarak saklanmiyor, provider islemesi ve site gizlilik metni ayri.
 - Gercek siparis/odeme canliya alinmaz. rubyhair.de eski WP DNS degismez.
