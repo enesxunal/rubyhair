@@ -1,7 +1,7 @@
 import type {Metadata} from "next";
 import Link from "next/link";
 import {redirect} from "next/navigation";
-import {ClipboardList,Clock3,ArrowUpRight} from "lucide-react";
+import {ClipboardList,Clock3,ArrowUpRight,ShieldCheck,WalletCards} from "lucide-react";
 import {isAdmin} from "@/lib/admin-auth";
 import {getPrisma} from "@/lib/prisma";
 import {isKnownOrderState,orderStates} from "@/lib/order-lifecycle";
@@ -57,7 +57,14 @@ export default async function AdminOrders({searchParams}:{searchParams:Promise<{
    ].map(item=><Link key={item.value} href={"/admin/bestellungen?filter="+item.value}
        aria-current={filter===item.value?"page":undefined} className={filter===item.value?"is-active":undefined}>{item.label}</Link>)}
   </nav>
-  {orders.length===0?<div className="rh-admin-panel-card rh-admin-empty"><ClipboardList size={29}/><h2>Keine Bestelldatensätze</h2><p>Für diesen Filter sind noch keine Datensätze vorhanden. Das ist normal, solange der Checkout gesperrt ist.</p></div>:
+  {orders.length===0?<div className="rh-admin-panel-card rh-admin-empty rh-studio-orders-empty">
+      <span className="rh-studio-orders-empty-icon"><ClipboardList size={27}/></span><h2>Noch keine Bestelldatensätze</h2>
+      <p>In diesem Filter liegen keine Bestellungen vor. Live-Verkäufe sind noch deaktiviert – dies ist kein Umsatzbericht.</p>
+      <div className="rh-studio-orders-next">
+       <Link href="/admin/zahlungen"><WalletCards size={16}/> Zahlungsintegration vorbereiten <ArrowUpRight size={15}/></Link>
+       <Link href="/admin/produkte"><ShieldCheck size={16}/> Bestände prüfen <ArrowUpRight size={15}/></Link>
+      </div>
+     </div>:
    <section className="rh-admin-panel-card rh-admin-orders-card">
     <div className="rh-admin-card-title"><div><span>DATENBANK / LESEN</span><h2>{count} Einträge</h2></div><span>Seite {page} von {totalPages}</span></div>
     <div className="rh-admin-orders-list">

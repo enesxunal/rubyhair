@@ -253,7 +253,9 @@ test("admin pages use authenticated separate dashboard, product and read-only or
  assert.ok(orders.includes('statusEvents'));
  assert.ok(!orders.includes('action={saveVariantAction}'));
  assert.ok(!orders.includes('payment_confirmed:['));
- assert.ok(dash.includes('Bestand ungeprüft'));
+ assert.ok(dash.includes('Varianten ohne Menge'));
+ assert.ok(dash.includes('loadAnalyticsReport(7)'));
+ assert.ok(dash.includes('Checkout und Zahlung end-to-end getestet'));
  assert.ok(actions.includes('redirect("/admin/produkte?updated=1")'));
  assert.ok(actions.includes('redirect("/admin/produkte?productUpdated=1")'));
  assert.ok(fs.existsSync(path.join(base,"src/styles/admin.css")));
@@ -397,12 +399,19 @@ test("payment planning never opens live checkout or duplicates WordPress credent
   assert.ok(checkout.includes("503"));
 });
 
-test("admin traffic report reads aggregate events with explicit no-sales and consent warnings",()=>{
+test("admin analytics reads anonymous aggregates and never invents sessions or sales",()=>{
   const page=fs.readFileSync(path.join(base,"app/admin/analytics/page.tsx"),"utf8");
-  assert.ok(page.includes("analyticsAggregate.groupBy"));
+  const data=fs.readFileSync(path.join(base,"src/lib/admin-analytics-server.ts"),"utf8");
+  const report=fs.readFileSync(path.join(base,"src/lib/admin-analytics-report.ts"),"utf8");
+  const exportRoute=fs.readFileSync(path.join(base,"app/admin/analytics/export/route.ts"),"utf8");
+  assert.ok(data.includes("analyticsAggregate.findMany"));
   assert.ok(page.includes('RUBY_ANALYTICS_ENABLED==="APPROVED"'));
   assert.ok(page.includes("Keine eindeutigen Besucher"));
-  assert.ok(page.includes("Noch keine verifizierte PSP-Integration"));
+  assert.ok(page.includes("keine Conversion-Rate"));
+  assert.ok(page.includes("Checkout und PSP noch deaktiviert"));
+  assert.ok(report.includes("never estimates people, sessions, conversion rates"));
+  assert.ok(exportRoute.includes('if(!await isAdmin())'));
+  assert.ok(exportRoute.includes("private, no-store"));
 });
 
 test("image generation requires consent but never an end-user test code",()=>{
@@ -487,4 +496,24 @@ test("Ruby Hair admin login uses a native POST and explicit redirect/errors",()=
  assert.ok(route.includes('await issueAdminSession()'));
  assert.ok(route.includes('origin_mismatch'));
  assert.ok(route.includes('new URL("/admin"')||route.includes('location(request,"/admin")'));
+});
+
+test("admin V2 analytics and launch readiness stay grounded in aggregates",()=>{
+ const page=fs.readFileSync(path.join(base,"app/admin/analytics/page.tsx"),"utf8");
+ const helper=fs.readFileSync(path.join(base,"src/lib/admin-analytics-server.ts"),"utf8");
+ const exportRoute=fs.readFileSync(path.join(base,"app/admin/analytics/export/route.ts"),"utf8");
+ const css=fs.readFileSync(path.join(base,"src/styles/admin-v2.css"),"utf8");
+ const dashboard=fs.readFileSync(path.join(base,"app/admin/page.tsx"),"utf8");
+ const products=fs.readFileSync(path.join(base,"app/admin/produkte/page.tsx"),"utf8");
+ const chart=fs.readFileSync(path.join(base,"src/components/admin-activity-chart.tsx"),"utf8");
+ assert.ok(page.includes("Referrer-Kategorien"));
+ assert.ok(page.includes("Conversion-Rate"));
+ assert.ok(page.includes("CSV exportieren"));
+ assert.ok(helper.includes("select:{day:true,event:true,path:true,source:true,device:true,count:true}"));
+ assert.ok(!exportRoute.includes("customerEmail"));
+ assert.ok(exportRoute.includes("await isAdmin()"));
+ assert.ok(css.includes("@media(max-width:650px)"));
+ assert.ok(dashboard.includes("Einrichtungsschritte"));
+ assert.ok(products.includes("Bestandsdaten geprüft"));
+ assert.ok(!chart.includes("<title>"));
 });

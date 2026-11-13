@@ -1,4 +1,5 @@
 import type {Metadata} from "next";
+import {ShieldCheck,LockKeyhole,AlertCircle,CheckCircle2,ArrowRight} from "lucide-react";
 import {redirect} from "next/navigation";
 import {isAdmin} from "@/lib/admin-auth";
 import {getPrisma} from "@/lib/prisma";
@@ -24,11 +25,17 @@ export default async function PaymentsReadiness({
     params.status==="unchanged"?"Keine Änderungen vorgenommen.":null;
   return <AdminShell current="payments" title="Zahlungen & Integrationen."
     description="Zugangsdaten für PayPal, Kartenzahlungen, Klarna und Banküberweisung geschützt hinterlegen. Noch keine Live-Zahlungen.">
-    <section className="rh-admin-intro-banner">
-      <div><span>PAYMENTS / SETUP</span><h2>Hier kannst du die Zugangsdaten hinterlegen.</h2>
-        <p>Gespeicherte Werte werden verschlüsselt in PostgreSQL abgelegt. Sie sind später nicht im Browser auslesbar. Leere Felder ändern bestehende Werte nicht.</p>
-      </div>
+    <section className="rh-studio-payments-head">
+      <div><span className="rh-studio-eyebrow"><ShieldCheck size={14}/> PAYMENT READINESS / VORSCHAU</span>
+       <h2>Zugangsdaten sicher verwalten.<br/><em>Live-Zahlungen bleiben gesperrt.</em></h2>
+       <p>API-Zugänge für Provider geschützt vorbereiten. Ein gespeicherter Schlüssel ist noch keine verifizierte Zahlungsintegration.</p>
+      </div><LockKeyhole size={44} strokeWidth={1.2}/>
     </section>
+    <div className="rh-studio-payment-steps">
+      <div><span><CheckCircle2 size={17}/> 01 / DATENBANK</span><strong>{ready?"Verschlüsselter Speicher bereit":"Verschlüsselter Speicher fehlt"}</strong><small>Serverseitig, keine Klartext-Anzeige</small></div>
+      <div><span><AlertCircle size={17}/> 02 / PROVIDER-DATEN</span><strong>{saved.length} Felder gespeichert</strong><small>Kein Live-Status oder Zahlungsnachweis</small></div>
+      <div><span><LockKeyhole size={17}/> 03 / TRANSAKTIONEN</span><strong>Noch nicht aktiviert</strong><small>Adapter, Webhooks und Sandbox-QA ausstehend</small></div>
+    </div>
     {!ready&&<p role="alert" className="rh-admin-warning">
       Verschlüsselte Speicherung nicht eingerichtet. In der Serverumgebung muss RUBY_PAYMENT_SETTINGS_KEY
       (32 Byte, base64url) gesetzt und die Datenbankmigration eingespielt werden. Speichern ist bis dahin gesperrt.
@@ -45,6 +52,10 @@ export default async function PaymentsReadiness({
             <span>{definition.fields.length} Felder</span>
           </div>
           <p className="rh-admin-muted">{definition.explanation}</p>
+          <div className="rh-studio-provider-note">
+           <span>{saved.filter(v=>v.provider===provider).length} gespeicherte Einstellungen</span>
+           <span>Keine Transaktionen aktiviert <ArrowRight size={13}/></span>
+          </div>
           {(provider==="bank"?["live"] as const:paymentEnvironments).map(environment=>
             <form action={savePaymentSettingsAction} key={environment} className="rh-admin-credentials-form" autoComplete="off">
               <input type="hidden" name="provider" value={provider}/>

@@ -1,5 +1,7 @@
 import type {Metadata} from "next";
 import { redirect } from "next/navigation";
+import Link from "next/link";
+import {AlertCircle,CheckCircle2,Boxes,ArrowUpRight} from "lucide-react";
 import { isAdmin } from "@/lib/admin-auth";
 import { getPrisma } from "@/lib/prisma";
 import {saveVariantAction,saveProductAction} from "../actions";
@@ -18,14 +20,26 @@ export default async function Admin({searchParams}:{searchParams:Promise<{update
   const count=products.reduce((n,p)=>n+p.variants.length,0);
   const unknown=products.reduce((n,p)=>n+p.variants.filter(v=>v.stockQuantity===null).length,0);
   const zero=products.reduce((n,p)=>n+p.variants.filter(v=>v.stockQuantity===0).length,0);
+  const verified=count-unknown;
+  const verifiedPercent=count?Math.round(verified/count*100):0;
   const mode=["unbekannt","null","verifiziert"].includes(bestand||"")?bestand:"alle";
   const matches=(stock:number|null)=>mode==="alle"||mode==="unbekannt"&&stock===null||mode==="null"&&stock===0||mode==="verifiziert"&&stock!==null;
   return <AdminShell current="products" title="Produkte & Bestand." description="Artikeltexte, Preise und Varianten verwalten. Leere Bestandsfelder bedeuten unbekannt – nicht ausverkauft.">
-    <div className="rh-admin-pill-row"><span className="rh-admin-stat-pill">{products.length} Produkte</span>
-      <span className="rh-admin-stat-pill">{count} Varianten</span>
-      <span className="rh-admin-stat-pill is-alert">{unknown} unbekannte Lagerbestände</span>
-    </div>
-    <p className="rh-admin-warning">Kundenbestellungen und Zahlungen sind gesperrt. Bestand ohne Angabe bedeutet: nicht verifiziert.</p>
+    <section className="rh-admin-panel-card rh-studio-products-health">
+      <div className="rh-studio-products-health-head">
+        <div><span className="rh-admin-overline">LAGER / QUALITÄTSKONTROLLE</span><h2>{verifiedPercent}% Bestandsdaten geprüft</h2>
+          <p>{verified} von {count} Varianten mit bekannter Stückzahl. Unbekannt ist nicht dasselbe wie ausverkauft.</p></div>
+        {unknown?<AlertCircle size={27}/>:<CheckCircle2 size={27}/>}
+      </div>
+      <div className="rh-admin-inventory-bar" aria-label={verified+" von "+count+" Varianten mit bekannter Stückzahl"}><span style={{width:verifiedPercent+"%"}}/></div>
+      <div className="rh-studio-products-totals"><span><b>{products.length}</b> Produkte</span><span><b>{count}</b> Varianten</span>
+        <span><b>{unknown}</b> Mengen unbekannt</span><span><b>{zero}</b> Ausverkauft (0)</span></div>
+    </section>
+    <nav className="rh-studio-product-jump" aria-label="Zu Produkten springen">
+      <strong>PRODUKTÜBERSICHT</strong>
+      {products.map(p=><Link key={p.id} href={"#produkt-"+p.id}>{p.name} <span>{p.variants.length} Varianten</span><ArrowUpRight size={14}/></Link>)}
+    </nav>
+    <p className="rh-admin-warning">Wichtig: Der Shop ist eine Vorschau. Preise und Bestände kannst du verwalten, aber Live-Bestellungen und Zahlungen bleiben gesperrt.</p>
     <nav className="rh-admin-stock-filters" aria-label="Bestandsfilter">
       {[
         {value:"alle",name:"Alle Varianten",n:count},
