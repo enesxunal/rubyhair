@@ -281,7 +281,7 @@ test("virtual hair lab uses the real catalog and sends photos only with explicit
  assert.ok(page.includes('import catalog from "@/data/products.json"'));
  assert.ok(page.includes("robots:{index:false"));
  assert.ok(header.includes("href=\"/haar-anprobe/\""));
- for(const marker of ["URL.createObjectURL","URL.revokeObjectURL","image/jpeg","image/png","image/webp","maximal 8 MB", "setRatio", "Jetzt an mir testen", "RUBY HAIR"]){
+ for(const marker of ["URL.createObjectURL","URL.revokeObjectURL","image/jpeg","image/png","image/webp","maximal 8 MB", "setRatio", "Meinen Look erstellen", "RUBY HAIR"]){
    assert.ok(lab.includes(marker),marker);
  }
  for(const marker of ["fetch(\"/api/tryon/generate\"","new FormData()","consent","shrinkImage(before.file)"]){
@@ -518,15 +518,23 @@ test("admin V2 analytics and launch readiness stay grounded in aggregates",()=>{
  assert.ok(!chart.includes("<title>"));
 });
 
-test("simplified try-on is three-step, accessible and keeps consent next to the CTA",()=>{
+test("hair try-on uses a gated step-by-step wizard with accessible result preview",()=>{
  const lab=fs.readFileSync(path.join(base,"src/components/hair-tryon-lab.tsx"),"utf8");
  const css=fs.readFileSync(path.join(base,"src/styles/tryon.css"),"utf8");
- for(const title of ["Foto hochladen","Haare wählen","Ergebnis ansehen","Jetzt an mir testen"])
+ for(const title of ["Dein Foto","Finde deinen Farbton.","DEINE FREIGABE","Meinen Look erstellen"])
   assert.ok(lab.includes(title),title);
  assert.ok(lab.includes("setConsent(false)"),"New image requires fresh photo consent");
- assert.ok(lab.includes("setAiIssue("),"AI error shown beside generate button");
- assert.ok(lab.includes("photoStageRef.current?.scrollIntoView"),"Finished image made visible");
+ assert.ok(lab.includes("setAiIssue("),"AI error shown on approval screen");
+ assert.ok(lab.includes("setWizardStep(4)"),"Successful generation enters result screen");
  assert.ok(!lab.includes("KI-Ergebnis importieren"),"No second result-upload control");
- assert.ok(css.includes("@media(max-width:680px)"));
+ assert.ok(css.includes("@media(max-width:700px)"));
  assert.ok(lab.includes("name=\"tryon-density\""),"Optional density remains functional");
+ for(const marker of [
+  "wizardStep===0","wizardStep===1","wizardStep===2","wizardStep===3","wizardStep===4",
+  "SCHRITT ","Meinen Look erstellen","rh-wizard-creating","rh-wizard-scissors",
+  "role=\"status\"","Vorher-Nachher-Fotovergleich","startCompare","dragCompare",
+  "download=\"ruby-hair-vorschau.webp\"","goStep(2)"
+ ])assert.ok(lab.includes(marker),"Wizard UI missing: "+marker);
+ assert.ok(css.includes("prefers-reduced-motion:reduce"),"Animation respects reduced motion");
+ assert.ok(lab.includes('if(!consent)'),"Photo API is not called without consent");
 });
