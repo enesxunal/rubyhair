@@ -6,6 +6,7 @@ import {Search,ShoppingBag,Menu,X,ArrowUpRight,ArrowRight,Instagram,Sparkles} fr
 import {useCart} from "@/components/cart-context";
 import {type Product} from "@/lib/catalog";
 import {tapeInLengths,tapeInLengthHref} from "@/lib/tape-in-lengths";
+import CookieSettingsLink from "@/components/cookie-settings-link";
 
 const darkLogo="/media/RubyHair-WebHeader-Logo-Dunkel-70efc2b6a.png";
 const lightLogo="/media/RubyHair-WebHeader-Logo-Hell-818376d91.png";
@@ -153,7 +154,7 @@ function HomeFooter(){
         </div>
       </div>
       <div className="container footer-bottom"><span>© 2026 RUBY HAIR · DESIGNKONZEPT</span>
-        <div><Link href="/rechtliches/impressum/">IMPRESSUM</Link><Link href="/rechtliches/datenschutz/">DATENSCHUTZ</Link><Link href="/rechtliches/agb/">AGB</Link></div>
+        <div><Link href="/rechtliches/impressum/">IMPRESSUM</Link><Link href="/rechtliches/datenschutz/">DATENSCHUTZ</Link><Link href="/rechtliches/agb/">AGB</Link><CookieSettingsLink/></div>
         <span>MADE FOR BEAUTIFUL HAIR.</span>
       </div>
     </footer>

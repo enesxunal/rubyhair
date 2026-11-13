@@ -14,11 +14,17 @@ export default function AnalyticsConsent(){
   else setOpen(true);
  },[path]);
  useEffect(()=>{
+  if(!analyticsEnabled())return;
+  const showSettings=()=>setOpen(true);
+  window.addEventListener("ruby-open-analytics-settings",showSettings);
+  return ()=>window.removeEventListener("ruby-open-analytics-settings",showSettings);
+ },[]);
+ useEffect(()=>{
   if(choice!=="allow"||!isTrackableRubyPath(path))return;
   trackRubyEvent("page_view");
   if(path==="/kasse")trackRubyEvent("begin_checkout");
  },[path,choice]);
- if(!analyticsEnabled()||!isTrackableRubyPath(path))return null;
+ if(!analyticsEnabled())return null;
  const pick=(value:"allow"|"deny")=>{
   localStorage.setItem("ruby_analytics_choice",value);
   document.cookie="ruby_analytics="+(value==="allow"?"allow":"deny")+"; Path=/; Max-Age=31536000; SameSite=Lax"+(location.protocol==="https:"?"; Secure":"");
@@ -30,6 +36,5 @@ export default function AnalyticsConsent(){
      <p>Dürfen wir anonyme, zusammengefasste Seiten- und Warenkorb-Ereignisse zählen? Keine Fotos, Namen, Adressen oder individuellen Besucherverläufe. Optional. <Link href="/rechtliches/datenschutz/">Datenschutz</Link></p>
      <div><button type="button" onClick={()=>pick("deny")}>Ablehnen</button><button type="button" onClick={()=>pick("allow")}>Zustimmen</button></div>
    </aside>}
-   {choice&&<button type="button" className="rh-consent-settings" onClick={()=>setOpen(true)}>Statistik-Einstellungen</button>}
  </>;
 }

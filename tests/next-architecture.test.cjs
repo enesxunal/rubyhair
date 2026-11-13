@@ -436,3 +436,18 @@ test("payment provider settings are admin-only and encrypted at rest",()=>{
   const checkout=fs.readFileSync(path.join(base,"app/api/checkout/route.ts"),"utf8");
   assert.ok(checkout.includes("CHECKOUT_NOT_CONFIGURED"));
 });
+
+test("analytics settings live in both footers, never as a floating lower-left label",()=>{
+  const consent=fs.readFileSync(path.join(base,"src/components/analytics-consent.tsx"),"utf8");
+  const link=fs.readFileSync(path.join(base,"src/components/cookie-settings-link.tsx"),"utf8");
+  const home=fs.readFileSync(path.join(base,"src/components/home-frontend.tsx"),"utf8");
+  const shell=fs.readFileSync(path.join(base,"src/components/site-shell.tsx"),"utf8");
+  const styles=fs.readFileSync(path.join(base,"src/styles/shop.css"),"utf8");
+  assert.ok(link.includes("Cookie-Einstellungen"));
+  assert.ok(link.includes("ruby-open-analytics-settings"));
+  assert.ok(consent.includes('window.addEventListener("ruby-open-analytics-settings"'));
+  assert.ok(home.includes("<CookieSettingsLink/>"));
+  assert.ok(shell.includes("<CookieSettingsLink/>"));
+  assert.ok(!styles.includes(".rh-consent-settings{position:fixed"));
+  assert.ok(consent.includes("ruby_analytics_choice"));
+});

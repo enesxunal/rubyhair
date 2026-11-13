@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useCart } from "./cart-context";
 import {tapeInLengthHref} from "@/lib/tape-in-lengths";
+import CookieSettingsLink from "@/components/cookie-settings-link";
 const categories=[
   {href:"/kollektionen/",title:"Alle Extensions"},
   {href:tapeInLengthHref("45-50-cm"),title:"Tape-in Kurz"},
@@ -68,7 +69,7 @@ export function SiteFooter(){
       <div><strong>INFORMATIONEN</strong><Link href="/kontakt/">Kontakt & Beratung</Link><Link href="/ratgeber/">Hair Guide & Pflege</Link><Link href="/versand-zahlung/">Versand & Zahlung</Link><Link href="/rechtliches/widerruf/">Widerruf & Rückgabe</Link><Link href="/rechtliches/agb/">AGB</Link><Link href="/haar-anprobe/">KI-Haarvorschau (Test)</Link></div>
     </div>
     <div className="rh-footer-bottom"><span>© 2026 RUBY HAIR · NEXT.JS DESIGNVORSCHAU</span><div>
-      <Link href="/rechtliches/impressum/">Impressum</Link><Link href="/rechtliches/datenschutz/">Datenschutz</Link>
+      <Link href="/rechtliches/impressum/">Impressum</Link><Link href="/rechtliches/datenschutz/">Datenschutz</Link><CookieSettingsLink/>
     </div></div>
   </footer><div className="rh-preview-notice">DESIGNVORSCHAU · BESTELLUNG UND BEZAHLUNG SIND NOCH NICHT FREIGEGEBEN</div></>;
 }
