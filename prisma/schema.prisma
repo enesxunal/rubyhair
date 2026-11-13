@@ -134,3 +134,19 @@ model AnalyticsAggregate {
   @@index([day,event])
   @@map("analytics_aggregates")
 }
+
+
+// Encrypted credentials for separately approved payment providers. No plaintext keys in DB.
+model PaymentIntegrationSetting {
+  id         String   @id @default(uuid()) @db.Uuid
+  provider   String
+  environment String
+  field      String
+  ciphertext String
+  nonce      String
+  authTag    String
+  updatedAt  DateTime @updatedAt
+  @@unique([provider, environment, field])
+  @@index([provider, environment])
+  @@map("payment_integration_settings")
+}

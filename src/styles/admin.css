@@ -150,3 +150,23 @@
 .rh-admin-payment-wait{display:inline-block;background:#f8ece7;border:1px solid #e9d5cd;padding:6px 8px;color:#825b59;white-space:nowrap}
 @media(max-width:1050px){.rh-admin-reports-grid{grid-template-columns:1fr}}
 @media(max-width:560px){.rh-admin-bulk-top,.rh-admin-bulk-bottom{align-items:stretch}.rh-admin-bulk-save{width:100%}}
+
+/* Secure provider secret setup, no credential values rendered on the page */
+.rh-admin-payment-sections{display:grid;gap:18px;margin:18px 0}
+.rh-admin-credentials-form{border:1px solid #e7dadc;margin:17px 0;padding:20px;background:#fdfbf9}
+.rh-admin-credentials-heading,.rh-admin-credentials-footer{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.rh-admin-credentials-heading{padding-bottom:12px;margin-bottom:17px;border-bottom:1px solid #ede3e2}
+.rh-admin-credentials-heading strong{font-size:11px;letter-spacing:1.2px;color:#724455}
+.rh-admin-credentials-heading small{font-size:10px;color:#967c84}
+.rh-admin-credentials-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 16px}
+.rh-admin-credential-item{display:grid;align-content:start;gap:7px;min-width:0}
+.rh-admin-credential-item>label:first-child{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:12px;font-weight:600;color:#533b45}
+.rh-admin-credential-item>label:first-child small{font-size:10px;font-weight:500;color:#90707e}
+.rh-admin-credential-item>input{min-width:0;width:100%;border:1px solid #dacecf;padding:11px 13px;background:white;color:#35242b;font-size:12px;min-height:43px}
+.rh-admin-credential-item>input:disabled{background:#f2eeec}
+.rh-admin-credential-delete{font-size:10px;color:#8a5b68;display:flex;align-items:center;gap:6px}
+.rh-admin-credentials-footer{margin-top:21px;padding-top:15px;border-top:1px solid #eee5e2}
+.rh-admin-credentials-footer span{font-size:10px;color:#8e7780}
+.rh-admin-credentials-footer button{border:0;background:#633746;color:#fff;padding:12px 18px;font-size:11px;font-weight:650;min-height:42px;cursor:pointer}
+.rh-admin-credentials-footer button:disabled{background:#a99da1;cursor:not-allowed}
+@media(max-width:670px){.rh-admin-credentials-grid{grid-template-columns:1fr}.rh-admin-credentials-form{padding:15px}}

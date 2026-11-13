@@ -375,8 +375,10 @@ test("bulk variant editor requires admin, validates rows, and persists atomicall
 test("payment planning never opens live checkout or duplicates WordPress credentials",()=>{
   const page=fs.readFileSync(path.join(base,"app/admin/zahlungen/page.tsx"),"utf8");
   const checkout=fs.readFileSync(path.join(base,"app/api/checkout/route.ts"),"utf8");
-  assert.ok(page.includes("Nicht angebunden"));
-  for(const id of ["woocommerce_payments","ppcp-gateway","klarna_payments","bacs","ppcp-trustly"])assert.ok(page.includes(id),id);
+  assert.ok(page.includes("Noch keine Live-Zahlungen"));
+  assert.ok(page.includes("savePaymentSettingsAction"));
+  const notes=fs.readFileSync(path.join(base,"docs/RUBY_HAIR_PAYMENTS_MEETING_2026-11-14.md"),"utf8");
+  for(const id of ["woocommerce_payments","ppcp-gateway","klarna_payments","bacs","ppcp-trustly"])assert.ok(notes.includes(id),id);
   assert.ok(checkout.includes("CHECKOUT_NOT_CONFIGURED"));
   assert.ok(checkout.includes("503"));
 });
@@ -395,4 +397,28 @@ test("private hair demo retains consent and access key without artificial three-
   assert.ok(api.includes('authorized(form.get("testCode"))'));
   assert.ok(!api.includes("sessionLimited("));
   assert.ok(!api.includes("const attempts=new Map"));
+});
+
+
+test("payment provider settings are admin-only and encrypted at rest",()=>{
+  const page=fs.readFileSync(path.join(base,"app/admin/zahlungen/page.tsx"),"utf8");
+  const action=fs.readFileSync(path.join(base,"app/admin/payment-actions.ts"),"utf8");
+  const vault=fs.readFileSync(path.join(base,"src/lib/payment-secrets.ts"),"utf8");
+  const schema=fs.readFileSync(path.join(base,"prisma/schema.prisma"),"utf8");
+  const migration=fs.readFileSync(path.join(base,"prisma/migrations/20261113200000_payment_integration_settings/migration.sql"),"utf8");
+  assert.ok(page.includes("if(!await isAdmin())redirect"));
+  assert.ok(page.includes('type={field.secret?"password":"text"}'));
+  assert.ok(!page.includes("value={record.ciphertext}"));
+  assert.ok(page.includes("disabled={!ready}"));
+  assert.ok(action.includes("if(!await isAdmin())redirect"));
+  assert.ok(action.includes("encryptPaymentValue"));
+  assert.ok(action.includes("paymentVaultConfigured()"));
+  assert.ok(action.includes("getPrisma().$transaction"));
+  assert.ok(vault.includes("aes-256-gcm"));
+  assert.ok(vault.includes("setAAD("));
+  assert.ok(vault.includes("RUBY_PAYMENT_SETTINGS_KEY"));
+  assert.ok(schema.includes("model PaymentIntegrationSetting"));
+  assert.ok(migration.includes('CREATE TABLE "payment_integration_settings"'));
+  const checkout=fs.readFileSync(path.join(base,"app/api/checkout/route.ts"),"utf8");
+  assert.ok(checkout.includes("CHECKOUT_NOT_CONFIGURED"));
 });
