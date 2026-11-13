@@ -281,7 +281,7 @@ test("virtual hair lab uses the real catalog and sends photos only with explicit
  assert.ok(page.includes('import catalog from "@/data/products.json"'));
  assert.ok(page.includes("robots:{index:false"));
  assert.ok(header.includes("href=\"/haar-anprobe/\""));
- for(const marker of ["URL.createObjectURL","URL.revokeObjectURL","image/jpeg","image/png","image/webp","maximal 8 MB", "setRatio", "Saçımda Dene", "RUBY HAIR"]){
+ for(const marker of ["URL.createObjectURL","URL.revokeObjectURL","image/jpeg","image/png","image/webp","maximal 8 MB", "setRatio", "Jetzt an mir testen", "RUBY HAIR"]){
    assert.ok(lab.includes(marker),marker);
  }
  for(const marker of ["fetch(\"/api/tryon/generate\"","new FormData()","consent","shrinkImage(before.file)"]){
@@ -516,4 +516,17 @@ test("admin V2 analytics and launch readiness stay grounded in aggregates",()=>{
  assert.ok(dashboard.includes("Einrichtungsschritte"));
  assert.ok(products.includes("Bestandsdaten geprüft"));
  assert.ok(!chart.includes("<title>"));
+});
+
+test("simplified try-on is three-step, accessible and keeps consent next to the CTA",()=>{
+ const lab=fs.readFileSync(path.join(base,"src/components/hair-tryon-lab.tsx"),"utf8");
+ const css=fs.readFileSync(path.join(base,"src/styles/tryon.css"),"utf8");
+ for(const title of ["Foto hochladen","Haare wählen","Ergebnis ansehen","Jetzt an mir testen"])
+  assert.ok(lab.includes(title),title);
+ assert.ok(lab.includes("setConsent(false)"),"New image requires fresh photo consent");
+ assert.ok(lab.includes("setAiIssue("),"AI error shown beside generate button");
+ assert.ok(lab.includes("photoStageRef.current?.scrollIntoView"),"Finished image made visible");
+ assert.ok(!lab.includes("KI-Ergebnis importieren"),"No second result-upload control");
+ assert.ok(css.includes("@media(max-width:680px)"));
+ assert.ok(lab.includes("name=\"tryon-density\""),"Optional density remains functional");
 });
