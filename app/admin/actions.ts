@@ -5,29 +5,11 @@ import { z } from "zod";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import {
-  isAdmin, loginAllowed, adminConfigured, recordLoginAttempt,
-  checkAdminCredentials, issueAdminSession, clearAdminSession
+  isAdmin, clearAdminSession
 } from "@/lib/admin-auth";
 import { getPrisma } from "@/lib/prisma";
 import { requireOrderTransition } from "@/lib/order-lifecycle";
 
-const loginSchema=z.object({email:z.email().max(254),password:z.string().min(1).max(256)});
-export async function loginAction(formData:FormData){
-  if(!adminConfigured())redirect("/admin/login?error=unconfigured");
-  const parsed=loginSchema.safeParse({
-    email:formData.get("email"),password:formData.get("password")
-  });
-  if(!parsed.success)redirect("/admin/login?error=invalid");
-  const {key,allowed,reset}=await loginAllowed();
-  if(!allowed)redirect("/admin/login?error=locked");
-  const {email,password}=parsed.data;
-  if(!await checkAdminCredentials(email,password)){
-    await recordLoginAttempt(key,reset);
-    redirect("/admin/login?error=invalid");
-  }
-  await issueAdminSession();
-  redirect("/admin");
-}
 export async function logoutAction(){
   await clearAdminSession();
   redirect("/admin/login");

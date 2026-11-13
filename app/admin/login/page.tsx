@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { adminConfigured, isAdmin } from "@/lib/admin-auth";
-import { loginAction } from "../actions";
 export const metadata:Metadata={title:"Admin Anmeldung",robots:{index:false,follow:false}};
 export const dynamic="force-dynamic";
 export default async function AdminLogin({searchParams}:{searchParams:Promise<{error?:string}>}){
@@ -15,9 +14,9 @@ export default async function AdminLogin({searchParams}:{searchParams:Promise<{e
       <strong>Der Administratorzugang ist noch nicht eingerichtet.</strong>
       <p>Die eigene PostgreSQL-Datenbank und die geheimen Anmeldedaten müssen zuerst auf dem Server eingerichtet werden. Es gibt keinen Standardzugang.</p>
     </div>:
-    <form action={loginAction} className="rh-admin-login-form">
+    <form action="/api/admin/login" method="post" className="rh-admin-login-form">
       {error&&<p role="alert" className="rh-admin-error">
-        {error==="locked"?"Zu viele Versuche. Bitte später erneut versuchen.":"Anmeldedaten ungültig."}
+        {error==="locked"?"Zu viele Versuche. Bitte später erneut versuchen.":error==="unavailable"?"Die Anmeldung ist gerade nicht erreichbar. Bitte erneut versuchen.":"E-Mail oder Passwort ungültig."}
       </p>}
       <label>E-Mail<input type="email" name="email" autoComplete="username" required maxLength={254}/></label>
       <label>Passwort<input type="password" name="password" autoComplete="current-password" required maxLength={256}/></label>

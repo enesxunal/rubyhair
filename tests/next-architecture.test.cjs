@@ -472,3 +472,19 @@ test("KI hair try-on has no test access UI or API gate, retaining privacy and im
  assert.ok(lab.includes('shrinkImage(before.file)'));
  assert.ok(legal.includes('KI-Haaranprobe (freiwillige Bildverarbeitung)'));
 });
+
+
+test("Ruby Hair admin login uses a native POST and explicit redirect/errors",()=>{
+ const page=fs.readFileSync(path.join(base,"app/admin/login/page.tsx"),"utf8");
+ const route=fs.readFileSync(path.join(base,"app/api/admin/login/route.ts"),"utf8");
+ assert.ok(page.includes('action="/api/admin/login" method="post"'));
+ assert.ok(!page.includes('action={loginAction}'));
+ assert.ok(page.includes('error==="unavailable"'));
+ assert.ok(route.includes('status:303'));
+ assert.ok(route.includes('loginAllowed()'));
+ assert.ok(route.includes('checkAdminCredentials(email,password)'));
+ assert.ok(route.includes('recordLoginAttempt(key,reset)'));
+ assert.ok(route.includes('await issueAdminSession()'));
+ assert.ok(route.includes('origin_mismatch'));
+ assert.ok(route.includes('new URL("/admin"')||route.includes('location(request,"/admin")'));
+});
