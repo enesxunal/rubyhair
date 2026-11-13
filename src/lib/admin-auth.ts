@@ -3,6 +3,7 @@ import { createHmac } from "node:crypto";
 import { cookies, headers } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
+import {normalizedAdminPasswordHash} from "@/lib/admin-password-config";
 import { getPrisma, databaseConfigured } from "@/lib/prisma";
 
 const COOKIE_NAME="rubyhair_admin";
@@ -13,7 +14,7 @@ const ISSUER="rubyhair-next";
 export function adminConfigured(){
   return databaseConfigured() && Boolean(
     process.env.ADMIN_EMAIL &&
-    process.env.ADMIN_PASSWORD_HASH?.startsWith("$2") &&
+    normalizedAdminPasswordHash(process.env.ADMIN_PASSWORD_HASH) &&
     process.env.SESSION_SECRET &&
     process.env.SESSION_SECRET.length>=32
   );
@@ -78,6 +79,6 @@ export async function recordLoginAttempt(key:string,reset:boolean){
 export async function checkAdminCredentials(email:string,password:string){
   const configuredEmail=process.env.ADMIN_EMAIL?.trim().toLowerCase();
   // Always run bcrypt compare to avoid user-enumeration timing differences.
-  const valid=await bcrypt.compare(password,process.env.ADMIN_PASSWORD_HASH||"$2b$12$aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+  const valid=await bcrypt.compare(password,normalizedAdminPasswordHash(process.env.ADMIN_PASSWORD_HASH)||"$2b$12$aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
   return Boolean(valid && email.toLowerCase()===configuredEmail);
 }
