@@ -1,4 +1,4 @@
-/* Ruby Hair virtual hair-extension test lab. Uploads are browser-local; no AI endpoint. */
+/* Ruby Hair virtual hair-extension preview. Photos remain browser-local until consented API generation. */
 .rh-tryon-hero{padding-top:36px;padding-bottom:52px}
 .rh-tryon-hero-grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(240px,.55fr);gap:6%;align-items:end}
 .rh-tryon-hero h1{font:400 clamp(47px,6.5vw,91px)/1.05 var(--serif);margin:18px 0 22px;color:#382730;letter-spacing:-1.9px}

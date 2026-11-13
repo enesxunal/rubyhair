@@ -282,14 +282,14 @@ test("virtual hair lab uses the real catalog and sends photos only with explicit
  for(const marker of ["URL.createObjectURL","URL.revokeObjectURL","image/jpeg","image/png","image/webp","maximal 8 MB", "setRatio", "Saçımda Dene", "RUBY HAIR"]){
    assert.ok(lab.includes(marker),marker);
  }
- for(const marker of ["fetch(\"/api/tryon/generate\"","new FormData()","consent","testCode","shrinkImage(before.file)"]){
+ for(const marker of ["fetch(\"/api/tryon/generate\"","new FormData()","consent","shrinkImage(before.file)"]){
    assert.ok(lab.includes(marker),"Protected generation flow missing: "+marker);
  }
  for(const forbidden of ["localStorage","sessionStorage","/api/generate"]){
    assert.ok(!lab.includes(forbidden),"No persistent photo storage or unreviewed endpoints: "+forbidden);
  }
  const api=fs.readFileSync(path.join(base,"app/api/tryon/generate/route.ts"),"utf8");
- for(const marker of ["RUBY_TRYON_TEST_CODE","OPENAI_API_KEY","form.get(\"consent\")","authorized(form.get(\"testCode\"))","gpt-image-2.5-sunburst","image[]","no-store, private"]){
+ for(const marker of ["RUBY_HAIR_OPENAI_API_KEY","form.get(\"consent\")","gpt-image-2.5-sunburst","image[]","no-store, private"]){
    assert.ok(api.includes(marker),"Server-side guard missing: "+marker);
  }
  assert.ok(!lab.includes("OPENAI_API_KEY"),"Never expose provider key in the browser");
@@ -405,10 +405,12 @@ test("admin traffic report reads aggregate events with explicit no-sales and con
   assert.ok(page.includes("Noch keine verifizierte PSP-Integration"));
 });
 
-test("private hair demo retains consent and access key without artificial three-attempt cap",()=>{
+test("image generation requires consent but never an end-user test code",()=>{
   const api=fs.readFileSync(path.join(base,"app/api/tryon/generate/route.ts"),"utf8");
   assert.ok(api.includes('form.get("consent")!=="yes"'));
-  assert.ok(api.includes('authorized(form.get("testCode"))'));
+  assert.ok(!api.includes('authorized(form.get("testCode"))'));
+  assert.ok(!api.includes("RUBY_TRYON_TEST_CODE"));
+  assert.ok(!api.includes("testOnly:true"));
   assert.ok(!api.includes("sessionLimited("));
   assert.ok(!api.includes("const attempts=new Map"));
 });
@@ -450,4 +452,23 @@ test("analytics settings live in both footers, never as a floating lower-left la
   assert.ok(shell.includes("<CookieSettingsLink/>"));
   assert.ok(!styles.includes(".rh-consent-settings{position:fixed"));
   assert.ok(consent.includes("ruby_analytics_choice"));
+});
+
+
+test("KI hair try-on has no test access UI or API gate, retaining privacy and image validation",()=>{
+ const api=fs.readFileSync(path.join(base,"app/api/tryon/generate/route.ts"),"utf8");
+ const lab=fs.readFileSync(path.join(base,"src/components/hair-tryon-lab.tsx"),"utf8");
+ const legal=fs.readFileSync(path.join(base,"app/rechtliches/[slug]/page.tsx"),"utf8");
+ for(const blocked of ["testCode","RUBY_TRYON_TEST_CODE","Privater Test-Zugangscode"]){
+  assert.ok(!api.includes(blocked),blocked);
+  assert.ok(!lab.includes(blocked),blocked);
+ }
+ assert.ok(api.includes('process.env.RUBY_HAIR_OPENAI_API_KEY'));
+ assert.ok(api.includes('form.get("consent")!=="yes"'));
+ assert.ok(api.includes('validMagic(imageBytes,photo.type)'));
+ assert.ok(api.includes('origin!==new URL(request.url).origin'));
+ assert.ok(api.includes('image[]'));
+ assert.ok(lab.includes('checked={consent}'));
+ assert.ok(lab.includes('shrinkImage(before.file)'));
+ assert.ok(legal.includes('KI-Haaranprobe (freiwillige Bildverarbeitung)'));
 });

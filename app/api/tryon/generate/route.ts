@@ -1,4 +1,3 @@
-import {createHash,timingSafeEqual} from "node:crypto";
 import {readFile} from "node:fs/promises";
 import path from "node:path";
 import {NextRequest,NextResponse} from "next/server";
@@ -17,15 +16,8 @@ const NO_STORE={"Cache-Control":"no-store, private","X-Robots-Tag":"noindex, nof
 const deny=(message:string,status:number)=>NextResponse.json({error:message},{status,headers:NO_STORE});
 
 function isConfigured(){
- return Boolean(process.env.OPENAI_API_KEY?.startsWith("sk-") &&
-   (process.env.RUBY_TRYON_TEST_CODE||"").trim().length>=12);
-}
-function authorized(candidate:unknown){
- const expected=(process.env.RUBY_TRYON_TEST_CODE||"").trim();
- if(typeof candidate!=="string"||candidate.length>256||expected.length<12)return false;
- const a=createHash("sha256").update(candidate).digest();
- const b=createHash("sha256").update(expected).digest();
- return timingSafeEqual(a,b);
+ // The provider key is a server-only Vercel secret, never sent to the browser.
+ return Boolean(process.env.RUBY_HAIR_OPENAI_API_KEY?.startsWith("sk-"));
 }
 function validMagic(bytes:Buffer,mime:string){
  if(mime==="image/jpeg")return bytes.length>=3&&bytes[0]===255&&bytes[1]===216&&bytes[2]===255;
@@ -68,12 +60,11 @@ export async function GET(){
   available:isConfigured(),
   provider:"OpenAI Images API",
   model:MODEL,
-  testOnly:true,
   requiresConsent:true
  },{headers:NO_STORE});
 }
 export async function POST(request:NextRequest){
- if(!isConfigured())return deny("KI-Haaranprobe ist noch nicht freigeschaltet. Test-Zugang und API-Verbindung fehlen.",503);
+ if(!isConfigured())return deny("KI-Haaranprobe ist noch nicht eingerichtet. Bitte OpenAI API-Schlüssel auf dem Server hinterlegen.",503);
  const origin=request.headers.get("origin");
  if(!origin||origin!==new URL(request.url).origin)return deny("Ungültige Anforderungsquelle.",403);
  const lengthHeader=Number(request.headers.get("content-length")||0);
@@ -81,7 +72,6 @@ export async function POST(request:NextRequest){
  let form:FormData;
  try{form=await request.formData();}catch{return deny("Ungültige Bilddaten.",400);}
  if(form.get("consent")!=="yes")return deny("Bitte zuerst der einmaligen Verarbeitung des Fotos durch den KI-Anbieter zustimmen.",403);
- if(!authorized(form.get("testCode")))return deny("Ungültiger Test-Zugangscode.",401);
  const selected=selection(form.get("variantKey"));
  if(!selected||selected.product.slug!=="tape-in-extensions")return deny("Bitte eine gültige Ruby Hair Tape-in Variante auswählen.",400);
  const density=form.get("density");
@@ -118,7 +108,7 @@ export async function POST(request:NextRequest){
  try{
   const result=await fetch("https://api.openai.com/v1/images/edits",{
    method:"POST",
-   headers:{Authorization:"Bearer "+process.env.OPENAI_API_KEY},
+   headers:{Authorization:"Bearer "+process.env.RUBY_HAIR_OPENAI_API_KEY},
    body:payload,
    cache:"no-store",
    signal:AbortSignal.timeout(98_000)
@@ -139,7 +129,7 @@ export async function POST(request:NextRequest){
     if(result.status===429)return "OpenAI hat das Anbieterlimit erreicht. Bitte API-Rate-Limit und Guthaben prüfen.";
     return "OpenAI hat die Bildbearbeitung abgelehnt.";
    })();
-   // Structured diagnostics only: no key, private test code, photo, prompt or upstream error message.
+   // Structured diagnostics only: no key, photo, prompt or upstream error message.
    console.warn("RubyHair tryon provider rejection",{
     providerHttpStatus:result.status,providerErrorCode:code,
     providerRequestId:result.headers.get("x-request-id")||undefined

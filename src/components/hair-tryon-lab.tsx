@@ -44,7 +44,6 @@ export default function HairTryonLab({products}:{products:Product[]}){
  const [issue,setIssue]=useState("");
  const [showAll,setShowAll]=useState(false);
  const [aiAvailable,setAiAvailable]=useState<boolean|null>(null);
- const [testCode,setTestCode]=useState("");
  const [consent,setConsent]=useState(false);
  const [generating,setGenerating]=useState(false);
  const [aiInfo,setAiInfo]=useState("");
@@ -83,7 +82,6 @@ export default function HairTryonLab({products}:{products:Product[]}){
  const createTryon=async()=>{
    if(!before?.file||!picked||!aiAvailable||generating)return;
    if(!consent){setIssue("Bitte zuerst der Übermittlung deines Fotos an OpenAI zustimmen.");return;}
-   if(testCode.trim().length<12){setIssue("Bitte den privaten Test-Zugangscode eingeben.");return;}
    setGenerating(true);setIssue("");setAiInfo("");
    try{
      const compressed=await shrinkImage(before.file);
@@ -92,7 +90,6 @@ export default function HairTryonLab({products}:{products:Product[]}){
      payload.set("variantKey",picked.key);
      payload.set("density",density);
      payload.set("consent","yes");
-     payload.set("testCode",testCode.trim());
      const response=await fetch("/api/tryon/generate",{method:"POST",body:payload,cache:"no-store",signal:AbortSignal.timeout(110000)});
      const data=await response.json().catch(()=>null);
      if(!response.ok)throw new Error(typeof data?.error==="string"?data.error:"Die KI-Haaranprobe ist fehlgeschlagen.");
@@ -109,8 +106,8 @@ export default function HairTryonLab({products}:{products:Product[]}){
     <div className="rh-tryon-hero-grid">
       <div><div className="rh-eyebrow">RUBY HAIR / VIRTUAL HAIR STUDIO</div>
        <h1>See the <em>possibility.</em></h1>
-       <p>Wähle Farbe und Länge deiner Tape-in Extensions. Die KI soll nur Haare ergänzen – deine eigene Haarfarbe bleibt erhalten. Der Bildtest ist derzeit geschützt.</p>
-       <div className="rh-tryon-status"><LockKeyhole size={17}/><span>GESCHÜTZTER TEST · KI-Verarbeitung nur nach deiner ausdrücklichen Zustimmung</span></div>
+       <p>Wähle Farbe und Länge deiner Tape-in Extensions. Die KI soll nur Haare ergänzen – deine eigene Haarfarbe bleibt erhalten. Die virtuelle Vorschau zeigt eine mögliche Ergänzung deiner Echthaar-Extensions.</p>
+       <div className="rh-tryon-status"><LockKeyhole size={17}/><span>KI-HAARANPROBE · Fotoübertragung nur mit deiner ausdrücklichen Zustimmung</span></div>
       </div>
       <div className="rh-tryon-feature-note">
         <Sparkles size={28} strokeWidth={1.4}/><span>YOUR NEXT<br/>HAIR STORY.</span>
@@ -153,7 +150,7 @@ export default function HairTryonLab({products}:{products:Product[]}){
       </div>
     </section>
     <section className="rh-tryon-workspace" aria-label="Vorher Nachher Vergleich">
-     <div className="rh-tryon-workspace-head"><div><span className="rh-tryon-step">04 / DEIN VERGLEICH</span><h2>Before. <em>After.</em></h2></div><span>PRIVATER TEST</span></div>
+     <div className="rh-tryon-workspace-head"><div><span className="rh-tryon-step">04 / DEIN VERGLEICH</span><h2>Before. <em>After.</em></h2></div><span>DEINE KI-VORSCHAU</span></div>
      <div className="rh-tryon-photo-actions">
       <label className="rh-tryon-photo-button"><Upload size={17}/> {before?"Ausgangsfoto ersetzen":"Originalfoto auswählen"}<input type="file" accept="image/jpeg,image/png,image/webp" onChange={e=>onPhoto(e,"before")}/></label>
       <label className={"rh-tryon-photo-button secondary"+(!before?" is-disabled":"")}><ImagePlus size={17}/> {after?"Ergebnis ersetzen":"KI-Ergebnis importieren"}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={!before} onChange={e=>onPhoto(e,"after")}/></label>
@@ -161,10 +158,9 @@ export default function HairTryonLab({products}:{products:Product[]}){
      </div>
      <div className="rh-tryon-generate">
       <div className="rh-tryon-generate-heading"><Sparkles size={21}/><div><strong>Extensions an dir testen</strong><small>Die KI soll deine Eigenhaarfarbe erhalten und nur Extensions ergänzen.</small></div></div>
-      {aiAvailable===false&&<p role="status" className="rh-tryon-disabled">Der Bildgenerator ist noch nicht freigeschaltet. Für den Test fehlen Server-API-Schlüssel und Testzugang.</p>}
+      {aiAvailable===false&&<p role="status" className="rh-tryon-disabled">Der Bildgenerator ist noch nicht verfügbar. Bitte den OpenAI API-Schlüssel auf dem Server hinterlegen.</p>}
       {aiAvailable===null&&<p role="status" className="rh-tryon-muted">KI-Verfügbarkeit wird geprüft …</p>}
       {aiAvailable===true&&<div className="rh-tryon-ai-access">
-       <label>Privater Test-Zugangscode<input type="password" value={testCode} autoComplete="off" placeholder="Testcode eingeben" onChange={e=>setTestCode(e.target.value)} maxLength={256}/></label>
        <label className="rh-tryon-consent"><input type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)}/><span>Ich bestätige, dass ich das Foto verwenden darf. Ich stimme zu, dass es einmalig zur KI-Haarbearbeitung an <strong>OpenAI</strong> übermittelt wird. Es wird von Ruby Hair nicht dauerhaft gespeichert. <Link href="/rechtliches/datenschutz/">Datenschutz</Link></span></label>
       </div>}
       <button type="button" className="rh-tryon-generate-button" disabled={!before||!aiAvailable||generating} onClick={createTryon}>
