@@ -35,6 +35,14 @@ test("Instagram home implementation explicitly separates live authenticated post
  assert.ok(frontend.includes("posts.map"));
  assert.ok(!frontend.includes("inspiration.map"));
  assert.ok(frontend.includes("rh-instagram-unconnected"));
+ assert.ok(frontend.includes("https://www.instagram.com/rubyhair.de/embed/"));
+ assert.ok(frontend.includes("showProfileEmbed?"));
+ assert.ok(frontend.includes("onClick={authorizeEmbed}"));
+ assert.ok(frontend.includes("localStorage.setItem(consentKey"));
+ assert.ok(frontend.includes("localStorage.removeItem(consentKey"));
+ assert.ok(frontend.includes("Externe Inhalte ausblenden"));
+ assert.ok(frontend.includes('loading="lazy"'));
+ assert.ok(frontend.includes('referrerPolicy="no-referrer"'));
  assert.ok(frontend.includes("/api/instagram-thumbnail/"));
  assert.ok(frontend.includes("https://www.instagram.com/rubyhair.de/"));
  assert.ok(auth.includes("RUBY_INSTAGRAM_ACCESS_TOKEN"));

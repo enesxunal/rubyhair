@@ -1,28 +1,25 @@
-# Ruby Hair — official Instagram feed and authorization
-Updated 14 November 2026. New Vercel demo only; existing rubyhair.de WordPress unchanged.
+# Ruby Hair — real Instagram profile feed (14 November 2026)
 
-## Current live state
-- @rubyhair.de account link and Instagram section exist on the homepage.
-- User explicitly rejected four local editorial/AI images masquerading as recent Instagram content. Those four image tiles were removed from the Instagram section. Without a valid authorized account connection, visitors see a compact Ruby Hair profile CTA.
-- Real Instagram media are NEVER fabricated, scraped from public profile HTML, or represented by unrelated editorial images.
+## Live plan and verification
+- Open profile: https://www.instagram.com/rubyhair.de/
+- Tested the official Instagram profile-embed endpoint: https://www.instagram.com/rubyhair.de/embed/
+- Verified in a clean normal Chrome session WITHOUT login or owner API token. The embed shows the actual Ruby Hair profile, follower count, and six current profile post thumbnails. Some profile posts are collaborations with other accounts (for example @hairboutiique); Instagram itself chooses which posts to display.
+- Verified native iframe works from a separate local site, and in the actual Ruby Hair Next.js page under desktop Chrome and 390 px mobile Chrome. Mobile screenshot confirms six real profile posts and zero page-level horizontal overflow.
+- The Instagram native profile embed is not a scraping or unofficial JSON API. It serves and refreshes its own public content, and does not require collecting images on the Ruby Hair server.
+- On first visit: explicit 'BEITRÄGE ANZEIGEN' button to load external Meta media (German privacy consent). Local browser consent is remembered. A revoke button hides the iframe and removes remembered permission.
+- If a future user opts into Instagram media, the original Instagram profile embed appears. If not, a branded consent card and direct @rubyhair.de link appear. No fake post snapshots or local editorial images.
+- Original Ruby Hair page, hero, catalog, admin, and disabled checkout untouched.
 
-## Automatic recent-media implementation
-- Backend src/lib/instagram-feed.ts reads the account's latest media using Meta's official Graph API with an owner-authorized token, requesting id, media_type, media_url, thumbnail_url, permalink, timestamp and caching for approximately one hour.
-- Show the first four validated live media items when available. Image and Reel thumbnail links are accepted only from Instagram/Facebook's approved CDN hostnames.
-- New route app/api/instagram-thumbnail/[id]/route.ts proxies real media image bytes from the authorized account's verified four items, with TLS-only image host allowlist, no redirects, image MIME/size caps and caching. User browsers do not automatically connect to Meta's image CDN; no private token is exposed.
-- After media authorization, the page draws four real recent Instagram posts with links to their original Instagram post/Reel. No extra load-images click is necessary.
-- If token missing/expired or API/media request fails, show only the official Instagram profile link and no fake feed.
-
-## Missing owner authorization (NOT connected)
-- Production currently has no RUBY_INSTAGRAM_ACCESS_TOKEN environment variable; Metricool currently reports no connected social network. Automated real media display cannot work without owner permission.
-- Ruby Hair Instagram needs to be a Professional/Creator account with owner access. Via Meta Developer app with Instagram Login, grant instagram_business_basic. Official graph.instagram.com backend requires the app-authorized Instagram User token.
-- Store owner-approved RUBY_INSTAGRAM_ACCESS_TOKEN as Vercel Production Secret, not in source, browser JS, screenshots or chat.
-- For Facebook Login instead: RUBY_INSTAGRAM_GRAPH_MODE=facebook and RUBY_INSTAGRAM_USER_ID numeric ID (only if authorized).
-- Redeploy, verify real post data and image proxy. Maintain token expiry/refresh workflow; access may expire if not refreshed or revoked.
-- Never substitute scraped images as latest posts. The screenshot showed the former local four-image editorial placeholder, which was removed.
+## Trade-offs and limitations
+- Instagram decides embed design, number and ordering of posts. It currently shows about six posts, NOT a custom exactly-four grid. We cannot change inner iframe content or branding.
+- Native profile iframe requires that the public Instagram account allows embedding, and availability can change. If Meta disallows the embed later, fall back to account link.
+- Client directly connects to Instagram only after explicit opt-in; third-party tracking disclosure and legal privacy wording should be reviewed by Ruby Hair.
+- Official Instagram API custom-four-card integration remains an optional path if owner later grants an access token. Previous work in src/lib/instagram-feed.ts remains available; it is not required for native embed operation.
+- Avoid automated scraping: Instagram robots.txt prohibits unauthorized automated collection and browser HTML is not a documented data API.
 
 ## QA
-- Tests: post URL/CDN host validation, numeric ids, server-only token, no editorial fakes, image proxy checks, route rejection without token, homepage rendering and production build.
-- Network access does not rely on instagram.com scraping; only official Meta API after account authorization.
-
-Meta documentation: https://developers.facebook.com/docs/instagram-platform/reference/instagram-media/v21.0/
+- Independent normal Chrome test on public profile and /embed endpoint: PASS
+- Embedded from another local domain: PASS
+- Ruby Hair desktop site iframe: PASS
+- Ruby Hair 390 px mobile iframe: PASS; no horizontal overflow
+- Project automatic tests + Next production build: PASS

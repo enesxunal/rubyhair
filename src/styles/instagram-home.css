@@ -79,3 +79,38 @@
  .rh-instagram-unconnected>div:nth-child(2){flex-basis:calc(100% - 80px)}
  .rh-instagram-unconnected>a{margin-left:0}
 }
+
+/* Instagram's own public-profile embed. No scraping or copied image files. */
+.rh-instagram-native{
+  margin:0 auto;
+  max-width:1180px;
+  background:#fff;
+  border:1px solid #e8dfdc;
+  border-radius:9px;
+  overflow:hidden;
+}
+.rh-instagram-native iframe{
+  display:block;
+  width:100%;
+  height:710px;
+  border:0;
+  background:#fff;
+}
+.rh-instagram-unconnected>button{
+  display:inline-flex;align-items:center;gap:12px;
+  white-space:nowrap;padding:14px 19px;
+  background:#694154;color:#fff;font-size:11px;
+  letter-spacing:.7px;font-weight:750;border:0;cursor:pointer;
+}
+.rh-instagram-unconnected>button:hover{background:#825368}
+@media(max-width:700px){
+  .rh-instagram-native iframe{height:590px}
+  .rh-instagram-unconnected>button{margin-left:0}
+}
+
+
+.rh-instagram-bottom-actions{display:flex;align-items:center;justify-content:flex-end;gap:18px;flex-wrap:wrap}
+.rh-instagram-bottom-actions>a{display:inline-flex;align-items:center;gap:11px;color:#5e3d4e;font-size:10px;letter-spacing:1px;font-weight:750;text-decoration:none}
+.rh-instagram-bottom-actions>a:hover{text-decoration:underline;text-underline-offset:5px}
+.rh-instagram-bottom-actions>button{padding:4px 0;border:0;background:none;color:#99818c;font-size:10px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.rh-instagram-bottom-actions>button:hover{color:#694154}
