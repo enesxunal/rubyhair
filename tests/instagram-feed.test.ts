@@ -27,30 +27,29 @@ test("Instagram normalization is empty rather than faking unknown media",()=>{
  ]),[]);
 });
 
-test("Instagram home implementation explicitly separates live authenticated posts and owned editorial imagery",async()=>{
+test("Instagram home uses real posts in a fixed editorial gallery without scrolling or third-party embeds",async()=>{
  const {readFileSync}=await import("node:fs");
  const frontend=readFileSync("src/components/instagram-home.tsx","utf8");
+ const css=readFileSync("src/styles/instagram-home.css","utf8");
  const auth=readFileSync("src/lib/instagram-feed.ts","utf8");
  const proxy=readFileSync("app/api/instagram-thumbnail/[id]/route.ts","utf8");
- assert.ok(frontend.includes("posts.map"));
- assert.ok(!frontend.includes("inspiration.map"));
- assert.ok(frontend.includes("rh-instagram-unconnected"));
- assert.ok(frontend.includes("https://www.instagram.com/rubyhair.de/embed/"));
- assert.ok(frontend.includes("showProfileEmbed?"));
- assert.ok(frontend.includes("onClick={authorizeEmbed}"));
- assert.ok(frontend.includes("localStorage.setItem(consentKey"));
- assert.ok(frontend.includes("localStorage.removeItem(consentKey"));
- assert.ok(frontend.includes("Externe Inhalte ausblenden"));
- assert.ok(frontend.includes('loading="lazy"'));
- assert.ok(frontend.includes('referrerPolicy="no-referrer"'));
+ assert.ok(frontend.includes("posts.slice(0,5).map"));
+ assert.ok(frontend.includes("influencerStories[index]"));
+ assert.ok(frontend.includes("post.postUrl"));
+ assert.ok(frontend.includes("rh-instagram-editorial"));
+ assert.ok(frontend.includes("rh-instagram-photo-featured"));
  assert.ok(frontend.includes("/api/instagram-thumbnail/"));
  assert.ok(frontend.includes("https://www.instagram.com/rubyhair.de/"));
+ assert.ok(!frontend.includes("iframe"));
+ assert.ok(!frontend.includes("localStorage"));
+ assert.ok(!css.includes("overflow-x:auto"));
+ assert.ok(!css.includes("scroll-snap"));
+ assert.ok(css.includes("grid-template-columns:repeat(3,minmax(0,1fr))"));
+ assert.ok(css.includes("grid-template-columns:repeat(2,minmax(0,1fr))"));
+ assert.ok(css.includes("object-fit:cover"));
  assert.ok(auth.includes("RUBY_INSTAGRAM_ACCESS_TOKEN"));
- assert.ok(auth.includes('Authorization:"Bearer "+token'));
  assert.ok(!frontend.includes("RUBY_INSTAGRAM_ACCESS_TOKEN"));
  assert.ok(proxy.includes("getRubyInstagramPosts()"));
  assert.ok(proxy.includes("posts.find(p=>p.id===id)"));
- assert.ok(proxy.includes('redirect:"error"'));
- assert.ok(proxy.includes('Content-Type'));
  assert.ok(!proxy.includes("access_token="));
 });

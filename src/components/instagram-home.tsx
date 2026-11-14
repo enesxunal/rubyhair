@@ -1,88 +1,47 @@
-"use client";
-
-import {useEffect,useState} from "react";
-import {ArrowUpRight,Instagram,Play,ShieldCheck} from "lucide-react";
+import {ArrowUpRight,Instagram,Play} from "lucide-react";
 import type {InstagramFeedPost} from "@/lib/instagram-feed";
+import {influencerStories} from "@/data/influencer-stories";
 
 const account="https://www.instagram.com/rubyhair.de/";
-const profileEmbed="https://www.instagram.com/rubyhair.de/embed/";
-const consentKey="ruby_instagram_embed_consent_v1";
+
+// Every fallback is a real @rubyhair.de post whose image is stored locally.
+// The official account feed takes precedence whenever the Meta token is connected.
+const editorialPositions=[0,3,2,5,7];
+const editorialPosts=editorialPositions.map(index=>influencerStories[index]).filter(Boolean);
 
 export default function InstagramHome({posts}:{posts:InstagramFeedPost[]}){
-  const connected=posts.length>0;
-  const [showProfileEmbed,setShowProfileEmbed]=useState(false);
-
-  useEffect(()=>{
-    try{setShowProfileEmbed(window.localStorage.getItem(consentKey)==="allow");}
-    catch{/* Storage disabled: request consent again on each visit. */}
-  },[]);
-
-  const authorizeEmbed=()=>{
-    try{window.localStorage.setItem(consentKey,"allow");}catch{/* Session-only consent. */}
-    setShowProfileEmbed(true);
-  };
-  const hideExternalEmbed=()=>{
-    try{window.localStorage.removeItem(consentKey);}catch{/* Session-only consent. */}
-    setShowProfileEmbed(false);
-  };
+  const livePosts=posts.slice(0,5).map(post=>({key:post.id,src:"/api/instagram-thumbnail/"+post.id,href:post.permalink,
+    alt:"Ruby Hair Instagram Beitrag",isVideo:post.isVideo}));
+  const curatedPosts=editorialPosts.map(post=>({key:post.postUrl,src:post.image,href:post.postUrl,
+    alt:post.name+" – Ruby Hair Instagram",isVideo:false}));
+  // Fill the fixed five-tile composition even when the official API has fewer posts.
+  const gallery=[...livePosts,...curatedPosts.filter(post=>!livePosts.some(live=>live.href===post.href))].slice(0,5);
 
   return <section className="rh-instagram-section" id="instagram" aria-labelledby="rh-instagram-title">
-    <div className="container">
+    <div className="container rh-instagram-inner">
       <div className="rh-instagram-head">
         <div>
-          <span className="rh-instagram-kicker"><Instagram size={16} aria-hidden="true"/> FOLLOW THE RUBY HAIR FEELING</span>
-          <h2 id="rh-instagram-title">Ruby Hair <i>on Instagram.</i></h2>
-          <p>Hair Inspiration, Studio-Momente und neue Looks – entdecke unsere Welt auf Instagram.</p>
+          <span className="rh-instagram-kicker"><Instagram size={15} aria-hidden="true"/> AUS UNSEREM INSTAGRAM</span>
+          <h2 id="rh-instagram-title">Hair moments. <i>Ruby Hair.</i></h2>
+          <p>Echte Looks, besondere Nuancen und Inspiration aus unserem Studio.</p>
         </div>
         <a className="rh-instagram-follow" href={account} target="_blank" rel="noopener noreferrer">
           @rubyhair.de <ArrowUpRight size={17} aria-hidden="true"/>
         </a>
       </div>
-
-      {connected?
-        <div className="rh-instagram-grid">
-          {posts.map(post=>
-            <a key={post.id} className="rh-instagram-tile" href={post.permalink} target="_blank"
-              rel="noopener noreferrer" aria-label={"Ruby Hair Instagram Beitrag ansehen"+(post.isVideo?" (Video)":"")}>
-              <img src={"/api/instagram-thumbnail/"+post.id}
-                alt="Instagram-Beitrag aus dem Ruby Hair Profil" loading="lazy" decoding="async"/>
-              {post.isVideo&&<span className="rh-instagram-media-type"><Play size={18} fill="currentColor"/></span>}
-              <span className="rh-instagram-tile-open"><Instagram size={19}/></span>
-            </a>
-          )}
-        </div>:
-        showProfileEmbed?
-          <div className="rh-instagram-native">
-            <iframe src={profileEmbed}
-              title="Aktuelle öffentliche Instagram-Beiträge von @rubyhair.de"
-              loading="lazy"
-              referrerPolicy="no-referrer"
-              allow="fullscreen"
-            />
-          </div>:
-          <div className="rh-instagram-unconnected">
-            <div className="rh-instagram-unconnected-symbol"><Instagram size={39} strokeWidth={1.35}/></div>
-            <div>
-              <strong>Echte Beiträge direkt von Instagram.</strong>
-              <p>Wir zeigen das öffentliche Ruby Hair Profil mit den neuesten Beiträgen. Beim Anzeigen lädt Instagram (Meta) externe Inhalte und kann Cookies setzen sowie deine IP-Adresse erhalten.</p>
-            </div>
-            <button type="button" onClick={authorizeEmbed}>
-              BEITRÄGE ANZEIGEN <ArrowUpRight size={16} aria-hidden="true"/>
-            </button>
-          </div>
-      }
-      <div className="rh-instagram-bottom">
-        <span>{connected?
-          <><ShieldCheck size={15}/> Aktuelle Beiträge von @rubyhair.de</>:
-          <><ShieldCheck size={15}/> Originales Instagram-Profil · automatisch von Instagram aktualisiert</>}
-        </span>
-        <div className="rh-instagram-bottom-actions">
-          {!connected&&showProfileEmbed&&
-            <button type="button" onClick={hideExternalEmbed}>Externe Inhalte ausblenden</button>}
-          <a href={account} target="_blank" rel="noopener noreferrer">
-            INSTAGRAM BESUCHEN <ArrowUpRight size={16} aria-hidden="true"/>
-          </a>
-        </div>
+      <div className="rh-instagram-editorial" aria-label="Ruby Hair Instagram Fotogalerie">
+        {gallery.map((item,index)=><a key={item.key}
+          className={"rh-instagram-photo"+(index===0?" rh-instagram-photo-featured":"")}
+          href={item.href} target="_blank" rel="noopener noreferrer"
+          aria-label={item.alt+" auf Instagram öffnen"}>
+          <img src={item.src} alt={item.alt} loading="lazy" decoding="async"/>
+          {item.isVideo&&<span className="rh-instagram-video"><Play size={17} fill="currentColor"/></span>}
+          <span className="rh-instagram-photo-overlay"><Instagram size={18}/><span>BEITRAG ANSEHEN</span><ArrowUpRight size={17}/></span>
+        </a>)}
+      </div>
+      <div className="rh-instagram-foot">
+        <span>RUBY HAIR · ESSEN <span className="rh-instagram-foot-divider">/</span> INSTAGRAM EDITORIAL</span>
+        <a href={account} target="_blank" rel="noopener noreferrer">MEHR AUF INSTAGRAM <ArrowUpRight size={16}/></a>
       </div>
     </div>
   </section>;
