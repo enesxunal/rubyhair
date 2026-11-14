@@ -647,3 +647,20 @@ test("Ruby Hair community carousel has 12 sourced posts and usable navigation",(
  assert.ok(css.includes('scroll-snap-type:x mandatory'));
  assert.ok(css.includes('-webkit-overflow-scrolling:touch'));
 });
+
+test("Ruby Hair homepage uses approved editorial copy and removes the redundant studio section",()=>{
+ const home=fs.readFileSync(path.join(base,"src/components/home-frontend.tsx"),"utf8");
+ for(const copy of [
+  "Seidige Texturen. Facettenreiche Nuancen. Ein unvergleichlich natürlicher Fall.",
+  "Unsere Premium Tape-in Extensions vereinen hochwertige Echthaarqualität mit nahezu unsichtbaren Verbindungen – für einen Look, der sich wie dein eigenes Haar anfühlt.",
+  "KOLLEKTION ENTDECKEN",
+  "Schönes Haar verändert nicht nur deinen Look. Es verändert, wie du dich fühlst.",
+  "Ruby Hair steht für erstklassige Echthaar-Extensions, natürliche Ergebnisse und kompromisslose Qualität.",
+  "Entdecke deine perfekte Haarverlängerung – online oder bei einer persönlichen Beratung in unserem Studio in Essen.",
+  "PERSÖNLICHE BERATUNG"
+ ]) assert.ok(home.includes(copy),"missing reference text: "+copy);
+ for(const old of ['Beauty is better','className="studio"','id="studio"','href="/#studio"','TAPE-IN ENTDECKEN'])
+  assert.ok(!home.includes(old),"obsolete homepage section/link: "+old);
+ assert.ok(home.indexOf('<TapeInAtelier/>')<home.indexOf('className="brand-story'));
+ assert.ok(home.indexOf('className="brand-story')<home.indexOf('<InstagramHome posts={instagramPosts}/>'));
+});

@@ -59,7 +59,7 @@ function HomeNavigation(){
       <span>THE RUBY HAIR EXPERIENCE</span>
       <span className="top-star"><Sparkles size={13}/></span>
       <span>PREMIUM ECHTHAAR EXTENSIONS</span>
-      <Link href="/#studio">ENTDECKE UNS IN ESSEN <ArrowUpRight size={14}/></Link>
+      <Link href="/kontakt/">ENTDECKE UNS IN ESSEN <ArrowUpRight size={14}/></Link>
     </div>
     <header className="site-header" id="top">
       <div className="head-main container-wide">
@@ -131,9 +131,10 @@ function TapeInAtelier(){
       <div className="rh-tape-atelier-copy">
         <div className="eyebrow">THE ART OF EXTENSIONS / RUBY HAIR</div>
         <h2 id="rh-atelier-heading">Schönheit liegt<br/>im <i>Detail.</i></h2>
-        <p>Ein Blick auf die feinen Nuancen und den natürlichen Fall unserer Tape-in Extensions. Finde die passende Länge und entdecke die Farbvielfalt.</p>
+        <p>Seidige Texturen. Facettenreiche Nuancen. Ein unvergleichlich natürlicher Fall.</p>
+        <p>Unsere Premium Tape-in Extensions vereinen hochwertige Echthaarqualität mit nahezu unsichtbaren Verbindungen – für einen Look, der sich wie dein eigenes Haar anfühlt.</p>
         <Link href="/kollektionen/tape-in-extensions/" className="rh-tape-atelier-link">
-          TAPE-IN ENTDECKEN <ArrowUpRight size={17} aria-hidden="true"/>
+          KOLLEKTION ENTDECKEN <ArrowUpRight size={17} aria-hidden="true"/>
         </Link>
         <span className="rh-tape-atelier-note">RUBY HAIR · STUDIO EDITORIAL</span>
       </div>
@@ -178,7 +179,7 @@ function HomeFooter(){
         </div>
         <div className="footer-col"><h3>RUBY HAIR</h3>
           <Link href="/#about">Unsere Story</Link>
-          <Link href="/#studio">Studio in Essen</Link>
+          <Link href="/kontakt/">Studio in Essen</Link>
           <Link href="/kontakt/">Kontakt</Link>
           <a href="https://www.instagram.com/rubyhair.de/" target="_blank" rel="noopener noreferrer">Instagram <ArrowUpRight size={15}/></a>
         </div>
@@ -231,9 +232,10 @@ export default function HomeFrontend({products,instagramPosts=[]}:{products:Prod
         <div className="brand-copy">
           <div className="eyebrow"><span className="num">04 /</span> BEHIND THE BEAUTY</div>
           <h2>Not just hair.<br/><i>A feeling.</i></h2>
-          <p>Schönes Haar ist persönlich. Bei Ruby Hair dreht sich alles um die Freiheit, deinen ganz eigenen Look zu kreieren.</p>
-          <p>Entdecke echte Haarqualität und persönliche Beratung direkt in unserem Studio in Essen.</p>
-          <Link href="/kontakt/" className="under-button">KONTAKT & BERATUNG <ArrowUpRight size={16}/></Link>
+          <p>Schönes Haar verändert nicht nur deinen Look. Es verändert, wie du dich fühlst.</p>
+          <p>Ruby Hair steht für erstklassige Echthaar-Extensions, natürliche Ergebnisse und kompromisslose Qualität.</p>
+          <p>Entdecke deine perfekte Haarverlängerung – online oder bei einer persönlichen Beratung in unserem Studio in Essen.</p>
+          <Link href="/kontakt/" className="under-button">PERSÖNLICHE BERATUNG <ArrowUpRight size={16}/></Link>
           <div className="brand-signature">RUBY HAIR<br/><span>EXTENSIONS · ESSEN</span></div>
         </div>
         <div className="brand-portrait">
@@ -241,20 +243,6 @@ export default function HomeFrontend({products,instagramPosts=[]}:{products:Prod
           <div className="brand-photo-caption"><span>THE BEAUTY OF INDIVIDUALITY</span><span>RUBY HAIR · EDITORIAL 02</span></div>
         </div>
       </div></section>
-      <section className="studio" id="studio">
-        <div className="studio-image">
-          <video src="/media/freecompress-rh-vid-baeabc7ed.mp4" playsInline autoPlay muted loop preload="metadata"
-            aria-label="Einblicke in das Ruby Hair Studio in Essen"/>
-          <div className="studio-video-caption">EIN BLICK IN UNSER STUDIO <ArrowUpRight size={17}/></div>
-        </div>
-        <div className="studio-content">
-          <div className="eyebrow">RUBY HAIR · ESSEN</div>
-          <h2>Beauty is better<br/><i>in person.</i></h2>
-          <p>Du möchtest dich persönlich beraten lassen? Entdecke Ruby Hair in Essen und finde deinen neuen Lieblingslook.</p>
-          <div className="studio-place">ESSEN · DEUTSCHLAND</div>
-          <Link href="/kontakt/" className="light-button">KONTAKT & BERATUNG <ArrowUpRight size={17}/></Link>
-        </div>
-      </section>
       <InstagramHome posts={instagramPosts}/>
     </main>
     <HomeFooter/>
