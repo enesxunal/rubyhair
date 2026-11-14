@@ -8,8 +8,8 @@ import {tapeInLengthHref} from "@/lib/tape-in-lengths";
 import CookieSettingsLink from "@/components/cookie-settings-link";
 const categories=[
   {href:"/kollektionen/",title:"Alle Extensions"},
-  {href:tapeInLengthHref("45-50-cm"),title:"Tape-in Kurz"},
-  {href:tapeInLengthHref("55-60-cm"),title:"Tape-in Lang"}
+  {href:tapeInLengthHref("45-50-cm"),title:"Tape-in 45–50 cm"},
+  {href:tapeInLengthHref("55-60-cm"),title:"Tape-in 55–60 cm"}
 ];
 export function SiteHeader(){
   const [open,setOpen]=useState(false);
@@ -65,7 +65,7 @@ export function SiteFooter(){
   return <><footer className="rh-footer">
     <div className="rh-footer-inner">
       <div><Link href="/" className="rh-footer-mark">RUBY HAIR</Link><p>Premium Echthaar Extensions – für deinen ganz persönlichen Look.</p><a className="rh-footer-contact" href="mailto:info@rubyhair.de">info@rubyhair.de</a><p>Essen · Deutschland</p></div>
-      <div><strong>SHOP</strong><Link href="/kollektionen/">Alle Extensions</Link><Link href={tapeInLengthHref("45-50-cm")}>Tape-in Kurz</Link><Link href={tapeInLengthHref("55-60-cm")}>Tape-in Lang</Link><Link href="/suche/">Produkte suchen</Link></div>
+      <div><strong>SHOP</strong><Link href="/kollektionen/">Alle Extensions</Link><Link href={tapeInLengthHref("45-50-cm")}>Tape-in 45–50 cm</Link><Link href={tapeInLengthHref("55-60-cm")}>Tape-in 55–60 cm</Link><Link href="/suche/">Produkte suchen</Link></div>
       <div><strong>INFORMATIONEN</strong><Link href="/kontakt/">Kontakt & Beratung</Link><Link href="/ratgeber/">Hair Guide & Pflege</Link><Link href="/versand-zahlung/">Versand & Zahlung</Link><Link href="/rechtliches/widerruf/">Widerruf & Rückgabe</Link><Link href="/rechtliches/agb/">AGB</Link><Link href="/haar-anprobe/">KI-Haarvorschau</Link></div>
     </div>
     <div className="rh-footer-bottom"><span>© 2026 RUBY HAIR · NEXT.JS DESIGNVORSCHAU</span><div>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import HomeFrontend from "@/components/home-frontend";
 import { getStoreCatalog } from "@/lib/catalog-server";
+import {getRubyInstagramPosts} from "@/lib/instagram-feed";
 export const dynamic="force-dynamic";
 export const metadata: Metadata = {
   title: "Ruby Hair — Premium Echthaar Extensions",
@@ -8,6 +9,6 @@ export const metadata: Metadata = {
   alternates:{canonical:"/"}
 };
 export default async function HomePage(){
-  const {products}=await getStoreCatalog();
-  return <HomeFrontend products={products}/>;
+  const [{products},instagramPosts]=await Promise.all([getStoreCatalog(),getRubyInstagramPosts()]);
+  return <HomeFrontend products={products} instagramPosts={instagramPosts}/>;
 }

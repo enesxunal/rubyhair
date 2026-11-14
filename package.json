@@ -7,7 +7,7 @@
     "build": "prisma generate && next build",
     "start": "next start -p 8765",
     "typecheck": "tsc --noEmit",
-    "test": "node --test tests/next-architecture.test.cjs && tsx --test tests/tryon-photo-suitability.test.ts tests/admin-password-config.test.ts tests/admin-analytics-report.test.ts",
+    "test": "node --test tests/next-architecture.test.cjs && tsx --test tests/tryon-photo-suitability.test.ts tests/admin-password-config.test.ts tests/admin-analytics-report.test.ts tests/instagram-feed.test.ts",
     "test:orders": "RUBY_LOCAL_ORDER_TESTS=LOCAL_TEST_ONLY tsx scripts/test-order-reservation.ts",
     "orders:expire:local": "RUBY_LOCAL_ORDER_TESTS=LOCAL_TEST_ONLY tsx scripts/local-order-expiry-worker.ts --once",
     "orders:worker:local": "RUBY_LOCAL_ORDER_TESTS=LOCAL_TEST_ONLY tsx scripts/local-order-expiry-worker.ts --watch",

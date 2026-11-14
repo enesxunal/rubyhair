@@ -88,19 +88,19 @@ export default function HairGuide(){
         <p>Wähle die Länge deiner Tape-in Extensions.</p></div>
       <div className="rh-guide-method-grid">
         <article>
-          <div className="rh-guide-method-photo"><img src="/media/tape-in-extensions-bg-17a4f5094.png" alt="Ruby Hair Tape-in Kurz"/></div>
-          <div className="rh-guide-method-info"><h3>Tape-in Kurz</h3>
+          <div className="rh-guide-method-photo"><img src="/media/tape-in-extensions-bg-17a4f5094.png" alt="Ruby Hair Tape-in 45–50 cm"/></div>
+          <div className="rh-guide-method-info"><h3>Tape-in 45–50 cm</h3>
             <p>45–50 cm Echthaar-Extensions.</p>
             <div className="rh-guide-method-facts"><span>100 % Echthaar</span><span>10 Tape-ins / Packung</span></div>
-            <Link href="/kollektionen/tape-in-extensions/?laenge=45-50-cm">TAPE-IN KURZ ANSEHEN <ArrowUpRight size={17}/></Link>
+            <Link href="/kollektionen/tape-in-extensions/?laenge=45-50-cm">TAPE-IN 45–50 CM ANSEHEN <ArrowUpRight size={17}/></Link>
           </div>
         </article>
         <article>
-          <div className="rh-guide-method-photo"><img src="/media/60-3-scaled-e99a55c0d.jpg" alt="Ruby Hair Tape-in Lang"/></div>
-          <div className="rh-guide-method-info"><h3>Tape-in Lang</h3>
+          <div className="rh-guide-method-photo"><img src="/media/60-3-scaled-e99a55c0d.jpg" alt="Ruby Hair Tape-in 55–60 cm"/></div>
+          <div className="rh-guide-method-info"><h3>Tape-in 55–60 cm</h3>
             <p>55–60 cm Echthaar-Extensions.</p>
             <div className="rh-guide-method-facts"><span>100 % Echthaar</span><span>10 Tape-ins / Packung</span></div>
-            <Link href="/kollektionen/tape-in-extensions/?laenge=55-60-cm">TAPE-IN LANG ANSEHEN <ArrowUpRight size={17}/></Link>
+            <Link href="/kollektionen/tape-in-extensions/?laenge=55-60-cm">TAPE-IN 55–60 CM ANSEHEN <ArrowUpRight size={17}/></Link>
           </div>
         </article>
       </div>

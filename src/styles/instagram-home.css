@@ -1,0 +1,47 @@
+/* Ruby Hair: Instagram inspiration with live media only after user opt-in. */
+.rh-instagram-section{padding:clamp(60px,7vw,105px) 0;background:#fffdfb}
+.rh-instagram-head{display:flex;align-items:flex-end;justify-content:space-between;gap:30px;margin-bottom:29px}
+.rh-instagram-kicker{display:inline-flex;align-items:center;gap:9px;font-size:9px;font-weight:750;color:#926e7d;letter-spacing:1.75px}
+.rh-instagram-head h2{font:400 clamp(36px,4.1vw,62px)/1.18 var(--serif);letter-spacing:-1px;margin:14px 0 8px;color:#3e2c36}
+.rh-instagram-head h2 i{color:#916477;font-weight:400}
+.rh-instagram-head p{font-size:12px;color:#88767e;line-height:1.8;margin:0}
+.rh-instagram-follow{display:inline-flex;align-items:center;gap:12px;border:1px solid #d5c7c9;padding:15px 18px;white-space:nowrap;font-size:11px;font-weight:750;letter-spacing:.4px;text-decoration:none;color:#664354;transition:background .2s}
+.rh-instagram-follow:hover{background:#f5ebed}
+.rh-instagram-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}
+.rh-instagram-tile{display:block;position:relative;aspect-ratio:1/1;background:#eee9e5;overflow:hidden;isolation:isolate}
+.rh-instagram-tile img{display:block;width:100%;height:100%;object-fit:cover;transition:transform .45s ease}
+.rh-instagram-tile:nth-child(2) img{object-position:center 38%}
+.rh-instagram-tile:hover img{transform:scale(1.055)}
+.rh-instagram-tile:after{content:"";inset:0;position:absolute;background:linear-gradient(0deg,#24151d50,transparent 50%);pointer-events:none}
+.rh-instagram-tile-open{position:absolute;right:13px;bottom:11px;z-index:2;display:grid;place-items:center;color:#fff}
+.rh-instagram-media-type{position:absolute;top:12px;right:12px;z-index:2;display:grid;place-items:center;width:31px;height:31px;border-radius:50%;background:#ffffffd9;color:#5a3447}
+.rh-instagram-bottom{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-top:22px}
+.rh-instagram-bottom>span{display:flex;align-items:center;gap:8px;color:#9e8993;font-size:10px}
+.rh-instagram-bottom>a{display:inline-flex;align-items:center;gap:11px;color:#5e3d4e;font-size:10px;letter-spacing:1px;font-weight:750;text-decoration:none}
+.rh-instagram-bottom>a:hover{text-decoration:underline;text-underline-offset:5px}
+.rh-instagram-optin{display:flex;align-items:center;gap:24px;padding:35px;background:#f6efef;border:1px solid #e5d8da}
+.rh-instagram-optin-mark{display:grid;place-items:center;flex-shrink:0;width:75px;height:75px;color:#86566a;border-radius:50%;background:#ecdfe4}
+.rh-instagram-optin>div{flex:1;min-width:0}
+.rh-instagram-optin strong{font:400 24px/1.2 var(--serif);color:#523a45}
+.rh-instagram-optin p{max-width:640px;margin:9px 0 0;font-size:11px;color:#8e7884;line-height:1.8}
+.rh-instagram-optin button{display:inline-flex;align-items:center;gap:11px;border:0;background:#6b4053;color:#fff;padding:14px 18px;font-size:11px;white-space:nowrap;cursor:pointer;font-weight:700}
+.rh-instagram-optin button:hover{background:#84576a}
+.rh-instagram-section a:focus-visible,.rh-instagram-section button:focus-visible{outline:2px solid #90657a;outline-offset:4px}
+@media(max-width:1050px){
+ .rh-instagram-optin{flex-wrap:wrap}
+ .rh-instagram-optin button{margin-left:99px}
+}
+@media(max-width:650px){
+ .rh-instagram-section{padding:56px 0}
+ .rh-instagram-head{align-items:flex-start;flex-direction:column;gap:17px;margin-bottom:20px}
+ .rh-instagram-head h2{font-size:39px}
+ .rh-instagram-follow{padding:12px 15px}
+ .rh-instagram-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+ .rh-instagram-bottom{align-items:flex-start;flex-direction:column;gap:15px;margin-top:16px}
+ .rh-instagram-optin{padding:20px;gap:14px}
+ .rh-instagram-optin-mark{width:54px;height:54px}
+ .rh-instagram-optin strong{font-size:21px}
+ .rh-instagram-optin>div{flex-basis:calc(100% - 75px)}
+ .rh-instagram-optin button{margin-left:0}
+}
+@media(prefers-reduced-motion:reduce){.rh-instagram-tile img{transition:none}.rh-instagram-tile:hover img{transform:none}}

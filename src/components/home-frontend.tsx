@@ -7,13 +7,15 @@ import {useCart} from "@/components/cart-context";
 import {type Product} from "@/lib/catalog";
 import {tapeInLengths,tapeInLengthHref} from "@/lib/tape-in-lengths";
 import CookieSettingsLink from "@/components/cookie-settings-link";
+import InstagramHome from "@/components/instagram-home";
+import type {InstagramFeedPost} from "@/lib/instagram-feed";
 
 const darkLogo="/media/RubyHair-WebHeader-Logo-Dunkel-70efc2b6a.png";
 const lightLogo="/media/RubyHair-WebHeader-Logo-Hell-818376d91.png";
 const nav=[
   {href:"/kollektionen/",title:"ALLE EXTENSIONS"},
-  {href:tapeInLengthHref("45-50-cm"),title:"TAPE-IN KURZ"},
-  {href:tapeInLengthHref("55-60-cm"),title:"TAPE-IN LANG"},
+  {href:tapeInLengthHref("45-50-cm"),title:"TAPE-IN 45–50 CM"},
+  {href:tapeInLengthHref("55-60-cm"),title:"TAPE-IN 55–60 CM"},
   {href:"/suche/",title:"HAARFARBEN"},
   {href:"/kontakt/",title:"BERATUNG"}
 ];
@@ -162,8 +164,8 @@ function HomeFooter(){
         </div>
         <div className="footer-col"><h3>SHOP</h3>
           <Link href="/kollektionen/">Alle Extensions</Link>
-          <Link href={tapeInLengthHref("45-50-cm")}>Tape-in Kurz</Link>
-          <Link href={tapeInLengthHref("55-60-cm")}>Tape-in Lang</Link>
+          <Link href={tapeInLengthHref("45-50-cm")}>Tape-in 45–50 cm</Link>
+          <Link href={tapeInLengthHref("55-60-cm")}>Tape-in 55–60 cm</Link>
           <Link href="/suche/">Farben entdecken</Link>
         </div>
         <div className="footer-col"><h3>INFORMATIONEN</h3>
@@ -188,7 +190,7 @@ function HomeFooter(){
     <div className="prototype-note">DESIGNVORSCHAU · BESTELLUNGEN UND ZAHLUNGEN NOCH NICHT FREIGEGEBEN</div>
   </>;
 }
-export default function HomeFrontend({products}:{products:Product[]}){
+export default function HomeFrontend({products,instagramPosts=[]}:{products:Product[];instagramPosts?:InstagramFeedPost[]}){
   return <>
     <HomeNavigation/>
     <main id="main">
@@ -210,7 +212,7 @@ export default function HomeFrontend({products}:{products:Product[]}){
               <div className="collection-media"><img src={choice.image} alt={choice.alt} loading="lazy"/>
                 <span className="rh-length-tag">{choice.label}</span>
               </div>
-              <div className="collection-caption"><h3>{index===0?<>Tape-in <i>Kurz.</i></>:<>Tape-in <i>Lang.</i></>}</h3>
+              <div className="collection-caption"><h3>{index===0?<>Tape-in <i>45–50 cm.</i></>:<>Tape-in <i>55–60 cm.</i></>}</h3>
                 <span className="round-arrow"><ArrowUpRight size={21} aria-hidden="true"/></span>
               </div>
             </Link>)}
@@ -247,6 +249,7 @@ export default function HomeFrontend({products}:{products:Product[]}){
           <Link href="/kontakt/" className="light-button">KONTAKT & BERATUNG <ArrowUpRight size={17}/></Link>
         </div>
       </section>
+      <InstagramHome posts={instagramPosts}/>
     </main>
     <HomeFooter/>
   </>;

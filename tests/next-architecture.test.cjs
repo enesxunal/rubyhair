@@ -94,7 +94,7 @@ test("native homepage uses React and current server catalog, not injected HTML b
   const home=fs.readFileSync(path.join(base,"app/page.tsx"),"utf8");
   const frontend=fs.readFileSync(path.join(base,"src/components/home-frontend.tsx"),"utf8");
   assert.ok(home.includes("getStoreCatalog()"));
-  assert.ok(home.includes("<HomeFrontend products={products}/>"));
+  assert.ok(home.includes("<HomeFrontend products={products} instagramPosts={instagramPosts}/>"));
   assert.ok(frontend.includes('className="hero rh-hero-product"'));
   assert.ok(frontend.includes("tapeInLengths.map("));
   assert.ok(!frontend.includes('KERATIN BONDINGS'));
@@ -126,7 +126,7 @@ test("public guide and contact do not invent order processing or email submissio
   const guide=fs.readFileSync(path.join(base,"app/ratgeber/page.tsx"),"utf8");
   const contact=fs.readFileSync(path.join(base,"app/kontakt/page.tsx"),"utf8");
   const composer=fs.readFileSync(path.join(base,"src/components/contact-composer.tsx"),"utf8");
-  for(const content of ["Tape-in Kurz","Tape-in Lang","10 Tape-ins / Packung","Pflege","faq"]) {
+  for(const content of ["Tape-in 45–50 cm","Tape-in 55–60 cm","10 Tape-ins / Packung","Pflege","faq"]) {
     assert.ok(guide.toLowerCase().includes(content.toLowerCase()),content);
   }
   assert.ok(contact.includes("info@rubyhair.de"));
@@ -559,4 +559,20 @@ test("Ruby Hair platinum studio photography appears as an editorial feature with
   assert.equal(bytes.toString('ascii',8,12),'WEBP');
   assert.ok(bytes.length<250_000,"Editorial image must remain web optimized");
  }
+});
+
+test("Tape-in lengths have measured labels everywhere, with no Kurz or Lang categories",()=>{
+ const files=["src/components/home-frontend.tsx","src/components/site-shell.tsx",
+   "src/lib/tape-in-lengths.ts","app/ratgeber/page.tsx"];
+ for(const name of files){
+  const text=fs.readFileSync(path.join(base,name),"utf8");
+  assert.ok(text.includes("45–50"),name+" must show short measured range");
+  assert.ok(text.includes("55–60"),name+" must show long measured range");
+  assert.doesNotMatch(text,/Tape-in\\s+(?:Kurz|Lang)\\b/i,name+" must not use old short/long labels");
+ }
+ const home=fs.readFileSync(path.join(base,"src/components/home-frontend.tsx"),"utf8");
+ const index=fs.readFileSync(path.join(base,"app/page.tsx"),"utf8");
+ assert.ok(home.includes("<InstagramHome posts={instagramPosts}/>"));
+ assert.ok(index.includes("getRubyInstagramPosts()"));
+ assert.ok(index.includes("Promise.all("));
 });
