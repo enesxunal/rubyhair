@@ -6,6 +6,7 @@ import "../src/styles/styles.css";
 import "../src/styles/shop.css";
 import "../src/styles/tape-atelier.css";
 import "../src/styles/instagram-home.css";
+import "../src/styles/influencer-stories.css";
 import "../src/styles/legacy-legal.css";
 import "../src/styles/admin.css";
 import "../src/styles/admin-v2.css";

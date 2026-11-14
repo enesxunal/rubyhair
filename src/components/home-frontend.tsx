@@ -8,6 +8,7 @@ import {type Product} from "@/lib/catalog";
 import {tapeInLengths,tapeInLengthHref} from "@/lib/tape-in-lengths";
 import CookieSettingsLink from "@/components/cookie-settings-link";
 import InstagramHome from "@/components/instagram-home";
+import InfluencerStories from "@/components/influencer-stories";
 import type {InstagramFeedPost} from "@/lib/instagram-feed";
 
 const darkLogo="/media/RubyHair-WebHeader-Logo-Dunkel-70efc2b6a.png";
@@ -204,6 +205,7 @@ export default function HomeFrontend({products,instagramPosts=[]}:{products:Prod
           <div className="hero-links"><span className="solid-button">TAPE-IN ANSEHEN <ArrowUpRight size={18} aria-hidden="true"/></span></div>
         </div>
       </Link>
+      <InfluencerStories/>
       <section id="collections" className="collections rh-length-collection section-pad" aria-labelledby="rh-home-lengths">
         <div className="container">
           <div className="section-heading"><h2 id="rh-home-lengths">Wähle deine <i>Länge.</i></h2></div>
@@ -217,6 +219,10 @@ export default function HomeFrontend({products,instagramPosts=[]}:{products:Prod
               </div>
             </Link>)}
           </div>
+          <Link className="rh-keratin-feature" href="/kollektionen/keratin-bondings/">
+            <img src="/media/1006-300x400-0854ea8f2.jpg" alt="Keratin Bondings – Ruby Hair Echthaar" loading="lazy"/>
+            <span><small>DIE DRITTE KOLLEKTION</small><strong>Keratin <i>Bondings.</i></strong><span>KERATIN ENTDECKEN <ArrowUpRight size={17}/></span></span>
+          </Link>
         </div>
       </section>
       <ShadeSelector/>

@@ -104,7 +104,7 @@ test("native homepage uses React and current server catalog, not injected HTML b
   assert.equal(fs.existsSync(path.join(base,"src/data/home.html")),false);
   assert.ok(fs.existsSync(path.join(base,"archive/legacy-preview/home-approved-before-native.html")));
 });
-test("Tape-in storefront splits real 45-50 and 55-60 cm variants, with Keratin hidden from discovery",()=>{
+test("Tape-in storefront splits real 45-50 and 55-60 cm variants, with Keratin present in discovery",()=>{
   const tape=catalog.products["tape-in-extensions"];
   const short=tape.variations.filter(v=>v.length==="45-50-cm");
   const long=tape.variations.filter(v=>v.length==="55-60-cm");
@@ -116,7 +116,7 @@ test("Tape-in storefront splits real 45-50 and 55-60 cm variants, with Keratin h
   const collection=fs.readFileSync(path.join(base,"app/kollektionen/[slug]/page.tsx"),"utf8");
   assert.ok(home.includes('className="hero rh-hero-product"'));
   assert.ok(home.includes('href={tapeInLengthHref(choice.key)}'));
-  assert.ok(!home.includes('keratin-bondings'));
+  assert.ok(home.includes('keratin-bondings'));
   assert.ok(!nav.includes('/kollektionen/keratin-bondings/'));
   assert.ok(grid.includes('variants.filter(v=>v.length===selectedLength)'));
   assert.ok(grid.includes('"&laenge="+encodeURIComponent(selectedLength)'));
@@ -577,11 +577,11 @@ test("Tape-in lengths have measured labels everywhere, with no Kurz or Lang cate
  assert.ok(index.includes("Promise.all("));
 });
 
-test("length collection cards use the newly optimized studio photos, not stale editorial copies",()=>{
+test("length collection cards use contrasting real hair photos, not stale editorial copies",()=>{
  const data=fs.readFileSync(path.join(base,"src/lib/tape-in-lengths.ts"),"utf8");
  const home=fs.readFileSync(path.join(base,"src/components/home-frontend.tsx"),"utf8");
  assert.ok(data.includes('image:"/assets/ruby-hair-platinum-atelier.webp"'));
- assert.ok(data.includes('image:"/assets/ruby-hair-platinum-detail.webp"'));
+ assert.ok(data.includes('image:"/media/6-1-scaled-ffe6f9676.jpg"'));
  assert.ok(!data.includes("tape-in-short-editorial.webp"));
  assert.ok(!data.includes("tape-in-long-editorial.webp"));
  assert.ok(home.includes('src={choice.image}'));

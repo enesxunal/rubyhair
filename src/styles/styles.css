@@ -387,3 +387,19 @@ body{background:#fcfaf7;color:#2f2829}
   .rh-length-collection .collection-media{height:240px}
   .rh-length-collection .collection-caption .round-arrow{display:none}
 }
+
+/* Customer-approved category composition: full hair attachment/top stays visible. */
+.rh-length-collection .collection-media{background:#eee9e4}
+.rh-length-collection .collection-media img{object-position:center top}
+.rh-length-collection .collection-grid>a:nth-child(2) .collection-media{background:#b5a092}
+.rh-length-collection .collection-grid>a:nth-child(2) .collection-media img{object-position:center 12%}
+.rh-keratin-feature{display:flex;align-items:center;gap:26px;margin-top:22px;padding:19px 25px;background:#f2ebe8;color:#47313c;text-decoration:none}
+.rh-keratin-feature>img{width:110px;height:120px;object-fit:cover;object-position:top center}
+.rh-keratin-feature>span{display:flex;flex-direction:column;align-items:start;gap:8px}
+.rh-keratin-feature small{font-size:10px;letter-spacing:1.6px}
+.rh-keratin-feature strong{font:400 clamp(25px,3vw,39px)/1.1 var(--serif)}
+.rh-keratin-feature strong i{color:#986b7c}
+.rh-keratin-feature>span>span{display:flex;gap:8px;align-items:center;font-size:10px;letter-spacing:1px}
+.rh-keratin-feature:hover{background:#e9dfe0}
+.rh-category-keratin .rh-category-photo img{object-position:top center}
+@media(max-width:550px){.rh-keratin-feature{padding:14px;gap:15px}.rh-keratin-feature>img{width:88px;height:105px}}

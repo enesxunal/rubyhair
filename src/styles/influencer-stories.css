@@ -1,0 +1,15 @@
+.rh-influencer-section{padding:27px 0 23px;background:#fffaf7;border-bottom:1px solid #f1e7e6}
+.rh-influencer-heading{font-size:10px;font-weight:750;letter-spacing:2px;color:#60404e;margin-bottom:17px}
+.rh-influencer-heading span{font-weight:400;color:#99838c}
+.rh-influencer-strip{display:flex;overflow-x:auto;gap:24px;padding:3px 0 14px;scrollbar-width:thin}
+.rh-influencer-profile{border:0;background:none;cursor:pointer;flex:0 0 98px;display:flex;flex-direction:column;align-items:center;gap:9px;font-size:11px;color:#513b44}
+.rh-influencer-ring{display:grid;place-items:center;border-radius:50%;padding:4px;width:88px;height:88px;background:linear-gradient(35deg,#ac6e84,#d2a68d,#85536a)}
+.rh-influencer-ring img{width:100%;height:100%;object-fit:cover;border-radius:50%;border:3px solid #fff}
+.rh-story-overlay{position:fixed;inset:0;z-index:1100;background:#140e12da;display:grid;place-items:center;padding:20px}
+.rh-story-viewer{position:relative;width:min(400px,100%);height:min(700px,calc(100dvh - 40px));background:#20161a;display:flex;flex-direction:column;color:#fff}
+.rh-story-viewer>img{width:100%;height:100%;object-fit:contain;min-height:0}
+.rh-story-top{position:absolute;z-index:2;top:0;left:0;right:0;padding:16px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(#0008,transparent)}
+.rh-story-top a{display:flex;align-items:center;gap:8px;color:#fff;text-decoration:none;font-size:13px}
+.rh-story-top button{border:0;background:#ffffff25;color:#fff;cursor:pointer;padding:7px;border-radius:50%}
+.rh-story-instagram{position:absolute;bottom:15px;left:50%;transform:translateX(-50%);white-space:nowrap;display:flex;align-items:center;gap:7px;background:#fff;color:#402b35;text-decoration:none;padding:11px 17px;font-size:12px}
+@media(max-width:550px){.rh-influencer-strip{gap:12px}.rh-influencer-profile{flex-basis:78px}.rh-influencer-ring{width:72px;height:72px}}

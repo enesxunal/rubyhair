@@ -7,7 +7,8 @@ export function ShadeGrid({product,selectedLength}:{product:Product;selectedLeng
   const [filter,setFilter]=useState("");
   const groups=Array.from(colorsFor(product))
     .map(([color,variants])=>[color,selectedLength?variants.filter(v=>v.length===selectedLength):variants] as const)
-    .filter(([,variants])=>variants.length>0);
+    .filter(([,variants])=>variants.length>0)
+    .sort((a,b)=>new Intl.Collator("de",{numeric:true,sensitivity:"base"}).compare(a[1][0].color_label,b[1][0].color_label));
   const filtered=groups.filter(([color,variants])=>
     (color+" "+variants[0].color_label).toLocaleLowerCase("de")
       .includes(filter.trim().toLocaleLowerCase("de"))
