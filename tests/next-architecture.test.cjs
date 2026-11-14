@@ -611,4 +611,19 @@ test("Ruby Hair community uses actual recent posts, not profile highlight covers
  assert.ok(story.includes("rh-story-progress"));
  assert.ok(story.includes("onTouchEnd"));
  assert.ok(story.includes("ArrowRight"));
+ for(let i=1;i<=4;i++){
+  const key=`ruby-post-${String(i).padStart(2,"0")}-story.webp`;
+  assert.ok(fs.existsSync(path.join(base,"public/assets/instagram-posts",key)),"Missing story crop "+key);
+  assert.ok(source.includes(key),"Story data does not use "+key);
+ }
+ for(const avatar of ["hair-boutique.webp","jessica-haller.webp","elaine-victoria.webp"]){
+  assert.ok(fs.existsSync(path.join(base,"public/assets/instagram-avatars",avatar)),"Missing IG profile picture "+avatar);
+ }
+ const style=fs.readFileSync(path.join(base,"src/styles/influencer-stories.css"),"utf8");
+ assert.ok(style.includes("aspect-ratio:9/16"));
+ assert.ok(style.includes("object-fit:cover"));
+ assert.ok(style.includes("rh-influencer-ring{box-sizing:border-box;position:relative"));
+ assert.ok(!story.includes("rh-story-bottom"));
+ assert.ok(story.includes("story.avatar"));
+ assert.ok(story.includes("story.storyImage"));
 });

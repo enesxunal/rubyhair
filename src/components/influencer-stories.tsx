@@ -1,7 +1,7 @@
 "use client";
 
 import {useCallback,useEffect,useRef,useState} from "react";
-import {ArrowLeft,ArrowRight,ArrowUpRight,Instagram,X} from "lucide-react";
+import {ArrowLeft,ArrowRight,ArrowUpRight,X} from "lucide-react";
 import {influencerStories} from "@/data/influencer-stories";
 
 const STORY_DURATION=7000;
@@ -59,7 +59,7 @@ export default function InfluencerStories(){
         <div className="rh-influencer-heading">RUBY HAIR <span>COMMUNITY</span></div>
         <div className="rh-influencer-strip">
           {influencerStories.map((item,index)=>
-            <button className="rh-influencer-profile" key={item.image} type="button"
+            <button className="rh-influencer-profile" key={item.postUrl} type="button"
               onClick={event=>{lastTrigger.current=event.currentTarget;setPaused(false);setActive(index);}}
               aria-label={item.name+" ansehen"}>
               <span className="rh-influencer-ring"><img src={item.image} alt="" loading="lazy"/></span>
@@ -75,7 +75,7 @@ export default function InfluencerStories(){
         <button type="button" className="rh-story-side-control rh-story-side-prev" onClick={prev}
           aria-label="Vorheriges Foto"><ArrowLeft size={22}/></button>
         <div className="rh-story-viewer" role="dialog" aria-modal="true"
-          aria-label={"Ruby Hair Galerie: "+story.name}
+          aria-label={"Ruby Hair Story: "+story.name}
           onPointerDown={()=>setPaused(true)} onPointerUp={()=>setPaused(false)} onPointerCancel={()=>setPaused(false)}
           onTouchStart={event=>{touchStart.current={x:event.touches[0].clientX,y:event.touches[0].clientY};}}
           onTouchEnd={event=>{
@@ -85,8 +85,7 @@ export default function InfluencerStories(){
             touchStart.current=null;
             if(Math.abs(dx)>55 && Math.abs(dx)>Math.abs(dy)*1.3){if(dx<0)next();else prev();}
           }}>
-          <div className="rh-story-backdrop" style={{backgroundImage:`url("${story.image}")`}} aria-hidden="true"/>
-          <img className="rh-story-image" key={story.image} src={story.image}
+          <img className="rh-story-image" key={story.storyImage} src={story.storyImage}
             alt={story.name+" – Ruby Hair Instagram Beitrag"} />
           <div className="rh-story-progress" aria-label={"Foto "+(active+1)+" von "+total}>
             {influencerStories.map((item,index)=><span key={item.image} className="rh-story-progress-track">
@@ -97,9 +96,9 @@ export default function InfluencerStories(){
           </div>
           <div className="rh-story-top">
             <a href={story.instagramUrl} target="_blank" rel="noopener noreferrer"
-              aria-label="Ruby Hair Instagram Profil in neuem Tab öffnen">
-              <span className="rh-story-account-avatar">RH</span>
-              <span className="rh-story-account-name">@{story.username}<small>RUBY HAIR COMMUNITY</small></span>
+              aria-label={"Instagram-Profil @"+story.username+" öffnen"}>
+              <img className="rh-story-account-avatar" src={story.avatar} alt=""/>
+              <span className="rh-story-account-name">{story.name}<small>@{story.username}</small></span>
               <ArrowUpRight size={16}/>
             </a>
             <button ref={closeRef} className="rh-story-close" onClick={close} type="button"
@@ -109,12 +108,6 @@ export default function InfluencerStories(){
             aria-label="Vorheriges Foto"/>
           <button type="button" className="rh-story-tap rh-story-tap-next" onClick={next}
             aria-label="Nächstes Foto"/>
-          <div className="rh-story-bottom">
-            <span className="rh-story-counter">{String(active+1).padStart(2,"0")} / {String(total).padStart(2,"0")}</span>
-            <a href={story.postUrl} target="_blank" rel="noopener noreferrer">
-              <Instagram size={17}/> Beitrag auf Instagram ansehen <ArrowUpRight size={15}/>
-            </a>
-          </div>
         </div>
         <button type="button" className="rh-story-side-control rh-story-side-next" onClick={next}
           aria-label="Nächstes Foto"><ArrowRight size={22}/></button>
