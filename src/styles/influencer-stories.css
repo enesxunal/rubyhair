@@ -22,3 +22,12 @@
 .rh-story-top{background:linear-gradient(#281823ae,transparent);z-index:3}
 .rh-influencer-profile:focus-visible,.rh-story-top a:focus-visible{outline:2px solid #785366;outline-offset:3px}
 @media(max-width:550px){.rh-story-viewer>img{width:min(220px,65%)}.rh-story-viewer:after{bottom:85px}}
+
+
+/* Real portrait posts: let the hair photograph fill the story panel instead of showing a stretched 150px highlight avatar. */
+.rh-story-viewer{width:min(480px,100%);background:#20161a;justify-content:stretch;align-items:stretch}
+.rh-story-viewer:before,.rh-story-viewer:after{display:none}
+.rh-story-viewer>img{display:block;position:absolute;inset:0;width:100%;height:100%;max-height:none;min-height:0;aspect-ratio:auto;object-fit:cover;object-position:center 25%;border:0;border-radius:0;box-shadow:none}
+.rh-story-top{z-index:2;background:linear-gradient(180deg,#120c10bd,transparent)}
+.rh-story-instagram{z-index:2;max-width:calc(100% - 20px);bottom:18px;box-shadow:0 5px 24px #0003}
+@media(max-width:550px){.rh-story-viewer>img{width:100%;height:100%}}

@@ -1,13 +1,13 @@
-/** Ruby Hair Instagram public highlights, captured 2026-11-14.
- * Images are saved locally to avoid expiring Instagram CDN links and third-party image loads.
- * Personal account links were independently cross-checked against public creator pages.
+/**
+ * Ruby Hair public Instagram grid, first 4 posts as seen on 2026-11-14.
+ * These are actual post photographs, not Instagram Highlight covers.
+ * Individual creator identity is not attributed without a verified post tag.
+ * Images are locally stored; Instagram profile is the verified outbound link.
  */
 export type InfluencerStory={name:string;username:string;image:string;instagramUrl:string};
 export const influencerStories:InfluencerStory[]=[
-  {name:"Elaine",username:"elaine.victoria",image:"/assets/influencers/elaine-victoria.jpg",instagramUrl:"https://www.instagram.com/elaine.victoria/"},
-  {name:"Esra",username:"esraworld",image:"/assets/influencers/esraworld.jpg",instagramUrl:"https://www.instagram.com/esraworld/"},
-  {name:"Jessica Haller",username:"jessica_haller",image:"/assets/influencers/jessica-haller.jpg",instagramUrl:"https://www.instagram.com/jessica_haller/"},
-  {name:"Asena Neuhoff",username:"asenaneuhoff",image:"/assets/influencers/asena-neuhoff.jpg",instagramUrl:"https://www.instagram.com/asenaneuhoff/"},
-  {name:"Jiena Viduka",username:"jienaviduka",image:"/assets/influencers/jiena-viduka.jpg",instagramUrl:"https://www.instagram.com/jienaviduka/"},
-  {name:"Johanna Einhorn",username:"johanna_einhorn",image:"/assets/influencers/johanna-einhorn.jpg",instagramUrl:"https://www.instagram.com/johanna_einhorn/"}
+  {name:"Ruby Look 01",username:"rubyhair.de",image:"/assets/instagram-posts/ruby-post-01.webp",instagramUrl:"https://www.instagram.com/rubyhair.de/"},
+  {name:"Ruby Look 02",username:"rubyhair.de",image:"/assets/instagram-posts/ruby-post-02.webp",instagramUrl:"https://www.instagram.com/rubyhair.de/"},
+  {name:"Ruby Look 03",username:"rubyhair.de",image:"/assets/instagram-posts/ruby-post-03.webp",instagramUrl:"https://www.instagram.com/rubyhair.de/"},
+  {name:"Ruby Look 04",username:"rubyhair.de",image:"/assets/instagram-posts/ruby-post-04.webp",instagramUrl:"https://www.instagram.com/rubyhair.de/"}
 ];
