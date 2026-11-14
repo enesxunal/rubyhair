@@ -45,3 +45,37 @@
  .rh-instagram-optin button{margin-left:0}
 }
 @media(prefers-reduced-motion:reduce){.rh-instagram-tile img{transition:none}.rh-instagram-tile:hover img{transform:none}}
+
+/* While unconnected, show the real account link instead of pretend posts. */
+.rh-instagram-unconnected{
+ display:flex;align-items:center;gap:26px;
+ padding:32px clamp(20px,3vw,46px);
+ background:#f6efed;border:1px solid #eadfde;
+}
+.rh-instagram-unconnected-symbol{
+ display:grid;place-items:center;
+ width:85px;height:85px;flex-shrink:0;
+ background:#ebdfe3;border-radius:50%;color:#916479;
+}
+.rh-instagram-unconnected>div:nth-child(2){min-width:0;flex:1}
+.rh-instagram-unconnected strong{
+ font:400 clamp(24px,2.35vw,34px)/1.2 var(--serif);
+ color:#563a48;
+}
+.rh-instagram-unconnected p{
+ color:#85717d;font-size:12px;line-height:1.8;
+ max-width:560px;margin:8px 0 0;
+}
+.rh-instagram-unconnected>a{
+ display:inline-flex;align-items:center;gap:12px;
+ white-space:nowrap;padding:14px 19px;
+ background:#694154;color:#fff;font-size:11px;
+ letter-spacing:.7px;font-weight:750;text-decoration:none;
+}
+.rh-instagram-unconnected>a:hover{background:#825368}
+@media(max-width:700px){
+ .rh-instagram-unconnected{flex-wrap:wrap;gap:17px;padding:23px}
+ .rh-instagram-unconnected-symbol{height:62px;width:62px}
+ .rh-instagram-unconnected>div:nth-child(2){flex-basis:calc(100% - 80px)}
+ .rh-instagram-unconnected>a{margin-left:0}
+}

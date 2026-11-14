@@ -58,7 +58,7 @@ export function normalizeRubyInstagramPosts(data:unknown):InstagramFeedPost[]{
     const permalink=instagramPostUrl(p.permalink);
     const isVideo=p.media_type==="VIDEO";
     const previewUrl=instagramImageUrl(isVideo?p.thumbnail_url:p.media_url);
-    if(!permalink||!previewUrl||typeof p.id!=="string")continue;
+    if(!permalink||!previewUrl||typeof p.id!=="string"||!/^[0-9]{1,30}$/.test(p.id))continue;
     entries.push({
       id:p.id,
       permalink,
