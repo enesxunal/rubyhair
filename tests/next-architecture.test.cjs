@@ -596,7 +596,7 @@ test("Ruby Hair community uses actual recent posts, not profile highlight covers
  const source=fs.readFileSync(path.join(base,"src/data/influencer-stories.ts"),"utf8");
  const home=fs.readFileSync(path.join(base,"src/components/home-frontend.tsx"),"utf8");
  const story=fs.readFileSync(path.join(base,"src/components/influencer-stories.tsx"),"utf8");
- for(let i=1;i<=4;i++){
+ for(let i=1;i<=12;i++){
   const photo=path.join(base,"public/assets/instagram-posts",`ruby-post-${String(i).padStart(2,"0")}.webp`);
   assert.ok(fs.existsSync(photo),"missing Ruby Hair Instagram post photo: "+i);
   assert.equal(fs.readFileSync(photo).toString("ascii",8,12),"WEBP");
@@ -611,12 +611,12 @@ test("Ruby Hair community uses actual recent posts, not profile highlight covers
  assert.ok(story.includes("rh-story-progress"));
  assert.ok(story.includes("onTouchEnd"));
  assert.ok(story.includes("ArrowRight"));
- for(let i=1;i<=4;i++){
+ for(let i=1;i<=12;i++){
   const key=`ruby-post-${String(i).padStart(2,"0")}-story.webp`;
   assert.ok(fs.existsSync(path.join(base,"public/assets/instagram-posts",key)),"Missing story crop "+key);
   assert.ok(source.includes(key),"Story data does not use "+key);
  }
- for(const avatar of ["hair-boutique.webp","jessica-haller.webp","elaine-victoria.webp"]){
+ for(const avatar of ["hair-boutique.webp","jessica-haller.webp","elaine-victoria.webp","asena-neuhoff.webp","kristina.webp"]){
   assert.ok(fs.existsSync(path.join(base,"public/assets/instagram-avatars",avatar)),"Missing IG profile picture "+avatar);
  }
  const style=fs.readFileSync(path.join(base,"src/styles/influencer-stories.css"),"utf8");
@@ -626,4 +626,24 @@ test("Ruby Hair community uses actual recent posts, not profile highlight covers
  assert.ok(!story.includes("rh-story-bottom"));
  assert.ok(story.includes("story.avatar"));
  assert.ok(story.includes("story.storyImage"));
+});
+
+test("Ruby Hair community carousel has 12 sourced posts and usable navigation",()=>{
+ const source=fs.readFileSync(path.join(base,"src/data/influencer-stories.ts"),"utf8");
+ const component=fs.readFileSync(path.join(base,"src/components/influencer-stories.tsx"),"utf8");
+ const css=fs.readFileSync(path.join(base,"src/styles/influencer-stories.css"),"utf8");
+ const postRefs=[...source.matchAll(/postUrl:"(https:\/\/www.instagram.com\/p\/[^"]+)"/g)].map(m=>m[1]);
+ assert.equal(postRefs.length,12);
+ assert.equal(new Set(postRefs).size,12);
+ for(const code of ["DcyyKV5uAXp","Dcl4tzkM9jA","DcEYx_1jPKb","DbsVnhmOKu7","DbiyODiMzwy","DbbCY7KMBcH","DaSI-qbjjXM","DZAP4dDsl7m"]){
+  assert.ok(source.includes("https://www.instagram.com/p/"+code+"/"),"missing actual Ruby Hair feed post "+code);
+ }
+ assert.ok(component.includes('ref={carouselRef}'));
+ assert.ok(component.includes('scrollCarousel(-1)'));
+ assert.ok(component.includes('scrollCarousel(1)'));
+ assert.ok(component.includes('disabled={!canScrollLeft}'));
+ assert.ok(component.includes('disabled={!canScrollRight}'));
+ assert.ok(css.includes('scroll-snap-type:x proximity'));
+ assert.ok(css.includes('scroll-snap-type:x mandatory'));
+ assert.ok(css.includes('-webkit-overflow-scrolling:touch'));
 });

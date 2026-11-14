@@ -11,8 +11,35 @@ export default function InfluencerStories(){
   const [paused,setPaused]=useState(false);
   const lastTrigger=useRef<HTMLButtonElement|null>(null);
   const closeRef=useRef<HTMLButtonElement|null>(null);
+  const carouselRef=useRef<HTMLDivElement|null>(null);
+  const [canScrollLeft,setCanScrollLeft]=useState(false);
+  const [canScrollRight,setCanScrollRight]=useState(false);
   const touchStart=useRef<{x:number;y:number}|null>(null);
   const total=influencerStories.length;
+
+  useEffect(()=>{
+    const rail=carouselRef.current;
+    if(!rail)return;
+    const update=()=>{
+      setCanScrollLeft(rail.scrollLeft>2);
+      setCanScrollRight(rail.scrollLeft+rail.clientWidth<rail.scrollWidth-2);
+    };
+    update();
+    rail.addEventListener("scroll",update,{passive:true});
+    window.addEventListener("resize",update);
+    const observer=typeof ResizeObserver!=="undefined"?new ResizeObserver(update):null;
+    observer?.observe(rail);
+    return ()=>{rail.removeEventListener("scroll",update);window.removeEventListener("resize",update);observer?.disconnect();};
+  },[]);
+
+  const scrollCarousel=(direction:-1|1)=>{
+    const rail=carouselRef.current;
+    if(!rail)return;
+    const item=rail.querySelector<HTMLElement>(".rh-influencer-profile");
+    const gap=parseFloat(getComputedStyle(rail).columnGap)||0;
+    const step=item?(item.getBoundingClientRect().width+gap)*(window.innerWidth<640?3:4):rail.clientWidth*.75;
+    rail.scrollBy({left:direction*step,behavior:"smooth"});
+  };
 
   const close=useCallback(()=>{
     setActive(null);
@@ -56,8 +83,15 @@ export default function InfluencerStories(){
   return <>
     <section className="rh-influencer-section" aria-label="Ruby Hair Community">
       <div className="container">
-        <div className="rh-influencer-heading">RUBY HAIR <span>COMMUNITY</span></div>
-        <div className="rh-influencer-strip">
+        <div className="rh-influencer-headrow">
+          <div className="rh-influencer-heading">RUBY HAIR <span>COMMUNITY</span></div>
+          <div className="rh-influencer-navigation" aria-label="Community Galerie navigieren">
+            <span className="rh-influencer-count">{total} LOOKS</span>
+            <button type="button" onClick={()=>scrollCarousel(-1)} disabled={!canScrollLeft} aria-label="Community nach links scrollen"><ArrowLeft size={18}/></button>
+            <button type="button" onClick={()=>scrollCarousel(1)} disabled={!canScrollRight} aria-label="Community nach rechts scrollen"><ArrowRight size={18}/></button>
+          </div>
+        </div>
+        <div className="rh-influencer-strip" ref={carouselRef} role="region" aria-label="Ruby Hair Community Carousel" tabIndex={0}>
           {influencerStories.map((item,index)=>
             <button className="rh-influencer-profile" key={item.postUrl} type="button"
               onClick={event=>{lastTrigger.current=event.currentTarget;setPaused(false);setActive(index);}}
