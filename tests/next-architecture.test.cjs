@@ -602,8 +602,13 @@ test("Ruby Hair community uses actual recent posts, not profile highlight covers
   assert.equal(fs.readFileSync(photo).toString("ascii",8,12),"WEBP");
  }
  assert.ok(!source.includes("assets/influencers/"),"highlight covers must not be used");
- assert.ok(source.includes("https://www.instagram.com/rubyhair.de/"));
+ for(const shortcode of ["DfVB0WouqXC","DfFi9wXOQSg","DeRBodOSBLJ","DdWuECGjPhu"])assert.ok(source.includes("https://www.instagram.com/p/"+shortcode+"/"));
  assert.ok(home.includes("<InfluencerStories/>"));
  assert.ok(story.includes('target="_blank"'));
- assert.ok(story.includes("Story schließen"));
+ assert.ok(story.includes("Galerie schließen"));
+ assert.ok(story.includes("Nächstes Foto"));
+ assert.ok(story.includes("Vorheriges Foto"));
+ assert.ok(story.includes("rh-story-progress"));
+ assert.ok(story.includes("onTouchEnd"));
+ assert.ok(story.includes("ArrowRight"));
 });

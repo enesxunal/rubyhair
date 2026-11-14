@@ -1,33 +1,52 @@
-.rh-influencer-section{padding:27px 0 23px;background:#fffaf7;border-bottom:1px solid #f1e7e6}
+/* Ruby Hair editorial Instagram-style gallery. */
+.rh-influencer-section{padding:29px 0 24px;background:#fffaf7;border-bottom:1px solid #f1e7e6}
 .rh-influencer-heading{font-size:10px;font-weight:750;letter-spacing:2px;color:#60404e;margin-bottom:17px}
 .rh-influencer-heading span{font-weight:400;color:#99838c}
-.rh-influencer-strip{display:flex;overflow-x:auto;gap:24px;padding:3px 0 14px;scrollbar-width:thin}
-.rh-influencer-profile{border:0;background:none;cursor:pointer;flex:0 0 98px;display:flex;flex-direction:column;align-items:center;gap:9px;font-size:11px;color:#513b44}
-.rh-influencer-ring{display:grid;place-items:center;border-radius:50%;padding:4px;width:88px;height:88px;background:linear-gradient(35deg,#ac6e84,#d2a68d,#85536a)}
-.rh-influencer-ring img{width:100%;height:100%;object-fit:cover;border-radius:50%;border:3px solid #fff}
-.rh-story-overlay{position:fixed;inset:0;z-index:1100;background:#140e12da;display:grid;place-items:center;padding:20px}
-.rh-story-viewer{position:relative;width:min(400px,100%);height:min(700px,calc(100dvh - 40px));background:#20161a;display:flex;flex-direction:column;color:#fff}
-.rh-story-viewer>img{width:100%;height:100%;object-fit:contain;min-height:0}
-.rh-story-top{position:absolute;z-index:2;top:0;left:0;right:0;padding:16px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(#0008,transparent)}
-.rh-story-top a{display:flex;align-items:center;gap:8px;color:#fff;text-decoration:none;font-size:13px}
-.rh-story-top button{border:0;background:#ffffff25;color:#fff;cursor:pointer;padding:7px;border-radius:50%}
-.rh-story-instagram{position:absolute;bottom:15px;left:50%;transform:translateX(-50%);white-space:nowrap;display:flex;align-items:center;gap:7px;background:#fff;color:#402b35;text-decoration:none;padding:11px 17px;font-size:12px}
-@media(max-width:550px){.rh-influencer-strip{gap:12px}.rh-influencer-profile{flex-basis:78px}.rh-influencer-ring{width:72px;height:72px}}
-
-/* Compact editorial story viewer: do not enlarge 150px Instagram highlight covers into pixelated full-screen portraits. */
-.rh-story-viewer{overflow:hidden;background:radial-gradient(ellipse at 50% 34%,#b88c9e 0%,#795467 48%,#301d29 100%);justify-content:center;align-items:center}
-.rh-story-viewer:before{content:'RUBY HAIR';position:absolute;left:0;right:0;top:29%;font:400 clamp(41px,7vw,58px)/1.1 var(--serif);letter-spacing:2px;text-align:center;color:#ffffff18;pointer-events:none}
-.rh-story-viewer>img{position:relative;width:min(245px,68%);height:auto;aspect-ratio:1;min-height:0;max-height:none;border-radius:50%;object-fit:cover;border:6px solid #ffffffd1;box-shadow:0 16px 45px #180d1780}
-.rh-story-viewer:after{content:'RUBY HAIR COMMUNITY';position:absolute;left:0;right:0;bottom:85px;text-align:center;color:#ffffffc6;font-size:10px;letter-spacing:2.3px;pointer-events:none}
-.rh-story-top{background:linear-gradient(#281823ae,transparent);z-index:3}
-.rh-influencer-profile:focus-visible,.rh-story-top a:focus-visible{outline:2px solid #785366;outline-offset:3px}
-@media(max-width:550px){.rh-story-viewer>img{width:min(220px,65%)}.rh-story-viewer:after{bottom:85px}}
-
-
-/* Real portrait posts: let the hair photograph fill the story panel instead of showing a stretched 150px highlight avatar. */
-.rh-story-viewer{width:min(480px,100%);background:#20161a;justify-content:stretch;align-items:stretch}
-.rh-story-viewer:before,.rh-story-viewer:after{display:none}
-.rh-story-viewer>img{display:block;position:absolute;inset:0;width:100%;height:100%;max-height:none;min-height:0;aspect-ratio:auto;object-fit:cover;object-position:center 25%;border:0;border-radius:0;box-shadow:none}
-.rh-story-top{z-index:2;background:linear-gradient(180deg,#120c10bd,transparent)}
-.rh-story-instagram{z-index:2;max-width:calc(100% - 20px);bottom:18px;box-shadow:0 5px 24px #0003}
-@media(max-width:550px){.rh-story-viewer>img{width:100%;height:100%}}
+.rh-influencer-strip{display:flex;overflow-x:auto;gap:25px;padding:3px 0 14px;scrollbar-width:thin}
+.rh-influencer-profile{border:0;background:transparent;cursor:pointer;flex:0 0 94px;display:flex;flex-direction:column;align-items:center;gap:9px;font-size:11px;color:#513b44}
+.rh-influencer-ring{display:grid;place-items:center;border-radius:50%;padding:3px;width:90px;height:90px;background:linear-gradient(35deg,#8b5266,#ebc8ab,#956077);transition:transform .2s ease}
+.rh-influencer-profile:hover .rh-influencer-ring{transform:scale(1.05)}
+.rh-influencer-ring img{width:100%;height:100%;object-fit:cover;object-position:center 28%;border-radius:50%;border:3px solid #fff}
+.rh-story-overlay{position:fixed;inset:0;z-index:1100;background:rgba(15,11,17,.93);display:grid;place-items:center;padding:20px}
+.rh-story-stage{display:flex;align-items:center;justify-content:center;gap:18px;max-width:100%;max-height:100%;width:100%}
+.rh-story-viewer{position:relative;isolation:isolate;flex:0 1 auto;width:min(430px,calc(100vw - 130px));height:min(775px,calc(100dvh - 40px));overflow:hidden;background:#21191d;color:#fff;box-shadow:0 22px 75px rgba(0,0,0,.5)}
+.rh-story-backdrop{position:absolute;inset:-30px;background-position:center;background-size:cover;filter:blur(35px) brightness(.54);transform:scale(1.08);z-index:0}
+.rh-story-image{position:relative;z-index:1;display:block;width:100%;height:100%;object-fit:contain;object-position:center}
+.rh-story-viewer:before,.rh-story-viewer:after{content:"";pointer-events:none;z-index:1;position:absolute;left:0;right:0}
+.rh-story-viewer:before{top:0;height:180px;background:linear-gradient(to bottom,rgba(0,0,0,.65),transparent)}
+.rh-story-viewer:after{bottom:0;height:145px;background:linear-gradient(to top,rgba(0,0,0,.72),transparent)}
+.rh-story-progress{position:absolute;z-index:5;top:11px;left:12px;right:12px;display:flex;gap:5px}
+.rh-story-progress-track{height:3px;flex:1;background:rgba(255,255,255,.4);border-radius:3px;overflow:hidden}
+.rh-story-progress-fill{display:block;height:100%;width:0;background:#fff;border-radius:3px}
+.rh-story-progress-fill.is-complete{width:100%}
+.rh-story-progress-fill.is-active{animation:rh-story-fill 7s linear forwards}
+@keyframes rh-story-fill{from{width:0}to{width:100%}}
+.rh-story-top{position:absolute;z-index:6;left:16px;right:13px;top:25px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.rh-story-top>a{display:flex;gap:11px;align-items:center;text-decoration:none;color:#fff;min-width:0}
+.rh-story-account-avatar{display:grid;place-items:center;width:36px;height:36px;flex-shrink:0;border:1px solid #ffffffab;border-radius:50%;font-family:Georgia,serif;font-size:13px;background:#efe5e1;color:#684557}
+.rh-story-account-name{display:flex;flex-direction:column;gap:1px;min-width:0;font-size:13px;font-weight:650}
+.rh-story-account-name small{font-size:8px;letter-spacing:1.2px;font-weight:450;color:#fff9}
+.rh-story-close{display:grid;place-items:center;flex-shrink:0;width:38px;height:38px;border:0;border-radius:50%;background:#0005;color:#fff;cursor:pointer}
+.rh-story-close:hover{background:#0009}
+.rh-story-tap{position:absolute;z-index:2;top:105px;bottom:95px;width:35%;border:0;background:none;cursor:pointer}
+.rh-story-tap-prev{left:0}
+.rh-story-tap-next{right:0}
+.rh-story-side-control{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;border-radius:50%;border:1px solid #ffffff75;background:#ffffff17;color:#fff;cursor:pointer}
+.rh-story-side-control:hover{background:#ffffff45}
+.rh-story-bottom{position:absolute;z-index:6;bottom:16px;left:16px;right:16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.rh-story-counter{font-size:11px;font-variant-numeric:tabular-nums;letter-spacing:2px;color:#fff9}
+.rh-story-bottom>a{display:inline-flex;align-items:center;gap:8px;color:#fff;background:#ffffff24;border:1px solid #ffffff50;border-radius:40px;padding:11px 14px;font-size:11px;text-decoration:none}
+.rh-story-bottom>a:hover{background:#ffffff40}
+.rh-influencer-profile:focus-visible,.rh-story-overlay button:focus-visible,.rh-story-overlay a:focus-visible{outline:2px solid #d2a3b6;outline-offset:3px}
+@media(max-width:600px){
+  .rh-influencer-strip{gap:13px}.rh-influencer-profile{flex-basis:76px}
+  .rh-influencer-ring{width:73px;height:73px}
+  .rh-story-overlay{padding:0;background:#130e12}
+  .rh-story-stage{height:100dvh;gap:0}
+  .rh-story-viewer{width:100vw;max-width:none;height:100dvh;flex:1}
+  .rh-story-side-control{display:none}
+  .rh-story-tap{top:100px;bottom:90px}
+  .rh-story-top{top:30px}
+  .rh-story-progress{top:12px}
+}
+@media(prefers-reduced-motion:reduce){.rh-influencer-ring{transition:none}}

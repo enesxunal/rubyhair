@@ -1,13 +1,12 @@
 /**
- * Ruby Hair public Instagram grid, first 4 posts as seen on 2026-11-14.
- * These are actual post photographs, not Instagram Highlight covers.
- * Individual creator identity is not attributed without a verified post tag.
- * Images are locally stored; Instagram profile is the verified outbound link.
+ * Original public Instagram post media (not screenshots or highlight covers).
+ * Downloaded 2026-11-14 from the actual Instagram /media/?size=l endpoints.
+ * Individual names only when verified in the post/collaboration itself.
  */
-export type InfluencerStory={name:string;username:string;image:string;instagramUrl:string};
+export type InfluencerStory={name:string;username:string;image:string;instagramUrl:string;postUrl:string};
 export const influencerStories:InfluencerStory[]=[
-  {name:"Ruby Look 01",username:"rubyhair.de",image:"/assets/instagram-posts/ruby-post-01.webp",instagramUrl:"https://www.instagram.com/rubyhair.de/"},
-  {name:"Ruby Look 02",username:"rubyhair.de",image:"/assets/instagram-posts/ruby-post-02.webp",instagramUrl:"https://www.instagram.com/rubyhair.de/"},
-  {name:"Ruby Look 03",username:"rubyhair.de",image:"/assets/instagram-posts/ruby-post-03.webp",instagramUrl:"https://www.instagram.com/rubyhair.de/"},
-  {name:"Ruby Look 04",username:"rubyhair.de",image:"/assets/instagram-posts/ruby-post-04.webp",instagramUrl:"https://www.instagram.com/rubyhair.de/"}
+  {name:"Copper Velvet",username:"hairboutiique",image:"/assets/instagram-posts/ruby-post-01.webp",instagramUrl:"https://www.instagram.com/hairboutiique/",postUrl:"https://www.instagram.com/p/DfVB0WouqXC/"},
+  {name:"Blonde Look",username:"hairboutiique",image:"/assets/instagram-posts/ruby-post-02.webp",instagramUrl:"https://www.instagram.com/hairboutiique/",postUrl:"https://www.instagram.com/p/DfFi9wXOQSg/"},
+  {name:"Jessica Haller",username:"jessica_haller",image:"/assets/instagram-posts/ruby-post-03.webp",instagramUrl:"https://www.instagram.com/jessica_haller/",postUrl:"https://www.instagram.com/p/DeRBodOSBLJ/"},
+  {name:"Elaine Victoria",username:"elaine.victoria",image:"/assets/instagram-posts/ruby-post-04.webp",instagramUrl:"https://www.instagram.com/elaine.victoria/",postUrl:"https://www.instagram.com/p/DdWuECGjPhu/"}
 ];
