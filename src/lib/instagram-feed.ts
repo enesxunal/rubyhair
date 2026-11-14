@@ -66,7 +66,7 @@ export function normalizeRubyInstagramPosts(data:unknown):InstagramFeedPost[]{
       isVideo,
       timestamp:typeof p.timestamp==="string"?p.timestamp:""
     });
-    if(entries.length===4)break;
+    if(entries.length===9)break;
   }
   return entries;
 }

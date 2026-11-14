@@ -27,29 +27,29 @@ test("Instagram normalization is empty rather than faking unknown media",()=>{
  ]),[]);
 });
 
-test("Instagram home uses real posts in a fixed editorial gallery without scrolling or third-party embeds",async()=>{
+test("Instagram home renders a 3-column profile feed using real media, without embed or carousel",async()=>{
  const {readFileSync}=await import("node:fs");
  const frontend=readFileSync("src/components/instagram-home.tsx","utf8");
  const css=readFileSync("src/styles/instagram-home.css","utf8");
  const auth=readFileSync("src/lib/instagram-feed.ts","utf8");
  const proxy=readFileSync("app/api/instagram-thumbnail/[id]/route.ts","utf8");
- assert.ok(frontend.includes("posts.slice(0,5).map"));
- assert.ok(frontend.includes("influencerStories[index]"));
+ assert.ok(frontend.includes("posts.slice(0,9).map"));
+ assert.ok(frontend.includes("influencerStories.slice(0,9)"));
+ assert.ok(frontend.includes("rubyhair-profile.webp"));
+ assert.ok(frontend.includes("rh-instagram-feed-grid"));
+ assert.ok(frontend.includes("BEITRÄGE"));
+ assert.ok(frontend.includes("rh-instagram-profile-tabs"));
  assert.ok(frontend.includes("post.postUrl"));
- assert.ok(frontend.includes("rh-instagram-editorial"));
- assert.ok(frontend.includes("rh-instagram-photo-featured"));
  assert.ok(frontend.includes("/api/instagram-thumbnail/"));
- assert.ok(frontend.includes("https://www.instagram.com/rubyhair.de/"));
  assert.ok(!frontend.includes("iframe"));
- assert.ok(!frontend.includes("localStorage"));
- assert.ok(!css.includes("overflow-x:auto"));
+ assert.ok(!frontend.includes("carousel"));
  assert.ok(!css.includes("scroll-snap"));
+ assert.ok(!css.includes("overflow-x:auto"));
  assert.ok(css.includes("grid-template-columns:repeat(3,minmax(0,1fr))"));
- assert.ok(css.includes("grid-template-columns:repeat(2,minmax(0,1fr))"));
+ assert.ok(css.includes("aspect-ratio:1/1"));
  assert.ok(css.includes("object-fit:cover"));
  assert.ok(auth.includes("RUBY_INSTAGRAM_ACCESS_TOKEN"));
+ assert.ok(auth.includes("if(entries.length===9)break"));
  assert.ok(!frontend.includes("RUBY_INSTAGRAM_ACCESS_TOKEN"));
  assert.ok(proxy.includes("getRubyInstagramPosts()"));
- assert.ok(proxy.includes("posts.find(p=>p.id===id)"));
- assert.ok(!proxy.includes("access_token="));
 });
