@@ -227,6 +227,7 @@ export default function HomeFrontend({products,instagramPosts=[]}:{products:Prod
         </div>
       </section>
       <ShadeSelector/>
+      <InstagramHome posts={instagramPosts}/>
       <TapeInAtelier/>
       <section className="brand-story section-pad" id="about"><div className="container brand-grid">
         <div className="brand-copy">
@@ -243,7 +244,6 @@ export default function HomeFrontend({products,instagramPosts=[]}:{products:Prod
           <div className="brand-photo-caption"><span>THE BEAUTY OF INDIVIDUALITY</span><span>RUBY HAIR · EDITORIAL 02</span></div>
         </div>
       </div></section>
-      <InstagramHome posts={instagramPosts}/>
     </main>
     <HomeFooter/>
   </>;

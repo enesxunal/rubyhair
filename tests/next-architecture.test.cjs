@@ -662,5 +662,6 @@ test("Ruby Hair homepage uses approved editorial copy and removes the redundant 
  for(const old of ['Beauty is better','className="studio"','id="studio"','href="/#studio"','TAPE-IN ENTDECKEN'])
   assert.ok(!home.includes(old),"obsolete homepage section/link: "+old);
  assert.ok(home.indexOf('<TapeInAtelier/>')<home.indexOf('className="brand-story'));
- assert.ok(home.indexOf('className="brand-story')<home.indexOf('<InstagramHome posts={instagramPosts}/>'));
+ assert.ok(home.indexOf('<ShadeSelector/>')<home.indexOf('<InstagramHome posts={instagramPosts}/>'));
+ assert.ok(home.indexOf('<InstagramHome posts={instagramPosts}/>')<home.indexOf('<TapeInAtelier/>'));
 });
