@@ -576,3 +576,18 @@ test("Tape-in lengths have measured labels everywhere, with no Kurz or Lang cate
  assert.ok(index.includes("getRubyInstagramPosts()"));
  assert.ok(index.includes("Promise.all("));
 });
+
+test("length collection cards use the newly optimized studio photos, not stale editorial copies",()=>{
+ const data=fs.readFileSync(path.join(base,"src/lib/tape-in-lengths.ts"),"utf8");
+ const home=fs.readFileSync(path.join(base,"src/components/home-frontend.tsx"),"utf8");
+ assert.ok(data.includes('image:"/assets/ruby-hair-platinum-atelier.webp"'));
+ assert.ok(data.includes('image:"/assets/ruby-hair-platinum-detail.webp"'));
+ assert.ok(!data.includes("tape-in-short-editorial.webp"));
+ assert.ok(!data.includes("tape-in-long-editorial.webp"));
+ assert.ok(home.includes('src={choice.image}'));
+ for(const filename of ["ruby-hair-platinum-atelier.webp","ruby-hair-platinum-detail.webp"]){
+  const f=path.join(base,"public/assets",filename);
+  assert.ok(fs.existsSync(f),"missing "+filename);
+  assert.equal(fs.readFileSync(f).toString("ascii",8,12),"WEBP");
+ }
+});
