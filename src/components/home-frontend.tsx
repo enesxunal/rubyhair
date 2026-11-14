@@ -122,6 +122,33 @@ function ShadeSelector(){
     </div>
   </section>;
 }
+function TapeInAtelier(){
+  return <section id="tape-in-atelier" className="rh-tape-atelier" aria-labelledby="rh-atelier-heading">
+    <div className="container rh-tape-atelier-grid">
+      <div className="rh-tape-atelier-copy">
+        <div className="eyebrow">THE ART OF EXTENSIONS / RUBY HAIR</div>
+        <h2 id="rh-atelier-heading">Schönheit liegt<br/>im <i>Detail.</i></h2>
+        <p>Ein Blick auf die feinen Nuancen und den natürlichen Fall unserer Tape-in Extensions. Finde die passende Länge und entdecke die Farbvielfalt.</p>
+        <Link href="/kollektionen/tape-in-extensions/" className="rh-tape-atelier-link">
+          TAPE-IN ENTDECKEN <ArrowUpRight size={17} aria-hidden="true"/>
+        </Link>
+        <span className="rh-tape-atelier-note">RUBY HAIR · STUDIO EDITORIAL</span>
+      </div>
+      <figure className="rh-tape-atelier-visual rh-tape-atelier-visual-main">
+        <img src="/assets/ruby-hair-platinum-atelier.webp"
+          alt="Platinblonde Tape-in Extensions auf drei weißen skulpturalen Säulen"
+          loading="lazy" decoding="async" width={1024} height={1536}/>
+        <figcaption><span>01 / THE COLLECTION</span><span>SOFT BLONDE</span></figcaption>
+      </figure>
+      <figure className="rh-tape-atelier-visual rh-tape-atelier-visual-detail">
+        <img src="/assets/ruby-hair-platinum-detail.webp"
+          alt="Platinblonde Tape-in Haarsträhnen auf einer schwarzen skulpturalen Hand"
+          loading="lazy" decoding="async" width={1024} height={1536}/>
+        <figcaption><span>02 / THE DETAILS</span><span>TAPE-IN TEXTURE</span></figcaption>
+      </figure>
+    </div>
+  </section>;
+}
 function HomeFooter(){
   return <>
     <footer className="footer" id="footer">
@@ -191,6 +218,7 @@ export default function HomeFrontend({products}:{products:Product[]}){
         </div>
       </section>
       <ShadeSelector/>
+      <TapeInAtelier/>
       <section className="brand-story section-pad" id="about"><div className="container brand-grid">
         <div className="brand-copy">
           <div className="eyebrow"><span className="num">04 /</span> BEHIND THE BEAUTY</div>

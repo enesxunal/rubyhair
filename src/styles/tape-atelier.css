@@ -1,0 +1,127 @@
+/* Ruby Hair studio editorial. Intentional product showcase, not a color swatch. */
+.rh-tape-atelier{
+ background:#f4f0ec;
+ padding:clamp(58px,7vw,112px) 0;
+}
+.rh-tape-atelier-grid{
+ display:grid;
+ grid-template-columns:minmax(240px,.88fr) minmax(0,1fr) minmax(0,1fr);
+ gap:clamp(18px,2.7vw,38px);
+ align-items:center;
+}
+.rh-tape-atelier-copy{padding-right:12px}
+.rh-tape-atelier-copy .eyebrow{
+ color:#8e6272;
+ font-size:9px;
+ letter-spacing:1.85px;
+ line-height:1.8;
+}
+.rh-tape-atelier-copy h2{
+ font:400 clamp(38px,3.9vw,60px)/1.15 var(--serif);
+ letter-spacing:-1.25px;
+ color:#392a33;
+ margin:19px 0 19px;
+}
+.rh-tape-atelier-copy h2 i{color:#8f5f71;font-weight:400}
+.rh-tape-atelier-copy p{
+ max-width:345px;
+ margin:0 0 31px;
+ color:#766971;
+ font-size:13px;
+ line-height:1.95;
+}
+.rh-tape-atelier-link{
+ display:inline-flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:19px;
+ padding:0 0 11px;
+ border-bottom:1px solid #6b4355;
+ text-decoration:none;
+ color:#654155;
+ font-size:11px;
+ font-weight:750;
+ letter-spacing:.65px;
+ transition:gap .2s ease,color .2s ease;
+}
+.rh-tape-atelier-link:hover{gap:26px;color:#94677d}
+.rh-tape-atelier-link:focus-visible{outline:2px solid #94677d;outline-offset:5px}
+.rh-tape-atelier-note{
+ display:block;
+ color:#a39299;
+ letter-spacing:1.85px;
+ font-size:9px;
+ margin-top:57px;
+}
+.rh-tape-atelier-visual{
+ background:#e9e5e1;
+ margin:0;
+ position:relative;
+ overflow:hidden;
+ height:clamp(350px,38vw,560px);
+}
+.rh-tape-atelier-visual-detail{transform:translateY(32px)}
+.rh-tape-atelier-visual img{
+ display:block;
+ width:100%;
+ height:100%;
+ object-fit:cover;
+ object-position:center 54%;
+ transition:transform .65s ease;
+}
+.rh-tape-atelier-visual:hover img{transform:scale(1.035)}
+.rh-tape-atelier-visual figcaption{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:9px;
+ position:absolute;
+ left:14px;right:14px;bottom:14px;
+ padding:13px 12px;
+ background:rgba(255,252,250,.90);
+ backdrop-filter:blur(5px);
+ color:#664e5a;
+ font-size:9px;
+ font-weight:700;
+ letter-spacing:1.1px;
+ line-height:1.5;
+}
+.rh-tape-atelier-visual figcaption span:last-child{
+ color:#9c7d8d;
+ text-align:right;
+}
+@media(max-width:1050px){
+ .rh-tape-atelier-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:19px;
+ }
+ .rh-tape-atelier-copy{grid-column:1/-1;padding:0;max-width:640px}
+ .rh-tape-atelier-copy h2{font-size:clamp(37px,5vw,55px)}
+ .rh-tape-atelier-copy p{max-width:535px;margin-bottom:20px}
+ .rh-tape-atelier-note{margin-top:17px}
+ .rh-tape-atelier-visual{height:clamp(360px,57vw,590px)}
+ .rh-tape-atelier-visual-detail{transform:translateY(22px)}
+}
+@media(max-width:550px){
+ .rh-tape-atelier{padding:60px 0 76px}
+ .rh-tape-atelier-grid{gap:10px}
+ .rh-tape-atelier-copy{margin-bottom:15px}
+ .rh-tape-atelier-copy h2{font-size:42px;margin:14px 0}
+ .rh-tape-atelier-copy p{font-size:12px;line-height:1.8;margin-bottom:21px}
+ .rh-tape-atelier-note{font-size:8px;letter-spacing:1.3px;margin-top:16px}
+ .rh-tape-atelier-visual{height:clamp(236px,74vw,410px)}
+ .rh-tape-atelier-visual-detail{transform:translateY(14px)}
+ .rh-tape-atelier-visual figcaption{
+  left:6px;right:6px;bottom:6px;
+  padding:7px 6px;display:block;
+  font-size:8px;letter-spacing:.5px;
+ }
+ .rh-tape-atelier-visual figcaption span{display:block}
+ .rh-tape-atelier-visual figcaption span:last-child{
+  text-align:left;font-size:7px;margin-top:2px;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ .rh-tape-atelier-visual img,.rh-tape-atelier-link{transition:none}
+ .rh-tape-atelier-visual:hover img{transform:none}
+}
