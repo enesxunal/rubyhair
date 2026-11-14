@@ -13,3 +13,12 @@
 .rh-story-top button{border:0;background:#ffffff25;color:#fff;cursor:pointer;padding:7px;border-radius:50%}
 .rh-story-instagram{position:absolute;bottom:15px;left:50%;transform:translateX(-50%);white-space:nowrap;display:flex;align-items:center;gap:7px;background:#fff;color:#402b35;text-decoration:none;padding:11px 17px;font-size:12px}
 @media(max-width:550px){.rh-influencer-strip{gap:12px}.rh-influencer-profile{flex-basis:78px}.rh-influencer-ring{width:72px;height:72px}}
+
+/* Compact editorial story viewer: do not enlarge 150px Instagram highlight covers into pixelated full-screen portraits. */
+.rh-story-viewer{overflow:hidden;background:radial-gradient(ellipse at 50% 34%,#b88c9e 0%,#795467 48%,#301d29 100%);justify-content:center;align-items:center}
+.rh-story-viewer:before{content:'RUBY HAIR';position:absolute;left:0;right:0;top:29%;font:400 clamp(41px,7vw,58px)/1.1 var(--serif);letter-spacing:2px;text-align:center;color:#ffffff18;pointer-events:none}
+.rh-story-viewer>img{position:relative;width:min(245px,68%);height:auto;aspect-ratio:1;min-height:0;max-height:none;border-radius:50%;object-fit:cover;border:6px solid #ffffffd1;box-shadow:0 16px 45px #180d1780}
+.rh-story-viewer:after{content:'RUBY HAIR COMMUNITY';position:absolute;left:0;right:0;bottom:85px;text-align:center;color:#ffffffc6;font-size:10px;letter-spacing:2.3px;pointer-events:none}
+.rh-story-top{background:linear-gradient(#281823ae,transparent);z-index:3}
+.rh-influencer-profile:focus-visible,.rh-story-top a:focus-visible{outline:2px solid #785366;outline-offset:3px}
+@media(max-width:550px){.rh-story-viewer>img{width:min(220px,65%)}.rh-story-viewer:after{bottom:85px}}

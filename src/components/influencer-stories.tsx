@@ -1,11 +1,17 @@
 "use client";
-import {useState} from "react";
+import {useEffect,useState} from "react";
 import {Instagram,X,ArrowUpRight} from "lucide-react";
 import {influencerStories} from "@/data/influencer-stories";
 
 export default function InfluencerStories(){
   const [active,setActive]=useState<number|null>(null);
-  // Publish only confirmed, licensed customer/influencer portraits and real account names.
+  useEffect(()=>{
+    if(active===null)return;
+    const close=(event:KeyboardEvent)=>{if(event.key==="Escape")setActive(null);};
+    document.addEventListener("keydown",close);
+    return ()=>document.removeEventListener("keydown",close);
+  },[active]);
+  // Use only real Ruby Hair Instagram highlights with verified creator profiles.
   if(!influencerStories.length)return null;
   const story=active===null?null:influencerStories[active];
   return <section className="rh-influencer-section" aria-label="Ruby Hair Community">

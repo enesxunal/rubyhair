@@ -591,3 +591,20 @@ test("length collection cards use contrasting real hair photos, not stale editor
   assert.equal(fs.readFileSync(f).toString("ascii",8,12),"WEBP");
  }
 });
+
+test("Ruby Hair community stories use real highlighted creator portraits and verified profile links",()=>{
+ const source=fs.readFileSync(path.join(base,"src/data/influencer-stories.ts"),"utf8");
+ const home=fs.readFileSync(path.join(base,"src/components/home-frontend.tsx"),"utf8");
+ const story=fs.readFileSync(path.join(base,"src/components/influencer-stories.tsx"),"utf8");
+ for(const handle of ["elaine.victoria","esraworld","jessica_haller","asenaneuhoff","jienaviduka","johanna_einhorn"]){
+  assert.ok(source.includes('https://www.instagram.com/'+handle+'/'),"missing verified profile: "+handle);
+ }
+ for(const file of ["elaine-victoria","esraworld","jessica-haller","asena-neuhoff","jiena-viduka","johanna-einhorn"]){
+  const photo=path.join(base,"public/assets/influencers",file+".jpg");
+  assert.ok(fs.existsSync(photo),"missing real Instagram highlight photo: "+file);
+  assert.equal(fs.readFileSync(photo).subarray(0,3).toString('hex'),"ffd8ff");
+ }
+ assert.ok(home.includes('<InfluencerStories/>'));
+ assert.ok(story.includes('target="_blank"'));
+ assert.ok(story.includes('Story schließen'));
+});
