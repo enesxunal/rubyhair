@@ -1,0 +1,24 @@
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const base=path.join(__dirname,'..');
+test('Ruby Hair customer domains display a brand-aligned temporary holding page',()=>{
+ const proxy=fs.readFileSync(path.join(base,'proxy.ts'),'utf8');
+ const route=fs.readFileSync(path.join(base,'app/coming-soon/route.ts'),'utf8');
+ const page=fs.readFileSync(path.join(base,'src/lib/coming-soon-page.ts'),'utf8');
+ assert.match(proxy,/"rubyhair\.de","www\.rubyhair\.de"/);
+ assert.match(proxy,/NextResponse\.rewrite\(new URL\("\/coming-soon"/);
+ assert.match(proxy,/request\.method!=="GET"&&request\.method!=="HEAD"/);
+ assert.ok(!proxy.includes('preview=true'));
+ assert.match(route,/status:503/);
+ assert.match(route,/Retry-After/);
+ assert.match(route,/no-store/);
+ assert.match(page,/RubyHair-WebHeader-Logo-Hell-818376d91\.png/);
+ assert.match(page,/hero-brunette\.webp/);
+ assert.match(page,/Schönes Haar/);
+ assert.match(page,/Neuer Auftritt/);
+ assert.match(page,/info@rubyhair\.de/);
+ assert.match(page,/@media\(max-width:700px\)/);
+ assert.ok(!page.includes('<form'));
+});
