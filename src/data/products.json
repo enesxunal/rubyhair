@@ -12,8 +12,8 @@
       "pack": "10 einzelne Tape-in Extensions",
       "material": "100% Echthaar",
       "currency": "EUR",
-      "min_price": 135.0,
-      "max_price": 185.0,
+      "min_price": 140.0,
+      "max_price": 190.0,
       "image": "/media/tape-in-short-editorial.webp",
       "variations": [
         {
@@ -22,7 +22,7 @@
           "color_label": "6",
           "length": "45-50-cm",
           "length_label": "45 - 50 cm",
-          "price": 135,
+          "price": 140,
           "available": true,
           "purchasable": true,
           "image": "/media/6-600x600-9d43d6634.jpg"
@@ -33,7 +33,7 @@
           "color_label": "6",
           "length": "55-60-cm",
           "length_label": "55 - 60 cm",
-          "price": 160,
+          "price": 165,
           "available": true,
           "purchasable": true,
           "image": "/media/6-600x600-9d43d6634.jpg"
@@ -44,7 +44,7 @@
           "color_label": "1",
           "length": "45-50-cm",
           "length_label": "45 - 50 cm",
-          "price": 135,
+          "price": 140,
           "available": true,
           "purchasable": true,
           "image": "/media/1-600x600-04fb73bc3.jpg"
@@ -55,7 +55,7 @@
           "color_label": "2",
           "length": "55-60-cm",
           "length_label": "55 - 60 cm",
-          "price": 160,
+          "price": 165,
           "available": true,
           "purchasable": true,
           "image": "/media/2-1-600x600-e901a9998.jpg"
@@ -66,7 +66,7 @@
           "color_label": "LOUI",
           "length": "55-60-cm",
           "length_label": "55 - 60 cm",
-          "price": 185,
+          "price": 190,
           "available": true,
           "purchasable": true,
           "image": "/media/5AT60-600x600-2bda6537e.jpg"
@@ -77,7 +77,7 @@
           "color_label": "LOUI",
           "length": "45-50-cm",
           "length_label": "45 - 50 cm",
-          "price": 160,
+          "price": 165,
           "available": true,
           "purchasable": true,
           "image": "/media/5AT60-600x600-2bda6537e.jpg"
@@ -88,7 +88,7 @@
           "color_label": "Banu",
           "length": "45-50-cm",
           "length_label": "45 - 50 cm",
-          "price": 160,
+          "price": 165,
           "available": true,
           "purchasable": true,
           "image": "/media/4T18-22-600x600-166ed7df3.jpg"
@@ -99,7 +99,7 @@
           "color_label": "BRONDE",
           "length": "55-60-cm",
           "length_label": "55 - 60 cm",
-          "price": 185,
+          "price": 190,
           "available": true,
           "purchasable": true,
           "image": "/media/BRONDE-600x600-33cde837f.jpg"
@@ -110,7 +110,7 @@
           "color_label": "4",
           "length": "45-50-cm",
           "length_label": "45 - 50 cm",
-          "price": 135,
+          "price": 140,
           "available": true,
           "purchasable": true,
           "image": "/media/4-600x600-f93ae94e9.jpg"
@@ -121,7 +121,7 @@
           "color_label": "7",
           "length": "45-50-cm",
           "length_label": "45 - 50 cm",
-          "price": 135,
+          "price": 140,
           "available": true,
           "purchasable": true,
           "image": "/media/7-600x600-5a04f8300.jpg"
@@ -132,7 +132,7 @@
           "color_label": "8",
           "length": "45-50-cm",
           "length_label": "45 - 50 cm",
-          "price": 135,
+          "price": 140,
           "available": true,
           "purchasable": true,
           "image": "/media/8.-600x600-3b20ec729.jpg"
@@ -143,7 +143,7 @@
           "color_label": "10",
           "length": "45-50-cm",
           "length_label": "45 - 50 cm",
-          "price": 135,
+          "price": 140,
           "available": true,
           "purchasable": true,
           "image": "/media/10-1-600x600-5702e10cd.jpg"
@@ -154,7 +154,7 @@
           "color_label": "ARI",
           "length": "45-50-cm",
           "length_label": "45 - 50 cm",
-          "price": 135,
+          "price": 140,
           "available": true,
           "purchasable": true,
           "image": "/media/18-600x600-4461cd9a2.jpg"
@@ -165,7 +165,7 @@
           "color_label": "60",
           "length": "45-50-cm",
           "length_label": "45 - 50 cm",
-          "price": 135,
+          "price": 140,
           "available": true,
           "purchasable": true,
           "image": "/media/60-600x600-fcc5f2027.jpg"
@@ -176,7 +176,7 @@
           "color_label": "EVE",
           "length": "45-50-cm",
           "length_label": "45 - 50 cm",
-          "price": 135,
+          "price": 140,
           "available": true,
           "purchasable": true,
           "image": "/media/1006-1-600x600-8f26ccdcc.jpg"
@@ -187,7 +187,7 @@
           "color_label": "BRONDE",
           "length": "45-50-cm",
           "length_label": "45 - 50 cm",
-          "price": 160,
+          "price": 165,
           "available": true,
           "purchasable": true,
           "image": "/media/BRONDE-600x600-33cde837f.jpg"
@@ -198,7 +198,7 @@
           "color_label": "2b",
           "length": "55-60-cm",
           "length_label": "55 - 60 cm",
-          "price": 160,
+          "price": 165,
           "available": true,
           "purchasable": true,
           "image": "/media/2b-600x600-cf1f52de0.jpg"
@@ -209,7 +209,7 @@
           "color_label": "4",
           "length": "55-60-cm",
           "length_label": "55 - 60 cm",
-          "price": 160,
+          "price": 165,
           "available": true,
           "purchasable": true,
           "image": "/media/4-600x600-f93ae94e9.jpg"
@@ -220,7 +220,7 @@
           "color_label": "7",
           "length": "55-60-cm",
           "length_label": "55 - 60 cm",
-          "price": 160,
+          "price": 165,
           "available": true,
           "purchasable": true,
           "image": "/media/7-600x600-5a04f8300.jpg"
@@ -231,7 +231,7 @@
           "color_label": "8",
           "length": "55-60-cm",
           "length_label": "55 - 60 cm",
-          "price": 160,
+          "price": 165,
           "available": true,
           "purchasable": true,
           "image": "/media/8.-600x600-3b20ec729.jpg"
@@ -242,7 +242,7 @@
           "color_label": "9A",
           "length": "55-60-cm",
           "length_label": "55 - 60 cm",
-          "price": 160,
+          "price": 165,
           "available": true,
           "purchasable": true,
           "image": "/media/9A-600x600-e0acc4bf5.jpg"
@@ -253,7 +253,7 @@
           "color_label": "10",
           "length": "55-60-cm",
           "length_label": "55 - 60 cm",
-          "price": 160,
+          "price": 165,
           "available": true,
           "purchasable": true,
           "image": "/media/10-1-600x600-5702e10cd.jpg"
@@ -264,7 +264,7 @@
           "color_label": "ARI",
           "length": "55-60-cm",
           "length_label": "55 - 60 cm",
-          "price": 160,
+          "price": 165,
           "available": true,
           "purchasable": true,
           "image": "/media/18-600x600-4461cd9a2.jpg"
@@ -275,7 +275,7 @@
           "color_label": "60",
           "length": "55-60-cm",
           "length_label": "55 - 60 cm",
-          "price": 160,
+          "price": 165,
           "available": true,
           "purchasable": true,
           "image": "/media/60-600x600-fcc5f2027.jpg"
@@ -286,7 +286,7 @@
           "color_label": "RUBY",
           "length": "55-60-cm",
           "length_label": "55 - 60 cm",
-          "price": 185,
+          "price": 190,
           "available": true,
           "purchasable": true,
           "image": "/media/ruby-1-600x600-553c515f8.jpg"
@@ -297,7 +297,7 @@
           "color_label": "SILVER",
           "length": "55-60-cm",
           "length_label": "55 - 60 cm",
-          "price": 160,
+          "price": 165,
           "available": true,
           "purchasable": true,
           "image": "/media/SILVER-600x600-b4a3a43b8.jpg"
@@ -308,7 +308,7 @@
           "color_label": "Banu",
           "length": "55-60-cm",
           "length_label": "55 - 60 cm",
-          "price": 185,
+          "price": 190,
           "available": true,
           "purchasable": true,
           "image": "/media/4T18-22-600x600-166ed7df3.jpg"
@@ -326,8 +326,8 @@
       "pack": "25 einzelne Bondings",
       "material": "100% Echthaar",
       "currency": "EUR",
-      "min_price": 145.0,
-      "max_price": 170.0,
+      "min_price": 150.0,
+      "max_price": 175.0,
       "image": "/media/1006-300x400-0854ea8f2.jpg",
       "variations": [
         {
@@ -336,7 +336,7 @@
           "color_label": "ARI",
           "length": "55-60-cm",
           "length_label": "55 - 60 cm",
-          "price": 145,
+          "price": 150,
           "available": true,
           "purchasable": true,
           "image": "/media/ari-600x600-57da438b4.jpg"
@@ -347,7 +347,7 @@
           "color_label": "LOUI",
           "length": "55-60-cm",
           "length_label": "55 - 60 cm",
-          "price": 170,
+          "price": 175,
           "available": true,
           "purchasable": true,
           "image": "/media/loui-600x600-43d8987cd.jpg"
@@ -358,7 +358,7 @@
           "color_label": "Banu",
           "length": "55-60-cm",
           "length_label": "55 - 60 cm",
-          "price": 170,
+          "price": 175,
           "available": true,
           "purchasable": true,
           "image": "/media/banu-600x600-c526aa656.jpg"
@@ -369,7 +369,7 @@
           "color_label": "6",
           "length": "55-60-cm",
           "length_label": "55 - 60 cm",
-          "price": 145,
+          "price": 150,
           "available": true,
           "purchasable": true,
           "image": "/media/6-600x600-9d43d6634.jpg"
@@ -380,7 +380,7 @@
           "color_label": "2",
           "length": "55-60-cm",
           "length_label": "55 - 60 cm",
-          "price": 145,
+          "price": 150,
           "available": true,
           "purchasable": true,
           "image": "/media/2-1-600x600-e901a9998.jpg"
@@ -391,7 +391,7 @@
           "color_label": "1b",
           "length": "55-60-cm",
           "length_label": "55 - 60 cm",
-          "price": 145,
+          "price": 150,
           "available": true,
           "purchasable": true,
           "image": "/media/1b-600x600-ed411886a.jpg"
@@ -402,7 +402,7 @@
           "color_label": "2b",
           "length": "55-60-cm",
           "length_label": "55 - 60 cm",
-          "price": 145,
+          "price": 150,
           "available": true,
           "purchasable": true,
           "image": "/media/2b-600x600-cf1f52de0.jpg"
@@ -413,7 +413,7 @@
           "color_label": "4",
           "length": "55-60-cm",
           "length_label": "55 - 60 cm",
-          "price": 145,
+          "price": 150,
           "available": true,
           "purchasable": true,
           "image": "/media/4-600x600-f93ae94e9.jpg"
@@ -424,7 +424,7 @@
           "color_label": "60",
           "length": "55-60-cm",
           "length_label": "55 - 60 cm",
-          "price": 145,
+          "price": 150,
           "available": true,
           "purchasable": true,
           "image": "/media/60-600x600-fcc5f2027.jpg"
@@ -435,7 +435,7 @@
           "color_label": "1006",
           "length": "55-60-cm",
           "length_label": "55 - 60 cm",
-          "price": 145,
+          "price": 150,
           "available": true,
           "purchasable": true,
           "image": "/media/1006-1-600x600-8f26ccdcc.jpg"
@@ -446,7 +446,7 @@
           "color_label": "RUBY",
           "length": "55-60-cm",
           "length_label": "55 - 60 cm",
-          "price": 170,
+          "price": 175,
           "available": true,
           "purchasable": true,
           "image": "/media/ruby-1-600x600-553c515f8.jpg"

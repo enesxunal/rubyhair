@@ -1,0 +1,236 @@
+{
+  "revision": "rubyhair-20261117-plus-5-eur",
+  "currency": "EUR",
+  "deltaCents": 500,
+  "scope": "new Ruby Hair storefront only; WooCommerce unchanged",
+  "variants": [
+    {
+      "slug": "tape-in-extensions",
+      "legacyId": 1782,
+      "beforeCents": 13500,
+      "afterCents": 14000
+    },
+    {
+      "slug": "tape-in-extensions",
+      "legacyId": 1783,
+      "beforeCents": 16000,
+      "afterCents": 16500
+    },
+    {
+      "slug": "tape-in-extensions",
+      "legacyId": 883,
+      "beforeCents": 13500,
+      "afterCents": 14000
+    },
+    {
+      "slug": "tape-in-extensions",
+      "legacyId": 1703,
+      "beforeCents": 16000,
+      "afterCents": 16500
+    },
+    {
+      "slug": "tape-in-extensions",
+      "legacyId": 1622,
+      "beforeCents": 18500,
+      "afterCents": 19000
+    },
+    {
+      "slug": "tape-in-extensions",
+      "legacyId": 1621,
+      "beforeCents": 16000,
+      "afterCents": 16500
+    },
+    {
+      "slug": "tape-in-extensions",
+      "legacyId": 1620,
+      "beforeCents": 16000,
+      "afterCents": 16500
+    },
+    {
+      "slug": "tape-in-extensions",
+      "legacyId": 1619,
+      "beforeCents": 18500,
+      "afterCents": 19000
+    },
+    {
+      "slug": "tape-in-extensions",
+      "legacyId": 886,
+      "beforeCents": 13500,
+      "afterCents": 14000
+    },
+    {
+      "slug": "tape-in-extensions",
+      "legacyId": 889,
+      "beforeCents": 13500,
+      "afterCents": 14000
+    },
+    {
+      "slug": "tape-in-extensions",
+      "legacyId": 890,
+      "beforeCents": 13500,
+      "afterCents": 14000
+    },
+    {
+      "slug": "tape-in-extensions",
+      "legacyId": 1308,
+      "beforeCents": 13500,
+      "afterCents": 14000
+    },
+    {
+      "slug": "tape-in-extensions",
+      "legacyId": 892,
+      "beforeCents": 13500,
+      "afterCents": 14000
+    },
+    {
+      "slug": "tape-in-extensions",
+      "legacyId": 895,
+      "beforeCents": 13500,
+      "afterCents": 14000
+    },
+    {
+      "slug": "tape-in-extensions",
+      "legacyId": 1322,
+      "beforeCents": 13500,
+      "afterCents": 14000
+    },
+    {
+      "slug": "tape-in-extensions",
+      "legacyId": 1615,
+      "beforeCents": 16000,
+      "afterCents": 16500
+    },
+    {
+      "slug": "tape-in-extensions",
+      "legacyId": 899,
+      "beforeCents": 16000,
+      "afterCents": 16500
+    },
+    {
+      "slug": "tape-in-extensions",
+      "legacyId": 900,
+      "beforeCents": 16000,
+      "afterCents": 16500
+    },
+    {
+      "slug": "tape-in-extensions",
+      "legacyId": 903,
+      "beforeCents": 16000,
+      "afterCents": 16500
+    },
+    {
+      "slug": "tape-in-extensions",
+      "legacyId": 904,
+      "beforeCents": 16000,
+      "afterCents": 16500
+    },
+    {
+      "slug": "tape-in-extensions",
+      "legacyId": 905,
+      "beforeCents": 16000,
+      "afterCents": 16500
+    },
+    {
+      "slug": "tape-in-extensions",
+      "legacyId": 1318,
+      "beforeCents": 16000,
+      "afterCents": 16500
+    },
+    {
+      "slug": "tape-in-extensions",
+      "legacyId": 906,
+      "beforeCents": 16000,
+      "afterCents": 16500
+    },
+    {
+      "slug": "tape-in-extensions",
+      "legacyId": 909,
+      "beforeCents": 16000,
+      "afterCents": 16500
+    },
+    {
+      "slug": "tape-in-extensions",
+      "legacyId": 1320,
+      "beforeCents": 18500,
+      "afterCents": 19000
+    },
+    {
+      "slug": "tape-in-extensions",
+      "legacyId": 910,
+      "beforeCents": 16000,
+      "afterCents": 16500
+    },
+    {
+      "slug": "tape-in-extensions",
+      "legacyId": 1613,
+      "beforeCents": 18500,
+      "afterCents": 19000
+    },
+    {
+      "slug": "keratin-bondings",
+      "legacyId": 1786,
+      "beforeCents": 14500,
+      "afterCents": 15000
+    },
+    {
+      "slug": "keratin-bondings",
+      "legacyId": 1711,
+      "beforeCents": 17000,
+      "afterCents": 17500
+    },
+    {
+      "slug": "keratin-bondings",
+      "legacyId": 1706,
+      "beforeCents": 17000,
+      "afterCents": 17500
+    },
+    {
+      "slug": "keratin-bondings",
+      "legacyId": 1705,
+      "beforeCents": 14500,
+      "afterCents": 15000
+    },
+    {
+      "slug": "keratin-bondings",
+      "legacyId": 1704,
+      "beforeCents": 14500,
+      "afterCents": 15000
+    },
+    {
+      "slug": "keratin-bondings",
+      "legacyId": 869,
+      "beforeCents": 14500,
+      "afterCents": 15000
+    },
+    {
+      "slug": "keratin-bondings",
+      "legacyId": 870,
+      "beforeCents": 14500,
+      "afterCents": 15000
+    },
+    {
+      "slug": "keratin-bondings",
+      "legacyId": 871,
+      "beforeCents": 14500,
+      "afterCents": 15000
+    },
+    {
+      "slug": "keratin-bondings",
+      "legacyId": 879,
+      "beforeCents": 14500,
+      "afterCents": 15000
+    },
+    {
+      "slug": "keratin-bondings",
+      "legacyId": 880,
+      "beforeCents": 14500,
+      "afterCents": 15000
+    },
+    {
+      "slug": "keratin-bondings",
+      "legacyId": 881,
+      "beforeCents": 17000,
+      "afterCents": 17500
+    }
+  ]
+}
