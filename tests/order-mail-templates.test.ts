@@ -10,9 +10,12 @@ test("Ruby Hair order communications have eight distinct German stages",()=>{
    assert.ok(msg.subject.includes("RH-2026-1001"));
    assert.ok(msg.text.includes("149,99"));
    assert.ok(msg.html.includes("RUBY HAIR EXTENSIONS"));
+   assert.ok(msg.html.includes("RubyHair-WebHeader-Logo-Hell-818376d91.png"));
    assert.ok(msg.html.includes("info@rubyhair.de"));
    assert.ok(msg.html.includes("<table"));
    assert.ok(msg.html.includes("<meta name=\"viewport\""));
+   assert.ok(msg.html.includes("table-layout:fixed"));
+   assert.ok(msg.html.includes("overflow-wrap:anywhere"));
    assert.ok(msg.html.includes("Test Kundin"));
    assert.ok(!msg.subject.includes("undefined"));
  }
