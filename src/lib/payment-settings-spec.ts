@@ -27,6 +27,18 @@ export const paymentSettingsSpec={
       {name:"merchantId",label:"Merchant ID",secret:true}
     ]
   },
+  dhl:{
+    label:"DHL Paket / Versand",
+    explanation:"DHL Paket DE Versenden: separate API App (Key/Secret), Geschäftskundenportal Systembenutzer und Abrechnungsnummer nötig. Alte WooCommerce-Passwörter nicht ungeprüft übernehmen. Keine Labels aktiv.",
+    fields:[
+      {name:"clientId",label:"DHL API Key / Client ID",secret:true},
+      {name:"clientSecret",label:"DHL API Secret / Client Secret",secret:true},
+      {name:"username",label:"DHL Geschäftskundenportal Systembenutzer",secret:true},
+      {name:"password",label:"DHL Geschäftskundenportal Passwort",secret:true},
+      {name:"accountNumber",label:"DHL EKP / Kundennummer",secret:true},
+      {name:"billingNumber",label:"Abrechnungsnummer",secret:true}
+    ]
+  },
   trustly:{
     label:"Trustly",
     explanation:"Nur eintragen, wenn die direkte API-Nutzung vom Zahlungsanbieter bestätigt wurde.",

@@ -24,7 +24,7 @@ export default async function PaymentsReadiness({
   const status=params.status==="saved"?"Änderungen sicher gespeichert. Die Zahlungsarten bleiben deaktiviert.":
     params.status==="unchanged"?"Keine Änderungen vorgenommen.":null;
   return <AdminShell current="payments" title="Zahlungen & Integrationen."
-    description="Zugangsdaten für PayPal, Kartenzahlungen, Klarna und Banküberweisung geschützt hinterlegen. Noch keine Live-Zahlungen.">
+    description="API-Zugänge für PayPal, Klarna, DHL Versand und weitere Anbieter geschützt hinterlegen. Noch keine Live-Zahlungen oder DHL-Labels.">
     <section className="rh-studio-payments-head">
       <div><span className="rh-studio-eyebrow"><ShieldCheck size={14}/> PAYMENT READINESS / VORSCHAU</span>
        <h2>Zugangsdaten sicher verwalten.<br/><em>Live-Zahlungen bleiben gesperrt.</em></h2>
@@ -54,7 +54,7 @@ export default async function PaymentsReadiness({
           <p className="rh-admin-muted">{definition.explanation}</p>
           <div className="rh-studio-provider-note">
            <span>{saved.filter(v=>v.provider===provider).length} gespeicherte Einstellungen</span>
-           <span>Keine Transaktionen aktiviert <ArrowRight size={13}/></span>
+           <span>{provider==="dhl"?"Keine Versandlabels aktiviert":"Keine Transaktionen aktiviert"} <ArrowRight size={13}/></span>
           </div>
           {(provider==="bank"?["live"] as const:paymentEnvironments).map(environment=>
             <form action={savePaymentSettingsAction} key={environment} className="rh-admin-credentials-form" autoComplete="off">
@@ -86,7 +86,7 @@ export default async function PaymentsReadiness({
                 })}
               </div>
               <div className="rh-admin-credentials-footer">
-                <span>Nur intern · Keine Kundenzahlung aktiviert</span>
+                <span>{provider==="dhl"?"Nur intern · Kein DHL-Label aktiviert":"Nur intern · Keine Kundenzahlung aktiviert"}</span>
                 <button type="submit" disabled={!ready}>Einstellungen speichern</button>
               </div>
             </form>)}
