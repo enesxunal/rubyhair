@@ -145,10 +145,10 @@ function TapeInAtelier(){
         <figcaption><span>01 / THE COLLECTION</span><span>SOFT BLONDE</span></figcaption>
       </figure>
       <figure className="rh-tape-atelier-visual rh-tape-atelier-visual-detail">
-        <img src="/assets/ruby-hair-platinum-detail.webp"
-          alt="Platinblonde Tape-in Haarsträhnen auf einer schwarzen skulpturalen Hand"
+        <img src="/assets/ruby-hair-brunette-tape-detail.webp"
+          alt="Braune Ruby Hair Tape-in Extensions auf einer schwarzen skulpturalen Hand"
           loading="lazy" decoding="async" width={1024} height={1536}/>
-        <figcaption><span>02 / THE DETAILS</span><span>TAPE-IN TEXTURE</span></figcaption>
+        <figcaption><span>02 / THE DETAILS</span><span>WARM BRUNETTE</span></figcaption>
       </figure>
     </div>
   </section>;

@@ -539,20 +539,22 @@ test("hair try-on uses a gated step-by-step wizard with accessible result previe
  assert.ok(lab.includes('if(!consent)'),"Photo API is not called without consent");
 });
 
-test("Ruby Hair platinum studio photography appears as an editorial feature without replacing the homepage hero or real color swatches",()=>{
+test("Ruby Hair blonde and brunette editorial photography keeps the approved homepage hero and real color swatches",()=>{
  const frontend=fs.readFileSync(path.join(base,"src/components/home-frontend.tsx"),"utf8");
  const sheet=fs.readFileSync(path.join(base,"src/styles/tape-atelier.css"),"utf8");
  const layout=fs.readFileSync(path.join(base,"app/layout.tsx"),"utf8");
  assert.ok(frontend.includes('src="/assets/hero-brunette.webp"'),"Original agreed hero remains unchanged");
  assert.ok(frontend.includes('src="/assets/ruby-hair-platinum-atelier.webp"'));
- assert.ok(frontend.includes('src="/assets/ruby-hair-platinum-detail.webp"'));
+ assert.ok(frontend.includes('src="/assets/ruby-hair-brunette-tape-detail.webp"'));
+ assert.ok(frontend.includes('WARM BRUNETTE'));
+ assert.ok(!frontend.includes('src="/assets/ruby-hair-platinum-detail.webp"'));
  assert.ok(frontend.includes('<TapeInAtelier/>'));
  assert.ok(frontend.includes('<ShadeSelector/>'));
  assert.ok(frontend.indexOf('<TapeInAtelier/>')>frontend.indexOf('<ShadeSelector/>'));
  assert.ok(frontend.indexOf('<TapeInAtelier/>')<frontend.indexOf('className="brand-story'));
  assert.ok(layout.includes('tape-atelier.css'));
  assert.ok(sheet.includes('@media(max-width:550px)'));
- for(const name of ['ruby-hair-platinum-atelier.webp','ruby-hair-platinum-detail.webp']){
+ for(const name of ['ruby-hair-platinum-atelier.webp','ruby-hair-brunette-tape-detail.webp']){
   const file=path.join(base,'public/assets',name);
   assert.ok(fs.existsSync(file));
   const bytes=fs.readFileSync(file);
@@ -585,7 +587,7 @@ test("length collection cards use contrasting real hair photos, not stale editor
  assert.ok(!data.includes("tape-in-short-editorial.webp"));
  assert.ok(!data.includes("tape-in-long-editorial.webp"));
  assert.ok(home.includes('src={choice.image}'));
- for(const filename of ["ruby-hair-platinum-atelier.webp","ruby-hair-platinum-detail.webp"]){
+ for(const filename of ["ruby-hair-platinum-atelier.webp","ruby-hair-brunette-tape-detail.webp"]){
   const f=path.join(base,"public/assets",filename);
   assert.ok(fs.existsSync(f),"missing "+filename);
   assert.equal(fs.readFileSync(f).toString("ascii",8,12),"WEBP");
