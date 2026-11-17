@@ -19,7 +19,8 @@
     "db:studio": "prisma studio",
     "admin:hash": "node scripts/hash-admin-password.cjs",
     "preflight:live": "node scripts/go-live-preflight.cjs",
-    "audit:stock": "node scripts/reconcile-legacy-stock.cjs"
+    "audit:stock": "node scripts/reconcile-legacy-stock.cjs",
+    "smoke:api": "node scripts/verify-store-api.cjs"
   },
   "dependencies": {
     "@prisma/client": "^6.19.1",

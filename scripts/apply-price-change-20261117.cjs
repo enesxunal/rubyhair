@@ -31,7 +31,14 @@ for(const r of manifest.variants){
 const backupDir=path.join(os.homedir(),'.config','desnod','rubyhair','backups');
 fs.mkdirSync(backupDir,{recursive:true,mode:0o700});
 fs.chmodSync(backupDir,0o700);
-const backupPath=path.join(backupDir,'rubyhair-new-db-prices-before-plus-5-20261117.json');
+// Keep a separate rollback snapshot for the disposable local database; never
+// overwrite or reuse the production before-price snapshot.
+const dbHostname=new URL(process.env.DATABASE_URL).hostname.toLowerCase();
+const localDb=['localhost','127.0.0.1','[::1]'].includes(dbHostname);
+const backupFile=localDb
+  ? 'rubyhair-local-db-prices-before-plus-5-20261117.json'
+  : 'rubyhair-new-db-prices-before-plus-5-20261117.json';
+const backupPath=path.join(backupDir,backupFile);
 const db=new PrismaClient({datasources:{db:{url:process.env.DATABASE_URL}}});
 async function main(){
   const data=await db.variant.findMany({select:{id:true,legacyId:true,priceCents:true,active:true,stockQuantity:true,product:{select:{slug:true}}}});
