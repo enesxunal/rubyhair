@@ -2,7 +2,7 @@ import Link from "next/link";
 import {
  ArrowUpRight,Boxes,LayoutDashboard,ClipboardList,BarChart3,
  WalletCards,ExternalLink,ShieldCheck,LogOut,ChevronRight,Store,
- CircleDot,Settings2
+ CircleDot,Settings2,Mail
 } from "lucide-react";
 import {logoutAction} from "./actions";
 
@@ -11,17 +11,18 @@ const sections=[
  {href:"/admin/analytics",label:"Analytics",icon:BarChart3},
  {href:"/admin/produkte",label:"Produkte & Bestand",icon:Boxes},
  {href:"/admin/bestellungen",label:"Bestellungen",icon:ClipboardList},
- {href:"/admin/zahlungen",label:"Zahlungen",icon:WalletCards}
+ {href:"/admin/zahlungen",label:"Zahlungen",icon:WalletCards},
+ {href:"/admin/benachrichtigungen",label:"E-Mails & Vorlagen",icon:Mail}
 ] as const;
 
-type Area="dashboard"|"products"|"orders"|"analytics"|"payments";
+type Area="dashboard"|"products"|"orders"|"analytics"|"payments"|"emails";
 const name:Record<Area,string>={
  dashboard:"Übersicht",analytics:"Analytics",products:"Produkte & Bestand",
- orders:"Bestellungen",payments:"Zahlungen"
+ orders:"Bestellungen",payments:"Zahlungen",emails:"E-Mails & Vorlagen"
 };
 const paths:Record<Area,string>={
  dashboard:"/admin",analytics:"/admin/analytics",products:"/admin/produkte",
- orders:"/admin/bestellungen",payments:"/admin/zahlungen"
+ orders:"/admin/bestellungen",payments:"/admin/zahlungen",emails:"/admin/benachrichtigungen"
 };
 export default function AdminShell({
  current,title,description,children

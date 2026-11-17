@@ -18,6 +18,7 @@ export default async function PaymentsReadiness({
   const params=await searchParams;
   const ready=databaseConfigured()&&paymentVaultConfigured();
   const saved=await getPrisma().paymentIntegrationSetting.findMany({
+    where:{provider:{in:paymentProviders}},
     select:{provider:true,environment:true,field:true,updatedAt:true}
   });
   const savedKeys=new Set(saved.map(v=>[v.provider,v.environment,v.field].join(":")));

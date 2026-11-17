@@ -9,6 +9,7 @@ import {isAdmin} from "@/lib/admin-auth";
 import {getPrisma} from "@/lib/prisma";
 import {loadAnalyticsReport} from "@/lib/admin-analytics-server";
 import {isKnownOrderState,orderStates} from "@/lib/order-lifecycle";
+import {paymentProviders} from "@/lib/payment-settings-spec";
 import AdminActivityChart from "@/components/admin-activity-chart";
 import AdminShell from "./admin-shell";
 
@@ -25,7 +26,7 @@ export default async function AdminHome(){
   db.order.findMany({select:{id:true,orderNumber:true,status:true,testOnly:true,createdAt:true},orderBy:{createdAt:"desc"},take:4}),
   db.order.count({where:{testOnly:false}}),
   db.order.count({where:{testOnly:true}}),
-  db.paymentIntegrationSetting.count(),
+  db.paymentIntegrationSetting.count({where:{provider:{in:paymentProviders}}}),
   loadAnalyticsReport(7)
  ]);
  const unknown=variants.filter(v=>v.stockQuantity===null).length;
