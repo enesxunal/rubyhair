@@ -48,7 +48,7 @@ async function run(){
   const vault=process.env.RUBY_PAYMENT_SETTINGS_KEY||'';
   let keyValid=false;
   try{keyValid=Buffer.from(vault,'base64url').length===32;}catch{}
-  check('encrypted_vault_key',keyValid,keyValid?'AES-256-GCM key configured':'Encryption key is absent or invalid');
+  check('encrypted_vault_key',keyValid,keyValid?'AES-256-GCM key configured':'Local key absent, invalid or masked by Vercel Secret export: verify actual authenticated server readiness');
 
   if(url.startsWith('postgres')){
     const {PrismaClient}=require('@prisma/client');

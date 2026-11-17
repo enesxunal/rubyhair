@@ -26,6 +26,14 @@ The script only prints counts and configuration field names, not credentials. No
 - [ ] **Device QA:** 390/768/1440px checkout, guest/new user order, failed payment, refunded order, mobile menu, cart, account/admin, analytics consent and accessibility.
 - [ ] **Production smoke:** Vercel production deploy READY, HTTPS and custom domain valid, functional order with signed payment capture and admin/tracking verification; archive test logs without personal secrets.
 
+## Backup evidence added 17 November 2026
+
+- IONOS phpMyAdmin full database export `dbs12920586` downloaded as SQL gzip, verified with `gzip -t`, then encrypted locally with PBKDF2 + AES-256-CBC. The encrypted output was independently decrypted and checked with `gzip -t` successfully. No unencrypted export was left in Downloads.
+- Encrypted private backup is at `~/.config/desnod/rubyhair/backups/rubyhair-wordpress-db-20261117.sql.gz.enc`; separate private passphrase file at `~/.config/desnod/rubyhair/wordpress-db-backup-passphrase-20261117.txt`. Do not upload the passphrase or decrypted file to GitHub or the public site.
+- Backup encrypted SHA-256: `3ac518844e8427179dcc9c2006132ad741b518940248b7eea6193a8b1aefbd07`. This verifies file identity, not a MySQL restore.
+- IONOS Webspace Recovery UI currently lists a RubyHair filesystem snapshot dated 17 November 2026, 00:41. The website folder was modified later that day, so that snapshot alone is not a current full portable website backup. Keep the original WordPress webspace untouched pending files/uploads backup and restore verification.
+- Vercel production lists `RUBY_PAYMENT_SETTINGS_KEY` as a protected Secret. A local `vercel env pull` masks secret values, so a short placeholder in an export cannot establish whether the runtime secret is valid. Verify the actual runtime readiness through authenticated administration; do not rotate the key without checking encrypted records.
+
 ## Cutover protocol
 
 1. Record IONOS DNS A/AAAA/CNAME/MX/TXT/CAA and domain registrar settings; keep MX/SPF/DKIM/DMARC and any unrelated subdomains unchanged.
