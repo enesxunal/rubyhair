@@ -667,3 +667,24 @@ test("Ruby Hair homepage uses approved editorial copy and removes the redundant 
  assert.ok(home.indexOf('<ShadeSelector/>')<home.indexOf('<InstagramHome posts={instagramPosts}/>'));
  assert.ok(home.indexOf('<InstagramHome posts={instagramPosts}/>')<home.indexOf('<TapeInAtelier/>'));
 });
+
+test("Ruby Hair homepage shows three equally prominent collection cards and a full-width mobile Keratin card",()=>{
+ const home=fs.readFileSync(path.join(base,"src/components/home-frontend.tsx"),"utf8");
+ const css=fs.readFileSync(path.join(base,"src/styles/styles.css"),"utf8");
+ const asset=path.join(base,"public/assets/ruby-hair-keratin-editorial.webp");
+ assert.ok(home.includes('collection-grid rh-collection-trio'));
+ assert.ok(home.includes('Entdecke deine <i>Extensions.</i>'));
+ assert.ok(home.includes('className="rh-collection-card rh-collection-card-keratin"'));
+ assert.ok(home.includes('href="/kollektionen/keratin-bondings/"'));
+ assert.ok(home.includes('src="/assets/ruby-hair-keratin-editorial.webp"'));
+ assert.ok(!home.includes('className="rh-keratin-feature"'),"Keratin must not remain a small secondary banner");
+ assert.ok(css.includes('.rh-length-collection .collection-grid.rh-collection-trio'));
+ assert.ok(css.includes('grid-template-columns:repeat(3,minmax(0,1fr))'));
+ assert.ok(css.includes('.rh-collection-card-keratin{grid-column:1/-1}'));
+ assert.ok(css.includes('@media(max-width:550px)'));
+ assert.ok(fs.existsSync(asset));
+ const bytes=fs.readFileSync(asset);
+ assert.equal(bytes.toString('ascii',8,12),'WEBP');
+ assert.ok(bytes.length<250000);
+ assert.ok(home.includes('src="/assets/hero-brunette.webp"'),"Approved homepage hero stays unchanged");
+});

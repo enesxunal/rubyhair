@@ -403,3 +403,67 @@ body{background:#fcfaf7;color:#2f2829}
 .rh-keratin-feature:hover{background:#e9dfe0}
 .rh-category-keratin .rh-category-photo img{object-position:top center}
 @media(max-width:550px){.rh-keratin-feature{padding:14px;gap:15px}.rh-keratin-feature>img{width:88px;height:105px}}
+
+/* Ruby Hair collection trio: all three products are primary categories, not a small third banner. */
+.rh-length-collection .collection-grid.rh-collection-trio{
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+ gap:clamp(13px,1.7vw,26px);align-items:stretch;
+}
+.rh-length-collection .rh-collection-trio>.rh-collection-card{
+ display:block;position:relative;min-width:0;margin:0;overflow:hidden;
+ background:#eee9e4;color:#fff;text-decoration:none;
+}
+.rh-length-collection .rh-collection-trio .collection-media{height:clamp(400px,39vw,565px);background:#eee9e4}
+.rh-length-collection .rh-collection-trio .collection-media>img{
+ display:block;width:100%;height:100%;object-fit:cover;object-position:center 64%;
+ transition:transform .6s ease;
+}
+.rh-length-collection .rh-collection-trio .rh-collection-card-1 img{object-position:center 73%}
+.rh-length-collection .rh-collection-trio .rh-collection-card-2 img{object-position:center 67%}
+.rh-length-collection .rh-collection-trio .rh-collection-card-keratin img{object-position:center 69%}
+.rh-length-collection .rh-collection-trio .collection-caption{
+ position:absolute;bottom:0;left:0;right:0;z-index:2;
+ display:flex;align-items:end;justify-content:space-between;gap:10px;
+ padding:108px clamp(16px,1.8vw,28px) clamp(20px,2.2vw,30px);
+ background:linear-gradient(0deg,rgba(31,23,27,.88) 0%,rgba(31,23,27,.51) 56%,rgba(31,23,27,0) 100%);
+}
+.rh-length-collection .rh-collection-trio .rh-collection-card-copy{min-width:0;display:flex;flex-direction:column;gap:10px}
+.rh-length-collection .rh-collection-trio .rh-collection-card-kicker{
+ display:block;color:#f3d9e2;font-size:9px;font-weight:700;letter-spacing:1.4px;line-height:1.35;
+}
+.rh-length-collection .rh-collection-trio .collection-caption h3{
+ font:400 clamp(25px,2.2vw,37px)/1.08 var(--serif);
+ letter-spacing:-.03em;max-width:100%;margin:0;color:#fff;
+}
+.rh-length-collection .rh-collection-trio .collection-caption h3 i{color:#f2d0df}
+.rh-length-collection .rh-collection-trio .collection-caption .round-arrow{
+ display:grid;place-items:center;min-width:38px;width:38px;height:38px;flex-shrink:0;
+ border:1px solid rgba(255,255,255,.75);color:#fff;
+}
+.rh-length-collection .rh-collection-trio>.rh-collection-card:hover .collection-media img,
+.rh-length-collection .rh-collection-trio>.rh-collection-card:focus-visible .collection-media img{transform:scale(1.035)}
+.rh-length-collection .rh-collection-trio>.rh-collection-card:focus-visible{outline:3px solid #71485a;outline-offset:4px}
+.rh-length-collection .rh-collection-trio>.rh-collection-card:hover .round-arrow,
+.rh-length-collection .rh-collection-trio>.rh-collection-card:focus-visible .round-arrow{background:#fff;color:#603c50}
+@media(max-width:1000px){
+ .rh-length-collection .collection-grid.rh-collection-trio{grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+ .rh-length-collection .rh-collection-trio .rh-collection-card-keratin{grid-column:1/-1}
+ .rh-length-collection .rh-collection-trio .collection-media{height:clamp(340px,45vw,440px)}
+ .rh-length-collection .rh-collection-trio .rh-collection-card-keratin .collection-media{height:335px}
+ .rh-length-collection .rh-collection-trio .rh-collection-card-keratin img{object-position:center 55%}
+}
+@media(max-width:550px){
+ .rh-length-collection .collection-grid.rh-collection-trio{gap:10px}
+ .rh-length-collection .rh-collection-trio .rh-collection-card-tape .collection-media{height:clamp(245px,70vw,345px)}
+ .rh-length-collection .rh-collection-trio .rh-collection-card-keratin .collection-media{height:320px}
+ .rh-length-collection .rh-collection-trio .collection-caption{padding:65px 12px 14px;gap:3px}
+ .rh-length-collection .rh-collection-trio .collection-caption h3{font-size:clamp(18px,5vw,23px);line-height:1.13}
+ .rh-length-collection .rh-collection-trio .rh-collection-card-kicker{font-size:8px;letter-spacing:.75px}
+ .rh-length-collection .rh-collection-trio .rh-collection-card-copy{gap:6px}
+ .rh-length-collection .rh-collection-trio .rh-collection-card-tape .round-arrow{display:none}
+ .rh-length-collection .rh-collection-trio .rh-collection-card-keratin .collection-caption h3{font-size:clamp(28px,7vw,34px)}
+ .rh-length-collection .rh-collection-trio .rh-collection-card-keratin .round-arrow{display:grid}
+ .rh-length-collection .rh-collection-trio .rh-collection-card-keratin img{object-position:center 63%}
+ .rh-length-collection .rh-collection-trio .rh-length-tag{top:10px;left:10px;font-size:9px;padding:7px 9px}
+}
+@media(prefers-reduced-motion:reduce){.rh-length-collection .rh-collection-trio .collection-media>img{transition:none}}

@@ -209,21 +209,31 @@ export default function HomeFrontend({products,instagramPosts=[]}:{products:Prod
       <InfluencerStories/>
       <section id="collections" className="collections rh-length-collection section-pad" aria-labelledby="rh-home-lengths">
         <div className="container">
-          <div className="section-heading"><h2 id="rh-home-lengths">Wähle deine <i>Länge.</i></h2></div>
-          <div className="collection-grid">
-            {tapeInLengths.map((choice,index)=><Link href={tapeInLengthHref(choice.key)} className={index===0?"collection-large":"collection-small"} key={choice.key}>
-              <div className="collection-media"><img src={choice.image} alt={choice.alt} loading="lazy"/>
+          <div className="section-heading"><h2 id="rh-home-lengths">Entdecke deine <i>Extensions.</i></h2></div>
+          <div className="collection-grid rh-collection-trio">
+            {tapeInLengths.map((choice,index)=><Link href={tapeInLengthHref(choice.key)} className={"rh-collection-card rh-collection-card-tape rh-collection-card-"+(index+1)} key={choice.key}>
+              <div className="collection-media"><img src={choice.image} alt={choice.alt} loading="lazy" decoding="async"/>
                 <span className="rh-length-tag">{choice.label}</span>
               </div>
-              <div className="collection-caption"><h3>{index===0?<>Tape-in <i>45–50 cm.</i></>:<>Tape-in <i>55–60 cm.</i></>}</h3>
-                <span className="round-arrow"><ArrowUpRight size={21} aria-hidden="true"/></span>
+              <div className="collection-caption">
+                <div className="rh-collection-card-copy"><span className="rh-collection-card-kicker">TAPE-IN EXTENSIONS</span>
+                  <h3>{index===0?<>Tape-in <i>45–50 cm.</i></>:<>Tape-in <i>55–60 cm.</i></>}</h3>
+                </div>
+                <span className="round-arrow" aria-hidden="true"><ArrowUpRight size={20}/></span>
               </div>
             </Link>)}
+            <Link className="rh-collection-card rh-collection-card-keratin" href="/kollektionen/keratin-bondings/">
+              <div className="collection-media"><img src="/assets/ruby-hair-keratin-editorial.webp" alt="Keratin Bondings aus Echthaar – Ruby Hair Originalproduktfotografie" loading="lazy" decoding="async"/>
+                <span className="rh-length-tag">KERATIN</span>
+              </div>
+              <div className="collection-caption">
+                <div className="rh-collection-card-copy"><span className="rh-collection-card-kicker">KERATIN EXTENSIONS</span>
+                  <h3>Keratin <i>Bondings.</i></h3>
+                </div>
+                <span className="round-arrow" aria-hidden="true"><ArrowUpRight size={20}/></span>
+              </div>
+            </Link>
           </div>
-          <Link className="rh-keratin-feature" href="/kollektionen/keratin-bondings/">
-            <img src="/media/1006-300x400-0854ea8f2.jpg" alt="Keratin Bondings – Ruby Hair Echthaar" loading="lazy"/>
-            <span><small>DIE DRITTE KOLLEKTION</small><strong>Keratin <i>Bondings.</i></strong><span>KERATIN ENTDECKEN <ArrowUpRight size={17}/></span></span>
-          </Link>
         </div>
       </section>
       <ShadeSelector/>
