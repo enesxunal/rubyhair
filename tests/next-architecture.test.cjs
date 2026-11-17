@@ -604,7 +604,7 @@ test("Ruby Hair community uses actual recent posts, not profile highlight covers
   assert.equal(fs.readFileSync(photo).toString("ascii",8,12),"WEBP");
  }
  assert.ok(!source.includes("assets/influencers/"),"highlight covers must not be used");
- for(const shortcode of ["DfVB0WouqXC","DfFi9wXOQSg","DeRBodOSBLJ","DdWuECGjPhu"])assert.ok(source.includes("https://www.instagram.com/p/"+shortcode+"/"));
+ for(const shortcode of ["DfVB0WouqXC","DeRBodOSBLJ","DdWuECGjPhu"])assert.ok(source.includes("https://www.instagram.com/p/"+shortcode+"/"));
  assert.ok(home.includes("<InfluencerStories/>"));
  assert.ok(story.includes('target="_blank"'));
  assert.ok(story.includes("Galerie schließen"));
@@ -616,7 +616,7 @@ test("Ruby Hair community uses actual recent posts, not profile highlight covers
  for(let i=1;i<=12;i++){
   const key=`ruby-post-${String(i).padStart(2,"0")}-story.webp`;
   assert.ok(fs.existsSync(path.join(base,"public/assets/instagram-posts",key)),"Missing story crop "+key);
-  assert.ok(source.includes(key),"Story data does not use "+key);
+  if(i!==2)assert.ok(source.includes(key),"Story data does not use "+key);
  }
  for(const avatar of ["hair-boutique.webp","jessica-haller.webp","elaine-victoria.webp","asena-neuhoff.webp","kristina.webp"]){
   assert.ok(fs.existsSync(path.join(base,"public/assets/instagram-avatars",avatar)),"Missing IG profile picture "+avatar);
@@ -630,13 +630,18 @@ test("Ruby Hair community uses actual recent posts, not profile highlight covers
  assert.ok(story.includes("story.storyImage"));
 });
 
-test("Ruby Hair community carousel has 12 sourced posts and usable navigation",()=>{
+test("Ruby Hair community carousel has 11 curated posts and usable navigation",()=>{
  const source=fs.readFileSync(path.join(base,"src/data/influencer-stories.ts"),"utf8");
  const component=fs.readFileSync(path.join(base,"src/components/influencer-stories.tsx"),"utf8");
  const css=fs.readFileSync(path.join(base,"src/styles/influencer-stories.css"),"utf8");
  const postRefs=[...source.matchAll(/postUrl:"(https:\/\/www.instagram.com\/p\/[^"]+)"/g)].map(m=>m[1]);
- assert.equal(postRefs.length,12);
- assert.equal(new Set(postRefs).size,12);
+ assert.equal(postRefs.length,11);
+ assert.equal(new Set(postRefs).size,11);
+ assert.ok(postRefs[0].endsWith("/DdWuECGjPhu/"),"Elaine Victoria must be first");
+ assert.ok(postRefs[1].endsWith("/DeRBodOSBLJ/"),"Second slot must be a named creator, not a customer repost");
+ assert.ok(!source.includes("/DfFi9wXOQSg/"),"Client-requested customer repost must be removed from carousel");
+ assert.ok(source.indexOf('name:"Elaine Victoria"')<source.indexOf('name:"Jessica Haller"'));
+
  for(const code of ["DcyyKV5uAXp","Dcl4tzkM9jA","DcEYx_1jPKb","DbsVnhmOKu7","DbiyODiMzwy","DbbCY7KMBcH","DaSI-qbjjXM","DZAP4dDsl7m"]){
   assert.ok(source.includes("https://www.instagram.com/p/"+code+"/"),"missing actual Ruby Hair feed post "+code);
  }
