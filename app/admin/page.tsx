@@ -22,12 +22,11 @@ export default async function AdminHome(){
   db.order.findMany({where:{testOnly:false},select:{id:true,orderNumber:true,status:true,createdAt:true},orderBy:{createdAt:"desc"},take:5}),
   db.order.count({where:{testOnly:false}})
  ]);
- const unknown=variants.filter(v=>v.active&&v.stockQuantity===null).length;
- const soldOut=variants.filter(v=>v.active&&v.stockQuantity===0).length;
+ const unknown=variants.filter(v=>v.stockQuantity===null).length;
+ const soldOut=variants.filter(v=>v.stockQuantity===0).length;
  const low=variants.filter(v=>v.active&&v.stockQuantity!==null&&v.stockQuantity>0&&v.stockQuantity<=5).length;
- const activeVariants=variants.filter(v=>v.active);
- const known=activeVariants.length-unknown;
- const progress=activeVariants.length?Math.round(known/activeVariants.length*100):0;
+ const known=variants.length-unknown;
+ const progress=variants.length?Math.round(known/variants.length*100):0;
  const metrics=[
   {label:"Aktive Produkte",value:number(products.length),note:"Im Live-Shop sichtbar",icon:Package},
   {label:"Ausverkaufte Varianten",value:number(soldOut),note:"Bestand 0 · nicht kaufbar",icon:AlertCircle},
@@ -55,8 +54,8 @@ export default async function AdminHome(){
   <div className="rh-admin-overview-columns rh-studio-overview-bottom">
    <section className="rh-admin-panel-card">
     <div className="rh-admin-card-title"><div><span>LAGER / BESTAND</span><h2>Bestandsübersicht</h2></div><Link href="/admin/produkte">Bearbeiten <ArrowUpRight size={15}/></Link></div>
-    <div className="rh-studio-stock-score"><strong>{progress}%</strong><span>Aktive Varianten mit bekannter Stückzahl</span></div>
-    <div className="rh-admin-inventory-bar" aria-label={known+" von "+activeVariants.length+" aktiven Varianten mit bekannter Menge"}><span style={{width:progress+"%"}}/></div>
+    <div className="rh-studio-stock-score"><strong>{progress}%</strong><span>Varianten aktiver Produkte mit bekannter Stückzahl</span></div>
+    <div className="rh-admin-inventory-bar" aria-label={known+" von "+variants.length+" Varianten aktiver Produkte mit bekannter Menge"}><span style={{width:progress+"%"}}/></div>
     <div className="rh-admin-inventory-list">
      <div><span><i className="rh-admin-dot unknown"/>Menge unbekannt</span><b>{unknown}</b></div>
      <div><span><i className="rh-admin-dot zero"/>Ausverkauft (0)</span><b>{soldOut}</b></div>
