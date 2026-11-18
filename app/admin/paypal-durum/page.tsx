@@ -1,5 +1,6 @@
 import type {Metadata} from "next";
 import {redirect} from "next/navigation";
+import {reconcileLiveVariantTestAction} from "../../live-variant-test-actions";
 import {isAdmin} from "@/lib/admin-auth";
 import {getPrisma} from "@/lib/prisma";
 import {PaypalClient,PaypalError} from "@/lib/paypal-provider-core";
@@ -64,6 +65,16 @@ export default async function PayPalStatusPage(){
   <p style={{fontWeight:650}}>{audit?.verified?
    "PayPal meldet eine abgeschlossene Zahlung. Ruby Hair muss ohne erneuten Einzug abgeglichen werden.":
    "Noch keine als abgeschlossen verifizierte Zahlung. Bitte NICHT erneut auf Einziehen klicken."}</p>
+  {audit?.verified&&order?.status==="pending_payment"&&<form action={reconcileLiveVariantTestAction} style={{padding:18,background:"#ecf6ed",border:"1px solid #7a9b80"}}>
+   <strong>PayPal 1,00 € bereits bezahlt. Ohne neue Abbuchung synchronisieren.</strong>
+   <p>Nur Ruby Hair Bestellung, Zahlungsnachweis, PDF-Rechnung und ursprünglichen Produktpreis wiederherstellen. Kein weiterer PayPal-Einzug.</p>
+   <label style={{display:"flex",gap:9,alignItems:"flex-start"}}>
+    <input name="confirmNoCharge" type="checkbox" required/> Ich bestätige die Abstimmung der bereits bezahlten Bestellung ohne neue Zahlung.
+   </label>
+   <button type="submit" style={{marginTop:16,padding:"14px 18px",background:"#3f6b51",color:"#fff",border:0,cursor:"pointer"}}>
+    Bereits bezahlte 1-€-Bestellung abgleichen und Rechnung erstellen
+   </button>
+  </form>}
   <p><a href="/kasse?liveTest=1">Zurück zur Kasse</a></p>
  </main>;
 }

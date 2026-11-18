@@ -138,12 +138,14 @@ export async function captureVariantTest(paypalOrderId:string){
  if(order.status==="payment_confirmed"&&order.invoice)return {paid:true,orderId:order.id,invoiceNumber:order.invoice.invoiceNumber};
  if(order.status!=="pending_payment"||!order.customerEmail)throw new VariantTestError("VARIANT_TEST_ORDER_NOT_PENDING");
  const api=await paypalClient();
+ // PayPal's immediate POST /capture response can differ from GET /orders/{id}.
+ // Never trust the POST response alone as proof of payment, and never retry the
+ // capture on a GET-only reconciliation page. The request ID stays idempotent.
+ try{await api.captureOrder(paypalOrderId,"VARIANT-QA-CAPTURE-"+order.id)}
+ catch{ /* Provider may have completed the capture before the response failed. */ }
  let raw:unknown;
- try{raw=await api.captureOrder(paypalOrderId,"VARIANT-QA-CAPTURE-"+order.id)}
- catch{
-  try{raw=await api.getOrder(paypalOrderId)}
-  catch{throw new VariantTestError("PROVIDER_CAPTURE_STATUS_UNKNOWN");}
- }
+ try{raw=await api.getOrder(paypalOrderId)}
+ catch{throw new VariantTestError("PROVIDER_CAPTURE_STATUS_UNKNOWN");}
  let captured;
  try{captured=api.requireCompletedCapture(raw,order.id,100,paypalOrderId)}
  catch{throw new VariantTestError("PAYPAL_PAYMENT_NOT_VERIFIED");}
@@ -183,6 +185,62 @@ export async function captureVariantTest(paypalOrderId:string){
   if(existing)return {paid:true,orderId:order.id,invoiceNumber:existing.invoiceNumber};
   console.error("RUBY_VARIANT_TEST_CAPTURED_RECONCILIATION",e instanceof Error?e.name:"unknown");
   throw new VariantTestError("CAPTURED_PAYMENT_REQUIRES_MANUAL_RECONCILIATION");
+ }
+}
+
+/** Reconcile a payment PayPal has ALREADY captured. This path never calls captureOrder,
+ * createOrder, authorize, refund, or any other provider-side money operation. */
+export async function reconcileCapturedVariantTest(){
+ const db=getPrisma();
+ const variant=await db.variant.findUnique({where:{legacyId:VARIANT_TEST_LEGACY_ID},select:{id:true}});
+ if(!variant)throw new VariantTestError("TEST_VARIATION_NOT_FOUND");
+ const order=await db.order.findFirst({
+  where:{testOnly:true,lines:{some:{variantId:variant.id}}},orderBy:{createdAt:"desc"},
+  include:{lines:{include:{variant:true}},invoice:true}
+ });
+ if(!order||!order.paymentReference||!order.customerEmail)throw new VariantTestError("TEST_PAYMENT_REFERENCE_MISSING");
+ const buyerName=ensureTestOrder(order);
+ if(order.status==="payment_confirmed"&&order.invoice)return {paid:true,orderId:order.id,invoiceNumber:order.invoice.invoiceNumber};
+ if(order.status!=="pending_payment")throw new VariantTestError("TEST_ORDER_RECONCILIATION_NOT_ALLOWED");
+ const api=await paypalClient();
+ let raw:unknown;
+ try{raw=await api.getOrder(order.paymentReference)}
+ catch{throw new VariantTestError("PAYPAL_READ_ONLY_STATUS_UNAVAILABLE");}
+ // Strictly validate PayPal's completed capture for this Ruby Hair order and amount.
+ let captured;
+ try{captured=api.requireCompletedCapture(raw,order.id,100,order.paymentReference)}
+ catch{throw new VariantTestError("PAYPAL_CAPTURE_NOT_COMPLETED_OR_MISMATCHED");}
+ const issuedAt=new Date(),invoiceNumber=qaInvoiceNumber(order.orderNumber,issuedAt);
+ const pdf=buildOneEuroInvoicePdf({invoiceNumber,issuedAt,orderNumber:order.orderNumber,
+  buyerName,buyerEmail:order.customerEmail,captureId:captured.captureId,
+  provider:"paypal",itemDescription:"Tape-in Extensions Farbe 4 / 45-50 cm (TEST)"});
+ try{
+  const invoice=await db.$transaction(async tx=>{
+   const updated=await tx.order.updateMany({
+    where:{id:order.id,testOnly:true,status:"pending_payment",totalCents:100,paymentReference:order.paymentReference},
+    data:{status:"payment_confirmed",reservationExpiresAt:null}
+   });
+   if(updated.count!==1)throw new VariantTestError("RECONCILIATION_ALREADY_HANDLED");
+   requireOrderTransition("pending_payment","payment_confirmed","payment_provider");
+   await tx.paymentEvent.create({data:{orderId:order.id,provider:"paypal",providerEventId:captured.captureId,eventType:"PAYMENT.CAPTURE.COMPLETED"}});
+   await tx.orderStatusEvent.create({data:{orderId:order.id,fromStatus:"pending_payment",toStatus:"payment_confirmed",reason:"read_only_paypal_capture_verified_existing_order_reconciled"}});
+   const restored=await tx.variant.updateMany({
+    where:{id:variant.id,active:true,priceCents:VARIANT_TEST_CENTS,stockQuantity:0},
+    data:{priceCents:VARIANT_TEST_ORIGINAL_CENTS,stockQuantity:null}
+   });
+   if(restored.count!==1)throw new VariantTestError("RECONCILIATION_CATALOG_RESTORE_CONFLICT");
+   return tx.invoice.create({data:{orderId:order.id,invoiceNumber,issuedAt,
+    seller:RUBY_TEST_SELLER,buyer:{name:buyerName,email:order.customerEmail},
+    lines:[{description:"Tape-in Extensions Farbe 4, 45–50 cm (interner Test, keine Lieferung)",qty:1,totalCents:100}],
+    taxRate:QA_INVOICE_TAX_RATE,taxCents:QA_INVOICE_TAX_CENTS,totalCents:100,pdf:new Uint8Array(pdf)}
+   });
+  },{isolationLevel:Prisma.TransactionIsolationLevel.Serializable,timeout:10000});
+  return {paid:true,orderId:order.id,invoiceNumber:invoice.invoiceNumber};
+ }catch(e){
+  const invoice=await db.invoice.findUnique({where:{orderId:order.id}});
+  if(invoice)return {paid:true,orderId:order.id,invoiceNumber:invoice.invoiceNumber};
+  console.error("RUBY_VARIANT_RECONCILIATION_FAILED",e instanceof Error?e.name:"unknown");
+  throw new VariantTestError("RECONCILIATION_NEEDS_MANUAL_REVIEW");
  }
 }
 
