@@ -5,7 +5,7 @@ import {z} from "zod";
 import {getPrisma} from "@/lib/prisma";
 import {loadPaymentValue} from "@/lib/payment-secrets";
 import {PaypalClient} from "@/lib/paypal-provider-core";
-import {KlarnaClient} from "@/lib/klarna-provider-core";
+import {KlarnaClient,KlarnaProviderError} from "@/lib/klarna-provider-core";
 import {legacyStore} from "@/lib/legacy-store-facts";
 
 const simple=z.string().trim().min(2).max(85).refine(s=>!/[<>\r\n\x00-\x1f]/.test(s));
@@ -50,6 +50,7 @@ export function verifyCheckoutSignature(orderId:string,provider:"paypal"|"klarna
 }
 export function publicCheckoutMode(){
  return process.env.RUBY_PUBLIC_CHECKOUT_MODE==="public"?"public":
+  process.env.RUBY_PUBLIC_CHECKOUT_MODE==="klarna_public"?"klarna_public":
   process.env.RUBY_PUBLIC_CHECKOUT_MODE==="admin_test"?"admin_test":"disabled";
 }
 export function providerForCheckout(provider:"paypal"):Promise<{provider:"paypal";api:PaypalClient}>;
@@ -116,6 +117,7 @@ export async function createCustomerCheckout(input:CustomerCheckoutInput){
  },{isolationLevel:Prisma.TransactionIsolationLevel.Serializable,timeout:12000});
  // The order remains pending on any provider timeout or ambiguous reply to
  // prevent duplicate external orders/stock restoration before reconciliation.
+ let klarnaSessionCreated=false;
  try{
   const base=`https://rubyhair.de/kasse/${input.provider}/return?orderId=${order.id}&state=${checkoutSignature(order.id,input.provider)}`;
   let reference:string,url:string;
@@ -131,6 +133,7 @@ export async function createCustomerCheckout(input:CustomerCheckoutInput){
   }else{
    const lines=await db.orderLine.findMany({where:{orderId:order.id},include:{variant:{include:{product:true}}}});
    const session=await gateway.api.createCustomerPaymentSession(order,lines);
+   klarnaSessionCreated=true;
    const page=await gateway.api.createCustomerHostedPage(session.session_id,base);
    reference="KLARNA-HPP:"+page.session_id;url=page.redirect_url;
   }
@@ -138,6 +141,31 @@ export async function createCustomerCheckout(input:CustomerCheckoutInput){
   if(changed.count!==1)throw new CustomerCheckoutError("PROVIDER_ORDER_REQUIRES_REVIEW",503);
   return {redirectUrl:url,orderId:order.id,amountCents:order.totalCents};
  }catch(error){
+  // A deterministic 4xx before a Klarna session exists cannot have authorized a
+  // customer. Release only this specific, provably unstarted reservation.
+  if(gateway.provider==="klarna"&&!klarnaSessionCreated&&
+     error instanceof KlarnaProviderError&&/^KLARNA_HTTP_(400|401|403)$/.test(error.reason)){
+   const released=await db.$transaction(async tx=>{
+    const updated=await tx.order.updateMany({
+     where:{id:order.id,testOnly:false,status:"pending_payment",paymentReference:null},
+     data:{status:"cancelled",reservationExpiresAt:null}
+    });
+    if(updated.count!==1)return false;
+    const stored=await tx.orderLine.findMany({where:{orderId:order.id}});
+    for(const line of stored){
+     if(line.stockReserved)await tx.variant.updateMany({
+      where:{id:line.variantId,stockQuantity:{not:null}},
+      data:{stockQuantity:{increment:line.quantity}}
+     });
+    }
+    await tx.orderStatusEvent.create({data:{
+     orderId:order.id,fromStatus:"pending_payment",toStatus:"cancelled",
+     reason:"klarna_session_rejected_before_creation"
+    }});
+    return true;
+   }).catch(()=>false);
+   if(released)throw new CustomerCheckoutError("KLARNA_PROVIDER_REJECTED",503);
+  }
   console.error("CUSTOMER_PROVIDER_START_REQUIRES_RECONCILIATION",error instanceof Error?error.name:"unknown");
   throw new CustomerCheckoutError("PROVIDER_ORDER_REQUIRES_REVIEW",503);
  }

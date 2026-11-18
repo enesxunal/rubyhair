@@ -6,6 +6,7 @@ import {
  CircleDot,Settings2,Mail,FlaskConical
 } from "lucide-react";
 import {logoutAction} from "./actions";
+import {publicCheckoutMode} from "@/lib/customer-checkout";
 
 const sections=[
  {href:"/admin",label:"Übersicht",icon:LayoutDashboard},
@@ -30,6 +31,9 @@ export default function AdminShell({
  current,title,description,children
 }:{current:Area;title:string;description:string;children:React.ReactNode}){
  const active=paths[current];
+ const salesMode=publicCheckoutMode();
+ const klarnaOnly=salesMode==="klarna_public";
+ const paymentsLive=salesMode==="public"||klarnaOnly;
  return <main className="rh-admin-app">
   <aside className="rh-admin-sidebar">
    <Link href="/admin" className="rh-admin-brand" aria-label="Ruby Hair Verwaltung Startseite">
@@ -48,7 +52,7 @@ export default function AdminShell({
    </div>
    <div className="rh-admin-sidebar-bottom">
     <div className="rh-admin-system-note">
-     <ShieldCheck size={18}/><span><strong>Geschützter Bereich</strong><small>Demomodus · Keine Live-Zahlungen</small></span>
+     <ShieldCheck size={18}/><span><strong>Geschützter Bereich</strong><small>{klarnaOnly?"Klarna live · DHL manuell":paymentsLive?"Live-Zahlungen aktiv":"Demomodus · Keine Live-Zahlungen"}</small></span>
     </div>
     <Link href="/" target="_blank" rel="noopener noreferrer" className="rh-admin-visit">
      <ExternalLink size={16}/> Shop ansehen <ArrowUpRight size={13}/>
@@ -61,7 +65,7 @@ export default function AdminShell({
     <div className="rh-admin-breadcrumb"><Link href="/admin"><Store size={15}/> Ruby Hair Studio</Link>
       <ChevronRight size={14}/><span>{name[current]}</span></div>
     <div className="rh-admin-topline-actions">
-     <span className="rh-admin-topline-status"><CircleDot size={12}/><span className="rh-admin-status-full">DEMO / LIVE-VERKAUF AUS</span><span className="rh-admin-status-short">DEMO · CHECKOUT AUS</span></span>
+     <span className="rh-admin-topline-status"><CircleDot size={12}/><span className="rh-admin-status-full">{klarnaOnly?"KLARNA LIVE / DHL MANUELL":paymentsLive?"LIVE-VERKAUF AKTIV":"DEMO / LIVE-VERKAUF AUS"}</span><span className="rh-admin-status-short">{klarnaOnly?"KLARNA LIVE":paymentsLive?"CHECKOUT AKTIV":"DEMO · CHECKOUT AUS"}</span></span>
      <Link href="/" target="_blank" rel="noopener noreferrer" className="rh-admin-top-shop" aria-label="Shop-Vorschau öffnen">
       <ExternalLink size={15}/> Shop-Vorschau
      </Link>
@@ -74,7 +78,7 @@ export default function AdminShell({
    {children}
    <footer className="rh-admin-bottom-note">
     <span>Ruby Hair Management Studio · Interne Vorschau</span>
-    <span>Keine freigeschalteten Kundenzahlungen · Datenschutz respektieren</span>
+    <span>{klarnaOnly?"Klarna-Autorisierung live · DHL-Versand und Einzug manuell":paymentsLive?"Kundenzahlungen aktiv · Datenschutz respektieren":"Keine freigeschalteten Kundenzahlungen · Datenschutz respektieren"}</span>
    </footer>
   </section>
  </main>;

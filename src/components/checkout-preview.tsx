@@ -15,10 +15,10 @@ const process=[
   {no:"02",label:"Lieferung",description:"Liefer- und Rechnungsadresse eingeben",icon:Truck},
   {no:"03",label:"Zahlung",description:"Zahlungsart und Bestellübersicht",icon:Wallet}
 ];
-export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippingCents=499}:{liveTest?:LiveVariantTestView|null;checkoutMode?:"disabled"|"admin_test"|"public";shippingCents?:number}){
+export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippingCents=499}:{liveTest?:LiveVariantTestView|null;checkoutMode?:"disabled"|"admin_test"|"public"|"klarna_public";shippingCents?:number}){
   const {lines,loaded}=useCart();
   const {quote,error,loading}=useCartQuote(lines);
-  const [paymentMethod,setPaymentMethod]=useState<"paypal"|"klarna">("paypal");
+  const [paymentMethod,setPaymentMethod]=useState<"paypal"|"klarna">(checkoutMode==="klarna_public"?"klarna":"paypal");
   const [validatedAddress,setValidatedAddress]=useState<CheckoutAddressData|null>(null);
   const oneEuroCart=Boolean(loaded&&lines.length===1&&lines[0].id===886&&lines[0].quantity===1&&
     quote&&quote.subtotalCents===100&&quote.lines.length===1);
@@ -47,11 +47,11 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
           <h3>03 / ZAHLUNG</h3>
           <p className="rh-payment-preview-heading">Wähle deine Zahlungsart</p>
           <div className="rh-payment-select" role="radiogroup" aria-label="Zahlungsart">
-            <label className={"rh-payment-choice"+(paymentMethod==="paypal"?" is-selected":"")}>
+            {checkoutMode!=="klarna_public"&&<label className={"rh-payment-choice"+(paymentMethod==="paypal"?" is-selected":"")}>
               <input type="radio" name="checkout-payment-method" value="paypal"
                 checked={paymentMethod==="paypal"} onChange={()=>setPaymentMethod("paypal")}/>
               <span><strong>PayPal</strong><small>PayPal oder Karte bei Verfügbarkeit</small></span>
-            </label>
+            </label>}
             <label className={"rh-payment-choice"+(paymentMethod==="klarna"?" is-selected":"")}>
               <input type="radio" name="checkout-payment-method" value="klarna"
                 checked={paymentMethod==="klarna"} onChange={()=>setPaymentMethod("klarna")}/>

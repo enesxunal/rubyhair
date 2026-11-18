@@ -8,6 +8,7 @@ import {isKnownOrderState,orderStates} from "@/lib/order-lifecycle";
 import {publicCheckoutMode} from "@/lib/customer-checkout";
 import AdminShell from "../admin-shell";
 import {updateFulfillmentAction} from "../actions";
+import {confirmManualKlarnaHandoverAction} from "../klarna-manual-actions";
 
 export const metadata:Metadata={title:"Bestellungen | Ruby Hair Verwaltung",robots:{index:false,follow:false}};
 export const dynamic="force-dynamic";
@@ -22,7 +23,7 @@ const addressText=(value:unknown)=>{
    .map(key=>typeof a[key]==="string"?a[key]:"").filter(Boolean).join(", ")||null;
 };
 
-export default async function AdminOrders({searchParams}:{searchParams:Promise<{filter?:string;seite?:string}>}){
+export default async function AdminOrders({searchParams}:{searchParams:Promise<{filter?:string;seite?:string;manualKlarna?:string}>}){
  if(!await isAdmin())redirect("/admin/login");
  const params=await searchParams;
  const filter=filters.find(f=>f===params.filter)||"alle";
@@ -46,8 +47,8 @@ export default async function AdminOrders({searchParams}:{searchParams:Promise<{
  ]);
  const totalPages=Math.max(1,Math.ceil(count/20));
  const link=(p:number)=>"/admin/bestellungen?filter="+filter+"&seite="+p;
- return <AdminShell current="orders" title="Bestellübersicht." description="Bestellungen, Sendungsnummern und Statusverlauf. Versandbearbeitung nur nach verifiziertem Zahlungseingang; keine Zahlungserfassung im Admin.">
-  <div className="rh-admin-warning"><strong>Checkout-Modus: {publicCheckoutMode()==="disabled"?"Nur Vorbereitung":publicCheckoutMode()==="admin_test"?"Admin-Test":"Kunden"}.</strong> Nur durch den Zahlungsanbieter verifizierte Transaktionen zählen als bezahlt. Testreservierungen zählen nicht als Umsatz.</div>
+ return <AdminShell current="orders" title="Bestellübersicht." description="Bestellungen, Sendungsnummern und Statusverlauf. Klarna-Einzug bei manuellem DHL-Versand nur nach bestätigter physischer Paketübergabe.">
+  <div className="rh-admin-warning"><strong>Checkout-Modus: {publicCheckoutMode()==="disabled"?"Nur Vorbereitung":publicCheckoutMode()==="admin_test"?"Admin-Test":publicCheckoutMode()==="klarna_public"?"Klarna live / DHL manuell":"Kunden"}.</strong> Nur durch den Zahlungsanbieter verifizierte Transaktionen zählen als bezahlt. Testreservierungen zählen nicht als Umsatz.</div>
   <div className="rh-admin-pill-row">
    <span className="rh-admin-stat-pill">{realCount} ohne Testkennzeichen</span>
    <span className="rh-admin-stat-pill">{testCount} technische Testdatensätze</span>
@@ -91,6 +92,18 @@ export default async function AdminOrders({searchParams}:{searchParams:Promise<{
         {order.shippingJob?.labelPdf&&<p><a href={`/api/admin/customer-document?orderId=${order.id}&type=label`} target="_blank" rel="noopener noreferrer">DHL Paketlabel PDF herunterladen</a></p>}
         {order.notifications.length>0&&<p><strong>Automatische E-Mails:</strong> {order.notifications.map(n=>n.stage+": "+n.status).join(" · ")}</p>}
         {order.fulfillmentNote&&<p><strong>Interne Notiz:</strong> {order.fulfillmentNote}</p>}</div>
+       {!order.testOnly&&order.status==="payment_authorized"&&order.paymentReference?.startsWith("KLARNA-HPP:")&&
+         <form action={confirmManualKlarnaHandoverAction} className="rh-admin-fulfillment-form">
+          <h3>Klarna: DHL-Versand manuell abschließen</h3>
+          <p>Nur wenn du das echte Paket bereits bei DHL abgegeben hast. Die bestätigte Übergabe führt zum echten Klarna-Einzug, zur PDF-Rechnung und zu den E-Mails. Vorher nicht bestätigen.</p>
+          <input type="hidden" name="id" value={order.id}/>
+          <label>DHL-Sendungsnummer<input name="tracking" required minLength={8} maxLength={60} placeholder="DHL Tracking-Nummer"/></label>
+          <label style={{display:"flex",gap:9,alignItems:"center"}}>
+           <input name="parcelHandedOver" type="checkbox" required/>
+           Ich bestätige, dass das Paket tatsächlich an DHL übergeben wurde und die Sendungsnummer korrekt ist.
+          </label>
+          <button type="submit">Paketübergabe bestätigen und Klarna-Einzug prüfen</button>
+         </form>}
        <h3>Positionen</h3>
        <div className="rh-admin-table-wrap"><table><thead><tr><th>Artikel</th><th>Variante</th><th>Menge</th><th>Einzelpreis</th><th>Summe</th></tr></thead>
         <tbody>{order.lines.map((line,i)=><tr key={i}>

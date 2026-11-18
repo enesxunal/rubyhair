@@ -21,11 +21,20 @@ export async function POST(req:NextRequest){
    if(!mail.stored||!dhl.credentialsComplete||(process.env.RUBY_DHL_LIVE_LABELS_ENABLED!=="true"||!process.env.RUBY_DHL_WEIGHT_G))
     return NextResponse.json({error:"FULFILLMENT_NOT_READY"},{status:503,headers});
   }
+  // Klarna-only launch with a real merchant handover: DHL labels must be purchased
+  // manually, and capture occurs only after tracking and parcel handover are verified.
+  if(mode==="klarna_public"){
+   const mail=await loadStoreMailSettings();
+   if(!mail.stored||process.env.RUBY_MANUAL_DHL_FULFILLMENT_ENABLED!=="true")
+    return NextResponse.json({error:"FULFILLMENT_NOT_READY"},{status:503,headers});
+  }
   const text=await req.text();
   if(text.length>16384)return NextResponse.json({error:"REQUEST_TOO_LARGE"},{status:413,headers});
   let value:unknown;try{value=JSON.parse(text)}catch{return NextResponse.json({error:"INVALID_JSON"},{status:400,headers})}
   const input=checkoutInput.safeParse(value);
   if(!input.success)return NextResponse.json({error:"INVALID_CHECKOUT"},{status:400,headers});
+  if(mode==="klarna_public"&&input.data.provider!=="klarna")
+   return NextResponse.json({error:"PAYMENT_METHOD_DISABLED"},{status:403,headers});
   const result=await createCustomerCheckout(input.data);
   return NextResponse.json(result,{status:201,headers});
  }catch(e){

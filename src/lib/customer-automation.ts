@@ -55,7 +55,7 @@ function recipientAddress(v:unknown):ShippingAddress{
  return x as ShippingAddress;
 }
 
-async function captureAuthorizedKlarna(orderId:string){
+export async function captureAuthorizedKlarna(orderId:string){
  const order=await db().order.findUnique({where:{id:orderId}});
  if(!order||order.status!=="payment_authorized"||order.testOnly)return;
  const m=/^Klarna authorized: ([0-9a-f-]{36})$/i.exec(order.fulfillmentNote||"");
@@ -167,8 +167,12 @@ export async function expireCustomerPaymentReservations(limit=10){
     const hpp=await gateway.api.readHostedPage(sessionId);
     if(["CANCELLED","FAILED","EXPIRED"].includes(hpp.status)){
      if(await cancelUnpaidCustomerOrder(order.id))cancelled++;
+    }else if(["COMPLETE","COMPLETED"].includes(hpp.status)&&hpp.order_id){
+     // A buyer may close their browser after approval; reconcile without relying
+     // on the return URL. This verifies HPP and the exact provider order amount.
+     try{await (await import("@/lib/customer-order-finalize")).confirmKlarnaCheckout(order.id,sessionId,hpp.order_id);reconciled++}
+     catch{/* Preserve reservation if the external result is ambiguous. */}
     }
-    // COMPLETE sessions must be reconciled against the provider, not cancelled.
     continue;
    }
    const gateway=await providerForCheckout("paypal");
