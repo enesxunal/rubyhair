@@ -21,7 +21,7 @@ const nav=[
   {href:"/kontakt/",title:"BERATUNG"}
 ];
 const shades=[
-  {key:"brown",title:"Brown",background:"#5e483a",image:"/media/6-1-scaled-ffe6f9676.jpg",color:"6",slug:"tape-in-extensions"},
+  {key:"brown",title:"Brown",background:"#5e483a",image:"/assets/ruby-hair-shade-brown-full-20261118.webp",color:"6",slug:"tape-in-extensions"},
   {key:"bronde",title:"Bronde",background:"#a28765",image:"/media/bronde-1-scaled-ae3a52b00.jpg",color:"bronde",slug:"tape-in-extensions"},
   {key:"blonde",title:"Blonde",background:"#d7c2a1",image:"/media/60-3-scaled-e99a55c0d.jpg",color:"60",slug:"tape-in-extensions"},
   {key:"ash",title:"Ash",background:"#b4ada5",image:"/media/silber-1-scaled-7627ffcff.jpg",color:"silver",slug:"tape-in-extensions"}
@@ -105,7 +105,7 @@ function ShadeSelector(){
   const active=shades[index];
   return <section id="shade" className="shade section-pad">
     <div className="container shade-grid">
-      <div className="shade-visual">
+      <div className={"shade-visual"+(active.key==="brown"?" is-landscape":"")}>
         <img key={active.key} loading="lazy" src={active.image} alt={"Ruby Hair Farbton "+active.title}/>
       </div>
       <div className="shade-copy">

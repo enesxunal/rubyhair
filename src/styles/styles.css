@@ -189,6 +189,9 @@ body{background:#fcfaf7;color:#2f2829}
 .shade{background:#fcfaf7}
 .shade-grid{gap:clamp(45px,7vw,100px)}
 .shade-visual{height:470px}
+/* Keep the complete horizontal Brown editorial photo visible, including the hair ends. */
+.shade-visual.is-landscape{height:auto;aspect-ratio:1672/941}
+.shade-visual.is-landscape img{display:block;width:100%;height:auto;object-fit:contain}
 .shade-copy h2,.brand-copy h2{font-size:clamp(41px,4.2vw,60px)}
 .brand-story{background:#f1eae3}
 .brand-portrait{height:500px}
