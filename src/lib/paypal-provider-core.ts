@@ -120,7 +120,7 @@ export class PaypalClient{
         amount:{currency_code:"EUR",value:"1.00"}
       }],
       payment_source:{paypal:{experience_context:{
-        brand_name:"Ruby Hair",user_action:"PAY_NOW",shipping_preference:"NO_SHIPPING",
+        brand_name:"Ruby Hair",user_action:"PAY_NOW",landing_page:"GUEST_CHECKOUT",shipping_preference:"NO_SHIPPING",
         return_url:httpsUrl(input.returnUrl),cancel_url:httpsUrl(input.cancelUrl)
       }}}
     },input.requestId);

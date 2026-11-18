@@ -14,7 +14,7 @@ export default function QaPayPalTestSection({qa,paypalReady,orders,params}:{qa:I
  return <section className="rh-admin-panel-card" style={{marginTop:20}}>
   <div className="rh-admin-card-title"><div><span>PAYPAL LIVE / NUR ADMIN</span><h2>1,00 € Testzahlung und PDF-Rechnung</h2></div><CreditCard size={23}/></div>
   <p style={{fontSize:13,lineHeight:1.75,marginTop:14}}>
-   Die folgende Testbestellung ist ausschließlich für Ruby-Hair-Administratoren. Nach der Freigabe bei PayPal kann mit einem zweiten Klick eine <strong>echte Zahlung von 1,00 €</strong> ausgelöst werden. Es erfolgt <strong>keine Warenlieferung</strong>. Die Rechnung wird nur nach verifizierter PayPal-Zahlung erstellt.
+   Die folgende Testbestellung ist ausschließlich für Ruby-Hair-Administratoren. Bei PayPal wird bevorzugt <strong>Debit- oder Kreditkartenzahlung ohne PayPal-Konto</strong> angezeigt, sofern PayPal diese Option für den Vorgang anbietet. Nach der Freigabe kann mit einem zweiten Klick eine <strong>echte Zahlung von 1,00 €</strong> ausgelöst werden. Es erfolgt <strong>keine Warenlieferung</strong>. Die Rechnung wird nur nach verifizierter Zahlung erstellt.
   </p>
   {params.qaError&&<p role="alert" className="rh-admin-warning" style={{marginTop:14}}>
    Der Test wurde nicht abgeschlossen ({params.qaError.replaceAll("_"," ").slice(0,95)}). Bestellstatus kontrollieren, bevor du erneut testest.

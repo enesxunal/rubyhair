@@ -80,6 +80,7 @@ test("live internal 1-EUR purchase is non-shippable, uses exact amount and does 
  assert.equal(req.purchase_units[0].amount.currency_code,"EUR");
  assert.equal(req.purchase_units[0].custom_id,"1dd90721-195f-4598-88a9-5ec2b9acaf44");
  assert.equal(req.payment_source.paypal.experience_context.shipping_preference,"NO_SHIPPING");
+ assert.equal(req.payment_source.paypal.experience_context.landing_page,"GUEST_CHECKOUT");
  assert.ok(requests.every(r=>!r.path.includes("/capture")));
  assert.ok(!JSON.stringify(req).includes('shipping_address'));
 });
