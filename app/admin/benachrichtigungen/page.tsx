@@ -11,14 +11,24 @@ export const metadata:Metadata={title:"E-Mails & Vorlagen | Ruby Hair Verwaltung
 export const runtime="nodejs";export const dynamic="force-dynamic";
 export default async function MailAdmin({searchParams}:{searchParams:Promise<{status?:string}>}){
  if(!await isAdmin())redirect("/admin/login");
- const config=await loadStoreMailSettings();
- const queued=await getPrisma().orderNotification.count({where:{status:{in:["queued","needs_review"]}}});
+ let config:Awaited<ReturnType<typeof loadStoreMailSettings>>={ready:false,stored:false,recipient:storeMailDefaults.notify,password:null};
+ let queued=0,dbUnavailable=false;
+ try{
+   config=await loadStoreMailSettings();
+   queued=await getPrisma().orderNotification.count({where:{status:{in:["queued","needs_review"]}}});
+ }catch(e){
+   dbUnavailable=true;
+   const code=(e as {code?:string}).code;
+   console.error("RUBY_ADMIN_MAIL_READ_UNAVAILABLE",code==="P2024"||code==="P2028"?code:"OTHER");
+ }
  const {status}=await searchParams;
  const messages:Record<string,string>={
   saved:"Einstellungen verschlüsselt gespeichert. Bitte anschließend den SMTP-Test durchführen.",
   "test-sent":"Test-E-Mail wurde vom SMTP-Server angenommen. Bitte Posteingang und Spam-Ordner überprüfen.",
   "test-failed":"Der SMTP-Test war nicht erfolgreich. Passwort, IONOS-Postfach und Serverberechtigung prüfen.",
+  "test-invalid-recipient":"Bitte eine gültige Test-E-Mail-Adresse eingeben.",
   invalid:"Ungültige Eingaben. Bitte Passwort und Benachrichtigungsadresse überprüfen.",
+  "save-unavailable":"Datenbank vorübergehend ausgelastet. Keine Änderung bestätigt. Bitte später erneut speichern.",
   "vault-missing":"Der verschlüsselte Speicher ist noch nicht bereit. RUBY_PAYMENT_SETTINGS_KEY serverseitig prüfen."
  };
  return <AdminShell current="emails" title="E-Mails & Benachrichtigungen."
@@ -30,6 +40,7 @@ export default async function MailAdmin({searchParams}:{searchParams:Promise<{st
     </div><Mail size={44} strokeWidth={1.2}/>
   </section>
   {status&&messages[status]&&<p className={status==="saved"||status==="test-sent"?"rh-admin-success":"rh-admin-warning"} role="status">{messages[status]}</p>}
+  {dbUnavailable&&<p className="rh-admin-warning" role="alert">Die Datenbank ist gerade ausgelastet. Die Einstellungen konnten nicht geladen werden. Bitte die Seite später erneut öffnen.</p>}
   <div className="rh-studio-payment-steps">
     <div><span><ShieldCheck size={17}/> SMTP-VERSCHLÜSSELUNG</span><strong>{config.ready?"Schlüsselspeicher bereit":"Noch nicht verfügbar"}</strong><small>Passwort niemals im Klartext anzeigen</small></div>
     <div><span><LockKeyhole size={17}/> MAIL-PASSWORT</span><strong>{config.stored?"Sicher hinterlegt":"Noch nicht gespeichert"}</strong><small>IONOS Benutzer: {storeMailDefaults.user}</small></div>
@@ -54,7 +65,11 @@ export default async function MailAdmin({searchParams}:{searchParams:Promise<{st
       <div className="rh-admin-credentials-footer"><span>Nur Administratoren · SMTP 587 / STARTTLS</span><button type="submit" disabled={!config.ready}>Zugangsdaten speichern</button></div>
     </form>
     <form action={sendStoreMailTestAction} style={{marginTop:20}}>
-      <p className="rh-admin-muted">Ein Test versendet die Ruby Hair Musterbestellung ausschließlich an die oben gespeicherte Empfängeradresse. Keine echte Bestellung, kein Zahlungsversuch.</p>
+      <p className="rh-admin-muted">Der Test sendet nur an die hier angegebene Adresse. Er ändert nicht den regulären Shop-Benachrichtigungsempfänger und löst keine Zahlung oder Bestellung aus.</p>
+      <div className="rh-admin-credential-item">
+        <label htmlFor="ruby-test-mail-recipient">Test-E-Mail empfangen unter</label>
+        <input id="ruby-test-mail-recipient" name="testRecipient" type="email" required maxLength={254} autoComplete="off" defaultValue={config.recipient} disabled={!config.ready||!config.stored}/>
+      </div>
       <button type="submit" disabled={!config.ready||!config.stored} className="rh-admin-mail-test-button"><Send size={16}/> SMTP-Test-E-Mail senden</button>
     </form>
   </section>

@@ -20,8 +20,10 @@ export async function sendStoreOrderMail(stage:OrderMailStage,to:string,order:Or
    return {accepted:true,messageId:result.messageId};
  }finally{client.close()}
 }
-export async function sendStoreSmtpTest(){
+export async function sendStoreSmtpTest(testRecipient?:string){
  const config=await loadStoreMailSettings();
  if(!config.ready||!config.password)throw new Error("SMTP_NOT_CONFIGURED");
- return sendStoreOrderMail("received",config.recipient,{orderNumber:"TEST-VORSCHAU",customerName:"Ruby Hair Team",totalCents:0});
+ const recipient=testRecipient||config.recipient;
+ if(!validMailAddress(recipient))throw new Error("INVALID_TEST_RECIPIENT");
+ return sendStoreOrderMail("received",recipient,{orderNumber:"TEST-VORSCHAU",customerName:"Ruby Hair Team",totalCents:0});
 }
