@@ -698,3 +698,21 @@ test("Ruby Hair homepage shows three equally prominent collection cards and a fu
  assert.ok(bytes.length<250000);
  assert.ok(home.includes('src="/assets/hero-brunette.webp"'),"Approved homepage hero stays unchanged");
 });
+
+test("floating KI hair try-on CTA points to the real preview and excludes protected routes",()=>{
+ const root=fs.readFileSync(path.join(base,"app/layout.tsx"),"utf8");
+ const component=fs.readFileSync(path.join(base,"src/components/hair-tryon-floating-link.tsx"),"utf8");
+ const styles=fs.readFileSync(path.join(base,"src/styles/hair-tryon-floating-link.css"),"utf8");
+ const route=fs.readFileSync(path.join(base,"app/haar-anprobe/page.tsx"),"utf8");
+ assert.ok(root.includes("<HairTryonFloatingLink/>"));
+ assert.ok(root.includes('import "../src/styles/hair-tryon-floating-link.css"'));
+ assert.ok(component.includes('href="/haar-anprobe/"'));
+ assert.ok(component.includes('JETZT HAARE TESTEN'));
+ assert.ok(component.includes('pathname.startsWith("/admin")'));
+ assert.ok(component.includes('pathname.startsWith("/haar-anprobe")'));
+ assert.ok(component.includes('pathname.startsWith("/qa/")'));
+ assert.ok(styles.includes("position:fixed"));
+ assert.ok(styles.includes("safe-area-inset-bottom"));
+ assert.ok(styles.includes("@media(max-width:600px)"));
+ assert.ok(route.includes("<HairTryonLab products={products}/>"));
+});
