@@ -1,3 +1,6 @@
+import "../src/styles/tape-atelier.css";
+import "../src/styles/instagram-home.css";
+import "../src/styles/influencer-stories.css";
 import type { Metadata } from "next";
 import HomeFrontend from "@/components/home-frontend";
 import { getStoreCatalog } from "@/lib/catalog-server";

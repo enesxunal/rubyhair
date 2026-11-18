@@ -22,6 +22,16 @@
 
 **Açık işler:** DHL canlı Developer API yetkileri ve otomatik etiket; müşteri-iade/refund/tekrarlı webhook E2E; nihai hukuki onay; sunucu güvenlik gözlemi; ön uç performans/CSS bölme. Gerçekten tamamlanmamış kontrolleri "PASS" sayma.
 
+## 18 Kasım ikinci bağımsız denetim düzeltme paketi (DHL kapsam dışı)
+
+- **PayPal tekrar webhook / return:** Kargoya verilmiş, teslim edilmiş veya iade edilmiş bir siparişte aynı `PAYMENT.CAPTURE.COMPLETED` olayı tekrar gelirse, yalnızca kaydedilmiş gerçek capture ve faturayı doğrulayıp sonucu idempotent döndüren koruma eklendi. Testler gerçek paraya dokunmadan mock/replay senaryolarıyla yapıldı. `PAYMENT.CAPTURE.REFUNDED` olayı otomatik tam/yarım refund statüsüne dönüştürülmüyor; durum sağlayıcı üzerinden incelenmeli.
+- **PayPal/Klarna iade araştırması:** `/admin/erstattungen` admin-only salt-okunur ekranı eklendi. PayPal GET captured payment ve Klarna GET order'dan tutar/durum doğrulama; herhangi bir POST refund/capture, yerel stok/ödenmiş sipariş değişikliği yapılmıyor. Gerçek iade ancak belirli vaka, tutar, ürün dönüşü, vergi ve merchant onayıyla gerçekleştirilip belgelenebilir.
+- **CSP:** `object-src 'none'; base-uri 'self'; frame-ancestors 'none'; upgrade-insecure-requests` artık ENFORCE; ödeme/analitik/script/style içerikli diğer CSP direktifleri uyumluluk gözleminde (`Report-Only`), güvenli tam enforcement henüz tek başına ilan edilmiyor.
+- **Tasarım/performans:** Hero sonrası önce ürün koleksiyonu, sonra influencer hikayeleri geliyor. Ana sayfa ve iç sayfalar ortak `storefrontNav` / footer link veri kaynağı kullanıyor; ana sayfanın editoryal başlık/görsel düzeni korunuyor. Admin, KI, influencer/Instagram/home görsel CSS'i ayrı route segmentlerine ayrıldı; checkout ve stok DB canlı doğrulamaları cache'e alınmadı.
+- **Dosya düzeni:** `.next-stale*`, eski kök `index.html`, `app.js`, `styles.css`, `assets/`, `3kare/` dosyaları silinmeden özel izinli `~/.config/desnod/rubyhair/legacy-root-archive-20261118/` klasörüne taşındı; mevcut Next.js `public/` ve git tarafından izlenen kaynaklar korunuyor.
+- **Hukuki statü:** `MERCHANT-APPROVAL.md` güncel canlı satış ve geçmiş önizleme tutarsızlıklarını ayırır. Müşterinin önceki sözlü hukuk metni onayı not edildi; bağımsız/kalifiye nihai kontrol henüz doğrulanmadı. Klara Strasse 19 ve Zweigertstrasse 8 adresleri arasında resmi adres/iade adresi çelişkisi çözülmeden hukuken onaylı denilemez. İçerikler kaynak dışı resmi verilerle değiştirilmedi.
+- **Uçtan uca kısıtlar:** Gerçek müşteri refund ve PayPal webhook replay'inin üretim üzerinde gerçek PSP imzalı olaylarla doğrulanması hâlâ açık. Testler mock seviyesinde; canlı ödeme/iade yapılmadı. Toplu CSP script/style enforcement ve gerçek mobil ekran taraması ayrıca gözlemlenmeli.
+
 ## Bağımsız denetim iyileştirmeleri
 
 - 18.11: Next.js 16.4.3 -> 16.4.6 guvenlik yukseltmesi ve temiz `npm ci` tamamlandi; uretim `npm audit --omit=dev` sonucu 0 acik. Yerel Node 65/65 + TS 74/74 = **139/139**, TypeScript ve Next production build PASS. SWC bozuk kurulum iki klasoru sifreli olmayan yerel korumali yedege alinarak temiz kuruldu.

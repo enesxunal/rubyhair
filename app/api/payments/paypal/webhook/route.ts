@@ -13,6 +13,11 @@ export async function POST(req:NextRequest){
   const gateway=await providerForCheckout("paypal");
   if(!await gateway.api.verifyWebhook(req.headers,evt))return NextResponse.json({error:"INVALID_SIGNATURE"},{status:401});
   const obj=evt as {event_type?:unknown;resource?:{supplementary_data?:{related_ids?:{order_id?:unknown}}}};
+  if(obj.event_type==="PAYMENT.CAPTURE.REFUNDED"){
+   // A signed webhook is not sufficient to classify a FULL vs PARTIAL refund.
+   // Never change balance/stock or issue a duplicate refund from this handler.
+   console.warn("RUBY_PAYPAL_REFUND_PROVIDER_RECONCILIATION_REQUIRED");
+  }
   if(obj.event_type==="PAYMENT.CAPTURE.COMPLETED"){
    const ref=obj.resource?.supplementary_data?.related_ids?.order_id;
    if(typeof ref==="string"&&/^[A-Za-z0-9_-]{8,60}$/.test(ref)){

@@ -13,13 +13,7 @@ import AnalyticsConsent from "@/components/analytics-consent";
 import HairTryonFloatingLink from "@/components/hair-tryon-floating-link";
 import "../src/styles/styles.css";
 import "../src/styles/shop.css";
-import "../src/styles/tape-atelier.css";
-import "../src/styles/instagram-home.css";
-import "../src/styles/influencer-stories.css";
 import "../src/styles/legacy-legal.css";
-import "../src/styles/admin.css";
-import "../src/styles/admin-v2.css";
-import "../src/styles/tryon.css";
 import "../src/styles/hair-tryon-floating-link.css";
 import "../src/styles/tape-in-shades.css";
 

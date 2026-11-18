@@ -4,13 +4,9 @@ import { Menu, Search, ShoppingBag, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useCart } from "./cart-context";
-import {tapeInLengthHref} from "@/lib/tape-in-lengths";
+import {storefrontNav,storefrontShopLinks,storefrontInfoLinks} from "@/lib/store-navigation";
 import CookieSettingsLink from "@/components/cookie-settings-link";
-const categories=[
-  {href:"/kollektionen/",title:"Alle Extensions"},
-  {href:tapeInLengthHref("45-50-cm"),title:"Tape-in 45–50 cm"},
-  {href:tapeInLengthHref("55-60-cm"),title:"Tape-in 55–60 cm"}
-];
+const categories=storefrontNav;
 export function SiteHeader(){
   const [open,setOpen]=useState(false);
   const toggle=useRef<HTMLButtonElement>(null);
@@ -36,8 +32,8 @@ export function SiteHeader(){
           <img src="/media/RubyHair-WebHeader-Logo-Dunkel-70efc2b6a.png" data-fallback="/assets/hero-brunette.webp" alt="Ruby Hair"/>
         </Link>
         <nav className="rh-desktop-nav" aria-label="Shop Navigation">
-          {categories.map(item=><Link key={item.href} href={item.href}>{item.title}</Link>)}
-          <Link href="/ratgeber/">Hair Guide</Link><Link href="/kontakt/">Beratung</Link>
+          {categories.map(item=><Link key={item.href} href={item.href}>{item.label}</Link>)}
+          <Link href="/ratgeber/">Hair Guide</Link>
         </nav>
         <div className="rh-actions">
           <Link href="/suche/" className="rh-search" aria-label="Produkte und Haarfarben suchen"><Search size={22}/></Link>
@@ -52,9 +48,8 @@ export function SiteHeader(){
       </div>
       {open&&<nav className="rh-mobile-nav" id="rh-mobile-nav" aria-label="Mobile Shop Navigation">
         <Link href="/" onClick={()=>setOpen(false)}>Startseite</Link>
-        {categories.map(item=><Link key={item.href} href={item.href} onClick={()=>setOpen(false)}>{item.title}</Link>)}
-        <Link href="/suche/" onClick={()=>setOpen(false)}>Produkte suchen</Link>
-        <Link href="/kontakt/" onClick={()=>setOpen(false)}>Beratung & Kontakt</Link>
+        {categories.map(item=><Link key={item.href} href={item.href} onClick={()=>setOpen(false)}>{item.label}</Link>)}
+        <Link href="/ratgeber/" onClick={()=>setOpen(false)}>Hair Guide</Link>
         <Link href="/haar-anprobe/" onClick={()=>setOpen(false)}>KI-Haarvorschau</Link>
       </nav>}
     </header>
@@ -65,8 +60,8 @@ export function SiteFooter(){
   return <><footer className="rh-footer">
     <div className="rh-footer-inner">
       <div><Link href="/" className="rh-footer-mark">RUBY HAIR</Link><p>Premium Echthaar Extensions – für deinen ganz persönlichen Look.</p><a className="rh-footer-contact" href="mailto:info@rubyhair.de">info@rubyhair.de</a><p>Essen · Deutschland</p></div>
-      <div><strong>SHOP</strong><Link href="/kollektionen/">Alle Extensions</Link><Link href={tapeInLengthHref("45-50-cm")}>Tape-in 45–50 cm</Link><Link href={tapeInLengthHref("55-60-cm")}>Tape-in 55–60 cm</Link><Link href="/suche/">Produkte suchen</Link></div>
-      <div><strong>INFORMATIONEN</strong><Link href="/kontakt/">Kontakt & Beratung</Link><Link href="/ratgeber/">Hair Guide & Pflege</Link><Link href="/versand-zahlung/">Versand & Zahlung</Link><Link href="/rechtliches/widerruf/">Widerruf & Rückgabe</Link><Link href="/widerruf/" style={{fontWeight:700,textDecoration:"underline",textUnderlineOffset:4}}>Vertrag widerrufen</Link><Link href="/rechtliches/agb/">AGB</Link><Link href="/haar-anprobe/">KI-Haarvorschau</Link></div>
+      <div><strong>SHOP</strong>{storefrontShopLinks.map(item=><Link href={item.href} key={item.href}>{item.label}</Link>)}</div>
+      <div><strong>INFORMATIONEN</strong>{storefrontInfoLinks.map(item=><Link href={item.href} key={item.href} style={item.href==="/widerruf/"?{fontWeight:700,textDecoration:"underline",textUnderlineOffset:4}:undefined}>{item.label}</Link>)}</div>
     </div>
     <div className="rh-footer-bottom"><span>© 2026 RUBY HAIR</span><div>
       <Link href="/rechtliches/impressum/">Impressum</Link><Link href="/rechtliches/datenschutz/">Datenschutz</Link><CookieSettingsLink/>

@@ -50,6 +50,7 @@ export default async function AdminOrders({searchParams}:{searchParams:Promise<{
  return <AdminShell current="orders" title="Bestellübersicht." description="Bestellungen, Sendungsnummern und Statusverlauf. Klarna-Einzug bei manuellem DHL-Versand nur nach bestätigter physischer Paketübergabe.">
   <div className="rh-admin-warning"><strong>Checkout-Modus: {publicCheckoutMode()==="disabled"?"Nur Vorbereitung":publicCheckoutMode()==="admin_test"?"Admin-Test":publicCheckoutMode()==="klarna_public"?"Klarna live / DHL manuell":publicCheckoutMode()==="payments_public"?"PayPal + Klarna live / DHL manuell":"Kunden"}.</strong> Nur durch den Zahlungsanbieter verifizierte Transaktionen zählen als bezahlt. Testreservierungen zählen nicht als Umsatz.</div>
   <p style={{margin:"13px 0 18px"}}><Link href="/admin/klarna-durum" className="rh-admin-mail-test-button">Klarna Live-Zahlung direkt beim Anbieter prüfen (ohne Abbuchung)</Link></p>
+  <p style={{margin:"12px 0 18px"}}><Link href="/admin/erstattungen">Erstattungen sicher prüfen (ohne Geldbewegung)</Link></p>
   <p style={{margin:"12px 0 18px"}}><Link href="/admin/dhl">DHL API prüfen / Versand einrichten</Link></p>
   <div className="rh-admin-pill-row">
    <span className="rh-admin-stat-pill">{realCount} ohne Testkennzeichen</span>

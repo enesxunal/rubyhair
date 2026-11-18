@@ -108,7 +108,7 @@ export class KlarnaClient{
   return r;
  }
  async readOrder(orderId:string){
-  return this.request<{order_id:string;order_amount:number;purchase_currency:string;status?:string;captured_amount?:number}>("GET","/ordermanagement/v1/orders/"+requireKlarnaUuid(orderId));
+  return this.request<{order_id:string;order_amount:number;purchase_currency:string;status?:string;captured_amount?:number;refunded_amount?:number}>("GET","/ordermanagement/v1/orders/"+requireKlarnaUuid(orderId));
  }
  async readCaptures(orderId:string){
   return this.request<{captures?:KlarnaCapture[]}|KlarnaCapture[]>("GET","/ordermanagement/v1/orders/"+requireKlarnaUuid(orderId)+"/captures");

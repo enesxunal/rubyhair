@@ -15,7 +15,8 @@ test("online withdrawal has explicit two-step confirmation and no reason require
  assert.match(form,/step==="confirm"/);
  assert.match(form,/Bestellnummer \/ Vertrag/);
  assert.doesNotMatch(form,/name="reason"/);
- assert.match(footer,/Vertrag widerrufen/);
+ assert.match(footer,/storefrontInfoLinks/);
+ assert.match(read("src/lib/store-navigation.ts"),/Vertrag widerrufen/);
 });
 
 test("withdrawal intake is durable, validated, anti-CSRF and rate limited",()=>{

@@ -1,3 +1,4 @@
+import "../../src/styles/tryon.css";
 import type {Metadata} from "next";
 import ShopLayout from "@/components/site-shell";
 import HairTryonLab from "@/components/hair-tryon-lab";

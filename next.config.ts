@@ -10,7 +10,10 @@ const nextConfig: NextConfig = {
         { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
         { key: "X-Frame-Options", value: "DENY" },
         { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), interest-cohort=()" },
-        // Monitor before enforcing: PayPal/Klarna redirect/iframe flows must keep working.
+        // Enforce browser-safe restrictions now; keep script/style/connect/frame in
+        // report-only mode until PayPal/Klarna and analytics CSP telemetry is reviewed.
+        { key: "Content-Security-Policy", value: "object-src 'none'; base-uri 'self'; frame-ancestors 'none'; upgrade-insecure-requests" },
+        // Monitor before fully enforcing: PayPal/Klarna redirect/iframe flows must keep working.
         { key: "Content-Security-Policy-Report-Only", value: "default-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https:; script-src 'self' https:; style-src 'self' 'unsafe-inline'" }
       ]
     }];

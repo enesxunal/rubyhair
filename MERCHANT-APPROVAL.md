@@ -1,3 +1,32 @@
+# Current merchant and legal review — 18 November 2026
+
+**Status: CUSTOMER REPORTED LEGAL-TEXT APPROVAL; FINAL MERCHANT IDENTIFICATION / PROFESSIONAL LEGAL SIGN-OFF STILL UNVERIFIED.** Do not interpret these records as a qualified legal assessment, and do not silently change the merchant's business address, VAT, return address, or refund entitlement.
+
+This historic checklist below was written for the earlier closed preview and remains as an audit trail. **Production is NOW PUBLIC and accepts PayPal/Klarna.** The original "checkout is 503", "no live database" and "old WordPress live" statements below are superseded.
+
+## Current verified technical compliance work
+
+- Live storefront and checkouts: on (`payments_public`), owner-directed. Stored stock and price validation continue to run in the production PostgreSQL database.
+- PayPal and Klarna customer payment choices exist; Klarna real order RH-5 has a verified €829.99 capture, invoice `RH-2026-0000005` and buyer/store notifications. Separate PayPal merchant 1 € QA capture verified.
+- Online withdrawal form `/widerruf/` (two explicit steps) persists the declaration before an acknowledgment mail; no reason is required. Manual buyer E2E withdrawal and refund are still outstanding.
+- Google Fonts runtime CDN links were removed; bundled DM Sans and Playfair Display no longer expose initial visitors to remote Google Fonts requests. Technical CSP base/object/frame restrictions are enforced, other rules remain report-only pending compatibility inspection.
+- Live shipping can be fulfilled manually, but DHL auto-label API is NOT integrated (excluded from the current follow-up).
+
+## Merchant/legal information requiring confirmation
+
+1. **Official business address and return address**: the historic Impressum says **Klara Strasse 19, 45130 Essen**, while the historic Datenschutz identifies **Zweigertstrasse 8, 45130 Essen**. The current public templates use the first source by default. Confirm the legally registered business location, the address receiving returns, and whether the responsible data controller address differs.
+2. **Tax/registration**: validate legal business name, responsible proprietor, publicly used VAT identifier, mandatory disclosures and merchant VAT regime with real documents. Do not invent a number or registration status.
+3. **Return, refund and cancellation**: confirm the right to return in this product category, full vs partial refund procedure, standard shipping refunds, used/sealed merchandise conditions (if any apply), refund timing, buyer notifications and invoice/credit-note adjustments. No automatic live refund will be executed without a specific approved case.
+4. **Privacy**: identify actual subprocessors and storage regions, request/access logging retention, email delivery, PSP interactions, optional analytics, OpenAI processing and third-country transfers; review DPAs, privacy text and cookie implementation. If not confirmed, do not claim fully GDPR certified.
+5. **Consumer and accessibility requirements**: verify § 356a BGB electronic withdrawal, § 312j paid-order controls, delivery times, BFSG applicability, PAngV and any sector-specific packaging/hygiene exceptions with qualified counsel.
+6. **Formal approval record**: preserve reviewer name/role, reviewed version, approval date and confirmed addresses outside the public site. Report any conflict before publishing new claims.
+
+**No merchant/professional approval has been invented by the technical audit.**
+
+---
+
+## Archive — historic pre-launch checklist (2 November 2026)
+
 # Ruby Hair — merchant acceptance checklist
 
 Status: **NOT APPROVED** — internal development checklist, NOT public legal advice or approved legal text.

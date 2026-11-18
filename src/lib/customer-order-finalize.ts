@@ -5,6 +5,7 @@ import {providerForCheckout,CustomerCheckoutError} from "@/lib/customer-checkout
 import {requireOrderTransition} from "@/lib/order-lifecycle";
 import {createCustomerInvoicePdf} from "@/lib/customer-invoice";
 import {RUBY_TEST_SELLER} from "@/lib/qa-invoice";
+import {verifiedCaptureReplay,paymentReplayOutcome} from "@/lib/payment-replay-policy";
 
 const shape=(v:Prisma.JsonValue):{firstName:string;lastName:string;street:string;postalCode:string;city:string;country:string}=>{
  if(!v||typeof v!=="object"||Array.isArray(v)||
@@ -20,7 +21,9 @@ export async function finishCapturedCustomerOrder(orderId:string,provider:"paypa
  const db=getPrisma();
  const order=await db.order.findUnique({where:{id:orderId},include:{lines:{include:{variant:{include:{product:true}}}},invoice:true}});
  if(!order||order.testOnly||!order.customerEmail||order.totalCents<100)throw new CustomerCheckoutError("CUSTOMER_ORDER_NOT_FOUND",404);
- if(order.status==="payment_confirmed"&&order.invoice)return {paid:true,invoiceNumber:order.invoice.invoiceNumber};
+ if(verifiedCaptureReplay(order.status,Boolean(order.invoice),Boolean(await db.paymentEvent.findFirst({
+   where:{orderId:order.id,provider,eventType:"PAYMENT.CAPTURE.COMPLETED",providerEventId:captureId},select:{id:true}
+  }))))return {paid:paymentReplayOutcome(order.status)==="paid",invoiceNumber:order.invoice!.invoiceNumber};
  if(!["pending_payment","payment_authorized"].includes(order.status))throw new CustomerCheckoutError("CUSTOMER_ORDER_NOT_PENDING",409);
  if(provider==="paypal"&&order.paymentReference!==providerOrderReference)throw new CustomerCheckoutError("PROVIDER_ORDER_REFERENCE_MISMATCH",409);
  if(provider==="klarna"&&!order.paymentReference?.startsWith("KLARNA-HPP:"))throw new CustomerCheckoutError("PROVIDER_ORDER_REFERENCE_MISMATCH",409);
@@ -65,7 +68,11 @@ export async function finalizePayPalCheckout(orderId:string,allowCapture:boolean
  if(!order||order.testOnly||!order.paymentReference||order.paymentReference.startsWith("KLARNA-"))
   throw new CustomerCheckoutError("PAYPAL_CUSTOMER_ORDER_NOT_FOUND",404);
  if(returnToken!==undefined&&order.paymentReference!==returnToken)throw new CustomerCheckoutError("PAYPAL_RETURN_REFERENCE_MISMATCH",403);
- if(order.status==="payment_confirmed"&&order.invoice)return {paid:true,invoiceNumber:order.invoice.invoiceNumber};
+ if(order.invoice&&["payment_confirmed","preparing","shipped","delivered","refunded"].includes(order.status)){
+  const captured=await db.paymentEvent.findFirst({where:{orderId:order.id,provider:"paypal",eventType:"PAYMENT.CAPTURE.COMPLETED"},select:{id:true}});
+  if(verifiedCaptureReplay(order.status,true,Boolean(captured)))return {paid:paymentReplayOutcome(order.status)==="paid",invoiceNumber:order.invoice.invoiceNumber};
+  throw new CustomerCheckoutError("PAYPAL_CAPTURE_REPLAY_INCONSISTENT",409);
+ }
  const gateway=await providerForCheckout("paypal");
  let raw=await gateway.api.getOrder(order.paymentReference) as {status?:string};
  if(raw?.status==="APPROVED"&&allowCapture){

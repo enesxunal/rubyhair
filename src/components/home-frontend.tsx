@@ -6,6 +6,7 @@ import {Search,ShoppingBag,Menu,X,ArrowUpRight,ArrowRight,Instagram,Sparkles} fr
 import {useCart} from "@/components/cart-context";
 import {type Product} from "@/lib/catalog";
 import {tapeInLengths,tapeInLengthHref} from "@/lib/tape-in-lengths";
+import {storefrontNav,storefrontShopLinks,storefrontInfoLinks} from "@/lib/store-navigation";
 import CookieSettingsLink from "@/components/cookie-settings-link";
 import InstagramHome from "@/components/instagram-home";
 import InfluencerStories from "@/components/influencer-stories";
@@ -13,13 +14,7 @@ import type {InstagramFeedPost} from "@/lib/instagram-feed";
 
 const darkLogo="/media/RubyHair-WebHeader-Logo-Dunkel-70efc2b6a.png";
 const lightLogo="/media/RubyHair-WebHeader-Logo-Hell-818376d91.png";
-const nav=[
-  {href:"/kollektionen/",title:"ALLE EXTENSIONS"},
-  {href:tapeInLengthHref("45-50-cm"),title:"TAPE-IN 45–50 CM"},
-  {href:tapeInLengthHref("55-60-cm"),title:"TAPE-IN 55–60 CM"},
-  {href:"/suche/",title:"HAARFARBEN"},
-  {href:"/kontakt/",title:"BERATUNG"}
-];
+const nav=storefrontNav;
 const shades=[
   {key:"brown",title:"Brown",background:"#5e483a",image:"/assets/ruby-hair-shade-brown-full-20261118.webp",color:"6",slug:"tape-in-extensions"},
   {key:"bronde",title:"Bronde",background:"#a28765",image:"/media/bronde-1-scaled-ae3a52b00.jpg",color:"bronde",slug:"tape-in-extensions"},
@@ -86,14 +81,14 @@ function HomeNavigation(){
         </div>
       </div>
       <nav className="desktop-nav" aria-label="Hauptnavigation">
-        {nav.map(item=><Link key={item.href} href={item.href}>{item.title}</Link>)}
+        {nav.map(item=><Link key={item.href} href={item.href}>{item.homeLabel}</Link>)}
       </nav>
     </header>
     <div className="mobile-shade" hidden={!menuOpen} onClick={()=>setMenuOpen(false)}/>
     <aside ref={menuPanel} className={"mobile-menu"+(menuOpen?" open":"")} id="mobile-menu" role="dialog" aria-modal={menuOpen} aria-label="Mobiles Menü" aria-hidden={!menuOpen} inert={!menuOpen}>
       <div className="mobile-menu-head"><img src={darkLogo} alt="Ruby Hair"/><button ref={menuClose} type="button" onClick={()=>setMenuOpen(false)} aria-label="Menü schließen"><X size={24}/></button></div>
       <span className="eyebrow">RUBY HAIR</span>
-      {nav.map(item=><Link key={item.href} href={item.href} onClick={()=>setMenuOpen(false)}>{item.title} <ArrowRight size={17}/></Link>)}
+      {nav.map(item=><Link key={item.href} href={item.href} onClick={()=>setMenuOpen(false)}>{item.homeLabel} <ArrowRight size={17}/></Link>)}
       <Link href="/warenkorb/" onClick={()=>setMenuOpen(false)}>WARENKORB ({count}) <ArrowRight size={17}/></Link>
       <div className="mobile-menu-foot">YOUR HAIR. YOUR SIGNATURE.</div>
     </aside>
@@ -166,17 +161,10 @@ function HomeFooter(){
             aria-label="Ruby Hair Instagram" className="social-icon"><Instagram size={20}/></a>
         </div>
         <div className="footer-col"><h3>SHOP</h3>
-          <Link href="/kollektionen/">Alle Extensions</Link>
-          <Link href={tapeInLengthHref("45-50-cm")}>Tape-in 45–50 cm</Link>
-          <Link href={tapeInLengthHref("55-60-cm")}>Tape-in 55–60 cm</Link>
-          <Link href="/suche/">Farben entdecken</Link>
+          {storefrontShopLinks.map(item=><Link href={item.href} key={item.href}>{item.label}</Link>)}
         </div>
         <div className="footer-col"><h3>INFORMATIONEN</h3>
-          <Link href="/ratgeber/">Hair Guide</Link>
-          <Link href="/kontakt/">Kundenservice</Link>
-          <Link href="/versand-zahlung/">Versand & Zahlung</Link>
-          <Link href="/rechtliches/widerruf/">Widerruf & Rückgabe</Link>
-          <Link href="/rechtliches/agb/">AGB</Link>
+          {storefrontInfoLinks.map(item=><Link href={item.href} key={item.href}>{item.label}</Link>)}
         </div>
         <div className="footer-col"><h3>RUBY HAIR</h3>
           <Link href="/#about">Unsere Story</Link>
@@ -206,7 +194,6 @@ export default function HomeFrontend({products,instagramPosts=[]}:{products:Prod
           <div className="hero-links"><span className="solid-button">TAPE-IN ANSEHEN <ArrowUpRight size={18} aria-hidden="true"/></span></div>
         </div>
       </Link>
-      <InfluencerStories/>
       <section id="collections" className="collections rh-length-collection section-pad" aria-labelledby="rh-home-lengths">
         <div className="container">
           <div className="section-heading"><h2 id="rh-home-lengths">Entdecke deine <i>Extensions.</i></h2></div>
@@ -236,6 +223,7 @@ export default function HomeFrontend({products,instagramPosts=[]}:{products:Prod
           </div>
         </div>
       </section>
+      <InfluencerStories/>
       <ShadeSelector product={products.find(p=>p.slug==="tape-in-extensions")}/>
       <InstagramHome posts={instagramPosts}/>
       <TapeInAtelier/>

@@ -138,6 +138,8 @@ export class PaypalClient{
     return {id:checkId(data.id,60),approvalUrl:url.toString()};
   }
   async getOrder(id:string):Promise<unknown>{return this.api("GET","/v2/checkout/orders/"+checkId(id,60));}
+  /** Read-only captured payment status; does not initiate refunds. */
+  async getCapture(id:string):Promise<unknown>{return this.api("GET","/v2/payments/captures/"+checkId(id,70));}
   async captureOrder(id:string,requestId:string):Promise<unknown>{
     return this.api("POST","/v2/checkout/orders/"+checkId(id,60)+"/capture",{},checkId(requestId));
   }

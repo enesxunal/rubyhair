@@ -230,7 +230,8 @@ test("German statutory online withdrawal now has a two-stage workflow",()=>{
  assert.ok(ui.includes("Weiter zur Bestätigung"));
  assert.ok(api.includes("sendWithdrawalAcknowledgment"));
  assert.ok(mail.includes("receivedAt.toISOString"));
- assert.ok(footer.includes('href="/widerruf/"'));
+ assert.ok(footer.includes('storefrontInfoLinks'));
+ assert.ok(fs.readFileSync(path.join(base,"src/lib/store-navigation.ts"),"utf8").includes('href:"/widerruf/"'));
 });
 
 test("live legal pages reflect real checkout while merchant approvals remain documented",()=>{
@@ -574,7 +575,9 @@ test("Ruby Hair blonde and brunette editorial photography keeps the approved hom
  assert.ok(frontend.includes('<ShadeSelector product={products.find(p=>p.slug==="tape-in-extensions")}/>'));
  assert.ok(frontend.indexOf('<TapeInAtelier/>')>frontend.indexOf('<ShadeSelector/>'));
  assert.ok(frontend.indexOf('<TapeInAtelier/>')<frontend.indexOf('className="brand-story'));
- assert.ok(layout.includes('tape-atelier.css'));
+ const homePage=fs.readFileSync(path.join(base,"app/page.tsx"),"utf8");
+ assert.ok(homePage.includes('tape-atelier.css'));
+ assert.ok(!layout.includes('tape-atelier.css'));
  assert.ok(sheet.includes('@media(max-width:550px)'));
  for(const name of ['ruby-hair-platinum-atelier.webp','ruby-hair-brunette-tape-detail.webp']){
   const file=path.join(base,'public/assets',name);
@@ -586,8 +589,9 @@ test("Ruby Hair blonde and brunette editorial photography keeps the approved hom
 });
 
 test("Tape-in lengths have measured labels everywhere, with no Kurz or Lang categories",()=>{
- const files=["src/components/home-frontend.tsx","src/components/site-shell.tsx",
+ const files=["src/components/home-frontend.tsx","src/lib/store-navigation.ts",
    "src/lib/tape-in-lengths.ts","app/ratgeber/page.tsx"];
+ assert.ok(fs.readFileSync(path.join(base,"src/components/site-shell.tsx"),"utf8").includes('storefrontNav'));
  for(const name of files){
   const text=fs.readFileSync(path.join(base,name),"utf8");
   assert.ok(text.includes("45–50"),name+" must show short measured range");
