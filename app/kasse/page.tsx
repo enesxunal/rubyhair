@@ -35,6 +35,6 @@ export default async function Checkout({searchParams}:{searchParams:Promise<Quer
   }
  }
  const mode=publicCheckoutMode();
- const active=mode==="public"||mode==="klarna_public"||mode==="admin_test"&&admin?mode:"disabled";
+ const active=mode==="public"||mode==="klarna_public"||mode==="payments_public"||mode==="admin_test"&&admin?mode:"disabled";
  return <ShopLayout><CheckoutPreview liveTest={test} checkoutMode={active} shippingCents={shippingDeCents()}/></ShopLayout>;
 }

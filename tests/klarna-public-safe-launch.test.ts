@@ -15,6 +15,20 @@ test("Klarna-only public checkout does not enable public PayPal",()=>{
  assert.match(ui,/checkoutMode==="klarna_public"\?"klarna"/);
 });
 
+test("Both PayPal and Klarna remain selectable in payments_public mode",()=>{
+ const api=source("app/api/checkout/route.ts");
+ const page=source("app/kasse/page.tsx");
+ const ui=source("src/components/checkout-preview.tsx");
+ const core=source("src/lib/customer-checkout.ts");
+ assert.match(core,/RUBY_PUBLIC_CHECKOUT_MODE==="payments_public"/);
+ assert.match(page,/mode==="payments_public"/);
+ assert.match(ui,/checkoutMode!=="klarna_public"/);
+ assert.match(ui,/method={paymentMethod}/);
+ assert.match(api,/mode==="klarna_public"\|\|mode==="payments_public"/);
+ assert.match(api,/mode==="klarna_public"&&input\.data\.provider!=="klarna"/);
+ assert.match(api,/RUBY_MANUAL_DHL_FULFILLMENT_ENABLED/);
+});
+
 test("Klarna cannot be captured before confirmed real DHL handover",()=>{
  const action=source("app/admin/klarna-manual-actions.ts");
  const core=source("src/lib/customer-automation.ts");

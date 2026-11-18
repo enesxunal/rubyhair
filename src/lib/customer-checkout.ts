@@ -51,6 +51,7 @@ export function verifyCheckoutSignature(orderId:string,provider:"paypal"|"klarna
 export function publicCheckoutMode(){
  return process.env.RUBY_PUBLIC_CHECKOUT_MODE==="public"?"public":
   process.env.RUBY_PUBLIC_CHECKOUT_MODE==="klarna_public"?"klarna_public":
+  process.env.RUBY_PUBLIC_CHECKOUT_MODE==="payments_public"?"payments_public":
   process.env.RUBY_PUBLIC_CHECKOUT_MODE==="admin_test"?"admin_test":"disabled";
 }
 export function providerForCheckout(provider:"paypal"):Promise<{provider:"paypal";api:PaypalClient}>;

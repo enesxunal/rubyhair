@@ -21,9 +21,9 @@ export async function POST(req:NextRequest){
    if(!mail.stored||!dhl.credentialsComplete||(process.env.RUBY_DHL_LIVE_LABELS_ENABLED!=="true"||!process.env.RUBY_DHL_WEIGHT_G))
     return NextResponse.json({error:"FULFILLMENT_NOT_READY"},{status:503,headers});
   }
-  // Klarna-only launch with a real merchant handover: DHL labels must be purchased
-  // manually, and capture occurs only after tracking and parcel handover are verified.
-  if(mode==="klarna_public"){
+  // Manual DHL fulfillment supports the separate Klarna-only and PayPal+Klarna
+  // launch modes until automatic carrier label creation is ready.
+  if(mode==="klarna_public"||mode==="payments_public"){
    const mail=await loadStoreMailSettings();
    if(!mail.stored||process.env.RUBY_MANUAL_DHL_FULFILLMENT_ENABLED!=="true")
     return NextResponse.json({error:"FULFILLMENT_NOT_READY"},{status:503,headers});
