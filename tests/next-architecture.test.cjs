@@ -182,8 +182,9 @@ test("checkout preview reuses authoritative cart quotation and cannot collect pa
   assert.ok(cart.includes("useCartQuote(lines)"));
   assert.ok(!checkout.includes("NOCH NICHT ZUR BESTELLUNG FREIGEGEBEN"));
   assert.ok(!checkout.includes("CHECKOUT-VORSCHAU"));
-  assert.ok(checkout.includes("Die Bezahlung wird nach dem laufenden Live-Zahlungstest aktiviert."));
-  assert.ok(!checkout.includes("<input"));
+  assert.ok(checkout.includes("Wähle deine Zahlungsart"));
+  assert.ok(checkout.includes("startLiveVariantTestAction")||checkout.includes("LiveVariantTestSection"));
+  assert.ok(checkout.includes('type="radio" name="checkout-payment-method"'));
   assert.ok(!checkout.includes("createOrder"));
 });
 test("cart preserves selected variant color and length for return to product",()=>{
@@ -352,7 +353,9 @@ test("checkout address form is browser-local and cannot initiate payment or cust
  assert.ok(form.includes('pattern="[0-9]{5}"'));
  assert.ok(!form.includes('fetch('));
  assert.ok(!form.includes('localStorage'));
- assert.ok(payment.includes('disabled aria-disabled="true"'));
+ assert.ok(payment.includes('LiveVariantTestSection'));
+ assert.ok(payment.includes('checkout-payment-method'));
+ assert.ok(!payment.includes('button type="button" disabled aria-disabled="true"'));
 });
 
 test("analytics collection is disabled by default, consent-gated and strictly categorical",()=>{
@@ -504,7 +507,7 @@ test("Ruby Hair admin login uses a native POST and explicit redirect/errors",()=
  assert.ok(route.includes('recordLoginAttempt(key,reset)'));
  assert.ok(route.includes('await issueAdminSession()'));
  assert.ok(route.includes('origin_mismatch'));
- assert.ok(route.includes('new URL("/admin"')||route.includes('location(request,"/admin")'));
+ assert.ok(route.includes('checkoutReturn?"/kasse?liveTest=1":"/admin"'));
 });
 
 test("admin V2 analytics and launch readiness stay grounded in aggregates",()=>{

@@ -3,10 +3,11 @@ import { redirect } from "next/navigation";
 import { adminConfigured, isAdmin } from "@/lib/admin-auth";
 export const metadata:Metadata={title:"Admin Anmeldung",robots:{index:false,follow:false}};
 export const dynamic="force-dynamic";
-export default async function AdminLogin({searchParams}:{searchParams:Promise<{error?:string}>}){
-  if(await isAdmin())redirect("/admin");
+export default async function AdminLogin({searchParams}:{searchParams:Promise<{error?:string;next?:string}>}){
+  const {error,next}=await searchParams;
+  const checkoutReturn=next==="live-checkout";
+  if(await isAdmin())redirect(checkoutReturn?"/kasse?liveTest=1":"/admin");
   const configured=adminConfigured();
-  const {error}=await searchParams;
   return <main className="rh-admin-login">
     <div className="rh-admin-eyebrow">RUBY HAIR / VERWALTUNG</div>
     <h1>Admin Anmeldung</h1>
@@ -15,6 +16,7 @@ export default async function AdminLogin({searchParams}:{searchParams:Promise<{e
       <p>Die eigene PostgreSQL-Datenbank und die geheimen Anmeldedaten müssen zuerst auf dem Server eingerichtet werden. Es gibt keinen Standardzugang.</p>
     </div>:
     <form action="/api/admin/login" method="post" className="rh-admin-login-form">
+      {checkoutReturn&&<input type="hidden" name="next" value="live-checkout"/>}
       {error&&<p role="alert" className="rh-admin-error">
         {error==="locked"?"Zu viele Versuche. Bitte später erneut versuchen.":error==="unavailable"?"Die Anmeldung ist gerade nicht erreichbar. Bitte erneut versuchen.":"E-Mail oder Passwort ungültig."}
       </p>}

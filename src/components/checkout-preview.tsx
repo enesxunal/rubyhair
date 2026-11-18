@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import {useState} from "react";
 import {Check,Truck,Wallet,ArrowUpRight,ShoppingBag} from "lucide-react";
 import {useCart} from "@/components/cart-context";
 import {useCartQuote} from "@/hooks/use-cart-quote";
@@ -15,6 +16,10 @@ const process=[
 export default function CheckoutPreview({liveTest}:{liveTest?:LiveVariantTestView|null}){
   const {lines,loaded}=useCart();
   const {quote,error,loading}=useCartQuote(lines);
+  const [paymentMethod,setPaymentMethod]=useState<"paypal"|"klarna">("paypal");
+  const oneEuroCart=Boolean(loaded&&lines.length===1&&lines[0].id===886&&lines[0].quantity===1&&
+    quote&&quote.subtotalCents===100&&quote.lines.length===1);
+  const payableTestCart=Boolean(oneEuroCart&&!error&&!loading&&!quote?.needsReview&&quote?.lines[0]?.status==="available");
   return <div className="rh-checkout-v2 rh-shell">
     <nav className="rh-breadcrumb" aria-label="Breadcrumb">
       <Link href="/">Startseite</Link><span>/</span>
@@ -34,20 +39,38 @@ export default function CheckoutPreview({liveTest}:{liveTest?:LiveVariantTestVie
             <span className="rh-checkout-step-state">{i===0?<Check size={18}/>:<span aria-hidden="true">{step.no}</span>}</span>
           </article>)}
         </div>
-        {liveTest&&<LiveVariantTestSection state={liveTest} cartReady={Boolean(
-          loaded&&lines.length===1&&lines[0].id===886&&lines[0].quantity===1&&
-          !error&&!loading&&quote&&!quote.needsReview&&quote.subtotalCents===100&&
-          quote.lines.length===1&&quote.lines[0].status==="available"
-        )}/>}
         {loaded&&lines.length>0&&<CheckoutAddressPreview/>}
-        {!liveTest&&<div className="rh-checkout-payment-preview"><h3>03 / ZAHLUNG</h3>
-          <p className="rh-payment-preview-heading">Zahlungsarten</p>
-          <div className="rh-payment-preview-methods" aria-label="Zahlungsarten in Vorbereitung">
-            {["PayPal","Klarna"].map(method=><span key={method}>{method}</span>)}
+        <section className="rh-checkout-payment-preview" aria-label="Zahlungsart auswählen">
+          <h3>03 / ZAHLUNG</h3>
+          <p className="rh-payment-preview-heading">Wähle deine Zahlungsart</p>
+          <div className="rh-payment-select" role="radiogroup" aria-label="Zahlungsart">
+            <label className={"rh-payment-choice"+(paymentMethod==="paypal"?" is-selected":"")}>
+              <input type="radio" name="checkout-payment-method" value="paypal"
+                checked={paymentMethod==="paypal"} onChange={()=>setPaymentMethod("paypal")}/>
+              <span><strong>PayPal</strong><small>PayPal oder Karte bei Verfügbarkeit</small></span>
+            </label>
+            <label className={"rh-payment-choice"+(paymentMethod==="klarna"?" is-selected":"")}>
+              <input type="radio" name="checkout-payment-method" value="klarna"
+                checked={paymentMethod==="klarna"} onChange={()=>setPaymentMethod("klarna")}/>
+              <span><strong>Klarna</strong><small>Derzeit nicht für diesen Produkttest verfügbar</small></span>
+            </label>
           </div>
-          <p>Die Bezahlung wird nach dem laufenden Live-Zahlungstest aktiviert.</p>
-          <button type="button" disabled aria-disabled="true">Bestellung abschließen</button>
-        </div>}
+          {paymentMethod==="paypal"&&liveTest&&<LiveVariantTestSection state={liveTest} cartReady={payableTestCart}/>}
+          {paymentMethod==="paypal"&&!liveTest&&oneEuroCart&&<div className="rh-payment-action-area">
+            <p>Der 1,00-€-Live-Test dieses Artikels ist ausschließlich über den geschützten Administratorzugang möglich.</p>
+            <Link className="rh-payment-primary-link" href="/admin/login?next=live-checkout">
+              Mit Admin-Konto anmelden und PayPal testen
+            </Link>
+          </div>}
+          {paymentMethod==="paypal"&&!liveTest&&!oneEuroCart&&<div className="rh-payment-action-area">
+            <p>Der reguläre PayPal-Kauf wird nach dem 1,00-€-Live-Test aktiviert. Ein Kauf wird hier noch nicht ausgelöst.</p>
+            <Link href="/produkt/tape-in-extensions/?farbe=4&laenge=45-50-cm" className="rh-payment-secondary-link">1,00-€-Testartikel ansehen</Link>
+          </div>}
+          {paymentMethod==="klarna"&&<div className="rh-payment-action-area" role="status">
+            <p>Die Klarna-Zahlung für diesen bestehenden Artikel ist noch nicht mit der Bestellverarbeitung verbunden. Keine Zahlung wird ausgelöst.</p>
+            <button type="button" className="rh-payment-secondary-link" onClick={()=>setPaymentMethod("paypal")}>Stattdessen PayPal testen</button>
+          </div>}
+        </section>
         <Link className="rh-continue-shop" href="/versand-zahlung/">Versand, Zahlung & Widerruf ansehen ↗</Link>
         <Link className="rh-checkout-return" href="/warenkorb/">← ZURÜCK ZUM WARENKORB</Link>
       </section>

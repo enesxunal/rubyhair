@@ -60,3 +60,20 @@ test("PayPal return is inert until manual capture and unrelated QA remains separ
  assert.match(actions,/beginVariantTest/);
  assert.match(actions,/captureVariantTest/);
 });
+
+test("checkout payment buttons are selectable and admin login can return to 1 EUR checkout",()=>{
+ const checkout=read("src/components/checkout-preview.tsx");
+ const loginPage=read("app/admin/login/page.tsx");
+ const loginRoute=read("app/api/admin/login/route.ts");
+ assert.match(checkout,/type="radio" name="checkout-payment-method" value="paypal"/);
+ assert.match(checkout,/type="radio" name="checkout-payment-method" value="klarna"/);
+ assert.match(checkout,/paymentMethod==="paypal"&&liveTest/);
+ assert.match(checkout,/LiveVariantTestSection state=\{liveTest\}/);
+ assert.match(checkout,/Mit Admin-Konto anmelden und PayPal testen/);
+ assert.match(checkout,/Klarna-Zahlung.*noch nicht/);
+ assert.doesNotMatch(checkout,/button type="button" disabled aria-disabled="true"/);
+ assert.match(loginPage,/checkoutReturn=next==="live-checkout"/);
+ assert.match(loginPage,/name="next" value="live-checkout"/);
+ assert.match(loginRoute,/form.get\("next"\)==="live-checkout"/);
+ assert.match(loginRoute,/checkoutReturn\?"\/kasse\?liveTest=1":"\/admin"/);
+});

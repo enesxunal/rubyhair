@@ -68,10 +68,10 @@ export function SiteFooter(){
       <div><strong>SHOP</strong><Link href="/kollektionen/">Alle Extensions</Link><Link href={tapeInLengthHref("45-50-cm")}>Tape-in 45–50 cm</Link><Link href={tapeInLengthHref("55-60-cm")}>Tape-in 55–60 cm</Link><Link href="/suche/">Produkte suchen</Link></div>
       <div><strong>INFORMATIONEN</strong><Link href="/kontakt/">Kontakt & Beratung</Link><Link href="/ratgeber/">Hair Guide & Pflege</Link><Link href="/versand-zahlung/">Versand & Zahlung</Link><Link href="/rechtliches/widerruf/">Widerruf & Rückgabe</Link><Link href="/rechtliches/agb/">AGB</Link><Link href="/haar-anprobe/">KI-Haarvorschau</Link></div>
     </div>
-    <div className="rh-footer-bottom"><span>© 2026 RUBY HAIR · NEXT.JS DESIGNVORSCHAU</span><div>
+    <div className="rh-footer-bottom"><span>© 2026 RUBY HAIR</span><div>
       <Link href="/rechtliches/impressum/">Impressum</Link><Link href="/rechtliches/datenschutz/">Datenschutz</Link><CookieSettingsLink/>
     </div></div>
-  </footer><div className="rh-preview-notice">DESIGNVORSCHAU · BESTELLUNG UND BEZAHLUNG SIND NOCH NICHT FREIGEGEBEN</div></>;
+  </footer></>;
 }
 export default function ShopLayout({children}:{children:React.ReactNode}){
   return <><SiteHeader/><main id="main">{children}</main><SiteFooter/></>;

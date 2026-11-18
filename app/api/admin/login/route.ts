@@ -31,6 +31,7 @@ export async function POST(request:NextRequest){
   try{
     const form=await request.formData();
     const result=schema.safeParse({email:form.get("email"),password:form.get("password")});
+    const checkoutReturn=form.get("next")==="live-checkout";
     if(!result.success)return location(request,"/admin/login?error=invalid");
     const {key,allowed,reset}=await loginAllowed();
     if(!allowed)return location(request,"/admin/login?error=locked");
@@ -40,7 +41,7 @@ export async function POST(request:NextRequest){
       return location(request,"/admin/login?error=invalid");
     }
     await issueAdminSession();
-    return location(request,"/admin");
+    return location(request,checkoutReturn?"/kasse?liveTest=1":"/admin");
   }catch(error){
     // Do not log credentials, IP addresses, hashes, request data or error detail.
     console.error("RUBY_ADMIN_LOGIN_UNAVAILABLE",{

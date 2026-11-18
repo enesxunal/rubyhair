@@ -33,7 +33,7 @@ export function CartPage(){
   return <section className="rh-shell rh-cart-page">
     <div className="rh-eyebrow">RUBY HAIR / WARENKORB</div>
     <h1>Deine <em>Auswahl.</em></h1>
-    <p className="rh-cart-notice">Shopping-Vorschau: Deine Auswahl wird nur in diesem Browser gespeichert. Es wird keine Bestellung ausgelöst.</p>
+    <p className="rh-cart-notice">Prüfe deine ausgewählten Produkte und gehe anschließend zur Kasse.</p>
     {catalogError&&<p role="alert" className="rh-admin-error">Produktpreise sind gerade nicht verfügbar. Der Warenkorb ist vorübergehend nicht nutzbar.</p>}
     {quoteError&&<p role="alert" className="rh-admin-error">Der Server konnte den Warenkorb nicht prüfen. Bitte erneut versuchen.</p>}
     {!loaded?<div className="rh-empty-cart" role="status">Warenkorb wird geladen …</div>:
@@ -78,8 +78,8 @@ export function CartPage(){
           {issues.some(x=>x.status==="out-of-stock")?"Einige Artikel sind nicht oder nicht in der gewünschten Menge verfügbar. ":""}
           {issues.some(x=>x.status==="unknown-variation")?"Ein Produkt ist nicht mehr im Katalog. ":""}
         </p>}
-        <p>Bestellungen und Zahlungen sind in dieser Vorschau nicht aktiv. Die Angaben dienen ausschließlich der Prüfung deiner Auswahl.</p>
-        <Link className="rh-buy-button" href="/kasse/">ZUR KASSE (VORSCHAU)<span>↗</span></Link>
+        <p>Nach Auswahl der Zahlungsart kannst du den aktuellen Testkauf abschließen. Für reguläre Bestellungen wird die Zahlung nach dem Test freigeschaltet.</p>
+        <Link className="rh-buy-button" href="/kasse/">ZUR KASSE<span>↗</span></Link>
         <Link className="rh-continue-shop" href="/kollektionen/">Weiter einkaufen</Link>
       </aside>
     </div>}

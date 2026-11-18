@@ -184,12 +184,11 @@ function HomeFooter(){
           <a href="https://www.instagram.com/rubyhair.de/" target="_blank" rel="noopener noreferrer">Instagram <ArrowUpRight size={15}/></a>
         </div>
       </div>
-      <div className="container footer-bottom"><span>© 2026 RUBY HAIR · DESIGNKONZEPT</span>
+      <div className="container footer-bottom"><span>© 2026 RUBY HAIR</span>
         <div><Link href="/rechtliches/impressum/">IMPRESSUM</Link><Link href="/rechtliches/datenschutz/">DATENSCHUTZ</Link><Link href="/rechtliches/agb/">AGB</Link><CookieSettingsLink/></div>
         <span>MADE FOR BEAUTIFUL HAIR.</span>
       </div>
     </footer>
-    <div className="prototype-note">DESIGNVORSCHAU · BESTELLUNGEN UND ZAHLUNGEN NOCH NICHT FREIGEGEBEN</div>
   </>;
 }
 export default function HomeFrontend({products,instagramPosts=[]}:{products:Product[];instagramPosts?:InstagramFeedPost[]}){

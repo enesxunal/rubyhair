@@ -677,3 +677,19 @@ button.rh-editorial-cta{cursor:pointer}
 .rh-payment-preview-heading{font-size:11px;color:#806c74;font-weight:650;margin:14px 0 9px}
 .rh-payment-preview-methods{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 20px}
 .rh-payment-preview-methods span{font-size:10px;color:#836c77;background:#faf6f4;border:1px solid #e7dbe0;padding:8px 10px}
+
+/* Connected payment method selector. A selected radio must always have a real
+   action or a clear capability notice; never present a fake disabled purchase. */
+.rh-payment-select{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:16px 0 18px}
+.rh-payment-choice{display:flex;gap:13px;align-items:flex-start;padding:17px 14px;border:1px solid #dcccd2;cursor:pointer;background:#fffafa;transition:border-color .2s,background .2s;min-width:0}
+.rh-payment-choice.is-selected{border:2px solid #653d4e;background:#fff;box-shadow:0 1px 4px #6e40520e;padding:16px 13px}
+.rh-payment-choice input{width:18px;height:18px;accent-color:#653d4e;flex-shrink:0;margin-top:2px;cursor:pointer}
+.rh-payment-choice span{display:flex;flex-direction:column;gap:6px;min-width:0}
+.rh-payment-choice strong{font-size:15px;color:#412b35;font-weight:700}
+.rh-payment-choice small{font-size:11px;color:#806c74;line-height:1.5}
+.rh-payment-choice:focus-within{outline:2px solid #735061;outline-offset:3px}
+.rh-payment-action-area{padding:18px;border:1px solid #e0d1d5;background:#fff9f7;color:#604d54;margin-top:8px}
+.rh-payment-action-area p{margin:0 0 14px;line-height:1.7;font-size:12px}
+.rh-payment-primary-link{display:inline-block;background:#593746;color:#fff!important;padding:14px 18px;text-decoration:none;font-size:12px;font-weight:700;text-align:center}
+.rh-payment-secondary-link{border:1px solid #745064;background:transparent;color:#694454;display:inline-block;font-size:12px;padding:12px 14px;text-decoration:none;cursor:pointer}
+@media(max-width:600px){.rh-payment-select{grid-template-columns:1fr}.rh-payment-choice{padding:13px}.rh-payment-choice.is-selected{padding:12px}}
