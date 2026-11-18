@@ -7,6 +7,8 @@ test("online withdrawal has explicit two-step confirmation and no reason require
  const page=read("app/widerruf/page.tsx");
  const form=read("src/components/withdrawal-form.tsx");
  const footer=read("src/components/site-shell.tsx");
+ const proxy=read("proxy.ts");
+ assert.match(proxy,/publicPostApis=new Set\(\[[^\]]*"\/api\/widerruf"/);
  assert.match(page,/WithdrawalForm/);
  assert.match(form,/Weiter zur Bestätigung/);
  assert.match(form,/Widerruf bestätigen/);
