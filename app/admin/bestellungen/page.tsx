@@ -26,7 +26,7 @@ const addressText=(value:unknown)=>{
 export default async function AdminOrders({searchParams}:{searchParams:Promise<{filter?:string;seite?:string;manualKlarna?:string}>}){
  if(!await isAdmin())redirect("/admin/login");
  const params=await searchParams;
- const filter=filters.find(f=>f===params.filter)||"alle";
+ const filter=filters.find(f=>f===params.filter)||"ohne-testkennzeichen";
  const requestedPage=Number(params.seite);
  const page=Number.isSafeInteger(requestedPage)&&requestedPage>0?Math.min(requestedPage,10000):1;
  const where=filter==="tests"?{testOnly:true}:filter==="ohne-testkennzeichen"?{testOnly:false}:
@@ -49,25 +49,27 @@ export default async function AdminOrders({searchParams}:{searchParams:Promise<{
  const link=(p:number)=>"/admin/bestellungen?filter="+filter+"&seite="+p;
  return <AdminShell current="orders" title="Bestellübersicht." description="Bestellungen, Sendungsnummern und Statusverlauf. Klarna-Einzug bei manuellem DHL-Versand nur nach bestätigter physischer Paketübergabe.">
   <div className="rh-admin-warning"><strong>Checkout-Modus: {publicCheckoutMode()==="disabled"?"Nur Vorbereitung":publicCheckoutMode()==="admin_test"?"Admin-Test":publicCheckoutMode()==="klarna_public"?"Klarna live / DHL manuell":publicCheckoutMode()==="payments_public"?"PayPal + Klarna live / DHL manuell":"Kunden"}.</strong> Nur durch den Zahlungsanbieter verifizierte Transaktionen zählen als bezahlt. Testreservierungen zählen nicht als Umsatz.</div>
-  <p style={{margin:"13px 0 18px"}}><Link href="/admin/klarna-durum" className="rh-admin-mail-test-button">Klarna Live-Zahlung direkt beim Anbieter prüfen (ohne Abbuchung)</Link></p>
-  <p style={{margin:"12px 0 18px"}}><Link href="/admin/erstattungen">Erstattungen sicher prüfen (ohne Geldbewegung)</Link></p>
-  <p style={{margin:"12px 0 18px"}}><Link href="/admin/dhl">DHL API prüfen / Versand einrichten</Link></p>
+  <details className="rh-admin-advanced-tools"><summary>Erweiterte Zahlungs- und Versandprüfung</summary><nav aria-label="Weitere Prüfwerkzeuge">
+   <Link href="/admin/klarna-durum">Klarna-Zahlung prüfen (nur lesen)</Link>
+   <Link href="/admin/dhl">DHL-Verbindung einrichten</Link>
+   <Link href="/admin/erstattungen">Erstattungsstatus prüfen (nur lesen)</Link>
+  </nav></details>
   <div className="rh-admin-pill-row">
-   <span className="rh-admin-stat-pill">{realCount} ohne Testkennzeichen</span>
-   <span className="rh-admin-stat-pill">{testCount} technische Testdatensätze</span>
+   <span className="rh-admin-stat-pill">{realCount} Kundenbestellungen</span>
+   <span className="rh-admin-stat-pill">{testCount} Testdatensätze</span>
   </div>
   <nav className="rh-admin-filters" aria-label="Bestellfilter">
    {[
-    {value:"alle",label:"Alle"},
-    {value:"tests",label:"Tests"},
-    {value:"ohne-testkennzeichen",label:"Ohne Testkennzeichen"},
-    {value:"offen",label:"Offene Testreservierungen"}
+    {value:"ohne-testkennzeichen",label:"Kundenbestellungen"},
+    {value:"tests",label:"Testbestellungen"},
+    {value:"alle",label:"Alle anzeigen"}
    ].map(item=><Link key={item.value} href={"/admin/bestellungen?filter="+item.value}
        aria-current={filter===item.value?"page":undefined} className={filter===item.value?"is-active":undefined}>{item.label}</Link>)}
   </nav>
+  {filter==="tests"&&<p className="rh-admin-muted"><Link href="/admin/bestellungen?filter=offen">Nur offene Testreservierungen</Link></p>}
   {orders.length===0?<div className="rh-admin-panel-card rh-admin-empty rh-studio-orders-empty">
       <span className="rh-studio-orders-empty-icon"><ClipboardList size={27}/></span><h2>Noch keine Bestelldatensätze</h2>
-      <p>In diesem Filter liegen keine Bestellungen vor. Live-Verkäufe sind noch deaktiviert – dies ist kein Umsatzbericht.</p>
+      <p>In diesem Filter liegen keine Bestellungen vor. Testdaten und Kundenbestellungen werden getrennt angezeigt.</p>
       <div className="rh-studio-orders-next">
        <Link href="/admin/zahlungen"><WalletCards size={16}/> Zahlungsintegration vorbereiten <ArrowUpRight size={15}/></Link>
        <Link href="/admin/produkte"><ShieldCheck size={16}/> Bestände prüfen <ArrowUpRight size={15}/></Link>

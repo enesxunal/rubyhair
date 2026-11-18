@@ -14,8 +14,7 @@ const sections=[
  {href:"/admin/produkte",label:"Produkte & Bestand",icon:Boxes},
  {href:"/admin/bestellungen",label:"Bestellungen",icon:ClipboardList},
  {href:"/admin/zahlungen",label:"Zahlungen",icon:WalletCards},
- {href:"/admin/benachrichtigungen",label:"E-Mails & Vorlagen",icon:Mail},
- {href:"/admin/testbestellung",label:"1 € Testbestellung",icon:FlaskConical}
+ {href:"/admin/benachrichtigungen",label:"E-Mails & Vorlagen",icon:Mail}
 ] as const;
 
 type Area="dashboard"|"products"|"orders"|"analytics"|"payments"|"emails"|"testorder";
@@ -50,6 +49,10 @@ export default function AdminShell({
       {active===section.href&&<ChevronRight className="rh-admin-nav-chevron" size={14}/>}
      </Link>)}
     </nav>
+    <details className="rh-admin-advanced-nav"><summary><FlaskConical size={15}/> Erweiterte Werkzeuge</summary>
+     <Link href="/admin/testbestellung">1 € Testbestellung</Link>
+     <Link href="/admin/dhl">DHL-Verbindung</Link>
+    </details>
    </div>
    <div className="rh-admin-sidebar-bottom">
     <div className="rh-admin-system-note">

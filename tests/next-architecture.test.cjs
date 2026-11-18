@@ -272,9 +272,9 @@ test("admin pages use authenticated separate dashboard, product and read-only or
  assert.ok(orders.includes('statusEvents'));
  assert.ok(!orders.includes('action={saveVariantAction}'));
  assert.ok(!orders.includes('payment_confirmed:['));
- assert.ok(dash.includes('Varianten ohne Menge'));
- assert.ok(dash.includes('loadAnalyticsReport(7)'));
- assert.ok(dash.includes('Checkout und Zahlung end-to-end getestet'));
+ assert.ok(dash.includes('Ausverkaufte Varianten'));
+ assert.ok(dash.includes('db.order.count({where:{testOnly:false}})'));
+ assert.ok(dash.includes('Ruby Hair ist live.'));
  assert.ok(actions.includes('redirect("/admin/produkte?updated=1")'));
  assert.ok(actions.includes('redirect("/admin/produkte?productUpdated=1")'));
  assert.ok(fs.existsSync(path.join(base,"src/styles/admin.css")));
@@ -536,7 +536,7 @@ test("admin V2 analytics and launch readiness stay grounded in aggregates",()=>{
  assert.ok(!exportRoute.includes("customerEmail"));
  assert.ok(exportRoute.includes("await isAdmin()"));
  assert.ok(css.includes("@media(max-width:650px)"));
- assert.ok(dashboard.includes("Einrichtungsschritte"));
+ assert.ok(dashboard.includes("Bestandsübersicht"));
  assert.ok(products.includes("Bestandsdaten geprüft"));
  assert.ok(!chart.includes("<title>"));
 });
@@ -751,4 +751,25 @@ test("Keratin category card uses the original full-resolution product photograph
  assert.ok(home.includes('width={1707} height={2560}'));
  assert.ok(fs.existsSync(file));
  assert.ok(fs.statSync(file).size>100000);
+});
+
+test("live merchant administration defaults to real orders and keeps test inventory out of stock KPIs",()=>{
+ const dash=fs.readFileSync(path.join(base,"app/admin/page.tsx"),"utf8");
+ const products=fs.readFileSync(path.join(base,"app/admin/produkte/page.tsx"),"utf8");
+ const orders=fs.readFileSync(path.join(base,"app/admin/bestellungen/page.tsx"),"utf8");
+ const shell=fs.readFileSync(path.join(base,"app/admin/admin-shell.tsx"),"utf8");
+ const css=fs.readFileSync(path.join(base,"src/styles/admin-v2.css"),"utf8");
+ assert.ok(dash.includes('db.variant.findMany({where:{product:{active:true}}'));
+ assert.ok(dash.includes('db.order.findMany({where:{testOnly:false}'));
+ assert.ok(dash.includes('Ruby Hair ist live.'));
+ assert.ok(!dash.includes('Keine Live-Zahlungen aktiviert'));
+ assert.ok(!dash.includes('Erst vorbereiten.'));
+ assert.ok(products.includes('products.filter(p=>p.active)'));
+ assert.ok(products.includes('Inaktive & Testprodukte anzeigen'));
+ assert.ok(products.includes('Bestand 0'));
+ assert.ok(orders.includes('||"ohne-testkennzeichen"'));
+ assert.ok(orders.includes('Kundenbestellungen'));
+ assert.ok(orders.includes('rh-admin-advanced-tools'));
+ assert.ok(shell.includes('rh-admin-advanced-nav'));
+ assert.ok(css.includes('.rh-admin-filters{display:flex'));
 });
