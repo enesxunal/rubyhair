@@ -32,3 +32,9 @@ Toplam: 45–50 cm için 12 mevcut / 6 eksik; 55–60 cm için 15 mevcut / 3 eks
 **Açık onaylar:** Eksik dokuz kombinasyon gerçekten sunulacak mı? Her biri için fiyat, fiziksel stok, doğru ürün görseli ve (varsa) WooCommerce/SKU referansı gerekiyor. Ayrıca Tape-in EVE ve Keratin 1006 aynı resim dosyasını kullanıyor; müşteri doğrulaması olmadan etiket değiştirilmemeli.
 
 **Yayın kuralı:** Renk görünürlük düzeltmesi yerelde tutulacak. GitHub/Vercel canlı yayını ve gerçek müşteri checkout'u, tüm diğer müşteri revizyonları ve uçtan uca satış testleri sonrası yapılacak.
+
+## Legacy WooCommerce audit – 18 November 2026
+
+The locally preserved 17 November 2026 WooCommerce variation inventory lists **36 Tape-in records**, compared with **27 imported into the new store**. These nine old variation IDs were omitted: `884`, `885`, `891`, `896`, `897`, `898`, `1319`, `1321`, `1701`. Each missing old record has `stock=0` and `outofstock` in the legacy inventory. This is evidence that old product records existed, not that they are currently sellable. Some other historical out-of-stock records also remain imported, so the exact import filter is not yet established.
+
+**Important:** The verified legacy stock summary does not carry the color/length attribute mapping for these nine IDs. Do not equate the nine IDs with the nine requested missing color/length combinations until the original WooCommerce `attribute_pa_*` metadata is compared. Preserve the nine as unavailable on the public storefront until specific color, length, price, and new stock information are confirmed. No production stock or prices were changed.
