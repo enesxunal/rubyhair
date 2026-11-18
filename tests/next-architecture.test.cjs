@@ -617,7 +617,7 @@ test("Ruby Hair community uses actual recent posts, not profile highlight covers
  for(let i=1;i<=12;i++){
   const key=`ruby-post-${String(i).padStart(2,"0")}-story.webp`;
   assert.ok(fs.existsSync(path.join(base,"public/assets/instagram-posts",key)),"Missing story crop "+key);
-  if(i!==1&&i!==2)assert.ok(source.includes(key),"Story data does not use "+key);
+  if(i!==1&&i!==2&&i!==12)assert.ok(source.includes(key),"Story data does not use "+key);
  }
  for(const avatar of ["hair-boutique.webp","jessica-haller.webp","elaine-victoria.webp","asena-neuhoff.webp","kristina.webp"]){
   assert.ok(fs.existsSync(path.join(base,"public/assets/instagram-avatars",avatar)),"Missing IG profile picture "+avatar);
@@ -631,13 +631,13 @@ test("Ruby Hair community uses actual recent posts, not profile highlight covers
  assert.ok(story.includes("story.storyImage"));
 });
 
-test("Ruby Hair community keeps ten curated items but removes only the two Hair Boutique-labeled cards",()=>{
+test("Ruby Hair community keeps nine unique looks, with Asena followed by Kristina",()=>{
  const source=fs.readFileSync(path.join(base,"src/data/influencer-stories.ts"),"utf8");
  const component=fs.readFileSync(path.join(base,"src/components/influencer-stories.tsx"),"utf8");
  const css=fs.readFileSync(path.join(base,"src/styles/influencer-stories.css"),"utf8");
  const postRefs=[...source.matchAll(/postUrl:"(https:\/\/www.instagram.com\/p\/[^"]+)"/g)].map(m=>m[1]);
- assert.equal(postRefs.length,10);
- assert.equal(new Set(postRefs).size,10);
+ assert.equal(postRefs.length,9);
+ assert.equal(new Set(postRefs).size,9);
  assert.ok(postRefs[0].endsWith("/DdWuECGjPhu/"),"Elaine Victoria must be first");
  assert.ok(postRefs[1].endsWith("/DeRBodOSBLJ/"),"Second slot must be a named creator, not a customer repost");
  assert.ok(!source.includes("/DfFi9wXOQSg/"),"Client-requested customer repost must be removed from carousel");
@@ -645,8 +645,9 @@ test("Ruby Hair community keeps ten curated items but removes only the two Hair 
 
  assert.ok(!source.includes('name:"Hair Boutique"'),"Only the Hair Boutique-labeled card should be removed");
  assert.ok(source.includes('name:"Blonde Balayage"'),"Descriptive looks must remain in the carousel");
- assert.equal((source.match(/username:"asenaneuhoff"/g)||[]).length,2,"Both previously published Asena posts should remain");
- for(const code of ["DcyyKV5uAXp","Dcl4tzkM9jA","DcEYx_1jPKb","DbsVnhmOKu7","DbiyODiMzwy","DbbCY7KMBcH","DaSI-qbjjXM","DZAP4dDsl7m"]){
+ assert.equal((source.match(/username:"asenaneuhoff"/g)||[]).length,1,"Asena must not appear twice");
+ assert.ok(source.indexOf('name:"Asena Neuhoff"')<source.indexOf('name:"Kristina"'),"Kristina should follow Asena");
+ for(const code of ["DcyyKV5uAXp","Dcl4tzkM9jA","DcEYx_1jPKb","DbsVnhmOKu7","DbiyODiMzwy","DbbCY7KMBcH","DaSI-qbjjXM"]){
   assert.ok(source.includes("https://www.instagram.com/p/"+code+"/"),"missing actual Ruby Hair feed post "+code);
  }
  assert.ok(component.includes('ref={carouselRef}'));
