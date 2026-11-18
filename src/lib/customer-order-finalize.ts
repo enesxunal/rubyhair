@@ -97,6 +97,7 @@ export async function confirmKlarnaCheckout(orderId:string,hppSessionId:string,p
   if(changed.count!==1)throw new CustomerCheckoutError("KLARNA_AUTH_CONCURRENCY",409);
   requireOrderTransition("pending_payment","payment_authorized","payment_provider");
   await tx.orderStatusEvent.create({data:{orderId:order.id,fromStatus:"pending_payment",toStatus:"payment_authorized",reason:"klarna_hpp_verified_authorized"}});
+  await tx.orderNotification.createMany({data:[{orderId:order.id,stage:"received"},{orderId:order.id,stage:"received_admin"}],skipDuplicates:true});
   await tx.shippingJob.upsert({where:{orderId:order.id},create:{orderId:order.id,status:"waiting_credentials"},update:{}});
  },{isolationLevel:Prisma.TransactionIsolationLevel.Serializable,timeout:10000});
  return {authorized:true};

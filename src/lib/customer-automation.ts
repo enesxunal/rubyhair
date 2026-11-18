@@ -3,7 +3,8 @@ import {getPrisma} from "@/lib/prisma";
 import {getDhlIntegrationReadiness} from "@/lib/dhl-api";
 import {createDhlShipmentLabel,type ShippingAddress} from "@/lib/dhl-labels";
 import {sendStoreOrderMail} from "@/lib/store-mail-transport";
-import {loadStoreMailSettings} from "@/lib/store-mail-settings";
+import {loadStoreMailSettings,adminOrderNotificationRecipients} from "@/lib/store-mail-settings";
+import {orderMailStages,type OrderMailStage} from "@/lib/order-mail-templates";
 import {providerForCheckout} from "@/lib/customer-checkout";
 import {finishCapturedCustomerOrder} from "@/lib/customer-order-finalize";
 import {requireOrderTransition} from "@/lib/order-lifecycle";
@@ -25,17 +26,21 @@ export async function deliverQueuedOrderEmails(limit=10){
   const claim=await db().orderNotification.updateMany({where:{id:item.id,status:item.status},data:{status:"sending",attempts:{increment:1}}});
   if(claim.count!==1)continue;
   try{
-   const order=await db().order.findUnique({where:{id:item.orderId},include:{invoice:{select:{invoiceNumber:true,pdf:true}}}});
-   if(!order||order.testOnly||!order.customerEmail||!(["paid","paid_admin","processing","shipped","delivered","failed"].includes(item.stage))||item.stage!=="failed"&&!order.invoice)
+   const order=await db().order.findUnique({where:{id:item.orderId},include:{invoice:{select:{invoiceNumber:true,pdf:true}},lines:{include:{variant:{include:{product:{select:{name:true}}}}}}}});
+   const isReceived=item.stage==="received"||item.stage==="received_admin";
+   if(!order||order.testOnly||!order.customerEmail||!orderMailStages.includes(item.stage as OrderMailStage)||
+      !isReceived&&item.stage!=="failed"&&!order.invoice||
+      isReceived&&!["payment_authorized","payment_confirmed","preparing","shipped","delivered"].includes(order.status))
     throw new Error("ORDER_NOTIFICATION_NOT_READY");
-   const adminCopy=item.stage==="paid_admin";
-   const dest=adminCopy?store.recipient:order.customerEmail;
-   const kind=adminCopy?"paid":item.stage as "paid"|"processing"|"shipped"|"delivered"|"failed";
+   const adminCopy=item.stage==="paid_admin"||item.stage==="received_admin";
+   const dest=adminCopy?adminOrderNotificationRecipients(store.recipient):order.customerEmail;
+   const kind=item.stage as OrderMailStage;
    const bill=order.billingAddress;
    const name=bill&&typeof bill==="object"&&!Array.isArray(bill)?
     String(bill.firstName||"")+" "+String(bill.lastName||""):"";
    await sendStoreOrderMail(kind,dest,{orderNumber:"RH-"+String(order.orderNumber),
-    customerName:name.trim(),totalCents:order.totalCents,
+    customerName:name.trim(),customerEmail:order.customerEmail,totalCents:order.totalCents,
+    items:order.lines.map(line=>({name:line.variant.product.name+" "+line.variant.colorLabel+" "+line.variant.lengthLabel,quantity:line.quantity,totalCents:line.lineTotalCents})),
     trackingNumber:order.trackingNumber||undefined,carrier:order.trackingCarrier||undefined},
     item.stage.startsWith("paid")&&order.invoice?{filename:order.invoice.invoiceNumber+".pdf",content:Buffer.from(order.invoice.pdf)}:undefined);
    await db().orderNotification.updateMany({where:{id:item.id,status:"sending"},data:{status:"sent",sentAt:new Date(),lastError:null}});
@@ -129,8 +134,29 @@ export async function finalizePreparedShippingJobs(limit=5){
  return {prepared};
 }
 
+// Recover Klarna-authorized orders even if the buyer closed their browser
+// before the "after()" callback ran. Deduplicated by (orderId,stage).
+export async function queueAuthorizedKlarnaNotifications(limit=10){
+ const orders=await db().order.findMany({
+  where:{testOnly:false,status:"payment_authorized",customerEmail:{not:null},OR:[
+   {notifications:{none:{stage:"received"}}},
+   {notifications:{none:{stage:"received_admin"}}}
+  ]},
+  select:{id:true},orderBy:{createdAt:"asc"},take:Math.max(1,Math.min(limit,20))
+ });
+ let queued=0;
+ for(const order of orders){
+  const result=await db().orderNotification.createMany({
+   data:[{orderId:order.id,stage:"received"},{orderId:order.id,stage:"received_admin"}],
+   skipDuplicates:true
+  });
+  queued+=result.count;
+ }
+ return {queued};
+}
 export async function runCustomerJobs(limit=5){
- const result={emails:await deliverQueuedOrderEmails(limit),labels:await createQueuedDhlLabels(limit),prepared:await finalizePreparedShippingJobs(limit)};
+ const authorized=await queueAuthorizedKlarnaNotifications(limit);
+ const result={authorized,emails:await deliverQueuedOrderEmails(limit),labels:await createQueuedDhlLabels(limit),prepared:await finalizePreparedShippingJobs(limit)};
  const afterShipping=await deliverQueuedOrderEmails(limit);result.emails={...result.emails,sent:(result.emails.sent||0)+(afterShipping.sent||0)};
  return result;
 }

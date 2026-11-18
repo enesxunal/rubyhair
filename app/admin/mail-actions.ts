@@ -5,7 +5,33 @@ import {isAdmin} from "@/lib/admin-auth";
 import {paymentVaultConfigured,encryptPaymentValue} from "@/lib/payment-secrets";
 import {getPrisma} from "@/lib/prisma";
 import {validMailAddress} from "@/lib/store-mail-settings";
-import {sendStoreSmtpTest} from "@/lib/store-mail-transport";
+import {sendStoreSmtpTest,sendStoreAdminSmtpTest} from "@/lib/store-mail-transport";
+import {queueAuthorizedKlarnaNotifications,deliverQueuedOrderEmails} from "@/lib/customer-automation";
+
+export async function sendPendingOrderMailAction(){
+ if(!await isAdmin())redirect("/admin/login");
+ let result:"mail-batch-empty"|"mail-batch-sent"|"mail-batch-retry"|"mail-batch-failed"="mail-batch-failed";
+ try{
+  const ready=await queueAuthorizedKlarnaNotifications(10);
+  const delivery=await deliverQueuedOrderEmails(10);
+  result=delivery.sent>0?"mail-batch-sent":ready.queued>0||delivery.skipped?"mail-batch-retry":"mail-batch-empty";
+ }catch(e){
+  console.error("RUBY_MANUAL_ORDER_EMAIL_RETRY_FAILED",e instanceof Error?e.name:"UnknownError");
+ }
+ revalidatePath("/admin/benachrichtigungen");
+ redirect("/admin/benachrichtigungen?status="+result);
+}
+
+export async function sendStoreAdminMailTestAction(){
+ if(!await isAdmin())redirect("/admin/login");
+ try{
+  await sendStoreAdminSmtpTest();
+ }catch(e){
+  console.error("RUBY_ADMIN_RECIPIENT_MAIL_TEST_FAILED",e instanceof Error?e.name:"UnknownError");
+  redirect("/admin/benachrichtigungen?status=admin-test-failed");
+ }
+ redirect("/admin/benachrichtigungen?status=admin-test-sent");
+}
 
 export async function saveStoreMailAction(form:FormData){
  if(!await isAdmin())redirect("/admin/login");

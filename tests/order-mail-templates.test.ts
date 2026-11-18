@@ -2,9 +2,9 @@ import {test} from "node:test";
 import assert from "node:assert/strict";
 import {renderOrderMail,orderMailStages} from "../src/lib/order-mail-templates";
 
-test("Ruby Hair order communications have eight distinct German stages",()=>{
- assert.equal(orderMailStages.length,8);
- assert.equal(new Set(orderMailStages).size,8);
+test("Ruby Hair order communications have ten German customer and admin stages",()=>{
+ assert.equal(orderMailStages.length,10);
+ assert.equal(new Set(orderMailStages).size,10);
  for(const stage of orderMailStages){
    const msg=renderOrderMail(stage,{orderNumber:"RH-2026-1001",customerName:"Test Kundin",totalCents:14999});
    assert.ok(msg.subject.includes("RH-2026-1001"));
