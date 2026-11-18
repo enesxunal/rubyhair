@@ -1,0 +1,24 @@
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const b=path.join(__dirname,'..');
+test('internal 1-EUR product is hidden, inactive and admin-only with no payment action',()=>{
+ const p=fs.readFileSync(path.join(b,'src/lib/internal-test-product.ts'),'utf8');
+ const admin=fs.readFileSync(path.join(b,'app/admin/testbestellung/page.tsx'),'utf8');
+ const action=fs.readFileSync(path.join(b,'app/admin/test-purchase-actions.ts'),'utf8');
+ const shell=fs.readFileSync(path.join(b,'app/admin/admin-shell.tsx'),'utf8');
+ assert.match(p,/QA_PRICE_CENTS=100/);
+ assert.match(p,/active:false/);
+ assert.match(p,/slug:QA_PRODUCT_SLUG/);
+ assert.match(p,/stockQuantity:1/);
+ assert.match(p,/if\(product\.active/);
+ assert.match(p,/if\(v\.active/);
+ assert.match(action,/if\(!await isAdmin\(\)\)redirect\("\/admin\/login"\)/);
+ assert.match(admin,/if\(!await isAdmin\(\)\)redirect\("\/admin\/login"\)/);
+ assert.match(admin,/Keine Zahlung und keine Bestellung wurden ausgelöst/);
+ assert.match(admin,/Es gibt keinen echten 1-€-Bezahlbutton/);
+ assert.match(shell,/\/admin\/testbestellung/);
+ assert.ok(!p.includes('paymentReference'));
+ assert.ok(!action.includes('captureOrder'));
+});
