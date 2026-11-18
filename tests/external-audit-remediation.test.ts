@@ -61,3 +61,9 @@ test("mobile checkout grid shrinks without horizontal scrolling",()=>{
  assert.match(css,/\.rh-checkout-grid>\*\{min-width:0\}/);
  assert.match(css,/\.rh-checkout-steps article\{grid-template-columns:30px minmax\(0,1fr\) 22px/);
 });
+
+test("checkout legal consent text stays in one shrinkable mobile flex item",()=>{
+ const jsx=read("src/components/customer-payment-submit.tsx");
+ assert.match(jsx,/<span style=\{\{minWidth:0,overflowWrap:"anywhere"\}\}>Ich habe die/);
+ assert.match(jsx,/Widerrufsbelehrung<\/a> gelesen und best[a-zA-Z\u00e4]*tige den kostenpflichtigen Kauf\.<\/span>/);
+});
