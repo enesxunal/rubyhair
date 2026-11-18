@@ -3,13 +3,14 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
 const base=path.join(__dirname,'..');
-test('Ruby Hair customer domains display a brand-aligned temporary holding page',()=>{
+test('Ruby Hair customer domains show a real logo holding page and protect checkout',()=>{
  const proxy=fs.readFileSync(path.join(base,'proxy.ts'),'utf8');
  const route=fs.readFileSync(path.join(base,'app/coming-soon/route.ts'),'utf8');
  const page=fs.readFileSync(path.join(base,'src/lib/coming-soon-page.ts'),'utf8');
  assert.match(proxy,/"rubyhair\.de","www\.rubyhair\.de"/);
  assert.match(proxy,/NextResponse\.rewrite\(new URL\("\/coming-soon"/);
  assert.match(proxy,/request\.method!=="GET"&&request\.method!=="HEAD"/);
+ assert.match(proxy,/restrictedResponse\(\)/);
  assert.ok(!proxy.includes('preview=true'));
  assert.match(route,/status:503/);
  assert.match(route,/Retry-After/);
@@ -21,4 +22,18 @@ test('Ruby Hair customer domains display a brand-aligned temporary holding page'
  assert.match(page,/info@rubyhair\.de/);
  assert.match(page,/@media\(max-width:700px\)/);
  assert.ok(!page.includes('<form'));
+});
+test('Ruby Hair primary domain admin access only accepts server-verified login JWT',()=>{
+ const proxy=fs.readFileSync(path.join(base,'proxy.ts'),'utf8');
+ assert.match(proxy,/const adminLoginPaths=new Set\(\["\/admin\/login","\/api\/admin\/login"\]\)/);
+ assert.match(proxy,/request\.cookies\.get\(ADMIN_COOKIE\)/);
+ assert.match(proxy,/jwtVerify\(token,new TextEncoder\(\)\.encode\(key\)/);
+ assert.match(proxy,/issuer:"rubyhair-next",audience:"rubyhair-admin",algorithms:\["HS256"\]/);
+ assert.match(proxy,/payload\.sub===email&&payload\.role==="admin"/);
+ assert.match(proxy,/if\(await hasVerifiedAdminSession\(request\)\)/);
+ assert.match(proxy,/"X-Robots-Tag","noindex, nofollow, noarchive"/);
+ assert.match(proxy,/"Cache-Control","private, no-store, max-age=0"/);
+ assert.match(proxy,/NextResponse\.redirect\(new URL\("\/admin\/login"/);
+ assert.ok(!proxy.includes('get("x-test-token")'));
+ assert.ok(!proxy.includes('get("authorization")'));
 });
