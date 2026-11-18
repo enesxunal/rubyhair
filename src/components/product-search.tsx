@@ -18,7 +18,7 @@ export function ProductSearch({initialQuery="",products}:{initialQuery?:string;p
     <input id="rh-shop-search" className="rh-search-input" type="search" value={query}
       onChange={e=>setQuery(e.target.value)} autoComplete="off" placeholder="z. B. BRONDE, SILVER"/>
     <div className="rh-search-toolbar"><span aria-live="polite">{filtered.length} Ergebnisse</span>
-      <span className="rh-catalog-status">Produktkatalog der neuen Ruby Hair Vorschau</span></div>
+      <span className="rh-catalog-status">Ruby Hair Produktkatalog · aktuelle Farben und Verfügbarkeit</span></div>
     <div className="rh-shade-grid">{filtered.map(x=>
       <Link key={x.product.slug+"-"+x.color} className="rh-shade-card"
         href={"/produkt/"+x.product.slug+"/?farbe="+encodeURIComponent(x.color)}>

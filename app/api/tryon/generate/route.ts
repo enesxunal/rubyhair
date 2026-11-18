@@ -3,6 +3,7 @@ import path from "node:path";
 import {NextRequest,NextResponse} from "next/server";
 import catalog from "@/data/products.json";
 import {checkPhotoSuitability,photoSuitabilityMessage} from "@/lib/tryon-photo-suitability";
+import {reserveTryonQuota,finishTryonQuota,TryonRateLimitError} from "@/lib/tryon-quota";
 
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
@@ -122,6 +123,21 @@ export async function POST(request:NextRequest){
   return deny("Bitte ein JPG-, PNG- oder WebP-Bild bis 3,5 MB hochladen.",400);
  const imageBytes=Buffer.from(await photo.arrayBuffer());
  if(!validMagic(imageBytes,photo.type))return deny("Bilddatei ist ungültig.",400);
+ // Reserve before any paid OpenAI call. If the quota DB is unavailable,
+ // fail closed rather than creating an unmetered, billable provider request.
+ let tryonQuotaId:string|undefined;
+ // Unit tests use stubbed provider calls and never reserve production DB quota.
+ // This switch is physically disabled inside all production Next.js builds.
+ const unitTestOnly=process.env.NODE_ENV!=="production"&&process.env.RUBY_TRYON_TEST_BYPASS==="LOCAL_TEST_ONLY";
+ try{if(!unitTestOnly)tryonQuotaId=await reserveTryonQuota(request);}
+ catch(e){
+  if(e instanceof TryonRateLimitError)return NextResponse.json({
+   error:"Die tägliche oder kurzfristige Grenze für KI-Vorschauen ist erreicht. Bitte später erneut versuchen.",code:"tryon_rate_limited"
+  },{status:429,headers:{...NO_STORE,"Retry-After":String(e.retryAfterSeconds)}});
+  console.error("RUBY_TRYON_QUOTA_UNAVAILABLE",e instanceof Error?e.name:"unknown");
+  return deny("KI-Vorschau vorübergehend nicht verfügbar. Bitte später erneut versuchen.",503);
+ }
+ try{
  const credential=await providerCredential();
  if(!credential.key)return deny(credential.reason==="invalid_key"?"Die KI ist vorübergehend nicht verfügbar: Die Server-API-Anmeldung muss erneuert werden.":"KI-Haaranprobe ist vorübergehend nicht erreichbar.",503);
  const apiKey=credential.key;
@@ -201,5 +217,10 @@ export async function POST(request:NextRequest){
   return NextResponse.json({image:"data:image/webp;base64,"+base64,model:credential.model||MODEL,notice:"KI-Visualisierung, keine Zusage des tatsächlichen Ergebnisses."},{headers:NO_STORE});
  }catch{
   return deny("Die Bildbearbeitung konnte nicht abgeschlossen werden. Bitte erneut versuchen.",504);
+ }
+ }finally{
+  try{if(tryonQuotaId)await finishTryonQuota(tryonQuotaId)}catch(e){
+   console.error("RUBY_TRYON_QUOTA_FINISH_FAILED",e instanceof Error?e.name:"unknown");
+  }
  }
 }

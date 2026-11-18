@@ -1,3 +1,11 @@
+import "@fontsource/dm-sans/400.css";
+import "@fontsource/dm-sans/500.css";
+import "@fontsource/dm-sans/600.css";
+import "@fontsource/dm-sans/700.css";
+import "@fontsource/playfair-display/400.css";
+import "@fontsource/playfair-display/500.css";
+import "@fontsource/playfair-display/400-italic.css";
+import "@fontsource/playfair-display/500-italic.css";
 import type { Metadata } from "next";
 import { CartProvider } from "@/components/cart-context";
 import {publicShopEnabled,siteOrigin} from "@/lib/seo";
@@ -24,9 +32,5 @@ export const metadata:Metadata={
   twitter:{card:"summary_large_image"}
 };
 export default function RootLayout({children}:{children:React.ReactNode}){
-  return <html lang="de"><head>
-    <link rel="preconnect" href="https://fonts.googleapis.com"/>
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous"/>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet"/>
-  </head><body><CartProvider>{children}<HairTryonFloatingLink/><AnalyticsConsent/></CartProvider></body></html>;
+  return <html lang="de"><body><CartProvider>{children}<HairTryonFloatingLink/><AnalyticsConsent/></CartProvider></body></html>;
 }

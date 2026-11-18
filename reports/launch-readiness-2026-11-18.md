@@ -1,3 +1,41 @@
+# Ruby Hair — Güncel Canlı Yayın Durumu ve Denetim Kanıtları (18 Kasım 2026)
+
+**Güncel karar: MÜŞTERİ TALEBİYLE KONTROLLÜ CANLI SATIŞ AÇIK.** `rubyhair.de` ve PayPal/Klarna müşteri kasası açıktır (`RUBY_PUBLIC_CHECKOUT_MODE=payments_public`). Bu durum, aşağıdaki açık konular için koşulsuz güvenlik/hukuk onayı anlamına gelmez.
+
+**Üretim kapısı:** Vercel production, `RUBY_SHOP_PUBLIC=APPROVED_PRODUCTION` ve `RUBY_CANONICAL_SITE_URL=https://rubyhair.de` birlikte gereklidir. Bu değişkenler 18.11.2026'da production'a eklendi. Ödeme durdurma mekanizması `RUBY_PUBLIC_CHECKOUT_MODE=disabled` ile ayrı olarak uygulanır; Vercel deployment gerektirebilir. Gerçek kapatma/geri-açma tatbikatı müşteri ödemelerini kesmemek için yapılmadı.
+
+## Kanıt matrisi — mevcut doğrulanmış durum
+
+| İşlem | Son kanıt | Sonuç |
+| --- | --- | --- |
+| Canlı katalog / fiziksel stok | PostgreSQL katalog; 17 Kasım WooCommerce snapshot eşitleme, stok 0 varyantlar engelleniyor | PASS (sürekli WooCommerce senkronizasyonu değil) |
+| Sepet / adres / fiyat / %19 KDV / 4,99 € DHL | Uygulama ve otomatik testler; normal müşteri Klarna siparişi | PASS, tekrar regresyon testleri sürüyor |
+| PayPal | Eski 1 € kontrollü canlı QA başarılı; müşteri kasasında seçenek mevcut | Normal müşteri prod E2E, refund, webhook tekrarları ayrıca doğrulanmalı |
+| Klarna | Gerçek müşteri RH-5, 829,99 €; Order Management CAPTURED ve tek gerçek capture; local payment_confirmed/shipped | PASS — tekrar tahsilat yapılmadı |
+| Sipariş / PDF fatura | RH-5, `RH-2026-0000005` | PASS |
+| Müşteri ve mağaza e-postaları | RH-5 received, paid, shipped ve mağaza kopyaları = sent; SMTP kabul | PASS (inbox teslimi ayrı kontrol edilebilir) |
+| DHL | RH-5 `manual_shipped`, gerçek takip numarası kayıtlı | Manuel fulfillment PASS; DHL API otomatik etiket hâlâ eksik |
+| KI saç denemesi | Canlı API; gerçek sunucu üretimi WebP HTTP 200; uygun olmayan foto 422 | PASS; kullanıcı bütçesi/rate-limit koruması ayrıca denetleniyor |
+| Online cayma | `/widerruf/` iki aşamalı kayıt, geçersiz veri ret ve SMTP kuyruğu | Kod ve API testi var; gerçek kullanıcı E2E testi eksik |
+| İptal/iade/refund/hatalı ödeme/webhook tekrarları | Otomasyon ve idempotency kodu mevcut | Gerçek müşteri üretim kanıtı eksik |
+| Hukuki bilgi | AGB, Impressum, Datenschutz, Widerruf var | Satıcı adresi, veri işleme ve nihai hukuk onayı açık |
+
+**Açık işler:** DHL canlı Developer API yetkileri ve otomatik etiket; müşteri-iade/refund/tekrarlı webhook E2E; nihai hukuki onay; sunucu güvenlik gözlemi; ön uç performans/CSS bölme. Gerçekten tamamlanmamış kontrolleri "PASS" sayma.
+
+## Bağımsız denetim iyileştirmeleri
+
+- 18.11: Next.js 16.4.3 -> 16.4.6 guvenlik yukseltmesi ve temiz `npm ci` tamamlandi; uretim `npm audit --omit=dev` sonucu 0 acik. Yerel Node 65/65 + TS 74/74 = **139/139**, TypeScript ve Next production build PASS. SWC bozuk kurulum iki klasoru sifreli olmayan yerel korumali yedege alinarak temiz kuruldu.
+- 18.11: Google Fonts istemci CDN çağrıları kaldırılıp Playfair Display/DM Sans self-host bağımlılıkları eklendi; CSP report-only ve Permissions-Policy eklendi.
+- 18.11: KI gorsel istegi maliyeti icin HMAC anonim IP ve PostgreSQL uzerinde atomik global/dakikalik/gunluk/eszamanli kota kontrolu eklendi (IP: 2/dak, 5/gun; global: 4/dak, 35/gun; paralel: 2). `20261118210000_tryon_quota` production DB migration PASS. MUSTERI fotograflari veritabanina kaydedilmez. Kota asiminda 429, DB erisim kaybinda ucretli provider istegi yapmadan 503.
+- 18.11: Checkout, sepet, ürün ve hukuki sayfalarda sabit KI CTA gizlendi; canlı satışa uymayan eski ürün/admin metinleri güncellendi.
+- 18.11: Eski NO-GO rapor metni aşağıda **yayın öncesi tarihsel kayıt** olarak korunuyor; güncel karar yerine geçmez.
+
+---
+
+## ARŞİV — 18 Kasım 2026, canlı satış açılmadan önceki denetim anlık görüntüsü
+
+> **Uyarı:** Aşağıdaki "NO-GO", 503, stok NULL, e-posta kapalı gibi ifadeler yayından önceki testleri anlatır; 18 Kasım güncel durumunu temsil etmez.
+
 # Ruby Hair — Canlı Yayın Öncesi Akış Kontrolü (18 Kasım 2026)
 
 **Karar:** NO-GO — genel satış kapalı, müşteri düzeltmeleri ve gerçek ödeme mutabakatı bekleniyor.

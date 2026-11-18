@@ -7,9 +7,6 @@ export function renderRubyHairComingSoon():string{
 <title>Ruby Hair Extensions — Wir sind bald zurück</title>
 <meta name="description" content="Das neue Ruby Hair Erlebnis entsteht. Premium Echthaar-Extensions, bald in einem ganz neuen Onlineshop.">
 <meta name="theme-color" content="#241b20">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <style>
 :root{color-scheme:dark;--ink:#21191e;--cream:#f4efea;--soft:#d8bdc8;--rose:#b98798}
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;}body{background:var(--ink);color:var(--cream);font-family:'DM Sans',Arial,sans-serif;-webkit-font-smoothing:antialiased}

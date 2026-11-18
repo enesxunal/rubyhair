@@ -9,8 +9,11 @@ const allowedAssets=new Set([
 ]);
 const adminLoginPaths=new Set(["/admin/login","/api/admin/login"]);
 const ADMIN_COOKIE="rubyhair_admin";
-const storefrontPublic=()=>process.env.VERCEL_ENV==="production" ||
-  (process.env.RUBY_SHOP_PUBLIC==="APPROVED_PRODUCTION" && process.env.RUBY_CANONICAL_SITE_URL==="https://rubyhair.de");
+// An explicit production merchant approval is required in addition to the deploy.
+// Branch previews and local builds never become a public storefront by accident.
+const storefrontPublic=()=>process.env.VERCEL_ENV==="production" &&
+  process.env.RUBY_SHOP_PUBLIC==="APPROVED_PRODUCTION" &&
+  process.env.RUBY_CANONICAL_SITE_URL==="https://rubyhair.de";
 // Only known public endpoints may be accessed without an administrator session.
 const publicGetApis=new Set(["/api/catalog","/api/tryon/generate"]);
 const publicPostApis=new Set(["/api/cart/quote","/api/analytics/event","/api/tryon/generate","/api/checkout","/api/widerruf"]);
@@ -85,7 +88,7 @@ export async function proxy(request:NextRequest){
    return NextResponse.next();
   }
   if(request.method!=="GET"&&request.method!=="HEAD")return restrictedResponse();
-  // Customer pages and local images are public. Checkout itself remains 503.
+  // Public customer pages and checkout are guarded by the explicit payment mode.
   return NextResponse.next();
  }
  if(request.method!=="GET"&&request.method!=="HEAD")return restrictedResponse();

@@ -1,3 +1,4 @@
+process.env.RUBY_TRYON_TEST_BYPASS="LOCAL_TEST_ONLY";
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";

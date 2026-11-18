@@ -136,7 +136,7 @@ export function ProductDetail({product,initialColor,initialLength}:{product:Prod
           </details>
           <details><summary>Pflege & Anwendung</summary><p>Wasche dein Haar schonend, bürste die Extensions vorsichtig und lege dich nicht mit nassem Haar schlafen. Unsere Hinweise zur täglichen Routine findest du im Hair Guide.</p>
             <Link href="/ratgeber/">Hair Guide ↗</Link></details>
-          <details><summary>Beratung & Lieferung</summary><p>Du hast eine Frage zu Farbe, Länge, Methode oder Packungsanzahl? Kontaktiere Ruby Hair. Die verbindlichen Lieferkosten und Versandbedingungen des neuen Shops werden vor dem Verkaufsstart bestätigt.</p>
+          <details><summary>Beratung & Lieferung</summary><p>Du hast eine Frage zu Farbe, Länge, Methode oder Packungsanzahl? Kontaktiere Ruby Hair. Wir versenden innerhalb Deutschlands mit DHL für 4,99 € pro Bestellung. Weitere Informationen zu Lieferzeit, Zahlung und Widerruf findest du unter Versand & Zahlung.</p>
             <Link href="/kontakt/">Beratung kontaktieren ↗</Link> · <Link href="/versand-zahlung/">Versand & Zahlung ↗</Link></details>
         </div>
       </section>

@@ -9,7 +9,9 @@ export default function HairTryonFloatingLink(){
  const pathname=usePathname();
  if(!pathname||pathname.startsWith("/admin")||pathname.startsWith("/qa/")||
     pathname.startsWith("/api/")||pathname.startsWith("/coming-soon")||
-    pathname.startsWith("/haar-anprobe"))return null;
+    pathname.startsWith("/haar-anprobe")||pathname.startsWith("/warenkorb")||
+    pathname.startsWith("/kasse")||pathname.startsWith("/rechtliches/")||
+    pathname.startsWith("/widerruf")||pathname.startsWith("/produkt/"))return null;
 
  return <Link
   href="/haar-anprobe/"

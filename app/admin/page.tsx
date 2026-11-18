@@ -54,7 +54,7 @@ export default async function AdminHome(){
    <div className="rh-studio-hero-copy">
     <span className="rh-studio-eyebrow"><ShieldCheck size={14}/> SHOP HEALTH / STARTKLARHEIT</span>
     <h2>Erst vorbereiten.<br/><em>Dann verkaufen.</em></h2>
-    <p>Der neue Ruby Hair Shop läuft als Vorschau. Produkt- und Besuchsdaten sind verfügbar; der echte Checkout bleibt absichtlich gesperrt.</p>
+    <p>Der Ruby Hair Shop ist live. Produkt- und Besuchsdaten sowie bestätigte Bestellungen sind hier abrufbar. DHL-Etiketten bleiben bis zur vollständigen API-Freigabe manuell.</p>
     <Link href="/admin/produkte?bestand=unbekannt">Nächste Aufgabe ansehen <ArrowUpRight size={17}/></Link>
    </div>
    <div className="rh-studio-hero-progress">

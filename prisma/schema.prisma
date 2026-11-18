@@ -226,3 +226,17 @@ model ShippingJob {
   @@index([status,updatedAt])
   @@map("shipping_jobs")
 }
+
+// Anonymized, bounded AI usage accounting; no photo, prompt or customer
+// identifier is retained. A short-lived active flag limits concurrent spend.
+model TryonQuotaAttempt {
+  id          String   @id @default(uuid()) @db.Uuid
+  ipDigest    String   @db.VarChar(64)
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
+  finishedAt  DateTime?
+  @@index([ipDigest,createdAt])
+  @@index([createdAt])
+  @@index([finishedAt,expiresAt])
+  @@map("tryon_quota_attempts")
+}
