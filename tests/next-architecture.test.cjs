@@ -773,3 +773,11 @@ test("live merchant administration defaults to real orders and keeps test invent
  assert.ok(shell.includes('rh-admin-advanced-nav'));
  assert.ok(css.includes('.rh-admin-filters{display:flex'));
 });
+
+test("small-screen admin preserves navigation but reduces menu and heading height",()=>{
+ const css=fs.readFileSync(path.join(base,"src/styles/admin-v2.css"),"utf8");
+ assert.ok(css.includes('Narrow screens: expose the merchant data sooner'));
+ assert.ok(css.includes('.rh-admin-brand-logo{max-width:145px}'));
+ assert.ok(css.includes('.rh-admin-page-heading{padding:20px 0 15px}'));
+ assert.ok(!css.includes('display:none!important'));
+});

@@ -349,3 +349,19 @@
 .rh-admin-advanced-nav a:hover{color:white;background:#ffffff12;border-radius:6px}
 @media(max-width:850px){.rh-admin-advanced-nav{margin:3px 0 10px;border-top:0}.rh-admin-advanced-nav summary{padding:9px}.rh-admin-advanced-nav a{padding:8px 12px}}
 @media(max-width:650px){.rh-studio-hero-live{grid-template-columns:minmax(0,1fr);padding:24px 21px;gap:18px}.rh-studio-live-summary{border-left:0;border-top:1px solid #ffffff30;padding:14px 0 0}.rh-admin-filters a{flex:1 1 auto;justify-content:center}}
+/* Narrow screens: expose the merchant data sooner without removing navigation. */
+@media(max-width:650px){
+ .rh-admin-sidebar{padding:10px 14px 8px}
+ .rh-admin-brand{padding:0 0 7px;margin:0 0 3px;border-bottom:0}
+ .rh-admin-brand-logo{max-width:145px}
+ .rh-admin-nav{gap:5px;padding:2px 0 4px}
+ .rh-admin-nav a{font-size:11px;padding:9px 10px;min-height:38px}
+ .rh-admin-advanced-nav{margin:1px 0 0;padding:0}
+ .rh-admin-advanced-nav summary{padding:5px 7px;font-size:10px}
+ .rh-admin-sidebar-bottom{padding:2px 0 0;gap:7px;justify-content:flex-start;align-self:stretch}
+ .rh-admin-visit,.rh-admin-logout{padding:6px 8px;font-size:10px}
+ .rh-admin-topline{min-height:47px;padding:9px 0}
+ .rh-admin-page-heading{padding:20px 0 15px}
+ .rh-admin-page-heading h1{font-size:30px;margin:8px 0}
+ .rh-studio-hero-live{padding:19px 18px}
+}
