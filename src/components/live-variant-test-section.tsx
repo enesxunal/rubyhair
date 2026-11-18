@@ -60,6 +60,9 @@ export default function LiveVariantTestSection({state,cartReady}:{state:LiveVari
     1,00 € jetzt endgültig einziehen und Rechnung erstellen
    </button>
   </form>}
+  {state.pending&&<p style={{marginTop:15,fontSize:13}}>
+   <a href="/admin/paypal-durum" style={{textDecoration:"underline",fontWeight:650}}>PayPal-Status sicher prüfen (ohne Abbuchung)</a>
+  </p>}
   {state.pending&&!state.approvedPaypalToken&&<div style={{marginTop:16}}>
    <p style={{fontSize:12,color:"#94566b"}}>Eine Testzahlung ist bereits offen. Bitte zuerst beim Anbieter prüfen, bevor du erneut startest.</p>
    {state.pending.hasReference&&<form action={cancelLiveVariantTestAction}>
