@@ -41,6 +41,12 @@ export async function proxy(request:NextRequest){
  if(adminLoginPaths.has(path))return NextResponse.next();
  // Public read-only PayPal return landing: GET carries no authority and
  // never captures money. User clicks through to the protected admin UI.
+ if(path==="/qa/klarna/return"&&(request.method==="GET"||request.method==="HEAD")){
+  const response=NextResponse.next();
+  response.headers.set("Cache-Control","private, no-store");
+  response.headers.set("X-Robots-Tag","noindex, nofollow");
+  return response;
+ }
  if(path==="/qa/paypal/return"&&(request.method==="GET"||request.method==="HEAD")){
   const response=NextResponse.next();
   response.headers.set("Cache-Control","private, no-store");

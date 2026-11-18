@@ -9,9 +9,12 @@ import {getPrisma} from "@/lib/prisma";
 import {prepareHiddenQaProductAction} from "../test-purchase-actions";
 import {verifyStoredPaymentProvider} from "../payment-check-action";
 import QaPayPalTestSection from "./purchase-section";
+import KlarnaQaTestSection from "./klarna-section";
+import {getKlarnaQaProduct,getKlarnaQaApproval,KLARNA_QA_SLUG} from "@/lib/qa-live-klarna";
+import {QA_PRODUCT_SLUG} from "@/lib/internal-test-product";
 export const metadata:Metadata={title:"1 EUR Testbestellung | Ruby Hair Admin",robots:{index:false,follow:false}};
 export const runtime="nodejs";export const dynamic="force-dynamic";
-export default async function TestPurchasePage({searchParams}:{searchParams:Promise<{status?:string;probe?:string;paypalToken?:string;qaError?:string;paid?:string}>}){
+export default async function TestPurchasePage({searchParams}:{searchParams:Promise<{status?:string;probe?:string;paypalToken?:string;qaError?:string;paid?:string;klarnaReturn?:string;klarnaError?:string;klarnaPaid?:string;klarnaStatus?:string}>}){
  if(!await isAdmin())redirect("/admin/login");
  const params=await searchParams;
  const status=params.status;
@@ -27,16 +30,19 @@ export default async function TestPurchasePage({searchParams}:{searchParams:Prom
   klarna_unavailable:"Klarna ist vom Server aus derzeit nicht erreichbar.",
   klarna_inconclusive:"Klarna-Sitzungstest nicht eindeutig. Ein echter Checkout-Test ist weiterhin erforderlich.",
  };
- const [qa,credentials,testOrders]=await Promise.all([
+ const [qa,credentials,testOrders,klarnaQa,klarnaOrders]=await Promise.all([
   getHiddenQaProduct(),
   getPrisma().paymentIntegrationSetting.findMany({where:{environment:"live",provider:{in:["paypal","klarna","smtp","dhl"]}},select:{provider:true,field:true}}),
-  getPrisma().order.findMany({where:{testOnly:true},include:{invoice:{select:{invoiceNumber:true}}},orderBy:{createdAt:"desc"},take:10})
+  getPrisma().order.findMany({where:{testOnly:true,lines:{some:{variant:{product:{slug:QA_PRODUCT_SLUG}}}}},include:{invoice:{select:{invoiceNumber:true}}},orderBy:{createdAt:"desc"},take:10}),
+  getKlarnaQaProduct(),
+  getPrisma().order.findMany({where:{testOnly:true,lines:{some:{variant:{product:{slug:KLARNA_QA_SLUG}}}}},include:{invoice:{select:{invoiceNumber:true}}},orderBy:{createdAt:"desc"},take:10})
  ]);
  const fields=new Map<string,Set<string>>();
  for(const setting of credentials){if(!fields.has(setting.provider))fields.set(setting.provider,new Set());fields.get(setting.provider)!.add(setting.field)}
  const paypalReady=["clientId","clientSecret","webhookId"].every(x=>fields.get("paypal")?.has(x));
  const klarnaReady=["username","password","merchantId"].every(x=>fields.get("klarna")?.has(x));
  const smtpReady=fields.get("smtp")?.has("password")===true;
+ const klarnaApproval=params.klarnaReturn?await getKlarnaQaApproval(params.klarnaReturn):null;
  const dhlReady=["clientId","clientSecret","username","password","billingNumber"].every(x=>fields.get("dhl")?.has(x));
  return <AdminShell current="testorder" title="1 € Live-Test vorbereiten."
    description="Nur für Administratoren. Der Testartikel bleibt aus dem Shop verborgen, bis Zahlung, Rechnungen und Benachrichtigungen vollständig verifiziert sind.">
@@ -60,6 +66,7 @@ export default async function TestPurchasePage({searchParams}:{searchParams:Prom
    </div>
   </section>
   <QaPayPalTestSection qa={qa} paypalReady={paypalReady===true} orders={testOrders} params={params}/>
+  <KlarnaQaTestSection qa={klarnaQa} klarnaReady={klarnaReady===true} orders={klarnaOrders} params={params} approval={klarnaApproval}/>
   <section className="rh-admin-panel-card" style={{marginTop:20}}>
    <div className="rh-admin-card-title"><div><span>GATE / KEINE LIVE-BESTELLUNG AUSLÖSEN</span><h2>Was für den 1-€-Test fehlt</h2></div><ShieldCheck size={24}/></div>
    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(205px,1fr))",gap:13,marginTop:18}}>
