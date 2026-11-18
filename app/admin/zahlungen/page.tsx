@@ -7,6 +7,7 @@ import {databaseConfigured} from "@/lib/prisma";
 import {paymentVaultConfigured} from "@/lib/payment-secrets";
 import {paymentSettingsSpec,paymentProviders,paymentEnvironments} from "@/lib/payment-settings-spec";
 import {savePaymentSettingsAction} from "../payment-actions";
+import {publicCheckoutMode} from "@/lib/customer-checkout";
 import AdminShell from "../admin-shell";
 
 export const metadata:Metadata={title:"Zahlungen | Ruby Hair Verwaltung",robots:{index:false,follow:false}};
@@ -17,33 +18,33 @@ export default async function PaymentsReadiness({
   if(!await isAdmin())redirect("/admin/login");
   const params=await searchParams;
   const ready=databaseConfigured()&&paymentVaultConfigured();
+  const publicPayments=["public","payments_public","klarna_public"].includes(publicCheckoutMode());
   const saved=await getPrisma().paymentIntegrationSetting.findMany({
     where:{provider:{in:paymentProviders}},
     select:{provider:true,environment:true,field:true,updatedAt:true}
   });
   const savedKeys=new Set(saved.map(v=>[v.provider,v.environment,v.field].join(":")));
-  const status=params.status==="saved"?"Änderungen sicher gespeichert. Die Zahlungsarten bleiben deaktiviert.":
+  const status=params.status==="saved"?"Einstellungen verschlüsselt gespeichert. Gespeicherte API-Felder müssen separat getestet werden.":
     params.status==="unchanged"?"Keine Änderungen vorgenommen.":null;
   return <AdminShell current="payments" title="Zahlungen & Integrationen."
-    description="API-Zugänge für PayPal, Klarna, DHL Versand und weitere Anbieter geschützt hinterlegen. Noch keine Live-Zahlungen oder DHL-Labels.">
+    description="PayPal, Klarna und DHL Zugangsdaten sicher verwalten. Kundenzahlungen sind aktiv; DHL-Etiketten benötigen separat geprüfte Zugangsdaten.">
     <section className="rh-studio-payments-head">
-      <div><span className="rh-studio-eyebrow"><ShieldCheck size={14}/> PAYMENT READINESS / VORSCHAU</span>
-       <h2>Zugangsdaten sicher verwalten.<br/><em>Live-Zahlungen bleiben gesperrt.</em></h2>
+      <div><span className="rh-studio-eyebrow"><ShieldCheck size={14}/> LIVE INTEGRATION / SICHER</span>
+       <h2>Zugangsdaten sicher verwalten.<br/><em>{publicPayments?"PayPal & Klarna live.":"Checkout in Vorbereitung."}</em></h2>
        <p>API-Zugänge für Provider geschützt vorbereiten. Ein gespeicherter Schlüssel ist noch keine verifizierte Zahlungsintegration.</p>
       </div><LockKeyhole size={44} strokeWidth={1.2}/>
     </section>
     <div className="rh-studio-payment-steps">
       <div><span><CheckCircle2 size={17}/> 01 / DATENBANK</span><strong>{ready?"Verschlüsselter Speicher bereit":"Verschlüsselter Speicher fehlt"}</strong><small>Serverseitig, keine Klartext-Anzeige</small></div>
       <div><span><AlertCircle size={17}/> 02 / PROVIDER-DATEN</span><strong>{saved.length} Felder gespeichert</strong><small>Kein Live-Status oder Zahlungsnachweis</small></div>
-      <div><span><LockKeyhole size={17}/> 03 / TRANSAKTIONEN</span><strong>Noch nicht aktiviert</strong><small>Adapter, Webhooks und Sandbox-QA ausstehend</small></div>
+      <div><span><LockKeyhole size={17}/> 03 / TRANSAKTIONEN</span><strong>{publicPayments?"Kundencheckout aktiviert":"Checkout nicht öffentlich"}</strong><small>DHL-Versandlabel bleibt bis zur Freigabe deaktiviert</small></div>
     </div>
     {!ready&&<p role="alert" className="rh-admin-warning">
       Verschlüsselte Speicherung nicht eingerichtet. In der Serverumgebung muss RUBY_PAYMENT_SETTINGS_KEY
       (32 Byte, base64url) gesetzt und die Datenbankmigration eingespielt werden. Speichern ist bis dahin gesperrt.
     </p>}
     {status&&<p role="status" className="rh-admin-success">{status}</p>}
-    <p className="rh-admin-warning">Wichtig: Die alte WooCommerce-API zeigt nur angebotene Zahlungsarten. Hier gespeicherte API-Codes
-      aktivieren keine Transaktionen. Provideranbindung, Webhook-Prüfung und Sandbox-Test sind separat erforderlich.</p>
+    <p className="rh-admin-warning">Wichtig: PayPal und Klarna werden bereits im aktuellen Checkout angeboten. Die gespeicherten DHL-Daten ersetzen keine DHL-API-Freigabe. Bis alle sechs DHL-Live-Felder, das Paketgewicht und die Versandfreigabe geprüft wurden, bleibt die automatische Etikettenerstellung deaktiviert.</p>
     <div className="rh-admin-payment-sections">
       {paymentProviders.map(provider=>{
         const definition=paymentSettingsSpec[provider];
@@ -55,7 +56,7 @@ export default async function PaymentsReadiness({
           <p className="rh-admin-muted">{definition.explanation}</p>
           <div className="rh-studio-provider-note">
            <span>{saved.filter(v=>v.provider===provider).length} gespeicherte Einstellungen</span>
-           <span>{provider==="dhl"?"Keine Versandlabels aktiviert":"Keine Transaktionen aktiviert"} <ArrowRight size={13}/></span>
+           <span>{provider==="dhl"?"DHL-Labels: nicht freigegeben":publicPayments?"Kundenzahlungen im Shop aktiv":"Provider-Zugang prüfen"} <ArrowRight size={13}/></span>
           </div>
           {(provider==="bank"?["live"] as const:paymentEnvironments).map(environment=>
             <form action={savePaymentSettingsAction} key={environment} className="rh-admin-credentials-form" autoComplete="off">
@@ -87,7 +88,7 @@ export default async function PaymentsReadiness({
                 })}
               </div>
               <div className="rh-admin-credentials-footer">
-                <span>{provider==="dhl"?"Nur intern · Kein DHL-Label aktiviert":"Nur intern · Keine Kundenzahlung aktiviert"}</span>
+                <span>{provider==="dhl"?"Nur intern · DHL-Labels weiterhin deaktiviert":"Nur intern · keine neuen Zahlungen durch Speichern"}</span>
                 <button type="submit" disabled={!ready}>Einstellungen speichern</button>
               </div>
             </form>)}
@@ -95,10 +96,9 @@ export default async function PaymentsReadiness({
       })}
     </div>
     <section className="rh-admin-panel-card">
-      <div className="rh-admin-card-title"><div><span>LETZTER SCHRITT</span><h2>Was nach dem Speichern folgt</h2></div></div>
-      <p className="rh-admin-muted">Wir prüfen Konto-Berechtigungen, erstellen die eigenständige Serveranbindung
-        und verifizieren Testzahlungen sowie signierte Webhooks. Erst danach kann der echte Checkout freigeschaltet werden.
-        Der bestehende rubyhair.de Shop bleibt unverändert.</p>
+      <div className="rh-admin-card-title"><div><span>DHL LIVE-ZUGANG</span><h2>Was für automatische Labels noch fehlt</h2></div></div>
+      <p className="rh-admin-muted">Die DHL Paket DE Versenden API erfordert einen freigeschalteten Developer-Zugang mit Client ID und Secret, Geschäftskundenportal-Zugang, bestätigte Abrechnungsnummer sowie ein geprüftes Paketgewicht. Für bereits autorisierte Klarna-Bestellungen darf der Einzug nur nach tatsächlicher Paketübergabe bestätigt werden.</p>
+      <p><a href="https://developer.dhl.com/" target="_blank" rel="noopener noreferrer">DHL Developer Portal öffnen</a></p>
     </section>
   </AdminShell>;
 }

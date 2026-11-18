@@ -408,10 +408,12 @@ test("bulk variant editor requires admin, validates rows, and persists atomicall
   assert.ok(products.includes("<AdminVariantBulk"));
 });
 
-test("payment planning never opens live checkout or duplicates WordPress credentials",()=>{
+test("payment administration reflects live payments while keeping DHL labels disabled without credentials",()=>{
   const page=fs.readFileSync(path.join(base,"app/admin/zahlungen/page.tsx"),"utf8");
   const checkout=fs.readFileSync(path.join(base,"app/api/checkout/route.ts"),"utf8");
-  assert.ok(page.includes("Noch keine Live-Zahlungen"));
+  assert.ok(page.includes("publicCheckoutMode()"));
+  assert.ok(page.includes("DHL-Versandlabel bleibt"));
+  assert.ok(page.includes("savePaymentSettingsAction"));
   assert.ok(page.includes("savePaymentSettingsAction"));
   const notes=fs.readFileSync(path.join(base,"docs/RUBY_HAIR_PAYMENTS_MEETING_2026-11-14.md"),"utf8");
   for(const id of ["woocommerce_payments","ppcp-gateway","klarna_payments","bacs","ppcp-trustly"])assert.ok(notes.includes(id),id);
