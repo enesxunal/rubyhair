@@ -44,3 +44,23 @@
 - 9 kayıt yalnızca **yerel** `src/data/products.json` kataloğuna eklendi, stok 0 / satış kapalı. Yerel toplam: Tape-in 36 varyant ve 18 renk.
 - Canlı PostgreSQL **değişmedi** (27 Tape-in), toplu yayında `scripts/restore-legacy-tapein-variants.cjs` korumalı veri eklemesi gerekecek.
 - Normal müşteri checkout hâlâ NO-GO; tüm gerçek stok/ödeme/kargo/fatura kontrolleri ayrı.
+
+## 18 November 2026 – last client visual correction and release gate recheck
+
+### Keratin Bondings source image, verified
+- The customer flagged the Keratin card image as soft/blurry. Original published WooCommerce attachment `2022/09/1006-scaled.jpg` was recovered by read-only request to the **old Ruby Hair IONOS HTTPS origin** with the original domain host; the current Vercel site was not changed.
+- Authentic original image: **1707 x 2560 px** (255,270-byte JPEG), compared to earlier 1024 x 1536 px derivative. Saved a true-image WebP without generative changes to `public/assets/ruby-hair-keratin-original-20261118.webp`, **175,976 bytes**. Changed only the Keratin homepage category-card image source and supplied intrinsic dimensions.
+- Desktop local Chrome visual preview at `/#collections` showed the three category cards and the sharper original Keratin photograph. Asset local HTTP 200 and there were no browser console errors. Separate regression test added. The previously added KI floating CTA was reduced in width to avoid covering the Keratin category heading.
+
+### Rechecked automated tests
+- TypeScript check PASS, Node **57/57**, TS **41/41**, total **98/98**, production Next.js build PASS (20/20 static pages). Note: SWC native module warning on Mac falls back to working WASM and is not a build failure.
+- Local standard routes `/`, both Tape-in category lengths, Keratin category, one variant detail, `/warenkorb`, `/kasse`, `/kontakt`, `/versand-zahlung`, `/haar-anprobe` returned HTTP 200 on the running preview (10/10). Correct legal page routes are under `/rechtliches/{impressum,datenschutz,agb,widerruf}`, not the legacy top-level aliases. Their content currently describes the site as a preview and still requires legal finalization.
+- On live domain: homepage HTTP **503** branded Coming Soon, `POST /api/checkout` HTTP **503**; protected admin QA and Klarna callback HTTP 200/redirect behavior remains isolated. No public store checkout enabled and no payment or stock mutation performed.
+
+### Live-production read-only inventory/payment checks
+- Current production DB: **2 active products**, **38 active variants with NULL/unverified stock**, **0 active variants with verified positive stock**, **0 customer orders**, **0 invoices**; **0/9** archived Tape-in records imported into live database. Two separate hidden QA variants are inactive/stock-zero. Nine recovered Tape-in items exist **only in local code** awaiting batched migration.
+- AES-encrypted live payment settings have six field names for PayPal/Klarna, but existence of keys is **not** end-to-end customer payment acceptance. No verified ordinary customer PayPal/Klarna capture+webhook+refund flow. SMTP (IONOS) and DHL API integration credentials are not in the protected payment settings and full end-to-end mail/label tracking flows remain unverified.
+- `npm run preflight:live`: **NO_GO, 7 blockers** including intentionally unsynced local branch, uncommitted correction (to be resolved by the next local commit), disabled normal checkout, local build environment not injected with the production DB/vault env, unverified complete WordPress file restore drill, and unsigned customer payment/shipping E2E. DNS MX record check PASSED. Some preflight failures describe missing local environment variables, not evidence that live DB does not exist; live DB was independently queried read-only.
+- The current Impressum and privacy legacy source differ on the legal street address (Klara Strasse 19 vs Zweigertstrasse 8). Merchant approval and final privacy/AGB/Widerruf documents are prerequisites for selling. KI try-on vendor integration and GDPR E2E must also be signed off before advertising it as fully operational.
+
+**Decision: NO-GO for removing Coming Soon or enabling live sales.** Keep protected admin QA accessible, live public site closed and previous merchant records intact. Required path to GO: confirm actual stock and legal details; complete customer checkout with safe PayPal/Klarna authorization, exactly-once capture, signed webhooks, cancellation/refund; invoice+SMTP transactional emails; DHL labels/tracking; real low-value authorized customer purchase and refund, then review and perform a single staged batch release with rollback. No live code push and no external financial actions in this review.

@@ -29,10 +29,11 @@
  background:#fff9f4;
  color:#704255;
 }
-.rh-tryon-floating-text{display:flex;flex-direction:column;gap:5px;white-space:nowrap}
-.rh-tryon-floating-eyebrow{font-size:9px;letter-spacing:1.2px;font-weight:600;opacity:.78}
-.rh-tryon-floating-text strong{font-size:12px;letter-spacing:.65px;font-weight:700}
-.rh-tryon-floating-arrow{margin-left:4px;flex:none;opacity:.8}
+.rh-tryon-floating-text{display:flex;flex-direction:column;gap:4px;white-space:normal;max-width:125px}
+.rh-tryon-floating-eyebrow{font-size:8px;letter-spacing:.55px;font-weight:600;opacity:.78;white-space:nowrap}
+.rh-tryon-floating-text strong{font-size:11px;letter-spacing:.35px;font-weight:700;line-height:1.2}
+/* Keep the floating CTA compact so it does not hide product-card titles. */
+.rh-tryon-floating-arrow{display:none}
 .rh-tryon-floating-link:hover{background:#4c2a39;transform:translateY(-3px);box-shadow:0 14px 34px rgba(43,25,34,.3)}
 .rh-tryon-floating-link:focus-visible{outline:3px solid #dfaaae;outline-offset:4px}
 @media(max-width:600px){

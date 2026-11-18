@@ -223,7 +223,7 @@ export default function HomeFrontend({products,instagramPosts=[]}:{products:Prod
               </div>
             </Link>)}
             <Link className="rh-collection-card rh-collection-card-keratin" href="/kollektionen/keratin-bondings/">
-              <div className="collection-media"><img src="/assets/ruby-hair-keratin-editorial.webp" alt="Keratin Bondings aus Echthaar – Ruby Hair Originalproduktfotografie" loading="lazy" decoding="async"/>
+              <div className="collection-media"><img src="/assets/ruby-hair-keratin-original-20261118.webp" width={1707} height={2560} alt="Keratin Bondings aus Echthaar – Ruby Hair Originalproduktfotografie" loading="lazy" decoding="async"/>
                 <span className="rh-length-tag">KERATIN</span>
               </div>
               <div className="collection-caption">

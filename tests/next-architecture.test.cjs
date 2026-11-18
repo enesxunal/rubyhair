@@ -687,12 +687,12 @@ test("Ruby Hair homepage uses approved editorial copy and removes the redundant 
 test("Ruby Hair homepage shows three equally prominent collection cards and a full-width mobile Keratin card",()=>{
  const home=fs.readFileSync(path.join(base,"src/components/home-frontend.tsx"),"utf8");
  const css=fs.readFileSync(path.join(base,"src/styles/styles.css"),"utf8");
- const asset=path.join(base,"public/assets/ruby-hair-keratin-editorial.webp");
+ const asset=path.join(base,"public/assets/ruby-hair-keratin-original-20261118.webp");
  assert.ok(home.includes('collection-grid rh-collection-trio'));
  assert.ok(home.includes('Entdecke deine <i>Extensions.</i>'));
  assert.ok(home.includes('className="rh-collection-card rh-collection-card-keratin"'));
  assert.ok(home.includes('href="/kollektionen/keratin-bondings/"'));
- assert.ok(home.includes('src="/assets/ruby-hair-keratin-editorial.webp"'));
+ assert.ok(home.includes('src="/assets/ruby-hair-keratin-original-20261118.webp"'));
  assert.ok(!home.includes('className="rh-keratin-feature"'),"Keratin must not remain a small secondary banner");
  assert.ok(css.includes('.rh-length-collection .collection-grid.rh-collection-trio'));
  assert.ok(css.includes('grid-template-columns:repeat(3,minmax(0,1fr))'));
@@ -721,4 +721,15 @@ test("floating KI hair try-on CTA points to the real preview and excludes protec
  assert.ok(styles.includes("safe-area-inset-bottom"));
  assert.ok(styles.includes("@media(max-width:600px)"));
  assert.ok(route.includes("<HairTryonLab products={products}/>"));
+});
+
+test("Keratin category card uses the original full-resolution product photograph",()=>{
+ const fs=require("node:fs");
+ const path=require("node:path");
+ const home=fs.readFileSync(path.join(base,"src/components/home-frontend.tsx"),"utf8");
+ const file=path.join(base,"public/assets/ruby-hair-keratin-original-20261118.webp");
+ assert.ok(home.includes('/assets/ruby-hair-keratin-original-20261118.webp'));
+ assert.ok(home.includes('width={1707} height={2560}'));
+ assert.ok(fs.existsSync(file));
+ assert.ok(fs.statSync(file).size>100000);
 });
