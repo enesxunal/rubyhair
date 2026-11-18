@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useCart } from "@/components/cart-context";
 import {byVariation, euros, type Product} from "@/lib/catalog";
 import {useCartQuote} from "@/hooks/use-cart-quote";
-export function CartPage(){
+export function CartPage({shippingCents}:{shippingCents:number}){
   const {lines,update,remove,clear,loaded}=useCart();
   const [liveProducts,setLiveProducts]=useState<Product[]|null>(null);
   const [catalogError,setCatalogError]=useState(false);
@@ -70,15 +70,15 @@ export function CartPage(){
       <aside className="rh-order-summary"><h2>Zusammenfassung</h2>
         <p className="rh-cart-checking" aria-live="polite">{quoteLoading?"Preise werden auf dem Server geprüft":currentQuote?"Preisprüfung abgeschlossen":quoteError?"Preisprüfung derzeit nicht möglich":""}</p>
         <div><span>Zwischensumme (serverseitig)</span><strong>{total===null?"Wird geprüft":euros(total/100)}</strong></div>
-        <div><span>Versand</span><span>Noch nicht bestätigt</span></div>
+        <div><span>DHL-Versand innerhalb Deutschlands</span><strong>{euros(shippingCents/100)}</strong></div>
         <Link className="rh-cart-shipping-link" href="/versand-zahlung/">Informationen zu Versand & Zahlung ↗</Link>
-        <div><span>Artikelwert ohne Versand</span><strong>{total===null?"Wird geprüft":euros(total/100)}</strong></div>
-        {currentQuote&&<p className="rh-quote-source">Quelle: {currentQuote.source==="postgresql"?"Ruby Hair PostgreSQL":"importierte Demo-Produktdaten"}. Dieser Betrag ist unverbindlich.</p>}
+        <div><span>Gesamt inkl. Versand</span><strong>{total===null?"Wird geprüft":euros((total+shippingCents)/100)}</strong></div>
+        {currentQuote&&<p className="rh-quote-source">{currentQuote.source==="postgresql"?"Die Preise werden beim Bestellabschluss erneut geprüft.":"Die Preisprüfung ist derzeit eingeschränkt; bitte versuche es später erneut."}</p>}
         {issues.length>0&&<p role="status" className="rh-cart-stock-warning">{issues.some(x=>x.status==="unverified-stock")?"Der physische Lagerbestand ist nicht bestätigt. ":""}
           {issues.some(x=>x.status==="out-of-stock")?"Einige Artikel sind nicht oder nicht in der gewünschten Menge verfügbar. ":""}
           {issues.some(x=>x.status==="unknown-variation")?"Ein Produkt ist nicht mehr im Katalog. ":""}
         </p>}
-        <p>Nach Auswahl der Zahlungsart kannst du den aktuellen Testkauf abschließen. Für reguläre Bestellungen wird die Zahlung nach dem Test freigeschaltet.</p>
+        <p>Im nächsten Schritt kannst du deine Adresse eingeben und sicher mit PayPal oder Klarna bezahlen.</p>
         <Link className="rh-buy-button" href="/kasse/">ZUR KASSE<span>↗</span></Link>
         <Link className="rh-continue-shop" href="/kollektionen/">Weiter einkaufen</Link>
       </aside>

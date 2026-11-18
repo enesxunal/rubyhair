@@ -28,7 +28,7 @@ export type QuoteLine={
 export type CartQuote={
   source:"postgresql"|"imported-preview";
   currency:"EUR";lines:QuoteLine[];subtotalCents:number;
-  needsReview:boolean;checkoutEnabled:false;
+  needsReview:boolean;checkoutEnabled:boolean;
   message:string;
 };
 // This is a read-only estimate. The future checkout MUST create the order from
@@ -60,7 +60,7 @@ export async function buildCartQuote(request:QuoteRequest):Promise<CartQuote>{
   return {
     source:catalog.source,currency:"EUR",lines,subtotalCents,
     needsReview:lines.some(line=>line.status!=="available"),
-    checkoutEnabled:false,
-    message:"Unverbindliche Vorschau. Keine Bestellung oder Zahlung moeglich."
+    checkoutEnabled:catalog.source==="postgresql"&&!lines.some(line=>line.status!=="available"),
+    message:catalog.source==="postgresql"?"Preise und Bestand wurden serverseitig geprüft; der Bestellabschluss erfolgt an der Kasse.":"Verbindliche Preisprüfung derzeit nicht verfügbar."
   };
 }

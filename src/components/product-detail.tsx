@@ -63,7 +63,7 @@ export function ProductDetail({product,initialColor,initialLength}:{product:Prod
         <h1>{product.name}</h1>
         <p className="rh-detail-summary">{product.intro}</p>
         <div className="rh-price" aria-live="polite">{selected?euros(selected.price):"Preis auf Anfrage"}</div>
-        <p className="rh-price-note">Unverbindlicher Demo-Preis. Steuerangaben, Versandkosten und Verfügbarkeit werden vor dem Verkaufsstart des neuen Shops bestätigt. <Link href="/versand-zahlung/">Versand & Zahlung ↗</Link></p>
+        <p className="rh-price-note">Alle Preise inkl. 19 % MwSt., zzgl. 4,99 € DHL-Versand innerhalb Deutschlands. Preis und Verfügbarkeit werden an der Kasse nochmals geprüft. <Link href="/versand-zahlung/">Versand & Zahlung ↗</Link></p>
         <div className="rh-product-summary-tags"><span>{product.material}</span><span>{product.pack} / Packung</span></div>
         <fieldset className="rh-choice"><legend>01 / WÄHLE DEINE FARBE <span>· {selected?.color_label}</span></legend>
           <div className="rh-color-options">

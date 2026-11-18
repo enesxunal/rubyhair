@@ -191,6 +191,26 @@ model OrderNotification {
   @@map("order_notifications")
 }
 
+// A consumer withdrawal request is recorded regardless of order/payment state.
+// Acknowledgment delivery is tracked separately; the request itself is never discarded.
+model WithdrawalRequest {
+  id              String   @id @default(uuid()) @db.Uuid
+  name            String   @db.VarChar(120)
+  contract        String   @db.VarChar(160)
+  email           String   @db.VarChar(254)
+  emailDigest     String   @db.VarChar(64)
+  ipDigest        String?  @db.VarChar(64)
+  receivedAt      DateTime @default(now())
+  status          String   @default("pending")
+  acknowledgedAt  DateTime?
+  attempts        Int      @default(0)
+  nextAttemptAt   DateTime @default(now())
+  @@index([emailDigest,receivedAt])
+  @@index([ipDigest,receivedAt])
+  @@index([status,nextAttemptAt])
+  @@map("withdrawal_requests")
+}
+
 // One shipment per customer order; shipping labels are never created for QA.
 model ShippingJob {
   id             String    @id @default(uuid()) @db.Uuid

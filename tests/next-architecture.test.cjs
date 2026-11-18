@@ -79,7 +79,7 @@ test("server cart quote validates IDs and uses server catalog prices",()=>{
   assert.ok(route.includes("quoteRequestSchema.safeParse"));
   assert.ok(source.includes("getStoreCatalog()"));
   assert.ok(source.includes("Math.round(v.price*100)"));
-  assert.ok(source.includes("checkoutEnabled:false"));
+  assert.ok(source.includes('checkoutEnabled:catalog.source==="postgresql"'));
   assert.ok(source.includes("unverified-stock"));
   assert.ok(source.includes("out-of-stock"));
 });
@@ -145,34 +145,33 @@ test("product pages link to care and contact routes",()=>{
   assert.ok(details.includes('href="/kontakt/"'));
   assert.ok(details.includes('rh-product-help'));
 });
-test("product preview distinguishes specific color images from editorial collection photos",()=>{
-  const product=fs.readFileSync(path.join(base,"src/components/product-detail.tsx"),"utf8");
-  for(const item of ["Vergrößerte Produktansicht","rh-gallery-thumb","Ausgewählter Farbton",
-    "Kollektion / Illustration","Unverbindlicher Demo-Preis","Nicht auf Lager","Verfügbar"]){
-    assert.ok(product.includes(item),item);
-  }
-  assert.ok(product.includes("lightbox.current?.showModal()"));
-  assert.ok(product.includes("lightbox.current?.close()"));
+test("product pages use real checkout prices and keep color image guidance",()=>{
+ const product=fs.readFileSync(path.join(base,"src/components/product-detail.tsx"),"utf8");
+ for(const item of ["Vergrößerte Produktansicht","rh-gallery-thumb","Ausgewählter Farbton", "Kollektion / Illustration", "Alle Preise inkl. 19 % MwSt.","Nicht auf Lager","Verfügbar"]){
+   assert.ok(product.includes(item),item);
+ }
+ assert.ok(!product.includes("Unverbindlicher Demo-Preis"));
+ assert.ok(product.includes("lightbox.current?.showModal()"));
+ assert.ok(product.includes("lightbox.current?.close()"));
 });
-test("shipping and returns preview does not claim unapproved checkout conditions",()=>{
-  const shipping=fs.readFileSync(path.join(base,"app/versand-zahlung/page.tsx"),"utf8");
-  assert.ok(shipping.includes("4,99 € Versandpauschale"));
-  assert.ok(shipping.includes("bis zu 5 Werktagen"));
-  assert.ok(shipping.includes("noch keine Zahlungsarten aktiviert"));
-  assert.ok(shipping.includes("Quell") || shipping.includes("Quelle"));
-  assert.ok(shipping.includes("Quelle: rubyhair.de"));
-  const legal=fs.readFileSync(path.join(base,"app/rechtliches/[slug]/page.tsx"),"utf8");
-  assert.ok(legal.includes("old.vatId"));
-  assert.ok(legal.includes("Zweigertstraße 8"));
-  assert.ok(legal.includes("Widerrufsbelehrung"));
-  assert.ok(legal.includes("robots:{index:false"));
-  assert.ok(shipping.includes('robots:{index:false'));
-  const merchant=fs.readFileSync(path.join(base,"MERCHANT-APPROVAL.md"),"utf8");
-  assert.ok(merchant.includes("NOT APPROVED"));
-  assert.ok(merchant.includes("conflicts"));
-  assert.ok(merchant.includes("Zweigertstrasse"));
-  assert.ok(merchant.includes("Klara Strasse"));
+
+test("live shipping, payment and withdrawal information matches the checkout",()=>{
+ const shipping=fs.readFileSync(path.join(base,"app/versand-zahlung/page.tsx"),"utf8");
+ const legal=fs.readFileSync(path.join(base,"app/rechtliches/[slug]/page.tsx"),"utf8");
+ assert.ok(shipping.includes("4,99 €"));
+ assert.ok(shipping.includes("fünf Werktage"));
+ assert.ok(shipping.includes("PayPal und Klarna"));
+ assert.ok(shipping.includes("/widerruf/"));
+ assert.ok(!shipping.includes("VORSCHAU"));
+ assert.ok(legal.includes("merchant.vatId"));
+ assert.ok(legal.includes("Widerrufsbelehrung"));
+ assert.ok(legal.includes("elektronische Funktion"));
+ const merchant=fs.readFileSync(path.join(base,"MERCHANT-APPROVAL.md"),"utf8");
+ assert.ok(merchant.includes("NOT APPROVED"));
+ assert.ok(merchant.includes("Zweigertstrasse"));
+ assert.ok(merchant.includes("Klara Strasse"));
 });
+
 test("checkout preview reuses authoritative cart quotation and cannot collect payment details",()=>{
   const checkout=fs.readFileSync(path.join(base,"src/components/checkout-preview.tsx"),"utf8");
   const quoteHook=fs.readFileSync(path.join(base,"src/hooks/use-cart-quote.ts"),"utf8");
@@ -216,33 +215,42 @@ test("local-only order reservation service fails closed and snapshots server-sid
   assert.ok(!fs.readFileSync(path.join(base,"app/api/checkout/route.ts"),"utf8").includes("reserveLocalTestOrder"));
   assert.ok(fs.existsSync(path.join(base,"prisma/migrations/20261102094500_local_test_order_reservations/migration.sql")));
 });
-test("German withdrawal and legal compliance blockers are recorded",()=>{
-  const doc=fs.readFileSync(path.join(base,"reports/legal-audit-2026-11-02.md"),"utf8");
-  const legal=fs.readFileSync(path.join(base,"app/rechtliches/[slug]/page.tsx"),"utf8");
-  assert.ok(doc.includes("356a"));
-  assert.ok(doc.includes("312j"));
-  assert.ok(doc.includes("357(2)"));
-  assert.ok(legal.includes("19. Juni 2026"));
-  assert.ok(legal.includes("elektronische Widerrufsfunktion"));
+test("German statutory online withdrawal now has a two-stage workflow",()=>{
+ const doc=fs.readFileSync(path.join(base,"reports/legal-audit-2026-11-02.md"),"utf8");
+ const legal=fs.readFileSync(path.join(base,"app/rechtliches/[slug]/page.tsx"),"utf8");
+ const ui=fs.readFileSync(path.join(base,"src/components/withdrawal-form.tsx"),"utf8");
+ const api=fs.readFileSync(path.join(base,"app/api/widerruf/route.ts"),"utf8");
+ const mail=fs.readFileSync(path.join(base,"src/lib/withdrawal.ts"),"utf8");
+ const footer=fs.readFileSync(path.join(base,"src/components/site-shell.tsx"),"utf8");
+ assert.ok(doc.includes("356a"));
+ assert.ok(doc.includes("312j"));
+ assert.ok(doc.includes("357(2)"));
+ assert.ok(legal.includes("Vertrag online widerrufen"));
+ assert.ok(ui.includes("Widerruf bestätigen"));
+ assert.ok(ui.includes("Weiter zur Bestätigung"));
+ assert.ok(api.includes("sendWithdrawalAcknowledgment"));
+ assert.ok(mail.includes("receivedAt.toISOString"));
+ assert.ok(footer.includes('href="/widerruf/"'));
 });
-test("legacy policy mirrors the old shop sections without opening sales",()=>{
-  const legal=fs.readFileSync(path.join(base,"app/rechtliches/[slug]/page.tsx"),"utf8");
-  const checkout=fs.readFileSync(path.join(base,"src/components/checkout-preview.tsx"),"utf8");
-  for(const section of ["1. Geltungsbereich","2. Vertragspartner","3. Vertragsschluss",
-   "4. Widerrufsrecht","5. Preise und Versandkosten","6. Lieferung",
-   "7. Zahlung","8. Eigentumsvorbehalt","9. Streitbeilegung"]){
-    assert.ok(legal.includes(section),section);
-  }
-  assert.ok(legal.includes("14-tägige Frist"));
-  assert.ok(legal.includes("Zweigertstraße 8"));
-  assert.ok(checkout.includes("DHL Versand Deutschland"));
-  assert.ok(checkout.includes("Enthaltene 19 % USt."));
-  const issues=fs.readFileSync(path.join(base,"reports/musteriye-sorulacak-konular-2026-11-02.md"),"utf8");
-  for(const issue of ["Kargo","AGB","Klara Straße","Zweigertstraße","Klarna","19 Haziran 2026","EVE"]){
-    assert.ok(issues.toLowerCase().includes(issue.toLowerCase()),issue);
-  }
-  assert.ok(fs.readFileSync(path.join(base,"app/api/checkout/route.ts"),"utf8").includes("503"));
+
+test("live legal pages reflect real checkout while merchant approvals remain documented",()=>{
+ const legal=fs.readFileSync(path.join(base,"app/rechtliches/[slug]/page.tsx"),"utf8");
+ const checkout=fs.readFileSync(path.join(base,"src/components/checkout-preview.tsx"),"utf8");
+ for(const section of ["1. Geltungsbereich","2. Bestellung und Vertragsschluss","3. Preise und Versandkosten","4. Zahlungsmethoden","5. Lieferung","6. Widerrufsrecht","7. Eigentumsvorbehalt","8. Kontakt"]){
+  assert.ok(legal.includes(section),section);
+ }
+ assert.ok(legal.includes("vierzehn Tagen"));
+ assert.ok(legal.includes("PayPal und Klarna"));
+ assert.ok(legal.includes("§ 5 DDG"));
+ assert.ok(checkout.includes("DHL Versand Deutschland"));
+ assert.ok(checkout.includes("Enthaltene 19 % USt."));
+ const issues=fs.readFileSync(path.join(base,"reports/musteriye-sorulacak-konular-2026-11-02.md"),"utf8");
+ for(const issue of ["Kargo","AGB","Klara Straße","Zweigertstraße","Klarna","19 Haziran 2026","EVE"]){
+  assert.ok(issues.toLowerCase().includes(issue.toLowerCase()),issue);
+ }
+ assert.ok(fs.readFileSync(path.join(base,"app/api/checkout/route.ts"),"utf8").includes("503"));
 });
+
 test("admin pages use authenticated separate dashboard, product and read-only order views",()=>{
  const dash=fs.readFileSync(path.join(base,"app/admin/page.tsx"),"utf8");
  const products=fs.readFileSync(path.join(base,"app/admin/produkte/page.tsx"),"utf8");
@@ -380,7 +388,7 @@ test("opt-in analytics handles page paths and purges daily aggregates after 180 
  assert.ok(consent.includes('isTrackableRubyPath(path)'));
  assert.ok(consent.includes('ruby_analytics_choice'));
  assert.ok(consent.includes('setOpen(true)'));
- assert.ok(legal.includes('Freiwillige Nutzungsstatistik (nur mit Einwilligung)'));
+ assert.ok(legal.includes('Cookie-Einwilligung und Statistik'));
  assert.ok(legal.includes('180 Tage'));
  assert.ok(!legal.includes('Anonyme Nutzungsstatistik (derzeit deaktiviert)'));
 });
@@ -491,7 +499,7 @@ test("KI hair try-on has no test access UI or API gate, retaining privacy and im
  assert.ok(api.includes('image[]'));
  assert.ok(lab.includes('checked={consent}'));
  assert.ok(lab.includes('shrinkImage(before.file)'));
- assert.ok(legal.includes('KI-Haaranprobe (freiwillige Bildverarbeitung)'));
+ assert.ok(legal.includes('KI-Haarvorschau'));
 });
 
 

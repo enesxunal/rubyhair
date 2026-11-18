@@ -35,8 +35,8 @@ export default function CustomerPaymentSubmit({method,lines,address,cartReady,to
   {!address&&<p>Bitte zuerst oben deine Liefer- und Rechnungsadresse mit „Adressen prüfen“ bestätigen.</p>}
   <label style={{display:"flex",alignItems:"flex-start",gap:10,marginBottom:16,fontSize:12,lineHeight:1.7}}>
    <input type="checkbox" checked={agreed} onChange={e=>setAgreed(e.target.checked)} required/>
-   Ich habe die <a href="/agb/" target="_blank" rel="noopener noreferrer">AGB</a> und die
-   <a href="/widerrufsbelehrung/" target="_blank" rel="noopener noreferrer"> Widerrufsbelehrung</a> gelesen und bestätige den kostenpflichtigen Kauf.
+   Ich habe die <a href="/rechtliches/agb/" target="_blank" rel="noopener noreferrer">AGB</a> und die
+   <a href="/rechtliches/widerruf/" target="_blank" rel="noopener noreferrer"> Widerrufsbelehrung</a> gelesen und bestätige den kostenpflichtigen Kauf.
   </label>
   {error&&<p role="alert" style={{color:"#a13c50"}}>Bestellung konnte nicht gestartet werden ({error}). Bitte nicht erneut versuchen, bis der Vorgang geprüft ist.</p>}
   <button type="button" className="rh-payment-primary-link" disabled={!ready} onClick={start}

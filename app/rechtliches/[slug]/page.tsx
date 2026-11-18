@@ -1,83 +1,123 @@
 import type {Metadata} from "next";
 import Link from "next/link";
 import {notFound} from "next/navigation";
-import {ExternalLink} from "lucide-react";
 import ShopLayout from "@/components/site-shell";
-import {legacyStore as old} from "@/lib/legacy-store-facts";
+import {legacyStore as merchant} from "@/lib/legacy-store-facts";
 
-const pages:Record<string,{title:string;source:string}>={
- impressum:{title:"Impressum",source:old.urls.imprint},
- datenschutz:{title:"Datenschutzerklärung",source:old.urls.privacy},
- agb:{title:"Allgemeine Geschäftsbedingungen",source:old.urls.terms},
- widerruf:{title:"Widerruf & Rückgabe",source:old.urls.cancellation}
+const pages:Record<string,string>={
+ impressum:"Impressum",
+ datenschutz:"Datenschutzerklärung",
+ agb:"Allgemeine Geschäftsbedingungen",
+ widerruf:"Widerrufsbelehrung"
 };
 export function generateStaticParams(){return Object.keys(pages).map(slug=>({slug}));}
 export async function generateMetadata({params}:{params:Promise<{slug:string}>}):Promise<Metadata>{
- return {title:pages[(await params).slug]?.title||"Rechtliche Informationen",robots:{index:false,follow:false}};
+ const slug=(await params).slug;
+ return {title:pages[slug]||"Rechtliche Informationen",alternates:{canonical:"/rechtliches/"+slug+"/"}};
 }
-function Source({href}:{href:string}){return <a className="rh-legal-source" href={href} target="_blank" rel="noopener noreferrer">QUELLE: BISHERIGER SHOP AUF RUBYHAIR.DE <ExternalLink size={15}/></a>;}
-function Section({title,children}:{title:string;children:React.ReactNode}){return <section className="rh-legal-section"><h2>{title}</h2>{children}</section>;}
-function Notice(){return <p className="rh-legal-caution">Diese Angaben beschreiben den bisherigen Ruby Hair Shop. Das neue Shopsystem ist eine Vorschau ohne Bestell- oder Zahlungsfunktion. Noch offene rechtliche Punkte werden vor dem Verkaufsstart abgestimmt.</p>;}
+function Section({title,children}:{title:string;children:React.ReactNode}){
+ return <section className="rh-legal-section"><h2>{title}</h2>{children}</section>;
+}
+function Merchant(){return <><strong>{merchant.business}</strong><span> – Inhaber {merchant.owner}</span>
+ <p>{merchant.street}, {merchant.postalCity}, Deutschland</p>
+ <p>E-Mail: <a href={"mailto:"+merchant.email}>{merchant.email}</a></p></>;}
 function LegalContent({slug}:{slug:string}){
  if(slug==="impressum")return <>
-  <Section title="Anbieterangaben">
-   <p><strong>{old.business}</strong><br/>Inhaber: Herr {old.owner}<br/>{old.street}<br/>{old.postalCity}<br/>Deutschland</p>
-   <p>E-Mail: <a href={"mailto:"+old.email}>{old.email}</a></p>
-   <p>Umsatzsteuer-Identifikationsnummer: <strong>{old.vatId}</strong></p>
-   <p>Die bisherigen AGB nennen das Amtsgericht Essen als Registergericht, ohne eine Registernummer anzugeben.</p>
+  <Section title="Angaben gemäß § 5 DDG"><Merchant/>
+   <p>Umsatzsteuer-Identifikationsnummer gemäß § 27a UStG: {merchant.vatId}</p>
   </Section>
   <Section title="Verbraucherstreitbeilegung">
-   <p>Ruby Hair erklärt im bisherigen Impressum, weder zur Teilnahme an einer Verbraucherschlichtung verpflichtet noch hierzu bereit zu sein.</p>
-   <p>Der dortige Link zur geschlossenen EU-Online-Streitbeilegungsplattform wird nicht als aktiver Dienst übernommen.</p>
-  </Section><Notice/>
+   <p>Ruby Hair ist nicht verpflichtet und nicht bereit, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.</p>
+  </Section>
+  <Section title="Kontakt"><p>Bei Fragen zum Online-Shop oder zu deiner Bestellung kannst du dich an <a href={"mailto:"+merchant.email}>{merchant.email}</a> wenden.</p></Section>
  </>;
  if(slug==="agb")return <>
-  <Section title="1. Geltungsbereich"><p>Die bisherigen AGB gelten für Lieferungen von Ruby Hair an Verbraucher. Verbraucher kaufen überwiegend zu privaten Zwecken und nicht im Rahmen einer gewerblichen oder selbstständigen Tätigkeit.</p></Section>
-  <Section title="2. Vertragspartner"><p>Ruby Hair, Inhaber {old.owner}, {old.street}, {old.postalCity}. Das alte Dokument nennt außerdem das Amtsgericht Essen als Registergericht.</p></Section>
-  <Section title="3. Vertragsschluss"><p>Die bisherige Produktdarstellung dient der Einladung zur Bestellung. Nach dem alten Ablauf erklärt der Kunde mit einem ausdrücklich kostenpflichtigen Bestellbutton seine verbindliche Bestellung; der Vertrag wird mit der Auftragsbestätigung per E-Mail geschlossen.</p><p>Die neue Vorschau erlaubt derzeit keine Bestellung.</p></Section>
-  <Section title="4. Widerrufsrecht"><p>Die bisherigen Bedingungen nennen für Verbraucher eine Widerrufsfrist von 14 Tagen ab Warenempfang. Die Erklärung kann gegenüber {old.owner} an der Geschäftsadresse oder per <a href={"mailto:"+old.email}>{old.email}</a> erfolgen.</p><p>Nach dem alten AGB-Text trägt der Käufer die unmittelbaren Rücksendekosten. Der alte AGB-Abschnitt nimmt die ursprünglichen Lieferkosten von der Erstattung aus; die separate Widerrufsbelehrung enthält hierzu eine andere Regelung.</p><p><Link href="/rechtliches/widerruf/">Widerrufsangaben des bisherigen Shops ansehen →</Link></p></Section>
-  <Section title="5. Preise und Versandkosten"><p>Der bisherige Shop gibt Produktpreise einschließlich gesetzlicher Mehrwertsteuer an. Für den Versand innerhalb Deutschlands wird eine Pauschale von <strong>4,99 € je Bestellung</strong> genannt. Nachnahme ist nach den bisherigen Bedingungen nicht möglich.</p></Section>
-  <Section title="6. Lieferung"><p>Die bisherigen AGB nennen den Versand innerhalb Deutschlands mit <strong>DHL</strong> und eine Lieferzeit von bis zu <strong>5 Werktagen</strong>. Für Lieferungen ins Ausland machen sie keinen verlässlichen Lieferzeitzusatz.</p></Section>
-  <Section title="7. Zahlung"><p>Als bisherige Zahlungsarten sind direkte Banküberweisung, PayPal, VISA und Mastercard angegeben. Bei Vorauszahlung erfolgt die Warenlieferung nach Eingang der Überweisung. Die alte Startseite nennt daneben Klarna und SEPA.</p><p>Für die neue Vorschau sind noch keine Zahlungsanbieter freigeschaltet.</p></Section>
-  <Section title="8. Eigentumsvorbehalt"><p>Nach den bisherigen Bedingungen bleibt die Ware bis zur vollständigen Bezahlung Eigentum von Ruby Hair.</p></Section>
-  <Section title="9. Streitbeilegung"><p>Ruby Hair erklärt, nicht zur Teilnahme an einem Verfahren vor einer Verbraucherschlichtungsstelle verpflichtet oder bereit zu sein. Die nicht mehr betriebene EU-Online-Streitbeilegungsplattform wird nicht als aktiver Kontaktweg verwendet.</p></Section>
-  <Notice/><Link className="rh-legal-internal" href="/versand-zahlung/">Versand & Zahlung ansehen →</Link>
+  <Section title="1. Geltungsbereich">
+   <p>Diese Bedingungen gelten für Bestellungen von Verbrauchern über den Ruby Hair Online-Shop. Vertragspartner ist Ruby Hair, Inhaber {merchant.owner}, {merchant.street}, {merchant.postalCity}.</p>
+  </Section>
+  <Section title="2. Bestellung und Vertragsschluss">
+   <p>Die Darstellung der Produkte stellt eine Einladung zur Abgabe einer Bestellung dar. Du kannst die gewünschte Farbe, Länge und Menge in den Warenkorb legen und die Bestelldaten an der Kasse prüfen. Durch die ausdrücklich zahlungspflichtige Bestellung gibst du ein verbindliches Angebot ab. Die Bestell- und Zahlungsbestätigung wird dir elektronisch mitgeteilt.</p>
+  </Section>
+  <Section title="3. Preise und Versandkosten">
+   <p>Die im Shop angegebenen Endpreise enthalten die gesetzliche deutsche Umsatzsteuer. Für den Versand innerhalb Deutschlands wird eine Versandpauschale von 4,99 € pro Bestellung berechnet. Vor Bestellabschluss werden Produkte, Gesamtbetrag und Versandkosten angezeigt.</p>
+  </Section>
+  <Section title="4. Zahlungsmethoden">
+   <p>Im Online-Shop sind PayPal und Klarna als Zahlungsarten verfügbar. Die Zahlung wird über den ausgewählten Anbieter abgewickelt. Klarna kann den Betrag zunächst autorisieren und erst nach Versand einziehen. Die jeweiligen zusätzlichen Bedingungen des Zahlungsanbieters werden in dessen Zahlungsprozess angezeigt.</p>
+  </Section>
+  <Section title="5. Lieferung">
+   <p>Geliefert wird innerhalb Deutschlands mit DHL. Die reguläre Lieferzeit beträgt bis zu fünf Werktage, sofern für den jeweiligen Artikel nichts anderes angegeben ist. Wenn ein Artikel nicht verfügbar ist oder sich der Versand verzögert, informieren wir dich.</p>
+  </Section>
+  <Section title="6. Widerrufsrecht">
+   <p>Verbrauchern steht grundsätzlich ein gesetzliches Widerrufsrecht zu. Die Informationen zur Frist, zu Rücksendekosten und zu den Erstattungsfolgen findest du in der <Link href="/rechtliches/widerruf/">Widerrufsbelehrung</Link>. Du kannst deine Erklärung auch direkt über die <Link href="/widerruf/">elektronische Widerrufsfunktion</Link> abgeben.</p>
+  </Section>
+  <Section title="7. Eigentumsvorbehalt und Gewährleistung">
+   <p>Bis zur vollständigen Zahlung bleibt die Ware Eigentum von Ruby Hair. Es gelten die gesetzlichen Mängelhaftungsrechte.</p>
+  </Section>
+  <Section title="8. Kontakt und Streitbeilegung">
+   <p>Bei Rückfragen kontaktiere uns bitte unter <a href={"mailto:"+merchant.email}>{merchant.email}</a>. Ruby Hair ist nicht zur Teilnahme an einem Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle verpflichtet oder bereit.</p>
+  </Section>
  </>;
  if(slug==="widerruf")return <>
-  <Section title="Widerrufsrecht und Frist">
-   <p>Nach der eigenständigen bisherigen Widerrufsbelehrung steht Verbrauchern eine <strong>14-tägige Frist</strong> ohne Angabe von Gründen zu. Sie beginnt grundsätzlich mit dem Empfang der Ware durch den Käufer oder einen benannten Dritten.</p>
-   <p>Eine eindeutige Erklärung kann an {old.owner}, {old.street}, {old.postalCity}, oder per E-Mail an <a href={"mailto:"+old.email}>{old.email}</a> gerichtet werden. Die Mitteilung muss innerhalb der Frist abgesendet werden.</p>
+  <Section title="Widerrufsrecht">
+   <p>Du hast das Recht, binnen vierzehn Tagen ohne Angabe von Gründen diesen Vertrag zu widerrufen. Die Widerrufsfrist beträgt vierzehn Tage ab dem Tag, an dem du oder ein von dir benannter Dritter, der nicht der Beförderer ist, die Waren in Besitz genommen hat. Bei getrennten Lieferungen ist grundsätzlich der Erhalt der letzten Ware maßgeblich.</p>
+   <p>Um dein Widerrufsrecht auszuüben, musst du uns – Ruby Hair, {merchant.owner}, {merchant.street}, {merchant.postalCity}, E-Mail <a href={"mailto:"+merchant.email}>{merchant.email}</a> – mittels einer eindeutigen Erklärung über deinen Entschluss, den Vertrag zu widerrufen, informieren. Zur Wahrung der Frist reicht es aus, dass du die Mitteilung vor Ablauf der Widerrufsfrist absendest.</p>
   </Section>
-  <Section title="Erstattung und Rücksendung">
-   <p>Die eigenständige alte Belehrung sieht die Rückzahlung der Zahlungen einschließlich der Kosten der günstigsten Standardlieferung vor. Zusätzliche Kosten einer teureren Versandart sind ausgenommen. Erstattungen sollen über das ursprüngliche Zahlungsmittel erfolgen.</p>
-   <p>Der Händler kann die Rückzahlung bis zum Eintreffen der Ware oder zum Nachweis ihrer Rücksendung zurückhalten. Die Ware ist nach der bisherigen Regelung innerhalb von 14 Tagen nach Erklärung zurückzusenden. Die unmittelbaren Rücksendekosten trägt der Käufer.</p>
-   <p>Ein Wertverlust ist nur zu ersetzen, wenn er auf einen Umgang mit der Ware zurückgeht, der zur Prüfung von Eigenschaften und Funktion nicht nötig war.</p>
+  <Section title="Vertrag online widerrufen">
+   <p>Du kannst deinen Widerruf auch über unsere elektronische Funktion erklären. Auf der Seite <Link href="/widerruf/">Vertrag widerrufen</Link> gibst du Name, Vertrags- oder Bestellreferenz und E-Mail-Adresse an. Danach bestätigst du den Widerruf mit einem zweiten Schritt. Wir übermitteln dir unverzüglich eine Eingangsbestätigung mit Inhalt sowie Datum und Uhrzeit deiner Erklärung auf einem dauerhaften Datenträger, in der Regel per E-Mail.</p>
+   <p><Link href="/widerruf/" className="rh-editorial-cta">VERTRAG WIDERRUFEN</Link></p>
   </Section>
-  <Section title="Rücksendekontakt"><p>Ruby Hair, {old.owner}<br/>{old.street}<br/>{old.postalCity}<br/>E-Mail: <a href={"mailto:"+old.email}>{old.email}</a></p><p>Die bisherige Website enthält noch unvollständige Felder für eine Telefonnummer und einen möglichen abweichenden Rücksendeempfänger. Bis zur Klärung wird keine weitere Adresse behauptet.</p></Section>
-  <Section title="Elektronische Widerrufsfunktion"><p>Seit dem 19. Juni 2026 verlangt § 356a BGB für erfasste Online-Verbraucherverträge eine elektronische Widerrufsfunktion mit Bestätigung in zwei Schritten und unverzüglicher elektronischer Eingangsbestätigung. Diese wird vor dem Verkaufsstart des neuen Shops umgesetzt.</p></Section>
-  <Notice/>
+  <Section title="Folgen des Widerrufs">
+   <p>Wenn du diesen Vertrag widerrufst, haben wir dir alle Zahlungen, die wir von dir erhalten haben, einschließlich der Kosten der günstigsten angebotenen Standardlieferung, unverzüglich und spätestens binnen vierzehn Tagen ab Eingang der Widerrufserklärung zurückzuzahlen. Zusätzliche Kosten aufgrund einer von dir gewählten teureren Versandart sind ausgenommen. Wir verwenden für die Rückzahlung dasselbe Zahlungsmittel wie bei der ursprünglichen Transaktion, sofern nicht ausdrücklich etwas anderes vereinbart wurde.</p>
+   <p>Wir können die Rückzahlung verweigern, bis wir die Waren wieder zurückerhalten haben oder du den Nachweis erbracht hast, dass du die Waren zurückgesandt hast, je nachdem, welches der frühere Zeitpunkt ist.</p>
+   <p>Du hast die Waren unverzüglich und in jedem Fall spätestens binnen vierzehn Tagen ab dem Tag, an dem du uns über den Widerruf unterrichtest, an Ruby Hair, {merchant.street}, {merchant.postalCity}, Deutschland, zurückzusenden oder zu übergeben. Du trägst die unmittelbaren Kosten der Rücksendung. Für einen Wertverlust musst du nur aufkommen, wenn er auf einen Umgang mit den Waren zurückzuführen ist, der zur Prüfung ihrer Beschaffenheit, Eigenschaften und Funktionsweise nicht notwendig war.</p>
+  </Section>
+  <Section title="Muster-Widerrufserklärung (freiwillig)">
+   <p>An Ruby Hair, {merchant.street}, {merchant.postalCity}, {merchant.email}:</p>
+   <p>Hiermit widerrufe ich den von mir abgeschlossenen Vertrag über den Kauf folgender Waren: [Bezeichnung]; bestellt am [Datum], erhalten am [Datum]; Name und Anschrift; Datum.</p>
+   <p>Eine Begründung ist nicht erforderlich. Die Nutzung dieses Musters ist freiwillig.</p>
+  </Section>
  </>;
  return <>
-  <Section title="Verantwortliche Stelle"><p>Die bisherige Datenschutzerklärung nennt <strong>Zweigertstraße 8, 45130 Essen</strong> als Adresse der verantwortlichen Stelle; im Impressum steht dagegen {old.street}, {old.postalCity}. Für die neue Datenschutzfassung wird die richtige Anschrift überprüft.</p><p>E-Mail: <a href={"mailto:"+old.email}>{old.email}</a></p></Section>
-  <Section title="Datenschutz im bisherigen Shop"><p>Die bisherige WordPress-Datenschutzerklärung beschreibt Serverprotokolle, Cookies, Einwilligungsverwaltung, Kontaktanfragen, Aufbewahrung, verschlüsselte Datenübertragung, Versand- und Zahlungsabwicklung.</p><p>Darin werden Usercentrics, Cookie Notice & Compliance, Complianz und mehrere Zahlungsdienstleister beschrieben. Diese historischen Angaben sind nicht automatisch auf die neue Plattform übertragbar.</p></Section>
-  <Section title="Neue Next.js-Vorschau"><p>In der aktuellen Vorschau werden weder Bestellungen noch Zahlungsinformationen entgegengenommen. Die Warenkorbauswahl wird im Browser gespeichert; das Kontaktformular bereitet nur einen Entwurf im E-Mail-Programm des Besuchers vor.</p><p>Die endgültige Datenschutzerklärung wird auf tatsächlich eingesetzte Hosting-, Schrift-, Analyse-, E-Mail- und Zahlungsdienste abgestimmt.</p></Section>
-  <Section title="Freiwillige Nutzungsstatistik (nur mit Einwilligung)"><p>Auf der neuen Ruby-Hair-Vorschau können Sie freiwillig der statistischen Auswertung zustimmen. Ohne diese Zustimmung werden keine Statistikereignisse erfasst. Die Auswahl kann jederzeit über „Statistik-Einstellungen“ auf der Website geändert werden. Eine Ablehnung verhindert die Datenerfassung.</p><p>Nach Zustimmung zählen wir auf unserer eigenen Website einzelne Seitenaufrufe, Klicks auf „Zum Warenkorb“ und Aufrufe der unverbindlichen Kassen-Vorschau. Gespeichert werden ausschließlich täglich zusammengefasste Ereigniszahlen nach grobem Seitenpfad, Gerätekategorie (Mobil/Desktop) und Herkunftskategorie (direkt, Suche, soziale Netzwerke, Verweis oder intern). Wir speichern dabei in der Statistik keine Besucher-ID, keine IP-Adresse, keine vollständige Referrer-URL, keine Suchbegriffe, keine Fotos, keine Namen und keine E-Mail-Adresse. Aus den Ereigniszahlen lassen sich keine individuellen Besucherverläufe oder eindeutigen Besucherzahlen ableiten.</p><p>Die Einwilligung wird in Ihrem Browser lokal gespeichert (Schlüssel „ruby_analytics_choice“). Für die Prüfung der Zustimmung wird ein auf diese Domain beschränktes Cookie „ruby_analytics“ mit der gewählten Einstellung verwendet, höchstens für zwölf Monate. Die täglich zusammengefassten Statistikdaten werden auf einen Zeitraum von 180 Tagen begrenzt; ältere Einträge werden beim nächsten Statistikereignis entfernt. Diese optionale statistische Verarbeitung erfolgt auf Grundlage Ihrer Einwilligung (Art. 6 Abs. 1 lit. a DSGVO); Sie können diese jederzeit für die Zukunft widerrufen. Technisch erforderliche Serverprotokolle des Hostinganbieters sind hiervon getrennt.</p></Section>
-  <Section title="KI-Haaranprobe (freiwillige Bildverarbeitung)"><p>Im Hair Preview Lab bleiben hochgeladene Bilder zunächst nur im Browser. Erst wenn Sie die KI-Bildbearbeitung selbst starten und ausdrücklich zustimmen, wird Ihr hochgeladenes Originalfoto zunächst zur Prüfung, ob eine geeignete Einzelpersonen-Haaraufnahme vorliegt, über unseren Server an den externen KI-Dienst <strong>OpenAI</strong> übermittelt. Nur wenn das Foto geeignet erscheint, werden das Original und das ausgewählte Ruby Hair Farbmuster anschließend zur Bildbearbeitung übermittelt. Ungeeignete oder nicht verlässlich prüfbare Fotos werden nicht zur Haargenerierung verwendet. Das erzeugte Ergebnis wird an Ihren Browser zurückgegeben. Ruby Hair speichert Original und Ergebnis nicht dauerhaft in seiner eigenen Datenbank. Eine weitere Verarbeitung beim externen Dienst nach dessen Bedingungen ist damit nicht ausgeschlossen.</p><p>Diese KI-Nutzung ist freiwillig und erfolgt auf Grundlage der ausdrücklichen Einwilligung (Art. 6 Abs. 1 lit. a DSGVO). Die Einwilligung gilt für diese geöffnete Sitzung; jeder einzelne Bildbearbeitungsauftrag wird erst durch den erneuten Klick auf „Saçımda Dene“ gestartet. Ohne Ihre Zustimmung findet keine Übermittlung an den KI-Anbieter statt. Für die endgültige öffentliche Kundennutzung müssen Auftragsverarbeitung, mögliche internationale Datenübertragungen, Verarbeitungsdauer und vollständige Datenschutzhinweise mit Ruby Hair verbindlich geklärt werden. Die Vorschau stellt kein garantiertes Friseurergebnis dar.</p></Section>
-  <Notice/>
+  <Section title="Verantwortliche Stelle">
+   <Merchant/>
+   <p>Für Datenschutzanfragen wende dich bitte an <a href={"mailto:"+merchant.email}>{merchant.email}</a>.</p>
+  </Section>
+  <Section title="Bestellungen, Zahlungen und Versand">
+   <p>Wenn du etwas bestellst, verarbeiten wir die für Vertrag und Versand erforderlichen Angaben, insbesondere Namen, Kontakt- und Lieferdaten, bestellte Artikel und den Zahlungsstatus. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO; für gesetzliche Aufbewahrungspflichten Art. 6 Abs. 1 lit. c DSGVO.</p>
+   <p>Für die Zahlungsabwicklung werden erforderliche Daten an PayPal beziehungsweise Klarna übermittelt, wenn du den Anbieter auswählst. Ruby Hair speichert Zahlungsreferenzen und Bestätigungsstatus, aber keine vollständigen Zahlungs- oder Kreditkartendaten. Für die Paketbeförderung werden Versanddaten an DHL übermittelt. Bestellbenachrichtigungen und Eingangsbestätigungen werden über IONOS-E-Mail-Dienste versandt.</p>
+  </Section>
+  <Section title="Hosting und technische Protokolle">
+   <p>Der Shop nutzt Vercel zum Hosting und eine PostgreSQL-Datenbank. Für die technische Bereitstellung und Sicherheit können Serverprotokolle (z. B. IP-Adresse, Zeitpunkt, angefragte Seite und technische Fehlerdaten) verarbeitet werden. Die Verarbeitung erfolgt zur Bereitstellung des Dienstes und zur Sicherheit auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO.</p>
+  </Section>
+  <Section title="Cookie-Einwilligung und Statistik">
+   <p>Technisch notwendige Funktionen wie der Warenkorb verwenden lokale Browserdaten. Optionale Nutzungsstatistiken werden nur mit deiner Einwilligung nach Art. 6 Abs. 1 lit. a DSGVO erfasst. Du kannst deine Auswahl über „Statistik-Einstellungen“ im Seitenfuß ändern oder widerrufen. Die Shop-Statistik speichert täglich zusammengefasste Ereigniszahlen statt individueller Besucherverläufe und löscht diese nach 180 Tagen.</p>
+  </Section>
+  <Section title="KI-Haarvorschau">
+   <p>Wenn du die KI-Haarvorschau nutzt, wird ein ausgewähltes Foto erst nach ausdrücklicher Einwilligung und nach deinem Start der Bildbearbeitung über den Shopserver an den Dienst OpenAI übertragen. Fotos und generierte Ergebnisse werden nicht dauerhaft in der Ruby Hair Datenbank gespeichert. Die Verarbeitung ist freiwillig und beruht auf deiner Einwilligung (Art. 6 Abs. 1 lit. a DSGVO). Für die Verarbeitung durch externe Anbieter gelten zusätzlich deren Datenschutzinformationen.</p>
+  </Section>
+  <Section title="Elektronische Widerrufserklärungen">
+   <p>Über unsere <Link href="/widerruf/">Widerrufsfunktion</Link> verarbeiten wir deinen Namen, die Vertrags- oder Bestellreferenz und deine angegebene E-Mail-Adresse. Wir dokumentieren Datum und Uhrzeit des Eingangs, speichern die Erklärung zur Nachweisführung und übermitteln eine Eingangsbestätigung per E-Mail. Die Verarbeitung ist für gesetzliche Pflichten und die Vertragsabwicklung erforderlich (Art. 6 Abs. 1 lit. b und c DSGVO). Die Daten werden nur so lange vorgehalten, wie die Bearbeitung und gesetzliche Aufbewahrungspflichten es erfordern.</p>
+  </Section>
+  <Section title="Deine Rechte">
+   <p>Du kannst nach den gesetzlichen Voraussetzungen Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung und Datenübertragbarkeit verlangen. Eine erteilte Einwilligung kannst du jederzeit mit Wirkung für die Zukunft widerrufen. Du hast außerdem das Recht, dich bei einer zuständigen Datenschutzaufsichtsbehörde zu beschweren. Wende dich für entsprechende Anliegen an <a href={"mailto:"+merchant.email}>{merchant.email}</a>.</p>
+  </Section>
  </>;
 }
 export default async function Legal({params}:{params:Promise<{slug:string}>}){
  const slug=(await params).slug;
  if(!pages[slug])notFound();
- const page=pages[slug];
  return <ShopLayout><section className="rh-shell rh-info-page rh-legal-page">
-  <nav className="rh-breadcrumb" aria-label="Breadcrumb"><Link href="/">Startseite</Link><span>/</span><span>{page.title}</span></nav>
-  <div className="rh-eyebrow">RUBY HAIR / INFORMATIONEN AUS DEM BISHERIGEN SHOP</div>
-  <h1>{page.title}</h1>
-  <p className="rh-legal-intro">Übernommen und zusammengefasst aus dem bisherigen Ruby Hair Shop, Stand {old.checkedOn}. Die Originalfassung ist über den Quellenlink verfügbar.</p>
-  <div className="rh-delivery-state" role="status"><strong>VORSCHAU</strong><span>Keine Bestellung oder Zahlung möglich. Die endgültigen Bedingungen werden vor dem Verkaufsstart geklärt.</span></div>
+  <nav className="rh-breadcrumb" aria-label="Breadcrumb"><Link href="/">Startseite</Link><span>/</span><span>{pages[slug]}</span></nav>
+  <div className="rh-eyebrow">RUBY HAIR / RECHTLICHE INFORMATIONEN</div>
+  <h1>{pages[slug]}</h1>
+  <p className="rh-legal-intro">Informationen zum Ruby Hair Online-Shop. Stand: 18. November 2026.</p>
   <LegalContent slug={slug}/>
-  <Source href={page.source}/>
-  <div className="rh-legal-nav"><Link href="/rechtliches/impressum/">Impressum</Link><Link href="/rechtliches/datenschutz/">Datenschutz</Link><Link href="/rechtliches/agb/">AGB</Link><Link href="/rechtliches/widerruf/">Widerruf</Link></div>
+  <div className="rh-legal-nav">
+   <Link href="/rechtliches/impressum/">Impressum</Link>
+   <Link href="/rechtliches/datenschutz/">Datenschutz</Link>
+   <Link href="/rechtliches/agb/">AGB</Link>
+   <Link href="/rechtliches/widerruf/">Widerrufsbelehrung</Link>
+   <Link href="/widerruf/">Vertrag widerrufen</Link>
+  </div>
  </section></ShopLayout>;
 }
