@@ -98,6 +98,7 @@ export default async function PaymentsReadiness({
     <section className="rh-admin-panel-card">
       <div className="rh-admin-card-title"><div><span>DHL LIVE-ZUGANG</span><h2>Was für automatische Labels noch fehlt</h2></div></div>
       <p className="rh-admin-muted">Die DHL Paket DE Versenden API erfordert einen freigeschalteten Developer-Zugang mit Client ID und Secret, Geschäftskundenportal-Zugang, bestätigte Abrechnungsnummer sowie ein geprüftes Paketgewicht. Für bereits autorisierte Klarna-Bestellungen darf der Einzug nur nach tatsächlicher Paketübergabe bestätigt werden.</p>
+      <p><a href="/admin/dhl">DHL Zugang & Versandstatus prüfen</a></p>
       <p><a href="https://developer.dhl.com/" target="_blank" rel="noopener noreferrer">DHL Developer Portal öffnen</a></p>
     </section>
   </AdminShell>;

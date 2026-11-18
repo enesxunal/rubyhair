@@ -31,7 +31,8 @@ export async function confirmManualKlarnaHandoverAction(data:FormData){
     throw new Error("UNVERIFIED_KLARNA_ORDER");
   if(before.status==="shipped"&&before.trackingNumber===tracking)return;
   if(!["payment_authorized","payment_confirmed"].includes(before.status)||
-     (before.shippingJob&&["label_created","awaiting_handover","manual_shipped"].includes(before.shippingJob.status)))
+     before.shippingJob?.status==="manual_shipped"||
+     (["label_created","awaiting_handover"].includes(before.shippingJob?.status||"")&&before.shippingJob?.trackingNumber!==tracking))
     throw new Error("NOT_ELIGIBLE_FOR_MANUAL_HANDOVER");
   if(before.status==="payment_authorized"){
    // Provider GET -> idempotent capture -> GET again -> exact amount -> invoice.
@@ -61,7 +62,7 @@ export async function confirmManualKlarnaHandoverAction(data:FormData){
    await tx.shippingJob.upsert({
     where:{orderId:id},
     create:{orderId:id,status:"manual_shipped",trackingNumber:tracking},
-    update:{status:"manual_shipped",trackingNumber:tracking,lastError:null}
+    update:{status:["label_created","awaiting_handover"].includes(before.shippingJob?.status||"")?"shipped":"manual_shipped",trackingNumber:tracking,lastError:null}
    });
    await tx.orderNotification.upsert({
     where:{orderId_stage:{orderId:id,stage:"shipped"}},

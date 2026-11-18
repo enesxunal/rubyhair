@@ -18,7 +18,7 @@ export async function POST(req:NextRequest){
   // admin_test may exercise the backend before external accounts are enabled.
   if(mode==="public"){
    const [mail,dhl]=await Promise.all([loadStoreMailSettings(),getDhlIntegrationReadiness("live")]);
-   if(!mail.stored||!dhl.credentialsComplete||(process.env.RUBY_DHL_LIVE_LABELS_ENABLED!=="true"||!process.env.RUBY_DHL_WEIGHT_G))
+   if(!mail.stored||!dhl.credentialsComplete||(process.env.RUBY_DHL_LIVE_LABELS_ENABLED!=="true"||process.env.RUBY_DHL_SENDER_APPROVED!=="true"||!process.env.RUBY_DHL_WEIGHT_G))
     return NextResponse.json({error:"FULFILLMENT_NOT_READY"},{status:503,headers});
   }
   // Manual DHL fulfillment supports the separate Klarna-only and PayPal+Klarna

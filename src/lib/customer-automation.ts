@@ -85,14 +85,14 @@ export async function captureAuthorizedKlarna(orderId:string){
  * only when merchant-supplied DHL contract credentials and package weight exist.
  * An ambiguous label response is held for manual reconciliation to avoid buying two labels. */
 export async function createQueuedDhlLabels(limit=5){
- if(process.env.RUBY_DHL_LIVE_LABELS_ENABLED!=="true"||!process.env.RUBY_DHL_WEIGHT_G)return {created:0,skipped:"DHL_LABELS_DISABLED"};
+ if(process.env.RUBY_DHL_LIVE_LABELS_ENABLED!=="true"||process.env.RUBY_DHL_SENDER_APPROVED!=="true"||!process.env.RUBY_DHL_WEIGHT_G)return {created:0,skipped:"DHL_LABELS_DISABLED"};
  const ready=await getDhlIntegrationReadiness("live");
  if(!ready.credentialsComplete)return {created:0,skipped:"DHL_CREDENTIALS_INCOMPLETE"};
  const rows=await db().shippingJob.findMany({where:{status:"waiting_credentials"},orderBy:{createdAt:"asc"},take:Math.max(1,Math.min(limit,10))});
  let created=0;
  for(const job of rows){
   const order=await db().order.findUnique({where:{id:job.orderId}});
-  if(!order||order.testOnly||!(["payment_confirmed","payment_authorized"].includes(order.status)))continue;
+  if(!order||order.testOnly||!(["payment_confirmed","payment_authorized","preparing"].includes(order.status)))continue;
   const claim=await db().shippingJob.updateMany({where:{id:job.id,status:"waiting_credentials",trackingNumber:null},data:{status:"submitting",attemptCount:{increment:1}}});
   if(claim.count!==1)continue;
   try{
@@ -110,6 +110,7 @@ export async function createQueuedDhlLabels(limit=5){
  return {created};
 }
 
+/** Creating a label is NOT proof of parcel handover. Never capture Klarna here. */
 export async function finalizePreparedShippingJobs(limit=5){
  const jobs=await db().shippingJob.findMany({where:{status:"label_created"},take:Math.max(1,Math.min(limit,10)),orderBy:{createdAt:"asc"}});
  let prepared=0;
@@ -117,16 +118,18 @@ export async function finalizePreparedShippingJobs(limit=5){
   try{
    const order=await db().order.findUnique({where:{id:job.orderId}});
    if(!order||order.testOnly||!job.trackingNumber)continue;
-   if(order.status==="payment_authorized")await captureAuthorizedKlarna(order.id);
-   const newOrder=await db().order.findUnique({where:{id:order.id}});
-   if(!newOrder||newOrder.status!=="payment_confirmed")continue;
+   if(!["payment_authorized","payment_confirmed","preparing"].includes(order.status))continue;
    await db().$transaction(async tx=>{
-    const changed=await tx.order.updateMany({where:{id:order.id,status:"payment_confirmed"},data:{status:"preparing"}});
-    if(changed.count!==1)throw new Error("FULFILLMENT_CONCURRENCY");
-    requireOrderTransition("payment_confirmed","preparing","fulfillment");
-    await tx.orderStatusEvent.create({data:{orderId:order.id,fromStatus:"payment_confirmed",toStatus:"preparing",reason:"dhl_label_created_waiting_parcel_handover"}});
-    await tx.orderNotification.upsert({where:{orderId_stage:{orderId:order.id,stage:"processing"}},create:{orderId:order.id,stage:"processing"},update:{}});
-    await tx.shippingJob.update({where:{id:job.id},data:{status:"awaiting_handover"}});
+    if(order.status==="payment_confirmed"){
+     const changed=await tx.order.updateMany({where:{id:order.id,status:"payment_confirmed"},data:{status:"preparing"}});
+     if(changed.count!==1)throw new Error("FULFILLMENT_CONCURRENCY");
+     requireOrderTransition("payment_confirmed","preparing","fulfillment");
+     await tx.orderStatusEvent.create({data:{orderId:order.id,fromStatus:"payment_confirmed",toStatus:"preparing",reason:"dhl_label_created_waiting_parcel_handover"}});
+     await tx.orderNotification.upsert({where:{orderId_stage:{orderId:order.id,stage:"processing"}},create:{orderId:order.id,stage:"processing"},update:{}});
+    }
+    // Authorized Klarna orders stay authorized until verified physical handover.
+    const changed=await tx.shippingJob.updateMany({where:{id:job.id,status:"label_created",trackingNumber:job.trackingNumber},data:{status:"awaiting_handover"}});
+    if(changed.count!==1)throw new Error("DHL_LABEL_STATUS_CONCURRENCY");
    });
    prepared++;
   }catch(e){console.error("SHIPPING_FINALIZE_REQUIRES_REVIEW",safeError(e));}

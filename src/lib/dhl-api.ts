@@ -30,6 +30,21 @@ export async function getDhlIntegrationReadiness(environment:DhlEnvironment) {
  * Explicit server-side test flags are required for OAuth verification.
  * Never return or log the access token in a response, browser or server logs.
  */
+/** An explicitly admin-triggered authentication check; never buys a parcel label. */
+export async function checkDhlAuthFromAdmin(environment:DhlEnvironment, doFetch:typeof fetch=fetch):Promise<"authenticated"|"credentials_missing"|"unauthorized"|"unavailable"> {
+  const credentials=await dhlCredentials(environment);
+  if(dhlMissingFields(credentials).length)return "credentials_missing";
+  try{
+    const request=buildDhlTokenRequest(environment,credentials as DhlCredentials);
+    const response=await doFetch(request.url,{...request.init,signal:AbortSignal.timeout(12000),redirect:"error"});
+    if(response.status===401||response.status===403)return "unauthorized";
+    if(!response.ok)return "unavailable";
+    const payload:unknown=await response.json();
+    return payload&&typeof payload==="object"&&"access_token" in payload&&typeof payload.access_token==="string"&&payload.access_token.length>10?
+      "authenticated":"unavailable";
+  }catch{return "unavailable"}
+}
+
 export async function testDhlAuthentication(environment:DhlEnvironment, doFetch:typeof fetch=fetch):Promise<boolean> {
   if (process.env.RUBY_DHL_AUTH_PROBE_ENABLED!=="true") throw new Error("DHL_AUTH_PROBE_DISABLED");
   if (environment==="live" && process.env.RUBY_DHL_LIVE_AUTH_PROBE_ENABLED!=="true")

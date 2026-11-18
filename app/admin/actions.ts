@@ -1,5 +1,7 @@
 "use server";
 import { revalidatePath, updateTag } from "next/cache";
+import {after} from "next/server";
+import {deliverQueuedOrderEmails} from "@/lib/customer-automation";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { existsSync } from "node:fs";
@@ -164,9 +166,10 @@ const fulfillmentInput=z.object({
   next:z.enum(["preparing","shipped","delivered"]),
   carrier:z.string().trim().max(65),
   tracking:z.string().trim().max(120),
-  note:z.string().trim().max(200)
+  note:z.string().trim().max(200),
+  handedOver:z.boolean()
 }).superRefine((data,ctx)=>{
-  if(data.next==="shipped"&&(!data.carrier||data.tracking.length<4)){
+  if(data.next==="shipped"&&(!data.handedOver||!data.carrier||data.tracking.length<4)){
     ctx.addIssue({code:"custom",message:"Tracking and carrier required",path:["tracking"]});
   }
 });
@@ -176,7 +179,8 @@ export async function updateFulfillmentAction(formData:FormData){
   const input=fulfillmentInput.safeParse({
     id:formData.get("id"),next:formData.get("next"),
     carrier:formData.get("carrier")??"",tracking:formData.get("tracking")??"",
-    note:formData.get("note")??""
+    note:formData.get("note")??"",
+    handedOver:formData.get("parcelHandedOver")==="on"
   });
   if(!input.success)throw new Error("Ungültiger Versandstatus oder Sendungsnummer");
   const data=input.data;
@@ -203,8 +207,20 @@ export async function updateFulfillmentAction(formData:FormData){
       orderId:order.id,fromStatus:order.status,toStatus:data.next,
       reason:"admin_fulfillment"+(data.note?": "+data.note:"")
     }});
-    if(data.next==="shipped")await tx.orderNotification.upsert({where:{orderId_stage:{orderId:order.id,stage:"shipped"}},create:{orderId:order.id,stage:"shipped"},update:{}});
+    if(data.next==="shipped"){
+      const shipping=await tx.shippingJob.findUnique({where:{orderId:order.id}});
+      const hasLabel=shipping?.status==="awaiting_handover"||shipping?.status==="label_created";
+      if(hasLabel&&(shipping?.trackingNumber!==data.tracking||data.carrier.toLowerCase()!=="dhl"))throw new Error("DHL_LABEL_TRACKING_MISMATCH");
+      if(shipping?.status==="waiting_credentials")await tx.shippingJob.update({
+        where:{orderId:order.id},data:{status:"manual_shipped",trackingNumber:data.tracking,lastError:null}
+      });
+      else if(hasLabel)await tx.shippingJob.update({where:{orderId:order.id},data:{status:"shipped",lastError:null}});
+      await tx.orderNotification.upsert({where:{orderId_stage:{orderId:order.id,stage:"shipped"}},create:{orderId:order.id,stage:"shipped"},update:{}});
+    }
     if(data.next==="delivered")await tx.orderNotification.upsert({where:{orderId_stage:{orderId:order.id,stage:"delivered"}},create:{orderId:order.id,stage:"delivered"},update:{}});
+  });
+  if(data.next==="shipped"||data.next==="delivered")after(async()=>{
+    try{await deliverQueuedOrderEmails(5)}catch(e){console.error("RUBY_SHIPPING_MAIL_RETRY_REQUIRED",e instanceof Error?e.name:"UNKNOWN")}
   });
   revalidatePath("/admin/bestellungen");
   revalidatePath("/admin");

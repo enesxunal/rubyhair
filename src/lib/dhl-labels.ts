@@ -9,7 +9,7 @@ export type ShippingAddress={firstName:string;lastName:string;street:string;post
 export function buildDhlShipmentBody(input:{billingNumber:string;orderNumber:string;recipient:ShippingAddress;weightG:number;shipDate:string}){
  if(!/^\d{4}-\d{2}-\d{2}$/.test(input.shipDate)||!/^\d{5}$/.test(input.recipient.postalCode)||
   input.recipient.country!=="DE"||!Number.isSafeInteger(input.weightG)||input.weightG<1||input.weightG>31500||
-  !/^[a-zA-Z0-9]{10,15}$/.test(input.billingNumber))throw new DhlShipmentError("DHL_SHIPMENT_INPUT_INVALID");
+  !/^[0-9]{10}01[A-Za-z0-9]{2}$/.test(input.billingNumber))throw new DhlShipmentError("DHL_SHIPMENT_INPUT_INVALID");
  return {profile:"STANDARD_GRUPPENPROFIL",shipments:[{
   product:"V01PAK",billingNumber:input.billingNumber,refNo:"RH-"+input.orderNumber,
   shipDate:input.shipDate,
@@ -31,6 +31,7 @@ async function credentials():Promise<DhlCredentials>{
 
 export async function createDhlShipmentLabel(input:{orderNumber:string;recipient:ShippingAddress},send:typeof fetch=fetch){
  if(process.env.RUBY_DHL_LIVE_LABELS_ENABLED!=="true")throw new DhlShipmentError("DHL_LABEL_CREATION_DISABLED");
+ if(process.env.RUBY_DHL_SENDER_APPROVED!=="true")throw new DhlShipmentError("DHL_SENDER_NOT_APPROVED");
  const raw=process.env.RUBY_DHL_WEIGHT_G||"";
  if(!/^[1-9]\d{0,4}$/.test(raw))throw new DhlShipmentError("DHL_WEIGHT_NOT_CONFIGURED");
  const weightG=Number(raw),creds=await credentials();

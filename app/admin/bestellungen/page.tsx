@@ -50,6 +50,7 @@ export default async function AdminOrders({searchParams}:{searchParams:Promise<{
  return <AdminShell current="orders" title="Bestellübersicht." description="Bestellungen, Sendungsnummern und Statusverlauf. Klarna-Einzug bei manuellem DHL-Versand nur nach bestätigter physischer Paketübergabe.">
   <div className="rh-admin-warning"><strong>Checkout-Modus: {publicCheckoutMode()==="disabled"?"Nur Vorbereitung":publicCheckoutMode()==="admin_test"?"Admin-Test":publicCheckoutMode()==="klarna_public"?"Klarna live / DHL manuell":publicCheckoutMode()==="payments_public"?"PayPal + Klarna live / DHL manuell":"Kunden"}.</strong> Nur durch den Zahlungsanbieter verifizierte Transaktionen zählen als bezahlt. Testreservierungen zählen nicht als Umsatz.</div>
   <p style={{margin:"13px 0 18px"}}><Link href="/admin/klarna-durum" className="rh-admin-mail-test-button">Klarna Live-Zahlung direkt beim Anbieter prüfen (ohne Abbuchung)</Link></p>
+  <p style={{margin:"12px 0 18px"}}><Link href="/admin/dhl">DHL API prüfen / Versand einrichten</Link></p>
   <div className="rh-admin-pill-row">
    <span className="rh-admin-stat-pill">{realCount} ohne Testkennzeichen</span>
    <span className="rh-admin-stat-pill">{testCount} technische Testdatensätze</span>
@@ -95,10 +96,10 @@ export default async function AdminOrders({searchParams}:{searchParams:Promise<{
         {order.fulfillmentNote&&<p><strong>Interne Notiz:</strong> {order.fulfillmentNote}</p>}</div>
        {!order.testOnly&&order.status==="payment_authorized"&&order.paymentReference?.startsWith("KLARNA-HPP:")&&
          <form action={confirmManualKlarnaHandoverAction} className="rh-admin-fulfillment-form">
-          <h3>Klarna: DHL-Versand manuell abschließen</h3>
-          <p>Nur wenn du das echte Paket bereits bei DHL abgegeben hast. Die bestätigte Übergabe führt zum echten Klarna-Einzug, zur PDF-Rechnung und zu den E-Mails. Vorher nicht bestätigen.</p>
+          <h3>{["label_created","awaiting_handover"].includes(order.shippingJob?.status||"")?"DHL-Label vorhanden – reale Paketübergabe bestätigen":"Klarna: DHL-Versand manuell abschließen"}</h3>
+          <p>Nur wenn du das echte Paket bereits bei DHL abgegeben hast. Bei Klarna wird ein noch nicht eingezogener Betrag erst nach der bestätigten Übergabe eingezogen und verifiziert. Niemals nur wegen eines gedruckten Labels bestätigen.</p>
           <input type="hidden" name="id" value={order.id}/>
-          <label>DHL-Sendungsnummer<input name="tracking" required minLength={8} maxLength={60} placeholder="DHL Tracking-Nummer"/></label>
+          <label>DHL-Sendungsnummer<input name="tracking" required minLength={8} maxLength={60} placeholder="DHL Tracking-Nummer" defaultValue={order.shippingJob?.trackingNumber||""} readOnly={["label_created","awaiting_handover"].includes(order.shippingJob?.status||"")}/></label>
           <label style={{display:"flex",gap:9,alignItems:"center"}}>
            <input name="parcelHandedOver" type="checkbox" required/>
            Ich bestätige, dass das Paket tatsächlich an DHL übergeben wurde und die Sendungsnummer korrekt ist.
@@ -122,7 +123,8 @@ export default async function AdminOrders({searchParams}:{searchParams:Promise<{
           <input type="hidden" name="next" value={next}/>
           {next==="shipped"&&<><label>Versanddienst<input name="carrier" required maxLength={65} placeholder="z. B. DHL"/></label>
             <label>Sendungsnummer<input name="tracking" required minLength={4} maxLength={120} placeholder="Tracking-Code"/></label></>}
-          <label>Interne Notiz (optional)<input name="note" maxLength={200} placeholder="Versandhinweis"/></label>
+          {next==="shipped"&&<label style={{display:"flex",gap:9,alignItems:"center"}}><input type="checkbox" name="parcelHandedOver" required/> Ich bestätige die tatsächliche Übergabe an DHL und die richtige Sendungsnummer. Die Versandbestätigung geht an den Kunden.</label>}
+                    <label>Interne Notiz (optional)<input name="note" maxLength={200} placeholder="Versandhinweis"/></label>
           <button type="submit">{next==="preparing"?"In Bearbeitung setzen":next==="shipped"?"Als versendet markieren":"Als zugestellt markieren"}</button>
         </form>:null;
        })()}
