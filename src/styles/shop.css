@@ -560,7 +560,7 @@ button.rh-editorial-cta{cursor:pointer}
 .rh-checkout-policy{border-top:1px solid #e0d2cf;padding-top:15px;margin-top:5px}
 .rh-checkout-help{display:block;margin-top:24px;font-size:11px;color:#704756;text-decoration:underline;text-underline-offset:4px}
 .rh-checkout-empty .rh-editorial-cta{margin:12px 0}
-@media(max-width:750px){.rh-checkout-grid{grid-template-columns:1fr;gap:38px}.rh-checkout-v2{padding-top:24px;padding-bottom:70px}.rh-checkout-summary{padding:22px}}
+@media(max-width:750px){.rh-checkout-grid{grid-template-columns:minmax(0,1fr);gap:38px}.rh-checkout-grid>*{min-width:0}.rh-checkout-steps article{grid-template-columns:30px minmax(0,1fr) 22px;gap:10px}.rh-checkout-v2{padding-top:24px;padding-bottom:70px}.rh-checkout-summary{padding:22px}}
 
 /* Ruby Hair: compact, product-aware selection guidance; keeps the existing brand system. */
 .rh-guidance{border-top:1px solid var(--line);margin:2px 0 22px}

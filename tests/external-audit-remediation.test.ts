@@ -54,3 +54,10 @@ test("AI image spend is protected by atomic, anonymous, cross-instance limits",(
  assert.match(migration,/CREATE TABLE "tryon_quota_attempts"/);
  assert.doesNotMatch(schema,/model TryonQuotaAttempt \{[^}]*photo/);
 });
+
+test("mobile checkout grid shrinks without horizontal scrolling",()=>{
+ const css=read("src/styles/shop.css");
+ assert.match(css,/\.rh-checkout-grid\{grid-template-columns:minmax\(0,1fr\);gap:38px\}/);
+ assert.match(css,/\.rh-checkout-grid>\*\{min-width:0\}/);
+ assert.match(css,/\.rh-checkout-steps article\{grid-template-columns:30px minmax\(0,1fr\) 22px/);
+});
