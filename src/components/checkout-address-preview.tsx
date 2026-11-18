@@ -1,19 +1,27 @@
 "use client";
 import {useState,type FormEvent} from "react";
+import type {CustomerCheckoutInput} from "@/lib/customer-checkout";
 import {CheckCircle2,ShieldCheck} from "lucide-react";
 
-/** UX-only address entry. No network request, storage or real order submission. */
-export default function CheckoutAddressPreview(){
+export type CheckoutAddressData={shipping:CustomerCheckoutInput["shipping"];billing?:CustomerCheckoutInput["billing"];email:string};
+/** Validation is local; a purchase sends data only on explicit confirmation. */
+export default function CheckoutAddressPreview({onValidated}:{onValidated?:(data:CheckoutAddressData|null)=>void}){
  const [otherBilling,setOtherBilling]=useState(false);
  const [checked,setChecked]=useState(false);
  const validate=(event:FormEvent<HTMLFormElement>)=>{
   event.preventDefault();
+  const data=new FormData(event.currentTarget);
+  const shipping={firstName:String(data.get("givenName")||""),lastName:String(data.get("familyName")||""),
+   street:String(data.get("street")||""),postalCode:String(data.get("zip")||""),city:String(data.get("city")||""),country:"DE" as const};
+  const billing=otherBilling?{firstName:String(data.get("billingFirst")||""),lastName:String(data.get("billingLast")||""),
+   street:String(data.get("billingStreet")||""),postalCode:String(data.get("billingZip")||""),city:String(data.get("billingCity")||""),country:"DE" as const}:undefined;
   setChecked(true);
+  onValidated?.({shipping,billing,email:String(data.get("email")||"")});
  };
  return <section className="rh-checkout-address" aria-label="Liefer- und Rechnungsadresse vorbereiten">
   <div className="rh-checkout-address-heading"><span>02 / LIEFERUNG</span><h2>Deine Lieferadresse.</h2>
    <p>Trage deine Lieferadresse und bei Bedarf eine abweichende Rechnungsadresse ein.</p></div>
-  <form onSubmit={validate} onChange={()=>setChecked(false)}>
+  <form onSubmit={validate} onChange={()=>{setChecked(false);onValidated?.(null)}}>
    <div className="rh-checkout-field-grid">
     <label>Vorname <input required autoComplete="given-name" name="givenName" maxLength={80} placeholder="Vorname"/></label>
     <label>Nachname <input required autoComplete="family-name" name="familyName" maxLength={80} placeholder="Nachname"/></label>

@@ -4,6 +4,7 @@ import ShopLayout from "@/components/site-shell";
 import CheckoutPreview from "@/components/checkout-preview";
 import {isAdmin} from "@/lib/admin-auth";
 import {getVariantTestState} from "@/lib/live-variant-qa";
+import {publicCheckoutMode,shippingDeCents} from "@/lib/customer-checkout";
 import type {LiveVariantTestView} from "@/components/live-variant-test-section";
 
 export const metadata:Metadata={
@@ -20,7 +21,7 @@ export default async function Checkout({searchParams}:{searchParams:Promise<Quer
  let test:LiveVariantTestView|null=null;
  if(admin){
   const s=await getVariantTestState();
-  if(p.liveTest==="1"||s.ready||s.pending||s.completed){
+  if(p.liveTest==="1"||(publicCheckoutMode()==="disabled"&&(s.ready||s.pending))){
   const supplied=typeof p.paypalToken==="string"&&/^[A-Za-z0-9_-]{8,60}$/.test(p.paypalToken)?p.paypalToken:null;
   test={
    ready:s.ready,priceCents:s.priceCents,
@@ -33,5 +34,7 @@ export default async function Checkout({searchParams}:{searchParams:Promise<Quer
   };
   }
  }
- return <ShopLayout><CheckoutPreview liveTest={test}/></ShopLayout>;
+ const mode=publicCheckoutMode();
+ const active=mode==="public"||mode==="admin_test"&&admin?mode:"disabled";
+ return <ShopLayout><CheckoutPreview liveTest={test} checkoutMode={active} shippingCents={shippingDeCents()}/></ShopLayout>;
 }

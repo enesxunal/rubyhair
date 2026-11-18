@@ -186,7 +186,7 @@ export async function updateFulfillmentAction(formData:FormData){
     // A status field alone cannot establish payment. Only the future verified
     // payment webhook may append the provider payment-confirmation event.
     const providerPaid=order.paymentReference&&order.payments.some(p=>
-      p.eventType==="payment_confirmed"&&p.provider!=="manual"&&p.providerEventId.length>0);
+      p.eventType==="PAYMENT.CAPTURE.COMPLETED"&&p.provider!=="manual"&&p.providerEventId.length>0);
     if(!providerPaid)throw new Error("Kein verifizierter Zahlungseingang: Versand gesperrt");
     requireOrderTransition(order.status,data.next,"fulfillment");
     const result=await tx.order.updateMany({where:{id:data.id,status:order.status,testOnly:false},data:{
@@ -200,6 +200,8 @@ export async function updateFulfillmentAction(formData:FormData){
       orderId:order.id,fromStatus:order.status,toStatus:data.next,
       reason:"admin_fulfillment"+(data.note?": "+data.note:"")
     }});
+    if(data.next==="shipped")await tx.orderNotification.upsert({where:{orderId_stage:{orderId:order.id,stage:"shipped"}},create:{orderId:order.id,stage:"shipped"},update:{}});
+    if(data.next==="delivered")await tx.orderNotification.upsert({where:{orderId_stage:{orderId:order.id,stage:"delivered"}},create:{orderId:order.id,stage:"delivered"},update:{}});
   });
   revalidatePath("/admin/bestellungen");
   revalidatePath("/admin");

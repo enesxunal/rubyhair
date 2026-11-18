@@ -1,7 +1,37 @@
-import { NextResponse } from "next/server";
-export async function POST(){
-  return NextResponse.json({
-    error:"CHECKOUT_NOT_CONFIGURED",
-    message:"Orders and payments are disabled until database and payment gateway are configured and tested."
-  },{status:503,headers:{"Cache-Control":"no-store"}});
+import {NextRequest,NextResponse} from "next/server";
+import {isAdmin} from "@/lib/admin-auth";
+import {checkoutInput,publicCheckoutMode,createCustomerCheckout,CustomerCheckoutError} from "@/lib/customer-checkout";
+import {loadStoreMailSettings} from "@/lib/store-mail-settings";
+import {getDhlIntegrationReadiness} from "@/lib/dhl-api";
+export const runtime="nodejs",dynamic="force-dynamic";
+const headers={"Cache-Control":"no-store","X-Content-Type-Options":"nosniff"};
+export async function POST(req:NextRequest){
+ const mode=publicCheckoutMode();
+ if(mode==="disabled"||mode==="admin_test"&&!await isAdmin())
+  return NextResponse.json({error:"CHECKOUT_NOT_CONFIGURED"},{status:503,headers});
+ const origin=req.headers.get("origin"),site=req.headers.get("sec-fetch-site");
+ if(!origin||![/^https:\/\/rubyhair\.de$/,/^https:\/\/www\.rubyhair\.de$/].some(r=>r.test(origin))||site==="cross-site")
+  return NextResponse.json({error:"ORIGIN_NOT_ALLOWED"},{status:403,headers});
+ if(Number(req.headers.get("content-length")||0)>16384)return NextResponse.json({error:"REQUEST_TOO_LARGE"},{status:413,headers});
+ try{
+  // Prevent customers paying when the shop cannot send a receipt or start shipping.
+  // admin_test may exercise the backend before external accounts are enabled.
+  if(mode==="public"){
+   const [mail,dhl]=await Promise.all([loadStoreMailSettings(),getDhlIntegrationReadiness("live")]);
+   if(!mail.stored||!dhl.credentialsComplete||(process.env.RUBY_DHL_LIVE_LABELS_ENABLED!=="true"||!process.env.RUBY_DHL_WEIGHT_G))
+    return NextResponse.json({error:"FULFILLMENT_NOT_READY"},{status:503,headers});
+  }
+  const text=await req.text();
+  if(text.length>16384)return NextResponse.json({error:"REQUEST_TOO_LARGE"},{status:413,headers});
+  let value:unknown;try{value=JSON.parse(text)}catch{return NextResponse.json({error:"INVALID_JSON"},{status:400,headers})}
+  const input=checkoutInput.safeParse(value);
+  if(!input.success)return NextResponse.json({error:"INVALID_CHECKOUT"},{status:400,headers});
+  const result=await createCustomerCheckout(input.data);
+  return NextResponse.json(result,{status:201,headers});
+ }catch(e){
+  const code=e instanceof CustomerCheckoutError?e.reason:"CHECKOUT_TEMPORARILY_UNAVAILABLE";
+  const status=e instanceof CustomerCheckoutError?e.http:503;
+  if(!(e instanceof CustomerCheckoutError))console.error("CUSTOMER_CHECKOUT_FAILED",e instanceof Error?e.name:"unknown");
+  return NextResponse.json({error:code},{status,headers});
+ }
 }

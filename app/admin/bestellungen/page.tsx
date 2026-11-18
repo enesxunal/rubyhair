@@ -5,6 +5,7 @@ import {ClipboardList,Clock3,ArrowUpRight,ShieldCheck,WalletCards} from "lucide-
 import {isAdmin} from "@/lib/admin-auth";
 import {getPrisma} from "@/lib/prisma";
 import {isKnownOrderState,orderStates} from "@/lib/order-lifecycle";
+import {publicCheckoutMode} from "@/lib/customer-checkout";
 import AdminShell from "../admin-shell";
 import {updateFulfillmentAction} from "../actions";
 
@@ -35,6 +36,9 @@ export default async function AdminOrders({searchParams}:{searchParams:Promise<{
   db.order.findMany({where,orderBy:[{createdAt:"desc"},{id:"asc"}],skip:(page-1)*20,take:20,include:{
    lines:{select:{quantity:true,unitPriceCents:true,lineTotalCents:true,variant:{select:{colorLabel:true,lengthLabel:true,product:{select:{name:true}}}}}},
    payments:{select:{eventType:true,provider:true,providerEventId:true}},
+   invoice:{select:{invoiceNumber:true}},
+   shippingJob:{select:{status:true,trackingNumber:true,labelPdf:true}},
+   notifications:{select:{stage:true,status:true}},
    statusEvents:{orderBy:{createdAt:"asc"},select:{createdAt:true,fromStatus:true,toStatus:true,reason:true}}
   }}),
   db.order.count({where:{testOnly:false}}),
@@ -43,7 +47,7 @@ export default async function AdminOrders({searchParams}:{searchParams:Promise<{
  const totalPages=Math.max(1,Math.ceil(count/20));
  const link=(p:number)=>"/admin/bestellungen?filter="+filter+"&seite="+p;
  return <AdminShell current="orders" title="Bestellübersicht." description="Bestellungen, Sendungsnummern und Statusverlauf. Versandbearbeitung nur nach verifiziertem Zahlungseingang; keine Zahlungserfassung im Admin.">
-  <div className="rh-admin-warning"><strong>Bestellannahme deaktiviert.</strong> Ein Eintrag ohne Testkennzeichen ist kein Nachweis für eine Zahlung. Testreservierungen zählen nicht als Verkauf oder Umsatz.</div>
+  <div className="rh-admin-warning"><strong>Checkout-Modus: {publicCheckoutMode()==="disabled"?"Nur Vorbereitung":publicCheckoutMode()==="admin_test"?"Admin-Test":"Kunden"}.</strong> Nur durch den Zahlungsanbieter verifizierte Transaktionen zählen als bezahlt. Testreservierungen zählen nicht als Umsatz.</div>
   <div className="rh-admin-pill-row">
    <span className="rh-admin-stat-pill">{realCount} ohne Testkennzeichen</span>
    <span className="rh-admin-stat-pill">{testCount} technische Testdatensätze</span>
@@ -69,7 +73,7 @@ export default async function AdminOrders({searchParams}:{searchParams:Promise<{
     <div className="rh-admin-card-title"><div><span>DATENBANK / LESEN</span><h2>{count} Einträge</h2></div><span>Seite {page} von {totalPages}</span></div>
     <div className="rh-admin-orders-list">
      {orders.map(order=><details key={order.id} className="rh-admin-order-item">
-      <summary><span className="rh-admin-order-number">#{order.orderNumber.toString()} <small>{order.testOnly?"TESTDATENSATZ":"NICHT VERIFIZIERT"}</small></span>
+      <summary><span className="rh-admin-order-number">#{order.orderNumber.toString()} <small>{order.testOnly?"TESTDATENSATZ":order.payments.some(p=>p.eventType==="PAYMENT.CAPTURE.COMPLETED")?"BEZAHLT":order.status==="payment_authorized"?"AUTORISIERT":"OFFEN"}</small></span>
        <span className="rh-admin-order-status">{isKnownOrderState(order.status)?orderStates[order.status]:order.status}</span>
        <span>{date(order.createdAt)}</span>
        <strong>{euro(order.totalCents)}</strong>
@@ -81,7 +85,11 @@ export default async function AdminOrders({searchParams}:{searchParams:Promise<{
         <p><strong>Kunde:</strong> {order.customerEmail||"Nicht erfasst"}</p>
         <p><strong>Rechnungsadresse:</strong> {addressText(order.billingAddress)||"Nicht erfasst"}</p>
         <p><strong>Lieferadresse:</strong> {addressText(order.shippingAddress)||"Nicht erfasst"}</p>
-        <p><strong>Versand:</strong> {order.trackingCarrier||"Nicht versendet"} {order.trackingNumber||""}</p>
+        <p><strong>Versand:</strong> {order.trackingCarrier||"Noch nicht versendet"} {order.trackingNumber||""}</p>
+        {order.invoice&&<p><a href={`/api/admin/customer-document?orderId=${order.id}&type=invoice`} target="_blank" rel="noopener noreferrer">Rechnung {order.invoice.invoiceNumber} herunterladen</a></p>}
+        {order.shippingJob&&<p><strong>DHL Automatik:</strong> {order.shippingJob.status} {order.shippingJob.trackingNumber||""}</p>}
+        {order.shippingJob?.labelPdf&&<p><a href={`/api/admin/customer-document?orderId=${order.id}&type=label`} target="_blank" rel="noopener noreferrer">DHL Paketlabel PDF herunterladen</a></p>}
+        {order.notifications.length>0&&<p><strong>Automatische E-Mails:</strong> {order.notifications.map(n=>n.stage+": "+n.status).join(" · ")}</p>}
         {order.fulfillmentNote&&<p><strong>Interne Notiz:</strong> {order.fulfillmentNote}</p>}</div>
        <h3>Positionen</h3>
        <div className="rh-admin-table-wrap"><table><thead><tr><th>Artikel</th><th>Variante</th><th>Menge</th><th>Einzelpreis</th><th>Summe</th></tr></thead>
@@ -92,8 +100,8 @@ export default async function AdminOrders({searchParams}:{searchParams:Promise<{
         </tr>)}</tbody>
        </table></div>
        {(()=>{
-        const paid= !order.testOnly&&Boolean(order.paymentReference)&&order.payments.some(p=>p.eventType==="payment_confirmed"&&p.provider!=="manual"&&p.providerEventId.length>0);
-        const next=order.status==="payment_confirmed"?"preparing":order.status==="preparing"?"shipped":order.status==="shipped"?"delivered":null;
+        const paid= !order.testOnly&&Boolean(order.paymentReference)&&order.payments.some(p=>p.eventType==="PAYMENT.CAPTURE.COMPLETED"&&p.provider!=="manual"&&p.providerEventId.length>0);
+        const next=order.status==="payment_confirmed"&&(!order.shippingJob||order.shippingJob.status!=="label_created")?"preparing":order.status==="preparing"?"shipped":order.status==="shipped"?"delivered":null;
         return paid&&next?<form action={updateFulfillmentAction} className="rh-admin-fulfillment-form">
           <h3>Versandstatus bearbeiten</h3><p>Nur nach verifiziertem Zahlungseingang. Statusänderungen werden protokolliert.</p>
           <input type="hidden" name="id" value={order.id}/>

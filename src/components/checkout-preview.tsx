@@ -1,6 +1,8 @@
 "use client";
 import Link from "next/link";
 import {useState} from "react";
+import type {CheckoutAddressData} from "./checkout-address-preview";
+import CustomerPaymentSubmit from "./customer-payment-submit";
 import {Check,Truck,Wallet,ArrowUpRight,ShoppingBag} from "lucide-react";
 import {useCart} from "@/components/cart-context";
 import {useCartQuote} from "@/hooks/use-cart-quote";
@@ -13,10 +15,11 @@ const process=[
   {no:"02",label:"Lieferung",description:"Liefer- und Rechnungsadresse eingeben",icon:Truck},
   {no:"03",label:"Zahlung",description:"Zahlungsart und Bestellübersicht",icon:Wallet}
 ];
-export default function CheckoutPreview({liveTest}:{liveTest?:LiveVariantTestView|null}){
+export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippingCents=499}:{liveTest?:LiveVariantTestView|null;checkoutMode?:"disabled"|"admin_test"|"public";shippingCents?:number}){
   const {lines,loaded}=useCart();
   const {quote,error,loading}=useCartQuote(lines);
   const [paymentMethod,setPaymentMethod]=useState<"paypal"|"klarna">("paypal");
+  const [validatedAddress,setValidatedAddress]=useState<CheckoutAddressData|null>(null);
   const oneEuroCart=Boolean(loaded&&lines.length===1&&lines[0].id===886&&lines[0].quantity===1&&
     quote&&quote.subtotalCents===100&&quote.lines.length===1);
   const payableTestCart=Boolean(oneEuroCart&&!error&&!loading&&!quote?.needsReview&&quote?.lines[0]?.status==="available");
@@ -39,7 +42,7 @@ export default function CheckoutPreview({liveTest}:{liveTest?:LiveVariantTestVie
             <span className="rh-checkout-step-state">{i===0?<Check size={18}/>:<span aria-hidden="true">{step.no}</span>}</span>
           </article>)}
         </div>
-        {loaded&&lines.length>0&&<CheckoutAddressPreview/>}
+        {loaded&&lines.length>0&&<CheckoutAddressPreview onValidated={setValidatedAddress}/>}
         <section className="rh-checkout-payment-preview" aria-label="Zahlungsart auswählen">
           <h3>03 / ZAHLUNG</h3>
           <p className="rh-payment-preview-heading">Wähle deine Zahlungsart</p>
@@ -52,7 +55,7 @@ export default function CheckoutPreview({liveTest}:{liveTest?:LiveVariantTestVie
             <label className={"rh-payment-choice"+(paymentMethod==="klarna"?" is-selected":"")}>
               <input type="radio" name="checkout-payment-method" value="klarna"
                 checked={paymentMethod==="klarna"} onChange={()=>setPaymentMethod("klarna")}/>
-              <span><strong>Klarna</strong><small>Derzeit nicht für diesen Produkttest verfügbar</small></span>
+              <span><strong>Klarna</strong><small>{checkoutMode!=="disabled"?"Zahlung bei Versand":"Noch nicht freigeschaltet"}</small></span>
             </label>
           </div>
           {paymentMethod==="paypal"&&liveTest&&<LiveVariantTestSection state={liveTest} cartReady={payableTestCart}/>}
@@ -62,13 +65,16 @@ export default function CheckoutPreview({liveTest}:{liveTest?:LiveVariantTestVie
               Mit Admin-Konto anmelden und PayPal testen
             </Link>
           </div>}
-          {paymentMethod==="paypal"&&!liveTest&&!oneEuroCart&&<div className="rh-payment-action-area">
-            <p>Der reguläre PayPal-Kauf wird nach dem 1,00-€-Live-Test aktiviert. Ein Kauf wird hier noch nicht ausgelöst.</p>
-            <Link href="/produkt/tape-in-extensions/?farbe=4&laenge=45-50-cm" className="rh-payment-secondary-link">1,00-€-Testartikel ansehen</Link>
+          {checkoutMode!=="disabled"&&!liveTest&&paymentMethod==="paypal"&&
+            <CustomerPaymentSubmit method={paymentMethod} lines={lines} address={validatedAddress} cartReady={Boolean(quote&&!quote.needsReview&&!loading&&!error&&lines.length)} totalCents={(quote?.subtotalCents||0)+shippingCents}/>}
+          {checkoutMode==="disabled"&&paymentMethod==="paypal"&&!liveTest&&!oneEuroCart&&<div className="rh-payment-action-area">
+            <p>Die letzte Freigabe für den regulären Kauf steht noch aus. Bis dahin wird keine Bestellung ausgelöst.</p>
           </div>}
-          {paymentMethod==="klarna"&&<div className="rh-payment-action-area" role="status">
-            <p>Die Klarna-Zahlung für diesen bestehenden Artikel ist noch nicht mit der Bestellverarbeitung verbunden. Keine Zahlung wird ausgelöst.</p>
-            <button type="button" className="rh-payment-secondary-link" onClick={()=>setPaymentMethod("paypal")}>Stattdessen PayPal testen</button>
+          {paymentMethod==="klarna"&&checkoutMode!=="disabled"&&!liveTest&&
+            <CustomerPaymentSubmit method={paymentMethod} lines={lines} address={validatedAddress} cartReady={Boolean(quote&&!quote.needsReview&&!loading&&!error&&lines.length)} totalCents={(quote?.subtotalCents||0)+shippingCents}/>}
+          {paymentMethod==="klarna"&&(checkoutMode==="disabled"||!!liveTest)&&<div className="rh-payment-action-area" role="status">
+            <p>Klarna ist für diesen Zahlungstest noch nicht freigegeben.</p>
+            <button type="button" className="rh-payment-secondary-link" onClick={()=>setPaymentMethod("paypal")}>Stattdessen PayPal wählen</button>
           </div>}
         </section>
         <Link className="rh-continue-shop" href="/versand-zahlung/">Versand, Zahlung & Widerruf ansehen ↗</Link>
@@ -99,8 +105,9 @@ export default function CheckoutPreview({liveTest}:{liveTest?:LiveVariantTestVie
             {liveTest?<><div className="rh-checkout-sum"><span>Versand (interner Test)</span><strong>{euros(0)}</strong></div>
               <div className="rh-checkout-sum"><span>Inkl. 19 % MwSt.</span><strong>{euros(0.16)}</strong></div>
               <div className="rh-checkout-sum"><span>Gesamtbetrag</span><strong>{euros(quote.subtotalCents/100)}</strong></div></>:
-              <><div className="rh-checkout-sum"><span>Versand innerhalb Deutschlands</span><strong>Wird an der Kasse berechnet</strong></div>
-              <p className="rh-checkout-policy">Gesamtbetrag und Versandkosten werden vor einer zahlungspflichtigen Bestellung ausgewiesen.</p></>}
+              <><div className="rh-checkout-sum"><span>DHL Versand Deutschland</span><strong>{euros(shippingCents/100)}</strong></div>
+              <div className="rh-checkout-sum"><span>Enthaltene 19 % USt.</span><strong>{euros(Math.round((quote.subtotalCents+shippingCents)*19/119)/100)}</strong></div>
+              <div className="rh-checkout-sum"><span>Gesamtbetrag</span><strong>{euros((quote.subtotalCents+shippingCents)/100)}</strong></div></>}
           </>}
         <Link className="rh-checkout-help" href="/kontakt/">Fragen zu deiner Auswahl? Beratung anfragen ↗</Link>
       </aside>

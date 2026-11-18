@@ -29,7 +29,7 @@ test("administrator-only test checkout, exact money and separate public checkout
  assert.match(page,/const admin=await isAdmin\(\)/);
  assert.match(page,/p\.liveTest==="1"&&!admin/);
  assert.match(page,/redirect\("\/admin\/login"\)/);
- assert.match(page,/s\.ready\|\|s\.pending\|\|s\.completed/);
+ assert.match(page,/s\.ready\|\|s\.pending/);
  assert.match(page,/s\.pending\?\.paymentReference===supplied/);
  assert.match(core,/createOneEuroQaOrder\(/);
  assert.match(core,/shippingCents:0/);
@@ -70,7 +70,7 @@ test("checkout payment buttons are selectable and admin login can return to 1 EU
  assert.match(checkout,/paymentMethod==="paypal"&&liveTest/);
  assert.match(checkout,/LiveVariantTestSection state=\{liveTest\}/);
  assert.match(checkout,/Mit Admin-Konto anmelden und PayPal testen/);
- assert.match(checkout,/Klarna-Zahlung.*noch nicht/);
+ assert.match(checkout,/Klarna ist für diesen Zahlungstest noch nicht freigegeben/);
  assert.doesNotMatch(checkout,/button type="button" disabled aria-disabled="true"/);
  assert.match(loginPage,/checkoutReturn=next==="live-checkout"/);
  assert.match(loginPage,/name="next" value="live-checkout"/);

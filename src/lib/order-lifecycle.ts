@@ -3,6 +3,7 @@ export const orderStates={
   draft:"Entwurf",
   pending_payment:"Zahlung ausstehend",
   payment_confirmed:"Zahlung bestätigt",
+  payment_authorized:"Zahlung autorisiert",
   preparing:"In Bearbeitung",
   shipped:"Versendet",
   delivered:"Zugestellt",
@@ -18,7 +19,8 @@ export type OrderActor="checkout"|"payment_provider"|"fulfillment"|"system"|"loc
 /** A payment confirmation can only originate from a future verified provider callback. */
 const rules:Partial<Record<OrderState,Partial<Record<OrderState,OrderActor[]>>>>={
   draft:{pending_payment:["checkout"],cancelled:["system"]},
-  pending_payment:{payment_confirmed:["payment_provider"],cancelled:["system"]},
+  pending_payment:{payment_confirmed:["payment_provider"],payment_authorized:["payment_provider"],cancelled:["system"]},
+  payment_authorized:{payment_confirmed:["payment_provider"],cancelled:["system"]},
   payment_confirmed:{preparing:["fulfillment"],refunded:["payment_provider"]},
   preparing:{shipped:["fulfillment"],cancelled:["fulfillment"],refunded:["payment_provider"]},
   shipped:{delivered:["fulfillment"],refunded:["payment_provider"]},

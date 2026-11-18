@@ -94,11 +94,12 @@ export class PaypalClient{
           item_total:{currency_code:"EUR",value:centsToEuro(input.totalCents-input.shippingCents)},
           shipping:{currency_code:"EUR",value:shipping}
         }}}],
-      application_context:{brand_name:"Ruby Hair",user_action:"PAY_NOW",landing_page:"LOGIN",
-        shipping_preference:"SET_PROVIDED_ADDRESS",return_url:httpsUrl(input.returnUrl),cancel_url:httpsUrl(input.cancelUrl)}
+      payment_source:{paypal:{experience_context:{brand_name:"Ruby Hair",user_action:"PAY_NOW",landing_page:"GUEST_CHECKOUT",
+        shipping_preference:"SET_PROVIDED_ADDRESS",return_url:httpsUrl(input.returnUrl),cancel_url:httpsUrl(input.cancelUrl)}}}
     },input.requestId);
     if(!isObject(data)||typeof data.id!=="string"||!Array.isArray(data.links))throw new PaypalError("PAYPAL_ORDER_INVALID");
-    const approve=data.links.find((link:unknown)=>isObject(link)&&link.rel==="approve"&&typeof link.href==="string");
+    const approve=data.links.find((link:unknown)=>isObject(link)&&
+      (link.rel==="payer-action"||link.rel==="approve")&&typeof link.href==="string");
     if(!isObject(approve)||typeof approve.href!=="string")throw new PaypalError("PAYPAL_APPROVAL_MISSING");
     const u=new URL(approve.href);
     if(u.protocol!=="https:"||!(["www.paypal.com","www.sandbox.paypal.com"].includes(u.hostname))||u.username||u.password)

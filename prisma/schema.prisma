@@ -73,6 +73,8 @@ model Order {
   payments          PaymentEvent[]
   statusEvents      OrderStatusEvent[]
   invoice           Invoice?
+  notifications     OrderNotification[]
+  shippingJob       ShippingJob?
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
   @@index([status,createdAt(sort: Desc)])
@@ -89,6 +91,7 @@ model OrderLine {
   quantity        Int
   unitPriceCents  Int
   lineTotalCents  Int
+  stockReserved   Boolean @default(false)
   @@map("order_lines")
 }
 
@@ -152,8 +155,8 @@ model PaymentIntegrationSetting {
   @@map("payment_integration_settings")
 }
 
-// Immutable receipt record issued only after a verified 1-EUR QA PayPal capture.
-// Full customer invoices remain disabled until their separate invoicing flow is approved.
+// Immutable PDF invoice issued only after strict payment-provider reconciliation.
+// The original internal QA invoice and regular customer invoice share this model.
 model Invoice {
   id            String   @id @default(uuid()) @db.Uuid
   orderId       String   @unique @db.Uuid
@@ -168,4 +171,38 @@ model Invoice {
   totalCents    Int
   pdf           Bytes    @db.ByteA
   @@map("invoices")
+}
+
+// Payment-confirmed, durable, idempotent email delivery queue.
+model OrderNotification {
+  id            String   @id @default(uuid()) @db.Uuid
+  orderId       String   @db.Uuid
+  order         Order    @relation(fields:[orderId],references:[id],onDelete:Restrict)
+  stage         String
+  status        String   @default("queued")
+  attempts      Int      @default(0)
+  nextAttemptAt DateTime @default(now())
+  sentAt        DateTime?
+  lastError     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  @@unique([orderId,stage])
+  @@index([status,nextAttemptAt])
+  @@map("order_notifications")
+}
+
+// One shipment per customer order; shipping labels are never created for QA.
+model ShippingJob {
+  id             String    @id @default(uuid()) @db.Uuid
+  orderId        String    @unique @db.Uuid
+  order          Order     @relation(fields:[orderId],references:[id],onDelete:Restrict)
+  status         String    @default("waiting_credentials")
+  attemptCount   Int       @default(0)
+  lastError      String?
+  trackingNumber String?
+  labelPdf       Bytes?    @db.ByteA
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  @@index([status,updatedAt])
+  @@map("shipping_jobs")
 }

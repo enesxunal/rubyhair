@@ -44,6 +44,14 @@ export async function proxy(request:NextRequest){
  if(allowedAssets.has(path)||path==="/coming-soon")return NextResponse.next();
  // The login form and its rate-limited POST must remain accessible before login.
  if(adminLoginPaths.has(path))return NextResponse.next();
+ // Only these two automated endpoints may cross the public API gate.
+ // Their own handlers enforce CRON_SECRET or PayPal signature verification.
+ if(path==="/api/internal/customer-jobs"&&(request.method==="GET"||request.method==="HEAD")){
+  const r=NextResponse.next();r.headers.set("Cache-Control","private, no-store");return r;
+ }
+ if(path==="/api/payments/paypal/webhook"&&request.method==="POST"){
+  const r=NextResponse.next();r.headers.set("Cache-Control","private, no-store");return r;
+ }
  // Public read-only PayPal return landing: GET carries no authority and
  // never captures money. User clicks through to the protected admin UI.
  if(path==="/qa/klarna/return"&&(request.method==="GET"||request.method==="HEAD")){

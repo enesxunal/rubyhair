@@ -3,6 +3,7 @@ import {redirect} from "next/navigation";
 import {Mail,ShieldCheck,LockKeyhole,AlertTriangle,CheckCircle2,Send,Eye} from "lucide-react";
 import {isAdmin} from "@/lib/admin-auth";
 import {loadStoreMailSettings,storeMailDefaults} from "@/lib/store-mail-settings";
+import {getPrisma} from "@/lib/prisma";
 import {orderMailStages,renderOrderMail} from "@/lib/order-mail-templates";
 import AdminShell from "../admin-shell";
 import {saveStoreMailAction,sendStoreMailTestAction} from "../mail-actions";
@@ -11,6 +12,7 @@ export const runtime="nodejs";export const dynamic="force-dynamic";
 export default async function MailAdmin({searchParams}:{searchParams:Promise<{status?:string}>}){
  if(!await isAdmin())redirect("/admin/login");
  const config=await loadStoreMailSettings();
+ const queued=await getPrisma().orderNotification.count({where:{status:{in:["queued","needs_review"]}}});
  const {status}=await searchParams;
  const messages:Record<string,string>={
   saved:"Einstellungen verschlüsselt gespeichert. Bitte anschließend den SMTP-Test durchführen.",
@@ -31,7 +33,7 @@ export default async function MailAdmin({searchParams}:{searchParams:Promise<{st
   <div className="rh-studio-payment-steps">
     <div><span><ShieldCheck size={17}/> SMTP-VERSCHLÜSSELUNG</span><strong>{config.ready?"Schlüsselspeicher bereit":"Noch nicht verfügbar"}</strong><small>Passwort niemals im Klartext anzeigen</small></div>
     <div><span><LockKeyhole size={17}/> MAIL-PASSWORT</span><strong>{config.stored?"Sicher hinterlegt":"Noch nicht gespeichert"}</strong><small>IONOS Benutzer: {storeMailDefaults.user}</small></div>
-    <div><span><Send size={17}/> LIVE-BESTELLUNGEN</span><strong>Automatik noch gesperrt</strong><small>Checkout und Bestellereignisse müssen erst freigegeben werden</small></div>
+    <div><span><Send size={17}/> BESTELL-AUTOMATIK</span><strong>{config.stored?"E-Mail-Versand bereit":"SMTP-Zugang fehlt"}</strong><small>{queued} wartende Benachrichtigungen · automatische Zustellung nach Zahlung</small></div>
   </div>
   <section className="rh-admin-panel-card" style={{marginTop:20}}>
     <div className="rh-admin-card-title"><div><span>POSTFACH / EINSTELLUNGEN</span><h2>IONOS SMTP einrichten</h2></div><LockKeyhole size={22}/></div>
@@ -58,7 +60,7 @@ export default async function MailAdmin({searchParams}:{searchParams:Promise<{st
   </section>
   <section className="rh-admin-panel-card" style={{marginTop:22}}>
     <div className="rh-admin-card-title"><div><span>RUBY HAIR / E-MAIL DESIGN</span><h2>Vorlagen für jeden Bestellschritt</h2></div><Eye size={22}/></div>
-    <p className="rh-admin-muted">Acht responsiv gestaltete deutsche Vorlagen sind erstellt. Sie sind hier als Vorschau sichtbar; automatische Auslösung und Zustellprotokoll folgen erst nach Fertigstellung des Zahlungs- und Bestellworkflows.</p>
+    <p className="rh-admin-muted">Acht deutsche Vorlagen sind angelegt. Nach verifizierter Zahlung legt das System die E-Mails automatisch und wiederholsicher in die Versandwarteschlange. Erst ein erfolgreicher SMTP-Test bestätigt die tatsächliche Auslieferung.</p>
     <div className="rh-admin-mail-preview-grid">
       {orderMailStages.map(stage=>{
         const email=renderOrderMail(stage,{orderNumber:"RH-2026-1001",customerName:"Musterkundin",totalCents:14999,trackingNumber:"123456789012",carrier:"DHL"});

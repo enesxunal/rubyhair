@@ -38,6 +38,8 @@ test("PayPal order request uses exact server amount, shipping, and idempotency",
  assert.equal(body.purchase_units[0].amount.breakdown.item_total.value,"15.00");
  assert.equal(body.purchase_units[0].amount.breakdown.shipping.value,"4.99");
  assert.equal(body.purchase_units[0].custom_id,"ORDER_1234");
+ assert.equal(body.payment_source.paypal.experience_context.landing_page,"GUEST_CHECKOUT");
+ assert.equal(body.payment_source.paypal.experience_context.shipping_preference,"SET_PROVIDED_ADDRESS");
 });
 test("redirect host and environment are strictly constrained",async()=>{
  for(const host of ["https://evil.example/checkout","http://www.sandbox.paypal.com/checkoutnow","https://www.paypal.com/checkoutnow"]){

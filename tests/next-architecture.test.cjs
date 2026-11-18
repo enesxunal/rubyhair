@@ -28,7 +28,7 @@ test("Next.js runtime does not reference WordPress endpoints",()=>{
       else if(/\.(?:ts|tsx|html|js|json)$/.test(item.name)){
         const content=fs.readFileSync(full,"utf8");
         // Publicly documented legacy pages are linked as sources, not fetched at runtime.
-        if(!["legacy-store-facts.ts","seo.ts","robots.ts","sitemap.ts","qa-live-paypal.ts","qa-live-klarna.ts","klarna-provider-core.ts","live-variant-qa.ts"].some(name=>full.endsWith(name)))assert.equal(content.includes("https://rubyhair.de/"),false,full);
+        if(!["legacy-store-facts.ts","seo.ts","robots.ts","sitemap.ts","qa-live-paypal.ts","qa-live-klarna.ts","klarna-provider-core.ts","live-variant-qa.ts","customer-checkout.ts"].some(name=>full.endsWith(name)))assert.equal(content.includes("https://rubyhair.de/"),false,full);
         assert.equal(content.includes("/wp-json/"),false,full);
         if(full.endsWith("qa-live-paypal.ts"))assert.ok(content.includes("https://rubyhair.de/qa/paypal/return"));
       }
@@ -235,8 +235,8 @@ test("legacy policy mirrors the old shop sections without opening sales",()=>{
   }
   assert.ok(legal.includes("14-tägige Frist"));
   assert.ok(legal.includes("Zweigertstraße 8"));
-  assert.ok(checkout.includes("Versand innerhalb Deutschlands"));
-  assert.ok(checkout.includes("Gesamtbetrag und Versandkosten werden vor einer zahlungspflichtigen Bestellung ausgewiesen."));
+  assert.ok(checkout.includes("DHL Versand Deutschland"));
+  assert.ok(checkout.includes("Enthaltene 19 % USt."));
   const issues=fs.readFileSync(path.join(base,"reports/musteriye-sorulacak-konular-2026-11-02.md"),"utf8");
   for(const issue of ["Kargo","AGB","Klara Straße","Zweigertstraße","Klarna","19 Haziran 2026","EVE"]){
     assert.ok(issues.toLowerCase().includes(issue.toLowerCase()),issue);
@@ -337,7 +337,7 @@ test("fulfillment writes require admin and verified provider evidence, never mar
  const schema=fs.readFileSync(path.join(base,"prisma/schema.prisma"),"utf8");
  assert.ok(actions.includes('export async function updateFulfillmentAction'));
  assert.ok(actions.includes('if(!await isAdmin())redirect("/admin/login")'));
- assert.ok(actions.includes('p.eventType==="payment_confirmed"'));
+ assert.ok(actions.includes('p.eventType==="PAYMENT.CAPTURE.COMPLETED"'));
  assert.ok(actions.includes('p.provider!=="manual"'));
  assert.ok(actions.includes('requireOrderTransition(order.status,data.next,"fulfillment")'));
  assert.ok(actions.includes('testOnly:false'));
