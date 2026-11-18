@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import ShopLayout from "@/components/site-shell";
+import {guides} from "@/lib/hair-guide-articles";
 import { ArrowUpRight, Droplets, Brush, Moon, CalendarDays, Sparkles, HelpCircle } from "lucide-react";
 
 export const metadata:Metadata={
@@ -132,6 +133,11 @@ export default function HairGuide(){
       </div>
     </section>
 
+    <section className="rh-shell rh-guide-article-index" aria-label="Extensions Ratgeber Artikel">
+      <span className="rh-eyebrow">RATGEBER / MEHR ERFAHREN</span>
+      <h2>Extensions: Auswahl, Haltbarkeit und Pflege.</h2>
+      <div>{guides.map(g=><Link href={`/ratgeber/${g.slug}/`} key={g.slug}><span>RATGEBER · {g.readingMinutes} MIN.</span><h3>{g.title}</h3><p>{g.description}</p><strong>Artikel lesen ↗</strong></Link>)}</div>
+    </section>
     <section className="rh-editorial-outro"><div className="rh-shell">
       <Sparkles size={26} strokeWidth={1.3}/>
       <div><span className="rh-eyebrow">NEXT STEP / YOUR SIGNATURE LOOK</span><h2>Ready for your<br/><em>new look?</em></h2></div>

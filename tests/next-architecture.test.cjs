@@ -329,7 +329,7 @@ test("pack recommendations match approved hair density quantities across site",(
   assert.ok(guide.includes("3–4 für normales und 6–8 für dickes Haar"));
 });
 
-test("SEO is guarded until merchant-approved launch and never exposes stock offer",()=>{
+test("SEO is guarded until merchant-approved launch and uses live inventory for structured offers",()=>{
  const gate=fs.readFileSync(path.join(base,"src/lib/seo.ts"),"utf8");
  const sitemap=fs.readFileSync(path.join(base,"app/sitemap.ts"),"utf8");
  const robots=fs.readFileSync(path.join(base,"app/robots.ts"),"utf8");
@@ -337,8 +337,9 @@ test("SEO is guarded until merchant-approved launch and never exposes stock offe
  assert.ok(gate.includes('RUBY_SHOP_PUBLIC===\"APPROVED_PRODUCTION\"'));
  assert.ok(sitemap.includes('if(!publicShopEnabled())return []'));
  assert.ok(robots.includes('disallow:"/"'));
- assert.ok(productPage.includes('"@type":"Product"'));
- assert.ok(!productPage.includes('"@type":"Offer"'));
+ assert.ok(productPage.includes('"@type":"ProductGroup"'));
+ assert.ok(productPage.includes('"@type":"Offer"'));
+ assert.ok(productPage.includes('v.purchasable?'));
 });
 
 test("fulfillment writes require admin and verified provider evidence, never mark payment paid",()=>{

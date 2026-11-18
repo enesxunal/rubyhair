@@ -18,8 +18,8 @@ import "../src/styles/hair-tryon-floating-link.css";
 import "../src/styles/tape-in-shades.css";
 
 export const metadata:Metadata={
-  title:{default:"Ruby Hair Extensions",template:"%s | Ruby Hair"},
-  description:"Ruby Hair – Premium Tape-in Echthaar Extensions in zwei Längen.",
+  title:{default:"Echthaar Extensions kaufen – Tape-in & Keratin | Ruby Hair",template:"%s | Ruby Hair"},
+  description:"Entdecke Ruby Hair Echthaar Extensions: Tape-in 45–50 cm und 55–60 cm sowie Keratin Bondings. Farben, Längen und verfügbare Varianten online vergleichen.",
   metadataBase:new URL(siteOrigin()),
   icons:{
     icon:[{url:"/ruby-hair-favicon-48.png?v=20261118",type:"image/png",sizes:"48x48"},{url:"/favicon.ico?v=20261118",type:"image/x-icon",sizes:"any"}],

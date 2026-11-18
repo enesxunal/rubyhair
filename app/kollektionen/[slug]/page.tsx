@@ -15,7 +15,7 @@ export async function generateMetadata({params,searchParams}:Params):Promise<Met
   const selected=product?.slug==="tape-in-extensions"?tapeInLengths.find(o=>o.key===laenge):undefined;
   return {title:selected?`${selected.title} · ${selected.label}`:product?.name||"Collection",
     description:selected?`${selected.title}: echte Ruby Hair Tape-in Haarverlängerungen in ${selected.label}. Farben entdecken.`:product?.intro,
-    alternates:{canonical:selected?`/kollektionen/tape-in-extensions/?laenge=${selected.key}`:`/kollektionen/${product?.slug||""}/`},
+    alternates:{canonical:`/kollektionen/${product?.slug||""}/`},
 };
 }
 export default async function Category({params,searchParams}:Params){

@@ -13,20 +13,31 @@ export async function generateMetadata({params}:Params):Promise<Metadata>{
   return {title:product?.name||"Produkt",
     description:product?.intro,
     alternates:{canonical:`/produkt/${product?.slug||""}/`},
-    ...(product?.slug==="keratin-bondings"?{robots:{index:false,follow:false}}:{})};
+    openGraph:{title:product?.name||"Ruby Hair Extensions",description:product?.intro||"Ruby Hair Echthaar Extensions",images:product?[{url:product.image}]:[]}};
 }
 export default async function ProductPage({params,searchParams}:Params){
   const product=await getStoreProduct((await params).slug);
   if(!product)notFound();
   const {farbe,laenge}=await searchParams;
+  const productUrl=absoluteSiteUrl(`/produkt/${product.slug}/`);
   const structured={
-    "@context":"https://schema.org", "@type":"Product",
+    "@context":"https://schema.org", "@type":"ProductGroup",
     "name":product.name,"description":product.intro,
+    "productGroupID":`rubyhair-${product.slug}`,
     "image":[absoluteSiteUrl(product.image)],
     "brand":{"@type":"Brand","name":"Ruby Hair"},
-    "material":"100% Echthaar",
-    "url":absoluteSiteUrl(`/produkt/${product.slug}/`)
-    // Intentional: no Offer/availability/reviews until approved prices, stock and checkout exist.
+    "material":product.material,
+    "url":productUrl,
+    "variesBy":["https://schema.org/color","https://schema.org/size"],
+    "hasVariant":product.variations.filter(v=>v.id>0).map(v=>({
+      "@type":"Product","name":`${product.name} – ${v.color_label} – ${v.length_label}`,
+      "sku":`RH-${v.id}`,"color":v.color_label,"size":v.length_label,
+      "image":absoluteSiteUrl(v.image),
+      "offers":{"@type":"Offer","priceCurrency":"EUR","price":v.price.toFixed(2),
+       "availability":v.purchasable?"https://schema.org/InStock":"https://schema.org/OutOfStock",
+       "itemCondition":"https://schema.org/NewCondition",
+       "url":productUrl+`?farbe=${encodeURIComponent(v.color)}&laenge=${encodeURIComponent(v.length)}`}
+    }))
   };
   return <ShopLayout>
     <script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(structured).replace(/</g,"\\u003c")}}/>
