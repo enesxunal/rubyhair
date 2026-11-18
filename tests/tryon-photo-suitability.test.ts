@@ -85,7 +85,7 @@ test("server never calls image edit API for unsuitable customer photos",async()=
  try{
   globalThis.fetch=async url=>{
    const endpoint=String(url);
-   if(endpoint.endsWith("/models/gpt-4.1-mini"))return Response.json({id:"gpt-4.1-mini"});
+   if(endpoint.endsWith("/models/gpt-image-2.5-sunburst"))return Response.json({id:"gpt-4.1-mini"});
    if(endpoint.endsWith("/responses")){validationRequests++;return visionReply("not_a_person");}
    if(endpoint.endsWith("/images/edits")){editRequests++;throw Error("THIS MUST NEVER BE CALLED");}
    throw Error("unexpected endpoint");
@@ -109,7 +109,7 @@ test("server never calls image edit API when vision service is unavailable",asyn
  let editRequests=0;
  try{
   globalThis.fetch=async url=>{
-   if(String(url).endsWith("/models/gpt-4.1-mini"))return Response.json({id:"gpt-4.1-mini"});
+   if(String(url).endsWith("/models/gpt-image-2.5-sunburst"))return Response.json({id:"gpt-4.1-mini"});
    if(String(url).endsWith("/responses"))return Response.json({error:"upstream"},{status:500});
    if(String(url).endsWith("/images/edits"))editRequests++;
    throw Error("unexpected endpoint");
@@ -130,7 +130,7 @@ test("approved photo proceeds to image editor only after passing vision",async()
  try{
   globalThis.fetch=async url=>{
    const endpoint=String(url);
-   if(endpoint.endsWith("/models/gpt-4.1-mini"))return Response.json({id:"gpt-4.1-mini"});
+   if(endpoint.endsWith("/models/gpt-image-2.5-sunburst"))return Response.json({id:"gpt-4.1-mini"});
    if(endpoint.endsWith("/responses")){calls.push("validate");return visionReply("suitable");}
    if(endpoint.endsWith("/images/edits")){
     calls.push("edit");

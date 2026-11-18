@@ -9,6 +9,7 @@ export const dynamic="force-dynamic";
 export const maxDuration=120;
 
 const MODEL="gpt-image-2.5-sunburst";
+const BACKUP_MODEL="gpt-image-2";
 const VALID_DENSITIES=["fein","normal","dicht"] as const;
 const MAX_IMAGE_BYTES=3_500_000;
 const MAX_RESPONSE_BASE64=3_700_000;
@@ -16,7 +17,7 @@ const MIME_TYPES=["image/jpeg","image/png","image/webp"] as const;
 const NO_STORE={"Cache-Control":"no-store, private","X-Robots-Tag":"noindex, nofollow"};
 const deny=(message:string,status:number)=>NextResponse.json({error:message},{status,headers:NO_STORE});
 
-type ProviderReadiness={key:string|null;reason:"ready"|"missing_key"|"invalid_key"|"provider_unavailable"};
+type ProviderReadiness={key:string|null;model:string|null;reason:"ready"|"missing_key"|"invalid_key"|"model_unavailable"|"provider_unavailable"};
 let credentialCache:{signature:string;until:number;value:ProviderReadiness}|null=null;
 /**
  * A configured sk- prefix is not proof that the credential is usable.
@@ -29,28 +30,30 @@ async function providerCredential():Promise<ProviderReadiness>{
  const candidates=[process.env.RUBY_HAIR_OPENAI_API_KEY,process.env.OPENAI_API_KEY]
   .filter((v):v is string=>typeof v==="string"&&v.startsWith("sk-"));
  const unique=[...new Set(candidates)];
- if(!unique.length)return {key:null,reason:"missing_key"};
+ if(!unique.length)return {key:null,model:null,reason:"missing_key"};
  // Cache only in production, never in test runs with stubbed fetch.
  const signature=unique.map(x=>x.slice(-8)+":"+x.length).join("|");
  if(process.env.NODE_ENV==="production"&&credentialCache?.signature===signature&&Date.now()<credentialCache.until)
   return credentialCache.value;
- let invalid=0,unavailable=0;
+ let invalid=0,unavailable=0,modelDenied=0;
  for(const key of unique){
-  try{
-   const response=await fetch("https://api.openai.com/v1/models/gpt-4.1-mini",{
-    headers:{Authorization:"Bearer "+key},cache:"no-store",signal:AbortSignal.timeout(6500)
-   });
-   if(response.ok||response.status===403){
-    // A restricted key can reject model listing while allowing inference.
-    const value:ProviderReadiness={key,reason:"ready"};
-    if(process.env.NODE_ENV==="production")credentialCache={signature,until:Date.now()+60_000,value};
-    return value;
-   }
-   if(response.status===401){invalid++;continue;}
-   unavailable++;
-  }catch{unavailable++;}
+  for(const imageModel of [MODEL,BACKUP_MODEL]){
+   try{
+    const response=await fetch("https://api.openai.com/v1/models/"+imageModel,{
+     headers:{Authorization:"Bearer "+key},cache:"no-store",signal:AbortSignal.timeout(6500)
+    });
+    if(response.ok){
+     const value:ProviderReadiness={key,model:imageModel,reason:"ready"};
+     if(process.env.NODE_ENV==="production")credentialCache={signature,until:Date.now()+60_000,value};
+     return value;
+    }
+    if(response.status===401){invalid++;break;}
+    if(response.status===403||response.status===404){modelDenied++;continue;}
+    unavailable++;
+   }catch{unavailable++;}
+  }
  }
- const value:ProviderReadiness={key:null,reason:invalid===unique.length?"invalid_key":"provider_unavailable"};
+ const value:ProviderReadiness={key:null,model:null,reason:invalid===unique.length?"invalid_key":modelDenied>0?"model_unavailable":"provider_unavailable"};
  if(process.env.NODE_ENV==="production")credentialCache={signature,until:Date.now()+15_000,value};
  return value;
 }
@@ -96,7 +99,7 @@ export async function GET(){
   available:auth.reason==="ready",
   status:auth.reason,
   provider:"OpenAI Images API",
-  model:MODEL,
+  model:auth.model||MODEL,
   requiresConsent:true
  },{headers:NO_STORE});
 }
@@ -145,7 +148,7 @@ export async function POST(request:NextRequest){
  if(swatch.length>4_000_000||!validMagic(swatch,swatchMime))
   return deny("Referenzfoto ist derzeit ungültig.",422);
  const payload=new FormData();
- payload.append("model",MODEL);
+ payload.append("model",credential.model||MODEL);
  // Keep upload filenames consistent with the actual binary/MIME type: image API validates both.
  const originalSuffix=photo.type==="image/png"?"png":photo.type==="image/webp"?"webp":"jpg";
  const shadeSuffix=swatchMime==="image/png"?"png":swatchMime==="image/webp"?"webp":"jpg";
@@ -195,7 +198,7 @@ export async function POST(request:NextRequest){
    console.warn("RubyHair tryon provider invalid image response",{base64Present:typeof base64==="string",responseSize:typeof base64==="string"?base64.length:0});
    return deny("Der KI-Anbieter hat kein gültiges Bild zurückgegeben.",502);
   }
-  return NextResponse.json({image:"data:image/webp;base64,"+base64,model:MODEL,notice:"KI-Visualisierung, keine Zusage des tatsächlichen Ergebnisses."},{headers:NO_STORE});
+  return NextResponse.json({image:"data:image/webp;base64,"+base64,model:credential.model||MODEL,notice:"KI-Visualisierung, keine Zusage des tatsächlichen Ergebnisses."},{headers:NO_STORE});
  }catch{
   return deny("Die Bildbearbeitung konnte nicht abgeschlossen werden. Bitte erneut versuchen.",504);
  }
