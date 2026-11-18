@@ -14,7 +14,7 @@ import {getKlarnaQaProduct,getKlarnaQaApproval,KLARNA_QA_SLUG} from "@/lib/qa-li
 import {QA_PRODUCT_SLUG} from "@/lib/internal-test-product";
 export const metadata:Metadata={title:"1 EUR Testbestellung | Ruby Hair Admin",robots:{index:false,follow:false}};
 export const runtime="nodejs";export const dynamic="force-dynamic";
-export default async function TestPurchasePage({searchParams}:{searchParams:Promise<{status?:string;probe?:string;paypalToken?:string;qaError?:string;paid?:string;klarnaReturn?:string;klarnaError?:string;klarnaPaid?:string;klarnaStatus?:string}>}){
+export default async function TestPurchasePage({searchParams}:{searchParams:Promise<{status?:string;probe?:string;paypalToken?:string;qaError?:string;paid?:string;klarnaReturn?:string;klarnaCheck?:string;klarnaError?:string;klarnaPaid?:string;klarnaStatus?:string}>}){
  if(!await isAdmin())redirect("/admin/login");
  const params=await searchParams;
  const status=params.status;
@@ -42,7 +42,10 @@ export default async function TestPurchasePage({searchParams}:{searchParams:Prom
  const paypalReady=["clientId","clientSecret","webhookId"].every(x=>fields.get("paypal")?.has(x));
  const klarnaReady=["username","password","merchantId"].every(x=>fields.get("klarna")?.has(x));
  const smtpReady=fields.get("smtp")?.has("password")===true;
- const klarnaApproval=params.klarnaReturn?await getKlarnaQaApproval(params.klarnaReturn):null;
+ const pendingKlarna=klarnaOrders.find(x=>x.status==="pending_payment"&&x.reservationKey);
+ // Read-only verification of an existing session before another charge is permitted.
+ const klarnaApproval=params.klarnaReturn?await getKlarnaQaApproval(params.klarnaReturn):
+   params.klarnaCheck==="1"&&pendingKlarna?.reservationKey?await getKlarnaQaApproval(pendingKlarna.reservationKey):null;
  const dhlReady=["clientId","clientSecret","username","password","billingNumber"].every(x=>fields.get("dhl")?.has(x));
  return <AdminShell current="testorder" title="1 € Live-Test vorbereiten."
    description="Nur für Administratoren. Der Testartikel bleibt aus dem Shop verborgen, bis Zahlung, Rechnungen und Benachrichtigungen vollständig verifiziert sind.">

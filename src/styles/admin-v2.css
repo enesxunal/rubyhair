@@ -11,7 +11,8 @@
  outline:2px solid #ad7b8e;outline-offset:3px
 }
 .rh-admin-sidebar{background:#30252c;padding:34px 17px 20px;gap:0;box-shadow:3px 0 18px #37212c09;z-index:2}
-.rh-admin-brand{border-bottom:1px solid #ffffff18;padding:3px 15px 28px;margin-bottom:24px}
+.rh-admin-brand{border-bottom:1px solid #ffffff18;padding:3px 15px 28px;margin-bottom:24px;justify-content:flex-start}
+.rh-admin-brand-logo{display:block;width:100%;max-width:190px;height:auto;object-fit:contain}
 .rh-admin-brand-symbol{font-size:44px;color:#e8aeba}
 .rh-admin-brand strong{font-size:13px;letter-spacing:2.4px}
 .rh-admin-brand small{display:block;color:#d0aebc;letter-spacing:1.5px;font-size:9px;margin-top:4px}

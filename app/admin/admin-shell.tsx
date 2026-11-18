@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
  ArrowUpRight,Boxes,LayoutDashboard,ClipboardList,BarChart3,
  WalletCards,ExternalLink,ShieldCheck,LogOut,ChevronRight,Store,
@@ -32,8 +33,7 @@ export default function AdminShell({
  return <main className="rh-admin-app">
   <aside className="rh-admin-sidebar">
    <Link href="/admin" className="rh-admin-brand" aria-label="Ruby Hair Verwaltung Startseite">
-    <span className="rh-admin-brand-symbol">R.</span>
-    <span><strong>RUBY HAIR</strong><small>MANAGEMENT STUDIO</small></span>
+    <Image className="rh-admin-brand-logo" src="/media/RubyHair-WebHeader-Logo-Hell-818376d91.png" alt="Ruby Hair" width={200} height={51} priority/>
    </Link>
    <div className="rh-admin-sidebar-main">
     <p className="rh-admin-menu-title">WORKSPACE</p>

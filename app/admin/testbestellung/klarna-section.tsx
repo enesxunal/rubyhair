@@ -54,6 +54,9 @@ export default function KlarnaQaTestSection({qa,klarnaReady,orders,params,approv
   </form>}
   {!klarnaReady&&<p className="rh-admin-warning" style={{marginTop:18}}>Klarna Live-Zugangsdaten fehlen. Keine Zahlung möglich.</p>}
   {pending&&!returned&&<p style={{marginTop:16,fontSize:12,color:"#985e70"}}>Eine Klarna-Testbestellung ist bereits offen. Keine zweite Zahlung beginnen; erst den vorhandenen Auftrag prüfen.</p>}
+  {pending&&!returned&&<p style={{marginTop:10,fontSize:12}}><a href="/admin/testbestellung?klarnaCheck=1">Vorhandenen Klarna-Zahlungsstatus ohne Abbuchung prüfen</a></p>}
+  {pending&&!returned&&approval?.approved&&<p className="rh-admin-success" style={{marginTop:12}}>Klarna hat die bestehende 1-€-Bestellung bestätigt; noch kein Einzug in Ruby Hair gebucht. <a href={"/admin/testbestellung?klarnaReturn="+encodeURIComponent(pending.reservationKey||"")}>Bestehende Freigabe zur gesonderten Einzugsprüfung öffnen</a>.</p>}
+  {pending&&!returned&&approval&&!approval.approved&&<p className="rh-admin-warning" style={{marginTop:12}}>Bestehender Klarna-Vorgang nicht als vollständig freigegeben verifiziert: {approval.reason?.replaceAll("_"," ")||"unbekannt"}. Kein neuer Einzug und kein automatischer Abbruch.</p>}
   {paid&&<p style={{marginTop:16,fontSize:12,color:"#448052"}}>Klarna-Test bereits bezahlt. Weitere Abbuchungen gesperrt.</p>}
  </section>;
 }
