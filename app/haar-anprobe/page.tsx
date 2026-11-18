@@ -12,7 +12,7 @@ export const metadata:Metadata={
 const products=Object.values(catalog.products).filter(p=>p.slug==="tape-in-extensions").map(p=>({
  slug:p.slug,name:p.name,pack:p.pack,material:p.material,
  variants:p.variations.map(v=>({
-   color:v.color_label,length:v.length_label,image:v.image,
+   color:v.color_label,code:v.color,length:v.length_label,image:v.image,
    key:p.slug+"-"+String(v.id)
  }))
 }));

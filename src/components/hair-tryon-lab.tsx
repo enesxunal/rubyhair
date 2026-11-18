@@ -4,7 +4,9 @@ import {useEffect,useMemo,useRef,useState,type ChangeEvent,type DragEvent,type P
 import Link from "next/link";
 import {ArrowLeft,ArrowRight,ArrowLeftRight,Check,ChevronDown,Download,ImagePlus,LockKeyhole,RefreshCw,Scissors,Sparkles,Upload,WandSparkles,X} from "lucide-react";
 
-type Variation={color:string;length:string;image:string;key:string};
+type Variation={color:string;code:string;length:string;image:string;key:string};
+const SHADE_ORDER=["1","1b","2","2b","4","6","7","8","9a","10","60","ari","eve","banu","bronde","loui","ruby","silver"];
+const shadeRank=(code:string)=>{const rank=SHADE_ORDER.indexOf(code.toLowerCase());return rank>=0?rank:SHADE_ORDER.length;};
 type Product={slug:string;name:string;pack:string;material:string;variants:Variation[]};
 type LocalPhoto={url:string;name:string;file?:File};
 type Density="fein"|"normal"|"dicht";
@@ -35,7 +37,7 @@ async function shrinkImage(file:File):Promise<Blob>{
 
 export default function HairTryonLab({products}:{products:Product[]}){
  const product=products[0];
- const [color,setColor]=useState(product?.variants[0]?.color||"");
+ const [color,setColor]=useState(product?.variants.find(v=>v.code.toLowerCase()==="1")?.color||product?.variants[0]?.color||"");
  const [wizardStep,setWizardStep]=useState<0|1|2|3|4>(0);
  const [length,setLength]=useState(product?.variants[0]?.length||"");
  const [density,setDensity]=useState<Density>("normal");
@@ -44,7 +46,7 @@ export default function HairTryonLab({products}:{products:Product[]}){
  const [ratio,setRatio]=useState(50);
  const [issue,setIssue]=useState("");
  const [aiIssue,setAiIssue]=useState("");
- const [showAll,setShowAll]=useState(false);
+ const [showAll,setShowAll]=useState(true);
  const [dragging,setDragging]=useState(false);
  const [aiAvailable,setAiAvailable]=useState<boolean|null>(null);
  const [healthRefresh,setHealthRefresh]=useState(0);
@@ -59,7 +61,8 @@ export default function HairTryonLab({products}:{products:Product[]}){
  const picked=available.find(v=>v.length===length)||available[0]||product?.variants[0];
  const currentColor=picked?.color||color;
  const currentLength=picked?.length||length;
- const colorOptions=(product?colors.map(tone=>product.variants.find(v=>v.color===tone)!).filter(Boolean):[]);
+ const colorOptions=(product?colors.map(tone=>product.variants.find(v=>v.color===tone)!).filter(Boolean):[])
+  .sort((a,b)=>shadeRank(a.code)-shadeRank(b.code)||new Intl.Collator("de",{numeric:true}).compare(a.code,b.code));
 
  useEffect(()=>()=>{if(before?.url.startsWith("blob:"))URL.revokeObjectURL(before.url);},[before]);
  useEffect(()=>()=>{if(after?.url.startsWith("blob:"))URL.revokeObjectURL(after.url);},[after]);
@@ -231,17 +234,17 @@ export default function HairTryonLab({products}:{products:Product[]}){
      <div className="rh-wizard-heading">
       <span className="rh-wizard-eyebrow">02 / DEIN WUNSCHLOOK</span>
       <h1>Finde deinen Farbton.</h1>
-      <p>Wähle die passende Haarfarbe und deine gewünschte Länge.</p>
+      <p>Wähle deine Ruby Hair Farbnummer und anschließend die gewünschte Länge. Die Farbnummern entsprechen den Produktfarben im Shop.</p>
      </div>
      <div className="rh-wizard-picker">
       <div>
-       <div className="rh-wizard-field-title"><strong>Haarfarbe</strong><span>Farbe {currentColor}</span></div>
-       <div className="rh-wizard-shades">
+       <div className="rh-wizard-field-title"><strong>Haarfarbe nach Farbnummer</strong><span>{currentColor}</span></div>
+       <div className="rh-wizard-shades" aria-label="Ruby Hair Farbnummern">
         {colorOptions.slice(0,showAll?undefined:8).map(v=><button key={v.color} type="button"
          className={currentColor===v.color?"is-selected":""} aria-label={"Farbe "+v.color}
          aria-pressed={currentColor===v.color} title={"Farbton "+v.color}
          onClick={()=>{setColor(v.color);const same=product.variants.find(x=>x.color===v.color&&x.length===length);if(!same)setLength(v.length);clearResult();}}>
-         <img src={v.image} alt="" loading="lazy"/><span>{v.color}</span>
+         <img src={v.image} alt="" loading="lazy"/><span>{v.code.toUpperCase()==="9A"?"9A":v.color}</span>
          {currentColor===v.color&&<Check size={14} className="rh-wizard-shade-check"/>}
         </button>)}
        </div>
@@ -264,7 +267,7 @@ export default function HairTryonLab({products}:{products:Product[]}){
       </div>
       <aside className="rh-wizard-picked">
        <img src={picked?.image} alt={"Ausgewählter Ruby Hair Farbton "+currentColor}/>
-       <div><small>DEINE AUSWAHL</small><strong>Farbe {currentColor}</strong><span>{currentLength} · Tape-in Extensions</span></div>
+       <div><small>DEINE AUSWAHL</small><strong>Farbton {currentColor}</strong><span>Farbnummer {picked?.code.toUpperCase()} · {currentLength} · Tape-in Extensions</span></div>
       </aside>
      </div>
      <div className="rh-wizard-buttons">
@@ -282,7 +285,7 @@ export default function HairTryonLab({products}:{products:Product[]}){
       </div>
       <div className="rh-wizard-summary">
        {before&&<img src={before.url} alt="Dein Foto vor der KI-Haarvorschau"/>}
-       <div><small>DEIN WUNSCHLOOK</small><strong>Farbe {currentColor} · {currentLength}</strong><span>Ruby Hair Tape-in Extensions</span>
+       <div><small>DEIN WUNSCHLOOK</small><strong>Farbton {currentColor} · {currentLength}</strong><span>Ruby Hair Farbnummer {picked?.code.toUpperCase()}</span>
         <button type="button" onClick={()=>goStep(2)}>Auswahl ändern</button></div>
        <Check size={19}/>
       </div>

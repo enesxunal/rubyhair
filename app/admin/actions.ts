@@ -1,5 +1,5 @@
 "use server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { existsSync } from "node:fs";
@@ -43,6 +43,7 @@ export async function saveVariantAction(formData:FormData){
   revalidatePath("/produkt/"+existing.product.slug);
   revalidatePath("/admin");
   revalidatePath("/admin/produkte");
+  updateTag("rubyhair-live-catalog");
   revalidatePath("/api/catalog");
   redirect("/admin/produkte?updated=1");
 }
@@ -110,6 +111,7 @@ export async function saveVariantBatchAction(formData:FormData){
   revalidatePath("/produkt/"+product.slug);
   revalidatePath("/admin");
   revalidatePath("/admin/produkte");
+  updateTag("rubyhair-live-catalog");
   revalidatePath("/api/catalog");
   redirect("/admin/produkte?updated=bulk");
 }
@@ -148,6 +150,7 @@ export async function saveProductAction(formData:FormData){
   revalidatePath("/kollektionen/"+product.slug);
   revalidatePath("/produkt/"+product.slug);
   revalidatePath("/suche");
+  updateTag("rubyhair-live-catalog");
   revalidatePath("/api/catalog");
   revalidatePath("/admin");
   revalidatePath("/admin/produkte");

@@ -1,12 +1,12 @@
 import "server-only";
+import {unstable_cache} from "next/cache";
 import { databaseConfigured, getPrisma } from "@/lib/prisma";
 import { products as importedProducts, type Product, type Variation } from "@/lib/catalog";
 
-export async function getStoreCatalog():Promise<{source:"postgresql"|"imported-preview";products:Product[]}>{
-  if(!databaseConfigured()){
-    return { source:"imported-preview", products:importedProducts };
-  }
-  // Fail closed on a configured but unavailable database: no silent stale price/stock.
+// Share one short-lived read across marketing pages and serverless requests.
+// Checkout, reservations and payments NEVER use this read cache.
+// Administrator writes invalidate the tag immediately.
+const liveProducts=unstable_cache(async ():Promise<Product[]>=>{
   const dbProducts=await getPrisma().product.findMany({
     where:{active:true},include:{variants:{orderBy:{legacyId:"asc"}}},orderBy:{name:"asc"}
   });
@@ -32,7 +32,12 @@ export async function getStoreCatalog():Promise<{source:"postgresql"|"imported-p
       variations
     };
   });
-  return {source:"postgresql",products};
+  return products;
+},["rubyhair-live-store-catalog"],{revalidate:15,tags:["rubyhair-live-catalog"]});
+export async function getStoreCatalog():Promise<{source:"postgresql"|"imported-preview";products:Product[]}>{
+  if(!databaseConfigured())return {source:"imported-preview",products:importedProducts};
+  // A failed database read still fails closed; never display fabricated stock.
+  return {source:"postgresql",products:await liveProducts()};
 }
 export async function getStoreProduct(slug:string){
   const catalog=await getStoreCatalog();
