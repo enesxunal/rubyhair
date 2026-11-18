@@ -1,17 +1,16 @@
 "use client";
 import Link from "next/link";
-import {Check,LockKeyhole,Truck,Wallet,ArrowUpRight,ShoppingBag} from "lucide-react";
+import {Check,Truck,Wallet,ArrowUpRight,ShoppingBag} from "lucide-react";
 import {useCart} from "@/components/cart-context";
 import {useCartQuote} from "@/hooks/use-cart-quote";
 import {euros} from "@/lib/catalog";
-import {legacyStore as old} from "@/lib/legacy-store-facts";
 import CheckoutAddressPreview from "./checkout-address-preview";
 import LiveVariantTestSection,{type LiveVariantTestView} from "./live-variant-test-section";
 
 const process=[
   {no:"01",label:"Warenkorb",description:"Produkte, Farbe und Menge prüfen",icon:ShoppingBag},
-  {no:"02",label:"Lieferung",description:"Versandgebiet, Lieferzeit und Kosten werden noch bestätigt",icon:Truck},
-  {no:"03",label:"Zahlung",description:"Zahlungsarten sind noch nicht freigeschaltet",icon:Wallet}
+  {no:"02",label:"Lieferung",description:"Liefer- und Rechnungsadresse eingeben",icon:Truck},
+  {no:"03",label:"Zahlung",description:"Zahlungsart und Bestellübersicht",icon:Wallet}
 ];
 export default function CheckoutPreview({liveTest}:{liveTest?:LiveVariantTestView|null}){
   const {lines,loaded}=useCart();
@@ -19,40 +18,36 @@ export default function CheckoutPreview({liveTest}:{liveTest?:LiveVariantTestVie
   return <div className="rh-checkout-v2 rh-shell">
     <nav className="rh-breadcrumb" aria-label="Breadcrumb">
       <Link href="/">Startseite</Link><span>/</span>
-      <Link href="/warenkorb/">Warenkorb</Link><span>/</span><span>Kasse (Vorschau)</span>
+      <Link href="/warenkorb/">Warenkorb</Link><span>/</span><span>Kasse</span>
     </nav>
-    <div className="rh-eyebrow">RUBY HAIR / CHECKOUT-VORSCHAU</div>
+    <div className="rh-eyebrow">RUBY HAIR / CHECKOUT</div>
     <h1>Almost <em>yours.</em></h1>
-    <div className="rh-checkout-alert" role="status">
-      <LockKeyhole size={22} strokeWidth={1.5}/>
-      <div><strong>{liveTest?"REGULÄRE KUNDENKASSE GESPERRT – INTERNER 1-€-TEST":"NOCH NICHT ZUR BESTELLUNG FREIGEGEBEN"}</strong>
-        <p>{liveTest?"Die reguläre Kasse bleibt geschützt. Nur der interne 1-€-Produkttest unten kann eine echte Zahlung auslösen, nachdem du sie ausdrücklich bestätigt hast.":"Die neue Kasse ist eine unverbindliche Designvorschau. Hier werden keine Adressen, Bestellungen oder Zahlungsdaten erfasst."}</p>
-      </div>
-    </div>
     <div className="rh-checkout-grid">
       <section className="rh-checkout-process">
-        <h2>So funktioniert die Kasse.</h2>
-        <p>Die Lieferadresse kann bereits lokal geprüft werden. Eine Bestellung oder Zahlung wird noch nicht ausgelöst.</p>
+        <h2>Dein Einkauf.</h2>
+        <p>Prüfe deine Auswahl und die Lieferadresse.</p>
         <div className="rh-checkout-steps">
           {process.map((step,i)=><article key={step.no}>
             <div className="rh-checkout-number">{step.no}</div>
             <div><div className="rh-checkout-step-name"><step.icon size={19} strokeWidth={1.6}/><h3>{step.label}</h3></div>
               <p>{step.description}</p></div>
-            <span className="rh-checkout-step-state">{i===0?<Check size={18}/>:<LockKeyhole size={15}/>}</span>
+            <span className="rh-checkout-step-state">{i===0?<Check size={18}/>:<span aria-hidden="true">{step.no}</span>}</span>
           </article>)}
         </div>
-        {loaded&&lines.length>0&&<CheckoutAddressPreview/>}
         {liveTest&&<LiveVariantTestSection state={liveTest} cartReady={Boolean(
           loaded&&lines.length===1&&lines[0].id===886&&lines[0].quantity===1&&
           !error&&!loading&&quote&&!quote.needsReview&&quote.subtotalCents===100&&
           quote.lines.length===1&&quote.lines[0].status==="available"
         )}/>}
-        <div className="rh-checkout-payment-preview"><h3>03 / ZAHLUNG</h3>
-          <p className="rh-payment-preview-heading">Vorgesehene Zahlungsmethoden aus dem bisherigen Shop (noch nicht aktiv)</p>
-          <div className="rh-payment-preview-methods" aria-label="Vorgesehene Zahlungsmethoden, nicht aktiv">
-            {["PayPal","Visa / Mastercard","Klarna","Banküberweisung","Trustly"].map(method=><span key={method}>{method}</span>)}
-          </div><p>Die Zahlungsart wählst du nach der Freigabe des Shops. Aktuell kann kein Kauf ausgelöst werden.</p>
-         <button type="button" disabled aria-disabled="true">Zahlungspflichtig bestellen — noch gesperrt</button></div>
+        {loaded&&lines.length>0&&<CheckoutAddressPreview/>}
+        {!liveTest&&<div className="rh-checkout-payment-preview"><h3>03 / ZAHLUNG</h3>
+          <p className="rh-payment-preview-heading">Zahlungsarten</p>
+          <div className="rh-payment-preview-methods" aria-label="Zahlungsarten in Vorbereitung">
+            {["PayPal","Klarna"].map(method=><span key={method}>{method}</span>)}
+          </div>
+          <p>Die Bezahlung wird nach dem laufenden Live-Zahlungstest aktiviert.</p>
+          <button type="button" disabled aria-disabled="true">Bestellung abschließen</button>
+        </div>}
         <Link className="rh-continue-shop" href="/versand-zahlung/">Versand, Zahlung & Widerruf ansehen ↗</Link>
         <Link className="rh-checkout-return" href="/warenkorb/">← ZURÜCK ZUM WARENKORB</Link>
       </section>
@@ -76,11 +71,13 @@ export default function CheckoutPreview({liveTest}:{liveTest?:LiveVariantTestVie
                 <b>{line.lineCents!==null?euros(line.lineCents/100):"Nicht verfügbar"}</b>
               </div>)}
             </div>
-            <div className="rh-checkout-sum"><span>Artikelwert (unverbindlich)</span>
+            <div className="rh-checkout-sum"><span>Artikelwert</span>
               <strong>{euros(quote.subtotalCents/100)}</strong></div>
-            <div className="rh-checkout-sum"><span>Versand DE laut bisherigem Shop (DHL)</span><strong>{euros(old.shipping.standardEuro)}</strong></div>
-            <div className="rh-checkout-sum"><span>Steuern & verbindlicher Gesamtpreis</span><strong>Noch offen</strong></div>
-            <p className="rh-checkout-policy">Die Versandpauschale von {euros(old.shipping.standardEuro)} ist eine unverbindliche Angabe aus dem bisherigen Shop. Sie wird hier nicht berechnet oder eingezogen. Es gibt noch keinen endgültigen Gesamtpreis oder eine zahlungspflichtige Bestellung.</p>
+            {liveTest?<><div className="rh-checkout-sum"><span>Versand (interner Test)</span><strong>{euros(0)}</strong></div>
+              <div className="rh-checkout-sum"><span>Inkl. 19 % MwSt.</span><strong>{euros(0.16)}</strong></div>
+              <div className="rh-checkout-sum"><span>Gesamtbetrag</span><strong>{euros(quote.subtotalCents/100)}</strong></div></>:
+              <><div className="rh-checkout-sum"><span>Versand innerhalb Deutschlands</span><strong>Wird an der Kasse berechnet</strong></div>
+              <p className="rh-checkout-policy">Gesamtbetrag und Versandkosten werden vor einer zahlungspflichtigen Bestellung ausgewiesen.</p></>}
           </>}
         <Link className="rh-checkout-help" href="/kontakt/">Fragen zu deiner Auswahl? Beratung anfragen ↗</Link>
       </aside>

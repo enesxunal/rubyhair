@@ -180,7 +180,9 @@ test("checkout preview reuses authoritative cart quotation and cannot collect pa
   assert.ok(quoteHook.includes('fetch("/api/cart/quote"'));
   assert.ok(checkout.includes("useCartQuote(lines)"));
   assert.ok(cart.includes("useCartQuote(lines)"));
-  assert.ok(checkout.includes("keine Adressen, Bestellungen oder Zahlungsdaten"));
+  assert.ok(!checkout.includes("NOCH NICHT ZUR BESTELLUNG FREIGEGEBEN"));
+  assert.ok(!checkout.includes("CHECKOUT-VORSCHAU"));
+  assert.ok(checkout.includes("Die Bezahlung wird nach dem laufenden Live-Zahlungstest aktiviert."));
   assert.ok(!checkout.includes("<input"));
   assert.ok(!checkout.includes("createOrder"));
 });
@@ -232,8 +234,8 @@ test("legacy policy mirrors the old shop sections without opening sales",()=>{
   }
   assert.ok(legal.includes("14-tägige Frist"));
   assert.ok(legal.includes("Zweigertstraße 8"));
-  assert.ok(checkout.includes("old.shipping.standardEuro"));
-  assert.ok(checkout.includes("Sie wird hier nicht berechnet oder eingezogen"));
+  assert.ok(checkout.includes("Versand innerhalb Deutschlands"));
+  assert.ok(checkout.includes("Gesamtbetrag und Versandkosten werden vor einer zahlungspflichtigen Bestellung ausgewiesen."));
   const issues=fs.readFileSync(path.join(base,"reports/musteriye-sorulacak-konular-2026-11-02.md"),"utf8");
   for(const issue of ["Kargo","AGB","Klara Straße","Zweigertstraße","Klarna","19 Haziran 2026","EVE"]){
     assert.ok(issues.toLowerCase().includes(issue.toLowerCase()),issue);

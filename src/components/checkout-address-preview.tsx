@@ -12,7 +12,7 @@ export default function CheckoutAddressPreview(){
  };
  return <section className="rh-checkout-address" aria-label="Liefer- und Rechnungsadresse vorbereiten">
   <div className="rh-checkout-address-heading"><span>02 / LIEFERUNG</span><h2>Deine Lieferadresse.</h2>
-   <p>Alle Felder werden nur in deinem Browser geprüft. Die Vorschau sendet oder speichert keine persönlichen Daten.</p></div>
+   <p>Trage deine Lieferadresse und bei Bedarf eine abweichende Rechnungsadresse ein.</p></div>
   <form onSubmit={validate} onChange={()=>setChecked(false)}>
    <div className="rh-checkout-field-grid">
     <label>Vorname <input required autoComplete="given-name" name="givenName" maxLength={80} placeholder="Vorname"/></label>
@@ -32,8 +32,8 @@ export default function CheckoutAddressPreview(){
      <label>Ort <input required name="billingCity" maxLength={100}/></label>
    </div></fieldset>}
    <button type="submit" className="rh-checkout-validate">Adressen prüfen <CheckCircle2 size={16}/></button>
-   {checked&&<p role="status" className="rh-checkout-address-ok"><CheckCircle2 size={17}/> Formulareingaben gültig. Es wurde keine Bestellung angelegt und kein Datenversand durchgeführt.</p>}
+   {checked&&<p role="status" className="rh-checkout-address-ok"><CheckCircle2 size={17}/> Deine Angaben sind vollständig. Noch keine Bestellung ausgelöst.</p>}
   </form>
-  <p className="rh-checkout-private"><ShieldCheck size={16}/> Persönliche Daten werden hier weder versendet noch dauerhaft gespeichert. Die echte Bestellannahme bleibt gesperrt.</p>
+  <p className="rh-checkout-private"><ShieldCheck size={16}/> Deine Adresse bleibt auf diesem Gerät, bis du eine Bestellung ausdrücklich bestätigst.</p>
  </section>;
 }

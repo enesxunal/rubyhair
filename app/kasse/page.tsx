@@ -1,4 +1,5 @@
 import type {Metadata} from "next";
+import {redirect} from "next/navigation";
 import ShopLayout from "@/components/site-shell";
 import CheckoutPreview from "@/components/checkout-preview";
 import {isAdmin} from "@/lib/admin-auth";
@@ -7,16 +8,19 @@ import type {LiveVariantTestView} from "@/components/live-variant-test-section";
 
 export const metadata:Metadata={
  title:"Kasse – Ruby Hair",
- description:"Ruby Hair – Warenkorb und Kasse. Zahlungen für reguläre Kunden sind noch nicht aktiviert.",
+ description:"Ruby Hair – sicherer Checkout, Lieferadresse und Zahlungsarten.",
  robots:{index:false,follow:false}
 };
 export const dynamic="force-dynamic";
 type Query={liveTest?:string;paypalToken?:string;testError?:string;testPaid?:string;testStatus?:string};
 export default async function Checkout({searchParams}:{searchParams:Promise<Query>}){
  const p=await searchParams;
+ const admin=await isAdmin();
+ if(p.liveTest==="1"&&!admin)redirect("/admin/login");
  let test:LiveVariantTestView|null=null;
- if(p.liveTest==="1"&&await isAdmin()){
+ if(admin){
   const s=await getVariantTestState();
+  if(p.liveTest==="1"||s.ready||s.pending||s.completed){
   const supplied=typeof p.paypalToken==="string"&&/^[A-Za-z0-9_-]{8,60}$/.test(p.paypalToken)?p.paypalToken:null;
   test={
    ready:s.ready,priceCents:s.priceCents,
@@ -27,6 +31,7 @@ export default async function Checkout({searchParams}:{searchParams:Promise<Quer
    status:typeof p.testStatus==="string"?p.testStatus:null,
    paid:typeof p.testPaid==="string"?p.testPaid:null
   };
+  }
  }
  return <ShopLayout><CheckoutPreview liveTest={test}/></ShopLayout>;
 }

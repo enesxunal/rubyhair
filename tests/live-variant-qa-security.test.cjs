@@ -26,7 +26,10 @@ test("administrator-only test checkout, exact money and separate public checkout
  assert.match(actions,/if\(!await isAdmin\(\)\)/);
  assert.match(actions,/form\.get\("variationId"\)!=="886"/);
  assert.match(actions,/form\.get\("confirmCapture"\)!=="on"/);
- assert.match(page,/p\.liveTest==="1"&&await isAdmin\(\)/);
+ assert.match(page,/const admin=await isAdmin\(\)/);
+ assert.match(page,/p\.liveTest==="1"&&!admin/);
+ assert.match(page,/redirect\("\/admin\/login"\)/);
+ assert.match(page,/s\.ready\|\|s\.pending\|\|s\.completed/);
  assert.match(page,/s\.pending\?\.paymentReference===supplied/);
  assert.match(core,/createOneEuroQaOrder\(/);
  assert.match(core,/shippingCents:0/);
