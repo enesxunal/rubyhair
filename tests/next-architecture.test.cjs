@@ -4,12 +4,12 @@ const fs=require("node:fs");
 const path=require("node:path");
 const base=path.resolve(__dirname,"..");
 const catalog=JSON.parse(fs.readFileSync(path.join(base,"src/data/products.json"),"utf8"));
-test("imported Ruby Hair catalog has exactly 2 products and 38 unique variants",()=>{
+test("imported Ruby Hair catalog has 2 products, including 9 restored inactive Tape-in variants",()=>{
   const list=Object.values(catalog.products);
   assert.equal(list.length,2);
   const all=list.flatMap(p=>p.variations);
-  assert.equal(all.length,38);
-  assert.equal(new Set(all.map(v=>v.id)).size,38);
+  assert.equal(all.length,47);
+  assert.equal(new Set(all.map(v=>v.id)).size,47);
   assert.ok(all.every(v=>v.price>0&&Number.isFinite(v.price)));
 });
 test("all product pictures and variants are owned local files",()=>{
@@ -109,8 +109,8 @@ test("Tape-in storefront splits real 45-50 and 55-60 cm variants, with Keratin p
   const tape=catalog.products["tape-in-extensions"];
   const short=tape.variations.filter(v=>v.length==="45-50-cm");
   const long=tape.variations.filter(v=>v.length==="55-60-cm");
-  assert.equal(short.length,12);
-  assert.equal(long.length,15);
+  assert.equal(short.length,18);
+  assert.equal(long.length,18);
   const home=fs.readFileSync(path.join(base,"src/components/home-frontend.tsx"),"utf8");
   const nav=fs.readFileSync(path.join(base,"src/components/site-shell.tsx"),"utf8");
   const grid=fs.readFileSync(path.join(base,"src/components/shade-grid.tsx"),"utf8");
@@ -195,9 +195,12 @@ test("cart preserves selected variant color and length for return to product",()
 test("imported catalog has a line-by-line merchant verification report",()=>{
   const data=JSON.parse(fs.readFileSync(path.join(base,"src/data/products.json"),"utf8"));
   const number=Object.values(data.products).reduce((n,p)=>n+p.variations.length,0);
-  assert.equal(number,38);
+  assert.equal(number,47);
   const rows=fs.readFileSync(path.join(base,"reports/catalog-38-variants.csv"),"utf8").trim().split("\n");
-  assert.equal(rows.length,number+1);
+  assert.equal(rows.length,39,"historical audit remains the original 38 imported variants");
+  const archived=JSON.parse(fs.readFileSync(path.join(base,"scripts/legacy-tapein-restoration-20261118.json"),"utf8"));
+  assert.equal(archived.variants.length,9);
+  assert.equal(archived.variants.length+rows.length-1,number);
   assert.ok(fs.readFileSync(path.join(base,"reports/catalog-review.md"),"utf8").includes("Tape-in EVE"));
 });
 test("local-only order reservation service fails closed and snapshots server-side prices",()=>{

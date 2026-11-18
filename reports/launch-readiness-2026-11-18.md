@@ -38,3 +38,9 @@
 3. PayPal ve Klarna müşteri checkout'u + güvenli sağlayıcı onayı, imzalı webhook, tekil tahsilat ve iptal/iade.
 4. Fatura PDF, sipariş e-postası ve DHL senaryolarını staging ortamında uçtan uca doğrula.
 5. Müşteri onayından sonra kontrollü gerçek müşteri siparişi; ardından Coming Soon kaldırma için ayrıca GO kararı.
+
+## 18 Kasım Tape-in arşiv geri kazanım ek notu
+- Eski WooCommerce SQL yedeği doğrulandı; yeni katalogda eksik olan 9 Tape-in renk/uzunluk kombinasyonu birebir orijinal varyant ID/SKU/fiyat/görselle eşleştirildi.
+- 9 kayıt yalnızca **yerel** `src/data/products.json` kataloğuna eklendi, stok 0 / satış kapalı. Yerel toplam: Tape-in 36 varyant ve 18 renk.
+- Canlı PostgreSQL **değişmedi** (27 Tape-in), toplu yayında `scripts/restore-legacy-tapein-variants.cjs` korumalı veri eklemesi gerekecek.
+- Normal müşteri checkout hâlâ NO-GO; tüm gerçek stok/ödeme/kargo/fatura kontrolleri ayrı.

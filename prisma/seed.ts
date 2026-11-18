@@ -38,7 +38,7 @@ async function main() {
             lengthCode: v.length,
             lengthLabel: v.length_label,
             priceCents: Math.round(v.price * 100),
-            stockQuantity: null, // stock count unknown; do not infer from available status
+            stockQuantity: "stock_quantity" in v && v.stock_quantity === 0 ? 0 : null, // archived zero-stock is verified; other stock counts remain unknown
             active: Boolean(v.available && v.purchasable),
             image: v.image
           }

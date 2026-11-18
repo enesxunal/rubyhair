@@ -1,0 +1,19 @@
+{
+  "revision": "rubyhair-woo-20261117-restored-tapein-unavailable",
+  "source": "17 November 2026 encrypted WooCommerce SQL backup, verified _stock/_price/attribute_pa_produktfarbe/attribute_pa_produktlaenge/_thumbnail_id/_sku and local media",
+  "sourceProductId": 882,
+  "slug": "tape-in-extensions",
+  "priceAdjustmentCents": 500,
+  "stockPolicy": "legacy stock 0; restored variants inactive, nonpurchasable and stock 0",
+  "variants": [
+    {"legacyId": 884, "sku": "RHTape1b-45/50", "color": "1b", "length": "45-50-cm", "legacyPriceCents": 13500, "imageId": 791, "image": "/media/1b-600x600-ed411886a.jpg"},
+    {"legacyId": 885, "sku": "RHTape2b-45/50", "color": "2b", "length": "45-50-cm", "legacyPriceCents": 13500, "imageId": 792, "image": "/media/2b-600x600-cf1f52de0.jpg"},
+    {"legacyId": 891, "sku": "RHTape9A-45/50", "color": "9a", "length": "45-50-cm", "legacyPriceCents": 13500, "imageId": 798, "image": "/media/9A-600x600-e0acc4bf5.jpg"},
+    {"legacyId": 896, "sku": "RHTapeSILVER-45/50", "color": "silver", "length": "45-50-cm", "legacyPriceCents": 13500, "imageId": 803, "image": "/media/SILVER-600x600-b4a3a43b8.jpg"},
+    {"legacyId": 897, "sku": "RHTape1-55/60", "color": "1", "length": "55-60-cm", "legacyPriceCents": 16000, "imageId": 790, "image": "/media/1-600x600-04fb73bc3.jpg"},
+    {"legacyId": 898, "sku": "RHTape1b-55/60", "color": "1b", "length": "55-60-cm", "legacyPriceCents": 16000, "imageId": 791, "image": "/media/1b-600x600-ed411886a.jpg"},
+    {"legacyId": 1319, "sku": "RHTapeEVE-55/60", "color": "eve", "length": "55-60-cm", "legacyPriceCents": 16000, "imageId": 1699, "image": "/media/1006-1-600x600-8f26ccdcc.jpg"},
+    {"legacyId": 1321, "sku": "RHTapeRUBY-45/50", "color": "ruby", "length": "45-50-cm", "legacyPriceCents": 16000, "imageId": 1700, "image": "/media/ruby-1-600x600-553c515f8.jpg"},
+    {"legacyId": 1701, "sku": "RHTape2-45/50", "color": "2", "length": "45-50-cm", "legacyPriceCents": 13500, "imageId": 1702, "image": "/media/2-1-600x600-e901a9998.jpg"}
+  ]
+}

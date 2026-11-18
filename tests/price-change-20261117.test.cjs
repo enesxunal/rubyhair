@@ -24,8 +24,13 @@ test('Ruby Hair 2026-11-17 pricing raises every imported variant exactly once by
     assert.equal(p.max_price,Math.max(...prices));
     return p.variations.map(v=>({slug,...v}));
   });
-  assert.equal(variants.length,38);
-  for(const v of variants){
+  assert.equal(variants.length,47);
+  const originals=variants.filter(v=>lookup.has(v.id));
+  const archived=variants.filter(v=>!lookup.has(v.id));
+  assert.equal(originals.length,38);
+  assert.equal(archived.length,9);
+  assert.ok(archived.every(v=>v.available===false&&v.purchasable===false&&v.stock_quantity===0));
+  for(const v of originals){
     const m=lookup.get(v.id);
     assert.ok(m,`Missing manifest entry for ${v.id}`);
     assert.equal(m.slug,v.slug);

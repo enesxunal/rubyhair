@@ -12,13 +12,13 @@ export function ShadeGrid({product,selectedLength}:{product:Product;selectedLeng
    .includes(filter.trim().toLocaleLowerCase("de"))
  );
  const listed=groups.filter(card=>card.status==="listed").length;
- const notListed=groups.filter(card=>card.status==="not-listed").length;
+ const unavailable=groups.filter(card=>card.status!=="listed").length;
  const labelLength=selectedLength==="45-50-cm"?"45–50 cm":selectedLength==="55-60-cm"?"55–60 cm":null;
  return <section className="rh-shell rh-shades-section">
   <div className="rh-section-heading"><div><h2>Wähle deine <em>Farbe.</em></h2></div></div>
   {product.slug==="tape-in-extensions"&&<div className="rh-shade-coverage" role="note">
    <strong>{groups.length} Farbtöne im Überblick</strong>
-   <span>{labelLength?labelLength+" · "+listed+" aktuell gelistet · "+notListed+" weitere Farbtöne nur auf Anfrage":listed+" gelistete Farbtöne · "+notListed+" Farbmuster ohne Tape-in-Variante"}</span>
+   <span>{labelLength?labelLength+" · "+listed+" derzeit verfügbar · "+unavailable+" aktuell nicht bestellbar":listed+" derzeit verfügbar · "+unavailable+" aktuell nicht bestellbar"}</span>
    <p>Alle angefragten Farben werden gezeigt. Nicht gelistete Farb-/Längenkombinationen sind <b>nicht bestellbar</b>. Bilder anderer Längen dienen nur als Farbmuster; Verfügbarkeit und Preise werden vor dem Verkauf geklärt.</p>
   </div>}
   <div className="rh-filters"><label htmlFor="rh-color-filter">Farbe suchen</label>

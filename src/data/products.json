@@ -12,8 +12,8 @@
       "pack": "10 einzelne Tape-in Extensions",
       "material": "100% Echthaar",
       "currency": "EUR",
-      "min_price": 140.0,
-      "max_price": 190.0,
+      "min_price": 140,
+      "max_price": 190,
       "image": "/media/tape-in-short-editorial.webp",
       "variations": [
         {
@@ -312,6 +312,114 @@
           "available": true,
           "purchasable": true,
           "image": "/media/4T18-22-600x600-166ed7df3.jpg"
+        },
+        {
+          "id": 884,
+          "color": "1b",
+          "color_label": "1b",
+          "length": "45-50-cm",
+          "length_label": "45 - 50 cm",
+          "price": 140,
+          "available": false,
+          "purchasable": false,
+          "stock_quantity": 0,
+          "image": "/media/1b-600x600-ed411886a.jpg"
+        },
+        {
+          "id": 885,
+          "color": "2b",
+          "color_label": "2b",
+          "length": "45-50-cm",
+          "length_label": "45 - 50 cm",
+          "price": 140,
+          "available": false,
+          "purchasable": false,
+          "stock_quantity": 0,
+          "image": "/media/2b-600x600-cf1f52de0.jpg"
+        },
+        {
+          "id": 891,
+          "color": "9a",
+          "color_label": "9A",
+          "length": "45-50-cm",
+          "length_label": "45 - 50 cm",
+          "price": 140,
+          "available": false,
+          "purchasable": false,
+          "stock_quantity": 0,
+          "image": "/media/9A-600x600-e0acc4bf5.jpg"
+        },
+        {
+          "id": 896,
+          "color": "silver",
+          "color_label": "SILVER",
+          "length": "45-50-cm",
+          "length_label": "45 - 50 cm",
+          "price": 140,
+          "available": false,
+          "purchasable": false,
+          "stock_quantity": 0,
+          "image": "/media/SILVER-600x600-b4a3a43b8.jpg"
+        },
+        {
+          "id": 897,
+          "color": "1",
+          "color_label": "1",
+          "length": "55-60-cm",
+          "length_label": "55 - 60 cm",
+          "price": 165,
+          "available": false,
+          "purchasable": false,
+          "stock_quantity": 0,
+          "image": "/media/1-600x600-04fb73bc3.jpg"
+        },
+        {
+          "id": 898,
+          "color": "1b",
+          "color_label": "1b",
+          "length": "55-60-cm",
+          "length_label": "55 - 60 cm",
+          "price": 165,
+          "available": false,
+          "purchasable": false,
+          "stock_quantity": 0,
+          "image": "/media/1b-600x600-ed411886a.jpg"
+        },
+        {
+          "id": 1319,
+          "color": "eve",
+          "color_label": "EVE",
+          "length": "55-60-cm",
+          "length_label": "55 - 60 cm",
+          "price": 165,
+          "available": false,
+          "purchasable": false,
+          "stock_quantity": 0,
+          "image": "/media/1006-1-600x600-8f26ccdcc.jpg"
+        },
+        {
+          "id": 1321,
+          "color": "ruby",
+          "color_label": "RUBY",
+          "length": "45-50-cm",
+          "length_label": "45 - 50 cm",
+          "price": 165,
+          "available": false,
+          "purchasable": false,
+          "stock_quantity": 0,
+          "image": "/media/ruby-1-600x600-553c515f8.jpg"
+        },
+        {
+          "id": 1701,
+          "color": "2",
+          "color_label": "2",
+          "length": "45-50-cm",
+          "length_label": "45 - 50 cm",
+          "price": 140,
+          "available": false,
+          "purchasable": false,
+          "stock_quantity": 0,
+          "image": "/media/2-1-600x600-e901a9998.jpg"
         }
       ]
     },
@@ -326,8 +434,8 @@
       "pack": "25 einzelne Bondings",
       "material": "100% Echthaar",
       "currency": "EUR",
-      "min_price": 150.0,
-      "max_price": 175.0,
+      "min_price": 150,
+      "max_price": 175,
       "image": "/media/1006-300x400-0854ea8f2.jpg",
       "variations": [
         {
