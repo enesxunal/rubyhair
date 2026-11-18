@@ -13,6 +13,7 @@ import "../src/styles/admin.css";
 import "../src/styles/admin-v2.css";
 import "../src/styles/tryon.css";
 import "../src/styles/hair-tryon-floating-link.css";
+import "../src/styles/tape-in-shades.css";
 
 export const metadata:Metadata={
   title:{default:"Ruby Hair Extensions",template:"%s | Ruby Hair"},

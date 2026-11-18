@@ -119,7 +119,10 @@ test("Tape-in storefront splits real 45-50 and 55-60 cm variants, with Keratin p
   assert.ok(home.includes('href={tapeInLengthHref(choice.key)}'));
   assert.ok(home.includes('keratin-bondings'));
   assert.ok(!nav.includes('/kollektionen/keratin-bondings/'));
-  assert.ok(grid.includes('variants.filter(v=>v.length===selectedLength)'));
+  const coverage=fs.readFileSync(path.join(base,"src/lib/tape-in-shades.ts"),"utf8");
+  assert.ok(grid.includes('collectionShadeCards(product,selectedLength)'));
+  assert.ok(coverage.includes('variants.filter(v=>v.length===selectedLength)'));
+  assert.ok(grid.includes('Nicht bestellbar')||grid.includes('NICHT BESTELLBAR'));
   assert.ok(grid.includes('"&laenge="+encodeURIComponent(selectedLength)'));
   assert.ok(collection.includes('selectedLength={selected?.key}'));
 });
