@@ -20,7 +20,7 @@ export function qaInvoiceNumber(orderNumber:bigint,issuedAt:Date):string{
  if(year<2026||year>2100||orderNumber<=BigInt(0))throw new Error("INVALID_QA_INVOICE_NUMBER");
  return `RH-QA-${year}-${orderNumber.toString().padStart(7,"0")}`;
 }
-export type QaInvoiceData={invoiceNumber:string;issuedAt:Date;orderNumber:bigint;buyerName:string;buyerEmail:string;captureId:string;provider?:"paypal"|"klarna"};
+export type QaInvoiceData={invoiceNumber:string;issuedAt:Date;orderNumber:bigint;buyerName:string;buyerEmail:string;captureId:string;provider?:"paypal"|"klarna";itemDescription?:string};
 const euro=(cents:number)=>`${(cents/100).toFixed(2).replace(".",",")} EUR`;
 
 // Helvetica with standard WinAnsiEncoding. The database JSON retains original
@@ -41,7 +41,8 @@ function hexText(text:string):string{
 export function buildOneEuroInvoicePdf(data:QaInvoiceData):Buffer{
  if(!/^RH-QA-20\d{2}-\d{7,}$/.test(data.invoiceNumber)||!Number.isFinite(data.issuedAt.getTime())||
   !data.buyerName.trim()||data.buyerName.length>120||!/^\S+@\S+\.\S+$/.test(data.buyerEmail)||data.buyerEmail.length>254||
-  !/^[A-Za-z0-9_-]{8,70}$/.test(data.captureId))throw new Error("INVALID_QA_INVOICE_DATA");
+  !/^[A-Za-z0-9_-]{8,70}$/.test(data.captureId)||
+  (data.itemDescription!==undefined&&(!data.itemDescription.trim()||data.itemDescription.length>75||/[\r\n<>]/.test(data.itemDescription))))throw new Error("INVALID_QA_INVOICE_DATA");
  const providerLabel=data.provider==="klarna"?"Klarna":"PayPal";
  const stamp=new Intl.DateTimeFormat("de-DE",{day:"2-digit",month:"2-digit",year:"numeric",timeZone:"Europe/Berlin"}).format(data.issuedAt);
  const draws:string[]=[];
@@ -65,7 +66,7 @@ export function buildOneEuroInvoicePdf(data:QaInvoiceData):Buffer{
  write(50,475,data.buyerEmail.trim());
  draws.push("0.77 0.67 0.73 RG 0.7 w 50 435 m 545 435 l S");
  write(50,448,"Position",9,"F2");write(390,448,"Menge",9,"F2");write(477,448,"Betrag",9,"F2");
- write(50,407,"Interner "+providerLabel+"-Testkauf (keine Warenlieferung)",9);
+ write(50,407,data.itemDescription||"Interner "+providerLabel+"-Testkauf (keine Warenlieferung)",9);
  write(399,407,"1",9);write(468,407,euro(100),9,"F2");
  draws.push("0.77 0.67 0.73 RG 0.7 w 50 389 m 545 389 l S");
  write(352,369,"Netto (19% USt.):",10);write(470,369,euro(84),10);

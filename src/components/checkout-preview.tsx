@@ -6,13 +6,14 @@ import {useCartQuote} from "@/hooks/use-cart-quote";
 import {euros} from "@/lib/catalog";
 import {legacyStore as old} from "@/lib/legacy-store-facts";
 import CheckoutAddressPreview from "./checkout-address-preview";
+import LiveVariantTestSection,{type LiveVariantTestView} from "./live-variant-test-section";
 
 const process=[
   {no:"01",label:"Warenkorb",description:"Produkte, Farbe und Menge prüfen",icon:ShoppingBag},
   {no:"02",label:"Lieferung",description:"Versandgebiet, Lieferzeit und Kosten werden noch bestätigt",icon:Truck},
   {no:"03",label:"Zahlung",description:"Zahlungsarten sind noch nicht freigeschaltet",icon:Wallet}
 ];
-export default function CheckoutPreview(){
+export default function CheckoutPreview({liveTest}:{liveTest?:LiveVariantTestView|null}){
   const {lines,loaded}=useCart();
   const {quote,error,loading}=useCartQuote(lines);
   return <div className="rh-checkout-v2 rh-shell">
@@ -24,8 +25,8 @@ export default function CheckoutPreview(){
     <h1>Almost <em>yours.</em></h1>
     <div className="rh-checkout-alert" role="status">
       <LockKeyhole size={22} strokeWidth={1.5}/>
-      <div><strong>NOCH NICHT ZUR BESTELLUNG FREIGEGEBEN</strong>
-        <p>Die neue Kasse ist eine unverbindliche Designvorschau. Hier werden keine Adressen, Bestellungen oder Zahlungsdaten erfasst.</p>
+      <div><strong>{liveTest?"REGULÄRE KUNDENKASSE GESPERRT – INTERNER 1-€-TEST":"NOCH NICHT ZUR BESTELLUNG FREIGEGEBEN"}</strong>
+        <p>{liveTest?"Die reguläre Kasse bleibt geschützt. Nur der interne 1-€-Produkttest unten kann eine echte Zahlung auslösen, nachdem du sie ausdrücklich bestätigt hast.":"Die neue Kasse ist eine unverbindliche Designvorschau. Hier werden keine Adressen, Bestellungen oder Zahlungsdaten erfasst."}</p>
       </div>
     </div>
     <div className="rh-checkout-grid">
@@ -41,6 +42,11 @@ export default function CheckoutPreview(){
           </article>)}
         </div>
         {loaded&&lines.length>0&&<CheckoutAddressPreview/>}
+        {liveTest&&<LiveVariantTestSection state={liveTest} cartReady={Boolean(
+          loaded&&lines.length===1&&lines[0].id===886&&lines[0].quantity===1&&
+          !error&&!loading&&quote&&!quote.needsReview&&quote.subtotalCents===100&&
+          quote.lines.length===1&&quote.lines[0].status==="available"
+        )}/>}
         <div className="rh-checkout-payment-preview"><h3>03 / ZAHLUNG</h3>
           <p className="rh-payment-preview-heading">Vorgesehene Zahlungsmethoden aus dem bisherigen Shop (noch nicht aktiv)</p>
           <div className="rh-payment-preview-methods" aria-label="Vorgesehene Zahlungsmethoden, nicht aktiv">
