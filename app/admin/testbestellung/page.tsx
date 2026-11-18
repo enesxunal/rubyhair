@@ -8,9 +8,10 @@ import {getHiddenQaProduct,QA_PRICE_CENTS} from "@/lib/internal-test-product";
 import {getPrisma} from "@/lib/prisma";
 import {prepareHiddenQaProductAction} from "../test-purchase-actions";
 import {verifyStoredPaymentProvider} from "../payment-check-action";
+import QaPayPalTestSection from "./purchase-section";
 export const metadata:Metadata={title:"1 EUR Testbestellung | Ruby Hair Admin",robots:{index:false,follow:false}};
 export const runtime="nodejs";export const dynamic="force-dynamic";
-export default async function TestPurchasePage({searchParams}:{searchParams:Promise<{status?:string;probe?:string}>}){
+export default async function TestPurchasePage({searchParams}:{searchParams:Promise<{status?:string;probe?:string;paypalToken?:string;qaError?:string;paid?:string}>}){
  if(!await isAdmin())redirect("/admin/login");
  const params=await searchParams;
  const status=params.status;
@@ -26,9 +27,10 @@ export default async function TestPurchasePage({searchParams}:{searchParams:Prom
   klarna_unavailable:"Klarna ist vom Server aus derzeit nicht erreichbar.",
   klarna_inconclusive:"Klarna-Sitzungstest nicht eindeutig. Ein echter Checkout-Test ist weiterhin erforderlich.",
  };
- const [qa,credentials]=await Promise.all([
+ const [qa,credentials,testOrders]=await Promise.all([
   getHiddenQaProduct(),
-  getPrisma().paymentIntegrationSetting.findMany({where:{environment:"live",provider:{in:["paypal","klarna","smtp","dhl"]}},select:{provider:true,field:true}})
+  getPrisma().paymentIntegrationSetting.findMany({where:{environment:"live",provider:{in:["paypal","klarna","smtp","dhl"]}},select:{provider:true,field:true}}),
+  getPrisma().order.findMany({where:{testOnly:true},include:{invoice:{select:{invoiceNumber:true}}},orderBy:{createdAt:"desc"},take:10})
  ]);
  const fields=new Map<string,Set<string>>();
  for(const setting of credentials){if(!fields.has(setting.provider))fields.set(setting.provider,new Set());fields.get(setting.provider)!.add(setting.field)}
@@ -57,6 +59,7 @@ export default async function TestPurchasePage({searchParams}:{searchParams:Prom
     </div>
    </div>
   </section>
+  <QaPayPalTestSection qa={qa} paypalReady={paypalReady===true} orders={testOrders} params={params}/>
   <section className="rh-admin-panel-card" style={{marginTop:20}}>
    <div className="rh-admin-card-title"><div><span>GATE / KEINE LIVE-BESTELLUNG AUSLÖSEN</span><h2>Was für den 1-€-Test fehlt</h2></div><ShieldCheck size={24}/></div>
    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(205px,1fr))",gap:13,marginTop:18}}>
@@ -66,8 +69,8 @@ export default async function TestPurchasePage({searchParams}:{searchParams:Prom
       {title:"Klarna Live-Zugang hinterlegt",ready:klarnaReady,icon:CreditCard},
       {title:"IONOS SMTP-Passwort hinterlegt",ready:smtpReady,icon:Mail},
       {title:"DHL-API-Daten hinterlegt",ready:dhlReady,icon:Package},
-      {title:"Rechtsgültige PDF-Rechnung",ready:false,icon:FileText},
-      {title:"Checkout + Webhook + Bestellereignisse",ready:false,icon:ShieldCheck},
+      {title:"Allgemeine Kundenrechnungen",ready:false,icon:FileText},
+      {title:"Allgemeiner Checkout + Webhook",ready:false,icon:ShieldCheck},
      ].map(item=><div key={item.title} style={{border:"1px solid #e7dee2",padding:15,borderRadius:5}}>
        <item.icon size={18}/><p style={{fontSize:13,fontWeight:700}}>{item.title}</p><p style={{fontSize:11,color:item.ready?"#397347":"#9a5565"}}>{item.ready?"Eingerichtet (Funktionstest ausstehend)":"Noch nicht vollständig"}</p>
      </div>)}
@@ -80,7 +83,7 @@ export default async function TestPurchasePage({searchParams}:{searchParams:Prom
      <form action={verifyStoredPaymentProvider}><input type="hidden" name="provider" value="klarna"/><button disabled={!klarnaReady} type="submit" className="rh-admin-mail-test-button">Klarna-Zugang prüfen</button></form>
     </div>
    </div>
-   <p className="rh-admin-warning" style={{marginTop:20}}><AlertTriangle size={17}/> Eine vorbereitete Variante ist noch kein Kauf. Es gibt keinen echten 1-€-Bezahlbutton und keine Rechnung, bis der Zahlungsstatus signiert verifiziert und eine einmalige Rechnungsnummer vergeben wird.</p>
+   <p className="rh-admin-warning" style={{marginTop:20}}><AlertTriangle size={17}/> Der interne 1-€-PayPal-Test ist vom öffentlichen Shop getrennt. Automatische E-Mails, DHL und die allgemeine Rechnungs- und Checkoutstrecke bleiben bis zur vollständigen Verifikation gesperrt.</p>
    <p style={{display:"flex",flexWrap:"wrap",gap:18,marginTop:18}}><Link href="/admin/zahlungen">Zahlungszugänge konfigurieren</Link><Link href="/admin/benachrichtigungen">E-Mail & SMTP testen</Link><Link href="/admin/bestellungen">Bestellungen ansehen</Link></p>
   </section>
  </AdminShell>;

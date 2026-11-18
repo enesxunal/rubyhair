@@ -17,7 +17,8 @@ test('internal 1-EUR product is hidden, inactive and admin-only with no payment 
  assert.match(action,/if\(!await isAdmin\(\)\)redirect\("\/admin\/login"\)/);
  assert.match(admin,/if\(!await isAdmin\(\)\)redirect\("\/admin\/login"\)/);
  assert.match(admin,/Keine Zahlung und keine Bestellung wurden ausgelöst/);
- assert.match(admin,/Es gibt keinen echten 1-€-Bezahlbutton/);
+ assert.match(admin,/Allgemeine Kundenrechnungen/);
+ assert.ok(fs.readFileSync(path.join(b,'app/api/checkout/route.ts'),'utf8').includes('CHECKOUT_NOT_CONFIGURED'));
  assert.match(shell,/\/admin\/testbestellung/);
  assert.ok(!p.includes('paymentReference'));
  assert.ok(!action.includes('captureOrder'));

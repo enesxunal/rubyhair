@@ -107,6 +107,35 @@ export class PaypalClient{
     if(this.env==="live"&&u.hostname!=="www.paypal.com")throw new PaypalError("PAYPAL_WRONG_ENVIRONMENT");
     return {id:checkId(data.id,60),approvalUrl:u.toString()};
   }
+  /** One explicit merchant-admin-only non-shippable QA purchase (always EUR 1.00).
+   * This does not capture, fulfill, or mark the payment paid. */
+  async createOneEuroQaOrder(input:{orderId:string;invoiceId:string;requestId:string;returnUrl:string;cancelUrl:string}):Promise<PaypalOrderResult>{
+    const orderId=checkId(input.orderId,60),invoiceId=checkId(input.invoiceId,50,3);
+    checkId(input.requestId);
+    const data=await this.api("POST","/v2/checkout/orders",{
+      intent:"CAPTURE",
+      purchase_units:[{
+        reference_id:orderId,custom_id:orderId,invoice_id:invoiceId,
+        description:"Ruby Hair – interner 1 EUR Testkauf (keine Lieferung)",
+        amount:{currency_code:"EUR",value:"1.00"}
+      }],
+      payment_source:{paypal:{experience_context:{
+        brand_name:"Ruby Hair",user_action:"PAY_NOW",shipping_preference:"NO_SHIPPING",
+        return_url:httpsUrl(input.returnUrl),cancel_url:httpsUrl(input.cancelUrl)
+      }}}
+    },input.requestId);
+    if(!isObject(data)||typeof data.id!=="string"||!Array.isArray(data.links))throw new PaypalError("PAYPAL_ORDER_INVALID");
+    const link=data.links.find((item:unknown)=>isObject(item)&&
+      (item.rel==="payer-action"||item.rel==="approve")&&typeof item.href==="string");
+    if(!isObject(link)||typeof link.href!=="string")throw new PaypalError("PAYPAL_APPROVAL_MISSING");
+    const url=new URL(link.href);
+    if(url.protocol!=="https:"||url.username||url.password||!
+      ["www.paypal.com","www.sandbox.paypal.com"].includes(url.hostname))
+      throw new PaypalError("PAYPAL_UNTRUSTED_REDIRECT");
+    if(this.env==="live"&&url.hostname!=="www.paypal.com")throw new PaypalError("PAYPAL_WRONG_ENVIRONMENT");
+    if(this.env==="sandbox"&&url.hostname!=="www.sandbox.paypal.com")throw new PaypalError("PAYPAL_WRONG_ENVIRONMENT");
+    return {id:checkId(data.id,60),approvalUrl:url.toString()};
+  }
   async getOrder(id:string):Promise<unknown>{return this.api("GET","/v2/checkout/orders/"+checkId(id,60));}
   async captureOrder(id:string,requestId:string):Promise<unknown>{
     return this.api("POST","/v2/checkout/orders/"+checkId(id,60)+"/capture",{},checkId(requestId));

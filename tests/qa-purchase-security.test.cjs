@@ -1,0 +1,20 @@
+const {test}=require('node:test');const assert=require('node:assert/strict');const fs=require('node:fs');const path=require('node:path');const root=path.join(__dirname,'..');
+test('live 1 EUR QA payments require admin authorization and explicit capture confirmation',()=>{
+ const actions=fs.readFileSync(path.join(root,'app/admin/qa-purchase-actions.ts'),'utf8');
+ const flow=fs.readFileSync(path.join(root,'src/lib/qa-live-paypal.ts'),'utf8');
+ const invoice=fs.readFileSync(path.join(root,'app/api/admin/qa-invoice/route.ts'),'utf8');
+ const proxy=fs.readFileSync(path.join(root,'proxy.ts'),'utf8');
+ assert.match(actions,/if\(!await isAdmin\(\)\)/);
+ assert.match(actions,/formData\.get\("confirmCapture"\)!=="on"/);
+ assert.match(flow,/if\(!input\.confirmedSeller\|\|!input\.confirmedTax\|\|!input\.confirmedCharge\)/);
+ assert.match(flow,/QA_PAYMENT_LIMIT=100/);
+ assert.match(flow,/testOnly:true/);
+ assert.match(flow,/active:false,stockQuantity:/);
+ assert.match(flow,/requireCompletedCapture\(raw,order\.id,QA_PAYMENT_LIMIT,paypalOrderId\)/);
+ assert.match(flow,/providerEventId:paid\.captureId/);
+ assert.match(flow,/tx\.invoice\.create\(/);
+ assert.match(invoice,/if\(!await isAdmin\(\)\)/);
+ assert.match(invoice,/"Content-Type":"application\/pdf"/);
+ assert.match(proxy,/path==="\/qa\/paypal\/return"&&\(request\.method==="GET"\|\|request\.method==="HEAD"\)/);
+ assert.ok(!proxy.includes('get("x-test-token")'));
+});

@@ -68,3 +68,18 @@ test("provider 401 cannot be mistaken for authorization",async()=>{
  const client=new PaypalClient("sandbox",credentials,(async()=>response(401,{})) as typeof fetch);
  await assert.rejects(()=>client.token(),/PAYPAL_AUTH_REJECTED/);
 });
+
+test("live internal 1-EUR purchase is non-shippable, uses exact amount and does not capture",async()=>{
+ const requests:{path:string;method:string;body:unknown;requestId:string|null}[]=[];
+ const client=new PaypalClient("sandbox",credentials,fakeFetch(requests));
+ const created=await client.createOneEuroQaOrder({orderId:"1dd90721-195f-4598-88a9-5ec2b9acaf44",invoiceId:"RH-QA-2026-0000001",requestId:"QA-CREATE-1dd90721-195f-4598-88a9-5ec2b9acaf44",returnUrl:"https://rubyhair.de/qa/paypal/return",cancelUrl:"https://rubyhair.de/qa/paypal/return?cancel=1"});
+ assert.equal(created.id,"PAYPAL_ORDER_1234");
+ assert.equal(requests.length,2);
+ const req=JSON.parse(requests[1].body as string);
+ assert.equal(req.purchase_units[0].amount.value,"1.00");
+ assert.equal(req.purchase_units[0].amount.currency_code,"EUR");
+ assert.equal(req.purchase_units[0].custom_id,"1dd90721-195f-4598-88a9-5ec2b9acaf44");
+ assert.equal(req.payment_source.paypal.experience_context.shipping_preference,"NO_SHIPPING");
+ assert.ok(requests.every(r=>!r.path.includes("/capture")));
+ assert.ok(!JSON.stringify(req).includes('shipping_address'));
+});
