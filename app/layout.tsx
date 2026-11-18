@@ -21,6 +21,11 @@ export const metadata:Metadata={
   title:{default:"Ruby Hair Extensions",template:"%s | Ruby Hair"},
   description:"Ruby Hair – Premium Tape-in Echthaar Extensions in zwei Längen.",
   metadataBase:new URL(siteOrigin()),
+  icons:{
+    icon:[{url:"/ruby-hair-favicon-48.png?v=20261118",type:"image/png",sizes:"48x48"},{url:"/favicon.ico?v=20261118",type:"image/x-icon",sizes:"any"}],
+    shortcut:["/favicon.ico?v=20261118"],
+    apple:[{url:"/ruby-hair-apple-touch-icon.png?v=20261118",sizes:"180x180",type:"image/png"}]
+  },
   robots:publicShopEnabled()?{index:true,follow:true}:{index:false,follow:false},
   openGraph:{type:"website",locale:"de_DE",siteName:"Ruby Hair",title:"Ruby Hair — Tape-in Extensions",images:[{url:"/assets/hero-brunette.webp",alt:"Ruby Hair Echthaar Extensions"}]},
   twitter:{card:"summary_large_image"}
