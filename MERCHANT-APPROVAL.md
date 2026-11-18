@@ -4,6 +4,8 @@
 
 This historic checklist below was written for the earlier closed preview and remains as an audit trail. **Production is NOW PUBLIC and accepts PayPal/Klarna.** The original "checkout is 503", "no live database" and "old WordPress live" statements below are superseded.
 
+**Merchant statement (18.11.2026):** The agency owner explicitly confirmed "hukuki sorun yok" and accepted the current legal-content status. Record this as an owner/merchant-side acceptance statement for operational handoff, **not** as proof of an external lawyer review or confirmation of either historical street address. No address, tax ID or legal wording is changed by this note.
+
 ## Current verified technical compliance work
 
 - Live storefront and checkouts: on (`payments_public`), owner-directed. Stored stock and price validation continue to run in the production PostgreSQL database.

@@ -46,3 +46,14 @@ test("failed and cancelled orders do not promise confirmed refunds",()=>{
  assert.ok(failed.text.includes("nicht bestätigt"));
  assert.ok(!failed.text.includes("Zahlung bestätigt."));
 });
+
+test("real DHL shipment emails include an official safe tracking URL",()=>{
+ const value=renderOrderMail("shipped",{orderNumber:"RH-99",carrier:"DHL",trackingNumber:"00340434123456789012"});
+ assert.ok(value.text.includes("https://www.dhl.de/de/privatkunden/dhl-sendungsverfolgung.html?piececode=00340434123456789012"));
+ assert.ok(value.html.includes("DHL Sendung verfolgen"));
+ assert.ok(value.html.includes('href="https://www.dhl.de/de/privatkunden/dhl-sendungsverfolgung.html?piececode=00340434123456789012"'));
+ const unsafe=renderOrderMail("shipped",{orderNumber:"RH-99",carrier:"DHL",trackingNumber:"<img onerror=alert(1)>"});
+ assert.ok(!unsafe.html.includes("DHL Sendung verfolgen"));
+ const different=renderOrderMail("shipped",{orderNumber:"RH-99",carrier:"UPS",trackingNumber:"00340434123456789012"});
+ assert.ok(!different.html.includes("DHL Sendung verfolgen"));
+});
