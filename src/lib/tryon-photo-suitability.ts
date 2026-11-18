@@ -89,19 +89,38 @@ export async function checkPhotoSuitability(
    cache:"no-store",
    signal:AbortSignal.timeout(18_000)
   });
-  if(!response.ok)return {status:"unavailable"};
+  if(!response.ok){
+   // Only HTTP status and fixed provider error code; never log the image or prompt.
+   const payload=await response.json().catch(()=>null) as {error?:{code?:unknown;type?:unknown}}|null;
+   const rawCode=payload?.error?.code??payload?.error?.type;
+   const code=typeof rawCode==="string"&&/^[a-z0-9_.-]{1,60}$/.test(rawCode)?rawCode:"unknown";
+   console.warn("RUBY_TRYON_PHOTO_CHECK_PROVIDER_FAILURE",{http:response.status,code});
+   return {status:"unavailable"};
+  }
   const raw:unknown=await response.json();
   const output=(raw as {output?:Array<{type?:string;content?:Array<{type?:string;text?:string}>}>})?.output;
-  if(!Array.isArray(output))return {status:"unavailable"};
+  if(!Array.isArray(output)){
+   const status=(raw as {status?:unknown}).status;
+   console.warn("RUBY_TRYON_PHOTO_CHECK_OUTPUT_MISSING",{providerStatus:typeof status==="string"?status:"unknown"});
+   return {status:"unavailable"};
+  }
   const message=output.flatMap(x=>x.type==="message"&&Array.isArray(x.content)?x.content:[])
    .find(x=>x.type==="output_text")?.text;
-  if(typeof message!=="string")return {status:"unavailable"};
+  if(typeof message!=="string"){
+   const status=(raw as {status?:unknown}).status;
+   console.warn("RUBY_TRYON_PHOTO_CHECK_TEXT_MISSING",{providerStatus:typeof status==="string"?status:"unknown"});
+   return {status:"unavailable"};
+  }
   const parsed=resultSchema.safeParse(JSON.parse(message));
-  if(!parsed.success)return {status:"unavailable"};
+  if(!parsed.success){
+   console.warn("RUBY_TRYON_PHOTO_CHECK_FORMAT_INVALID");
+   return {status:"unavailable"};
+  }
   const {decision,confidence}=parsed.data;
   if(decision==="suitable"&&confidence>=0.85)return {status:"accepted"};
   return {status:"rejected",reason:decision==="suitable"?"unsure":decision};
- }catch{
+ }catch(e){
+  console.warn("RUBY_TRYON_PHOTO_CHECK_EXCEPTION",e instanceof Error?e.name:"unknown");
   return {status:"unavailable"};
  }
 }
