@@ -3,7 +3,10 @@ import {unstable_cache} from "next/cache";
 import { databaseConfigured, getPrisma } from "@/lib/prisma";
 import { products as importedProducts, type Product, type Variation } from "@/lib/catalog";
 
-// Share one short-lived read across marketing pages and serverless requests.
+// Share one bounded read across marketing pages and serverless requests.
+// The provider pool intermittently reports P1001/P2024; frequent 15-second
+// revalidations amplified the load. Catalog is now refreshed every minute.
+// Customer cart quotations and checkout still validate real stock and prices.
 // Checkout, reservations and payments NEVER use this read cache.
 // Administrator writes invalidate the tag immediately.
 const liveProducts=unstable_cache(async ():Promise<Product[]>=>{
@@ -33,7 +36,7 @@ const liveProducts=unstable_cache(async ():Promise<Product[]>=>{
     };
   });
   return products;
-},["rubyhair-live-store-catalog"],{revalidate:15,tags:["rubyhair-live-catalog"]});
+},["rubyhair-live-store-catalog"],{revalidate:60,tags:["rubyhair-live-catalog"]});
 export async function getStoreCatalog():Promise<{source:"postgresql"|"imported-preview";products:Product[]}>{
   if(!databaseConfigured())return {source:"imported-preview",products:importedProducts};
   // A failed database read still fails closed; never display fabricated stock.

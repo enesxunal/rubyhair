@@ -21,7 +21,7 @@ test("catalog marketing pages use short-lived shared read cache without changing
  const checkout=read("src/lib/customer-checkout.ts");
  const storefrontError=read("app/error.tsx");
  assert.match(catalog,/unstable_cache/);
- assert.match(catalog,/revalidate:15/);
+ assert.match(catalog,/revalidate:60/);
  assert.match(catalog,/rubyhair-live-catalog/);
  assert.match(admin,/updateTag\("rubyhair-live-catalog"\)/);
  assert.match(checkout,/stockQuantity!==null/);
