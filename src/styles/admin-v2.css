@@ -15,7 +15,7 @@
 .rh-admin-brand-symbol{font-size:44px;color:#e8aeba}
 .rh-admin-brand strong{font-size:13px;letter-spacing:2.4px}
 .rh-admin-brand small{display:block;color:#d0aebc;letter-spacing:1.5px;font-size:9px;margin-top:4px}
-.rh-admin-sidebar-main{flex:1;min-height:0}
+.rh-admin-sidebar-main{flex:1;min-height:0;min-width:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#765664 transparent;padding-right:3px}
 .rh-admin-menu-title{margin:2px 16px 14px;color:#a9919b;font-size:9px;letter-spacing:2.25px}
 .rh-admin-nav{gap:4px}
 .rh-admin-nav a{border-radius:8px;padding:14px 15px;gap:13px;font-weight:500;color:#d0bdc6;font-size:12px}
@@ -24,7 +24,7 @@
 .rh-admin-nav a.is-current{background:#744758;color:#fff;box-shadow:inset 2px 0 #e7b3c0}
 .rh-admin-nav a.is-current svg{color:#f1c5d0}
 .rh-admin-nav-chevron{margin-left:auto}
-.rh-admin-sidebar-bottom{gap:8px}
+.rh-admin-sidebar-bottom{gap:8px;flex-shrink:0}
 .rh-admin-system-note{border:1px solid #ffffff1b;border-radius:9px;padding:14px;background:#ffffff08}
 .rh-admin-system-note strong{display:block;font-size:11px;font-weight:600}
 .rh-admin-system-note small{display:block;font-size:10px;margin-top:2px}
@@ -225,7 +225,7 @@
  .rh-admin-app{grid-template-columns:minmax(0,1fr)}
  .rh-admin-sidebar{position:relative;height:auto;padding:12px 20px;gap:0}
  .rh-admin-brand{margin:0 0 7px;padding:6px 0 14px}
- .rh-admin-sidebar-main{min-height:0}
+ .rh-admin-sidebar-main{min-height:0;overflow:visible;padding-right:0}
  .rh-admin-nav{display:flex;gap:7px;overflow-x:auto;padding:2px 0 9px}
  .rh-admin-nav a{padding:11px 13px;white-space:nowrap}
  .rh-admin-nav-chevron,.rh-admin-menu-title,.rh-admin-system-note{display:none}
