@@ -19,7 +19,7 @@ export function ShadeGrid({product,selectedLength}:{product:Product;selectedLeng
   {product.slug==="tape-in-extensions"&&<div className="rh-shade-coverage" role="note">
    <strong>{groups.length} Farbtöne im Überblick</strong>
    <span>{labelLength?labelLength+" · "+listed+" derzeit verfügbar · "+unavailable+" aktuell nicht bestellbar":listed+" derzeit verfügbar · "+unavailable+" aktuell nicht bestellbar"}</span>
-   <p>Alle angefragten Farben werden gezeigt. Nicht gelistete Farb-/Längenkombinationen sind <b>nicht bestellbar</b>. Bilder anderer Längen dienen nur als Farbmuster; Verfügbarkeit und Preise werden vor dem Verkauf geklärt.</p>
+   <p>Alle Farbtöne werden angezeigt. Ausverkaufte Varianten sind als <b>AUSVERKAUFT</b> markiert und können nicht ausgewählt oder bestellt werden.</p>
   </div>}
   <div className="rh-filters"><label htmlFor="rh-color-filter">Farbe suchen</label>
    <input id="rh-color-filter" type="search" value={filter}
@@ -33,13 +33,13 @@ export function ShadeGrid({product,selectedLength}:{product:Product;selectedLeng
      <div className="rh-shade-image">
       <img src={card.image} alt={product.name+" Farbmuster "+label} loading="lazy"/>
       <span className="rh-shade-badge">FARBE {label}</span>
-      {card.status!=="listed"&&<span className="rh-shade-status">NICHT BESTELLBAR</span>}
+      {card.status!=="listed"&&<span className="rh-shade-status">{card.status==="unavailable"?"AUSVERKAUFT":"NICHT BESTELLBAR"}</span>}
      </div>
      <div className="rh-shade-meta"><div>
       <strong>{product.name}{labelLength?" · "+labelLength:""}</strong>
       <small>Farbe {label}</small>
      </div><span className="rh-price-small">
-      {available.length?"ab "+euros(Math.min(...available.map(v=>v.price))):card.status==="unavailable"?"Nicht verfügbar":"Nur auf Anfrage"}
+      {available.length?"ab "+euros(Math.min(...available.map(v=>v.price))):card.status==="unavailable"?"Ausverkauft":"Nur auf Anfrage"}
      </span></div>
     </>;
     if(card.status==="listed"){
@@ -53,12 +53,12 @@ export function ShadeGrid({product,selectedLength}:{product:Product;selectedLeng
      {item}
      <p className="rh-shade-unlisted-note">
       {card.referenceOnly?"Farbmuster aus dem Keratin-Katalog. Tape-in in dieser Farbe noch nicht bestätigt.":
-       card.status==="unavailable"?"Diese Variante ist derzeit nicht verfügbar.":
+       card.status==="unavailable"?"Diese Variante ist ausverkauft und derzeit nicht bestellbar.":
        labelLength?"In "+labelLength+" derzeit nicht als Tape-in-Variante gelistet.":"Noch nicht als Tape-in-Variante gelistet."}
      </p>
-     <Link href="/kontakt/" className="rh-shade-request-link" aria-label={"Farbe "+label+" bei Ruby Hair anfragen"}>
+     {card.status!=="unavailable"&&<Link href="/kontakt/" className="rh-shade-request-link" aria-label={"Farbe "+label+" bei Ruby Hair anfragen"}>
       FARBE ANFRAGEN <span aria-hidden="true">↗</span>
-     </Link>
+     </Link>}
     </article>;
    })}
   </div>

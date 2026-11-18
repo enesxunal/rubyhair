@@ -147,7 +147,7 @@ test("product pages link to care and contact routes",()=>{
 });
 test("product pages use real checkout prices and keep color image guidance",()=>{
  const product=fs.readFileSync(path.join(base,"src/components/product-detail.tsx"),"utf8");
- for(const item of ["Vergrößerte Produktansicht","rh-gallery-thumb","Ausgewählter Farbton", "Kollektion / Illustration", "Alle Preise inkl. 19 % MwSt.","Nicht auf Lager","Verfügbar"]){
+ for(const item of ["Vergrößerte Produktansicht","rh-gallery-thumb","Ausgewählter Farbton", "Kollektion / Illustration", "Alle Preise inkl. 19 % MwSt.","Ausverkauft","Verfügbar"]){
    assert.ok(product.includes(item),item);
  }
  assert.ok(!product.includes("Unverbindlicher Demo-Preis"));
@@ -569,7 +569,7 @@ test("Ruby Hair blonde and brunette editorial photography keeps the approved hom
  assert.ok(frontend.includes('WARM BRUNETTE'));
  assert.ok(!frontend.includes('src="/assets/ruby-hair-platinum-detail.webp"'));
  assert.ok(frontend.includes('<TapeInAtelier/>'));
- assert.ok(frontend.includes('<ShadeSelector/>'));
+ assert.ok(frontend.includes('<ShadeSelector product={products.find(p=>p.slug==="tape-in-extensions")}/>'));
  assert.ok(frontend.indexOf('<TapeInAtelier/>')>frontend.indexOf('<ShadeSelector/>'));
  assert.ok(frontend.indexOf('<TapeInAtelier/>')<frontend.indexOf('className="brand-story'));
  assert.ok(layout.includes('tape-atelier.css'));

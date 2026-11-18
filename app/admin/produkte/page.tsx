@@ -39,7 +39,7 @@ export default async function Admin({searchParams}:{searchParams:Promise<{update
       <strong>PRODUKTÜBERSICHT</strong>
       {products.map(p=><Link key={p.id} href={"#produkt-"+p.id}>{p.name} <span>{p.variants.length} Varianten</span><ArrowUpRight size={14}/></Link>)}
     </nav>
-    <p className="rh-admin-warning">Wichtig: Der Shop ist eine Vorschau. Preise und Bestände kannst du verwalten, aber Live-Bestellungen und Zahlungen bleiben gesperrt.</p>
+    <p className="rh-admin-warning">Bestände direkt neben dem Preis bearbeiten: 0 = ausverkauft (für Kunden nicht auswählbar), leer = ohne Mengenbegrenzung. Nach dem Speichern gelten Änderungen sofort im Live-Shop.</p>
     <nav className="rh-admin-stock-filters" aria-label="Bestandsfilter">
       {[
         {value:"alle",name:"Alle Varianten",n:count},

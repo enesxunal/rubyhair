@@ -100,9 +100,10 @@ function HomeNavigation(){
   </>;
 }
 
-function ShadeSelector(){
+function ShadeSelector({product}:{product?:Product}){
   const [index,setIndex]=useState(0);
   const active=shades[index];
+  const canBuy=Boolean(product?.variations.some(v=>v.color===active.color&&v.available&&v.purchasable));
   return <section id="shade" className="shade section-pad">
     <div className="container shade-grid">
       <div className={"shade-visual"+(active.key==="brown"?" is-landscape":"")}>
@@ -118,9 +119,9 @@ function ShadeSelector(){
           </button>)}
         </div>
         <p className="shade-disclaimer">Farbdarstellung kann je nach Bildschirm abweichen. Die Auswahl dient als Inspiration.</p>
-        <Link className="solid-button shade-button" href={"/produkt/"+active.slug+"/?farbe="+active.color}>
+        {canBuy?<Link className="solid-button shade-button" href={"/produkt/"+active.slug+"/?farbe="+active.color}>
           FARBE ANSEHEN <ArrowUpRight size={17}/>
-        </Link>
+        </Link>:<span className="solid-button shade-button" aria-disabled="true" style={{opacity:.65,cursor:"not-allowed"}}>AUSVERKAUFT</span>}
       </div>
     </div>
   </section>;
@@ -235,7 +236,7 @@ export default function HomeFrontend({products,instagramPosts=[]}:{products:Prod
           </div>
         </div>
       </section>
-      <ShadeSelector/>
+      <ShadeSelector product={products.find(p=>p.slug==="tape-in-extensions")}/>
       <InstagramHome posts={instagramPosts}/>
       <TapeInAtelier/>
       <section className="brand-story section-pad" id="about"><div className="container brand-grid">

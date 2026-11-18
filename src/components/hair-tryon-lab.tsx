@@ -47,6 +47,7 @@ export default function HairTryonLab({products}:{products:Product[]}){
  const [showAll,setShowAll]=useState(false);
  const [dragging,setDragging]=useState(false);
  const [aiAvailable,setAiAvailable]=useState<boolean|null>(null);
+ const [healthRefresh,setHealthRefresh]=useState(0);
  const [consent,setConsent]=useState(false);
  const [generating,setGenerating]=useState(false);
  const [aiInfo,setAiInfo]=useState("");
@@ -72,7 +73,7 @@ export default function HairTryonLab({products}:{products:Product[]}){
    .then(data=>{if(active)setAiAvailable(data?.available===true);})
    .catch(()=>{if(active)setAiAvailable(false);});
   return ()=>{active=false;};
- },[]);
+ },[healthRefresh]);
 
  const clearResult=()=>{setAfter(null);setRatio(50);setAiInfo("");setIssue("");setAiIssue("");};
  const choosePhoto=(file:File)=>{
@@ -291,7 +292,7 @@ export default function HairTryonLab({products}:{products:Product[]}){
         <span>Ich darf dieses Foto verwenden und stimme zu, dass es für die Foto-Eignungsprüfung und die KI-Haarbearbeitung an <strong>OpenAI</strong> übermittelt wird. Ruby Hair speichert das Foto nicht dauerhaft. <Link href="/rechtliches/datenschutz/">Datenschutz</Link></span>
        </label>
       </div>
-      {aiAvailable===false&&<p role="status" className="rh-wizard-error">Die KI ist gerade nicht verfügbar. Bitte versuche es später erneut.</p>}
+      {aiAvailable===false&&<div role="status" className="rh-wizard-error"><p>Die KI-Haarvorschau ist vorübergehend nicht verfügbar. Die Verbindung zum Bilddienst wird geprüft.</p><button type="button" onClick={()=>{setAiAvailable(null);setHealthRefresh(v=>v+1);}}>Verfügbarkeit erneut prüfen</button></div>}
       {aiAvailable===null&&<p role="status" className="rh-wizard-muted">KI-Verfügbarkeit wird geprüft …</p>}
       {aiIssue&&<div role="alert" className="rh-wizard-error"><p>{aiIssue}</p><button type="button" onClick={()=>goStep(1)}>Anderes Foto wählen</button></div>}
       <div className="rh-wizard-buttons">
@@ -350,7 +351,7 @@ export default function HairTryonLab({products}:{products:Product[]}){
    <div className="rh-wizard-foot">
     <LockKeyhole size={15}/><span>Dein Foto wird nur nach ausdrücklicher Einwilligung an OpenAI übertragen.</span>
     <details><summary>Wichtige Hinweise</summary>
-     <p>Das KI-Ergebnis ist eine unverbindliche Vorschau. Die eigene Haarfarbe soll unverändert bleiben; bei abweichender Haarfarbe oder unnatürlichem Ansatz ist das Ergebnis nicht zuverlässig. Die tatsächliche Haarmenge und Farbabstimmung beurteilt eine Fachperson. Bestellungen sind auf dieser Vorschauseite noch deaktiviert.</p>
+     <p>Das KI-Ergebnis ist eine unverbindliche Vorschau. Die eigene Haarfarbe soll unverändert bleiben; bei abweichender Haarfarbe oder unnatürlichem Ansatz ist das Ergebnis nicht zuverlässig. Die tatsächliche Haarmenge und Farbabstimmung beurteilt eine Fachperson. Bitte beachte die tatsächliche Produktverfügbarkeit und die Versandinformationen an der Kasse.</p>
     </details>
    </div>
   </div>

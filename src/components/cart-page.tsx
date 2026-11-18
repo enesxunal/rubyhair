@@ -79,7 +79,7 @@ export function CartPage({shippingCents}:{shippingCents:number}){
           {issues.some(x=>x.status==="unknown-variation")?"Ein Produkt ist nicht mehr im Katalog. ":""}
         </p>}
         <p>Im nächsten Schritt kannst du deine Adresse eingeben und sicher mit PayPal oder Klarna bezahlen.</p>
-        <Link className="rh-buy-button" href="/kasse/">ZUR KASSE<span>↗</span></Link>
+        {currentQuote?.checkoutEnabled&&!quoteError&&!catalogError?<Link className="rh-buy-button" href="/kasse/">ZUR KASSE<span>↗</span></Link>:<span className="rh-buy-button" aria-disabled="true" style={{opacity:.5,cursor:"not-allowed"}}>{quoteLoading?"BESTAND WIRD GEPRÜFT":"NICHT BESTELLBAR"}</span>}
         <Link className="rh-continue-shop" href="/kollektionen/">Weiter einkaufen</Link>
       </aside>
     </div>}

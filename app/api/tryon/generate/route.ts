@@ -16,9 +16,43 @@ const MIME_TYPES=["image/jpeg","image/png","image/webp"] as const;
 const NO_STORE={"Cache-Control":"no-store, private","X-Robots-Tag":"noindex, nofollow"};
 const deny=(message:string,status:number)=>NextResponse.json({error:message},{status,headers:NO_STORE});
 
-function isConfigured(){
- // The provider key is a server-only Vercel secret, never sent to the browser.
- return Boolean(process.env.RUBY_HAIR_OPENAI_API_KEY?.startsWith("sk-"));
+type ProviderReadiness={key:string|null;reason:"ready"|"missing_key"|"invalid_key"|"provider_unavailable"};
+let credentialCache:{signature:string;until:number;value:ProviderReadiness}|null=null;
+/**
+ * A configured sk- prefix is not proof that the credential is usable.
+ * Check current OpenAI authentication before telling customers to upload photos.
+ * Both keys belong to this deployment. The dedicated one is preferred; the
+ * existing general production key is a fallback when the dedicated key is revoked.
+ * Never send keys, account metadata or raw provider errors to the browser.
+ */
+async function providerCredential():Promise<ProviderReadiness>{
+ const candidates=[process.env.RUBY_HAIR_OPENAI_API_KEY,process.env.OPENAI_API_KEY]
+  .filter((v):v is string=>typeof v==="string"&&v.startsWith("sk-"));
+ const unique=[...new Set(candidates)];
+ if(!unique.length)return {key:null,reason:"missing_key"};
+ // Cache only in production, never in test runs with stubbed fetch.
+ const signature=unique.map(x=>x.slice(-8)+":"+x.length).join("|");
+ if(process.env.NODE_ENV==="production"&&credentialCache?.signature===signature&&Date.now()<credentialCache.until)
+  return credentialCache.value;
+ let invalid=0,unavailable=0;
+ for(const key of unique){
+  try{
+   const response=await fetch("https://api.openai.com/v1/models/gpt-4.1-mini",{
+    headers:{Authorization:"Bearer "+key},cache:"no-store",signal:AbortSignal.timeout(6500)
+   });
+   if(response.ok||response.status===403){
+    // A restricted key can reject model listing while allowing inference.
+    const value:ProviderReadiness={key,reason:"ready"};
+    if(process.env.NODE_ENV==="production")credentialCache={signature,until:Date.now()+60_000,value};
+    return value;
+   }
+   if(response.status===401){invalid++;continue;}
+   unavailable++;
+  }catch{unavailable++;}
+ }
+ const value:ProviderReadiness={key:null,reason:invalid===unique.length?"invalid_key":"provider_unavailable"};
+ if(process.env.NODE_ENV==="production")credentialCache={signature,until:Date.now()+15_000,value};
+ return value;
 }
 function validMagic(bytes:Buffer,mime:string){
  if(mime==="image/jpeg")return bytes.length>=3&&bytes[0]===255&&bytes[1]===216&&bytes[2]===255;
@@ -57,15 +91,16 @@ function promptFor(method:string,tone:string,length:string,density:string){
 }
 
 export async function GET(){
+ const auth=await providerCredential();
  return NextResponse.json({
-  available:isConfigured(),
+  available:auth.reason==="ready",
+  status:auth.reason,
   provider:"OpenAI Images API",
   model:MODEL,
   requiresConsent:true
  },{headers:NO_STORE});
 }
 export async function POST(request:NextRequest){
- if(!isConfigured())return deny("KI-Haaranprobe ist noch nicht eingerichtet. Bitte OpenAI API-Schlüssel auf dem Server hinterlegen.",503);
  const origin=request.headers.get("origin");
  if(!origin||origin!==new URL(request.url).origin)return deny("Ungültige Anforderungsquelle.",403);
  const lengthHeader=Number(request.headers.get("content-length")||0);
@@ -84,11 +119,14 @@ export async function POST(request:NextRequest){
   return deny("Bitte ein JPG-, PNG- oder WebP-Bild bis 3,5 MB hochladen.",400);
  const imageBytes=Buffer.from(await photo.arrayBuffer());
  if(!validMagic(imageBytes,photo.type))return deny("Bilddatei ist ungültig.",400);
+ const credential=await providerCredential();
+ if(!credential.key)return deny(credential.reason==="invalid_key"?"Die KI ist vorübergehend nicht verfügbar: Die Server-API-Anmeldung muss erneuert werden.":"KI-Haaranprobe ist vorübergehend nicht erreichbar.",503);
+ const apiKey=credential.key;
  // Reject unsuitable photos BEFORE calling the expensive hair editing endpoint.
  // On classifier error, fail closed: never try to generate from an unchecked image.
  const suitability=await checkPhotoSuitability(
   imageBytes,photo.type as "image/jpeg"|"image/png"|"image/webp",
-  process.env.RUBY_HAIR_OPENAI_API_KEY!
+  apiKey
  );
  if(suitability.status==="unavailable")
   return deny("Foto-Prüfung derzeit nicht verfügbar. Bitte später erneut versuchen.",503);
@@ -122,7 +160,7 @@ export async function POST(request:NextRequest){
  try{
   const result=await fetch("https://api.openai.com/v1/images/edits",{
    method:"POST",
-   headers:{Authorization:"Bearer "+process.env.RUBY_HAIR_OPENAI_API_KEY},
+   headers:{Authorization:"Bearer "+apiKey},
    body:payload,
    cache:"no-store",
    signal:AbortSignal.timeout(98_000)

@@ -54,7 +54,7 @@ test('public production catalog launch preserves admin restrictions and disables
  assert.ok(seo.includes('process.env.VERCEL_ENV==="production"'));
  assert.ok(quote.includes('? "out-of-stock":"available";'), 'null stock should not be flagged sold out');
  assert.ok(quote.includes('stockQuantity!==null&&stockQuantity<item.quantity'));
- assert.ok(product.includes('!inStock?"Nicht auf Lager":"Verfügbar"'));
+ assert.ok(product.includes('!inStock?"Ausverkauft"'));
  assert.ok(checkout.includes('CHECKOUT_NOT_CONFIGURED'));
  assert.ok(checkout.includes('status:503'));
 });
