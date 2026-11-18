@@ -113,9 +113,7 @@ export function ProductDetail({product,initialColor,initialLength}:{product:Prod
           </details>
         </div>
         <p className={"rh-availability"+(!inStock?" rh-not-available":"")}>
-          {!inStock?"Diese Kombination ist laut importiertem Katalog nicht verfügbar":
-          selected?.stock_quantity==null?"Auswahl für die Vorschau möglich · tatsächlicher Lagerbestand noch nicht bestätigt":
-          "Vorschauauswahl verfügbar · Lagerbestand wird beim Verkaufsstart geprüft"}
+          {!inStock?"Nicht auf Lager":"Verfügbar"}
         </p>
         <label className="rh-qty-label" htmlFor="rh-quantity">Menge</label>
         <div className="rh-qty-control"><button onClick={()=>setQuantity(v=>Math.max(1,v-1))} aria-label="Menge verringern" type="button">−</button>

@@ -148,7 +148,7 @@ test("product pages link to care and contact routes",()=>{
 test("product preview distinguishes specific color images from editorial collection photos",()=>{
   const product=fs.readFileSync(path.join(base,"src/components/product-detail.tsx"),"utf8");
   for(const item of ["Vergrößerte Produktansicht","rh-gallery-thumb","Ausgewählter Farbton",
-    "Kollektion / Illustration","Unverbindlicher Demo-Preis","tatsächlicher Lagerbestand noch nicht bestätigt"]){
+    "Kollektion / Illustration","Unverbindlicher Demo-Preis","Nicht auf Lager","Verfügbar"]){
     assert.ok(product.includes(item),item);
   }
   assert.ok(product.includes("lightbox.current?.showModal()"));

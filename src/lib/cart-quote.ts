@@ -49,7 +49,7 @@ export async function buildCartQuote(request:QuoteRequest):Promise<CartQuote>{
     const lineCents=unitCents*item.quantity;
     const status:QuoteLine["status"]=!v.available||!v.purchasable ||
       (stockQuantity!==null&&stockQuantity<item.quantity)
-      ? "out-of-stock":stockQuantity===null?"unverified-stock":"available";
+      ? "out-of-stock":"available";
     subtotalCents+=lineCents;
     return {
       id:item.id,quantity:item.quantity,productName:p.name,

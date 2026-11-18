@@ -9,6 +9,11 @@ const allowedAssets=new Set([
 ]);
 const adminLoginPaths=new Set(["/admin/login","/api/admin/login"]);
 const ADMIN_COOKIE="rubyhair_admin";
+const storefrontPublic=()=>process.env.VERCEL_ENV==="production" ||
+  (process.env.RUBY_SHOP_PUBLIC==="APPROVED_PRODUCTION" && process.env.RUBY_CANONICAL_SITE_URL==="https://rubyhair.de");
+// Only known public endpoints may be accessed without an administrator session.
+const publicGetApis=new Set(["/api/catalog","/api/tryon/generate"]);
+const publicPostApis=new Set(["/api/cart/quote","/api/analytics/event","/api/tryon/generate","/api/checkout"]);
 
 /** Admin JWT uses the same signed, eight-hour token as src/lib/admin-auth.ts.
  * Only a verified session may bypass the Coming Soon wall on customer domains.
@@ -61,6 +66,19 @@ export async function proxy(request:NextRequest){
  }
  if(path==="/admin"||path.startsWith("/admin/")){
   return NextResponse.redirect(new URL("/admin/login",request.url),{status:307,headers:{"Cache-Control":"private, no-store"}});
+ }
+ if(path.startsWith("/api/admin/")||path.startsWith("/qa/"))return restrictedResponse();
+ if(storefrontPublic()){
+  if(path.startsWith("/api/")){
+   const isGet=request.method==="GET"||request.method==="HEAD";
+   const permitted=isGet?(publicGetApis.has(path)||path.startsWith("/api/instagram-thumbnail/")):
+    request.method==="POST"&&publicPostApis.has(path);
+   if(!permitted)return restrictedResponse();
+   return NextResponse.next();
+  }
+  if(request.method!=="GET"&&request.method!=="HEAD")return restrictedResponse();
+  // Customer pages and local images are public. Checkout itself remains 503.
+  return NextResponse.next();
  }
  if(request.method!=="GET"&&request.method!=="HEAD")return restrictedResponse();
  const response=NextResponse.rewrite(new URL("/coming-soon",request.url));

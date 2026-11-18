@@ -37,3 +37,24 @@ test('Ruby Hair primary domain admin access only accepts server-verified login J
  assert.ok(!proxy.includes('get("x-test-token")'));
  assert.ok(!proxy.includes('get("authorization")'));
 });
+
+test('public production catalog launch preserves admin restrictions and disables payments',()=>{
+ const source=fs.readFileSync(path.join(base,'proxy.ts'),'utf8');
+ const seo=fs.readFileSync(path.join(base,'src/lib/seo.ts'),'utf8');
+ const quote=fs.readFileSync(path.join(base,'src/lib/cart-quote.ts'),'utf8');
+ const product=fs.readFileSync(path.join(base,'src/components/product-detail.tsx'),'utf8');
+ const checkout=fs.readFileSync(path.join(base,'app/api/checkout/route.ts'),'utf8');
+ assert.ok(source.includes('process.env.VERCEL_ENV==="production"'));
+ assert.ok(source.includes('if(storefrontPublic())'));
+ assert.ok(source.includes('path.startsWith("/api/admin/")'));
+ assert.ok(source.includes('path.startsWith("/qa/")'));
+ assert.ok(source.includes('publicPostApis.has(path)'));
+ assert.ok(source.includes('publicGetApis.has(path)'));
+ assert.ok(source.includes('return NextResponse.next()'));
+ assert.ok(seo.includes('process.env.VERCEL_ENV==="production"'));
+ assert.ok(quote.includes('? "out-of-stock":"available";'), 'null stock should not be flagged sold out');
+ assert.ok(quote.includes('stockQuantity!==null&&stockQuantity<item.quantity'));
+ assert.ok(product.includes('!inStock?"Nicht auf Lager":"Verfügbar"'));
+ assert.ok(checkout.includes('CHECKOUT_NOT_CONFIGURED'));
+ assert.ok(checkout.includes('status:503'));
+});

@@ -24,7 +24,7 @@ export default async function Admin({searchParams}:{searchParams:Promise<{update
   const verifiedPercent=count?Math.round(verified/count*100):0;
   const mode=["unbekannt","null","verifiziert"].includes(bestand||"")?bestand:"alle";
   const matches=(stock:number|null)=>mode==="alle"||mode==="unbekannt"&&stock===null||mode==="null"&&stock===0||mode==="verifiziert"&&stock!==null;
-  return <AdminShell current="products" title="Produkte & Bestand." description="Artikeltexte, Preise und Varianten verwalten. Leere Bestandsfelder bedeuten unbekannt – nicht ausverkauft.">
+  return <AdminShell current="products" title="Produkte & Bestand." description="Artikeltexte, Preise und Varianten verwalten. Leerer Bestand = verfügbar ohne gespeicherte Menge. Nur 0 bedeutet ausverkauft.">
     <section className="rh-admin-panel-card rh-studio-products-health">
       <div className="rh-studio-products-health-head">
         <div><span className="rh-admin-overline">LAGER / QUALITÄTSKONTROLLE</span><h2>{verifiedPercent}% Bestandsdaten geprüft</h2>

@@ -19,7 +19,7 @@ export default function AdminVariantBulk({productId,variants}:{productId:string;
   const sortedVariants=[...variants].sort((a,b)=>colorSort.compare(a.colorLabel,b.colorLabel)||colorSort.compare(a.lengthLabel,b.lengthLabel));
   return <form action={saveVariantBatchAction} onChange={()=>setDirty(true)} className="rh-admin-bulk-form">
     <input type="hidden" name="productId" value={productId}/>
-    <div className="rh-admin-bulk-top"><p>Preise, Bestand und Sichtbarkeit aller Varianten gleichzeitig bearbeiten. Leerer Bestand = unbekannt.</p><Submit dirty={dirty}/></div>
+    <div className="rh-admin-bulk-top"><p>Preise, Bestand und Sichtbarkeit aller Varianten gleichzeitig bearbeiten. Leeres Feld = verfügbar (ohne Stückzahlbegrenzung); 0 = ausverkauft.</p><Submit dirty={dirty}/></div>
     <div className="rh-admin-table-wrap"><table className="rh-admin-bulk-table">
       <thead><tr><th>Farbe</th><th>Länge</th><th>Preis (EUR)</th><th>Bestand</th><th>Aktiv</th></tr></thead>
       <tbody>{sortedVariants.map(v=><tr key={v.id}>
@@ -31,7 +31,7 @@ export default function AdminVariantBulk({productId,variants}:{productId:string;
         </td>
         <td>{v.lengthLabel}</td>
         <td><input name={v.id+":priceEUR"} aria-label={"Preis "+v.colorLabel+" "+v.lengthLabel+" in Euro"} type="number" min="0.01" max="10000" step="0.01" defaultValue={(v.priceCents/100).toFixed(2)} required/></td>
-        <td><input name={v.id+":stockQuantity"} aria-label={"Bestand "+v.colorLabel+" "+v.lengthLabel} type="number" min="0" max="1000000" step="1" defaultValue={v.stockQuantity??""} placeholder="Unbekannt"/></td>
+        <td><input name={v.id+":stockQuantity"} aria-label={"Bestand "+v.colorLabel+" "+v.lengthLabel} type="number" min="0" max="1000000" step="1" defaultValue={v.stockQuantity??""} placeholder="Leer = verfügbar"/></td>
         <td><label className="rh-admin-active"><input name={v.id+":active"} type="checkbox" defaultChecked={v.active}/><span>Aktiv</span></label></td>
       </tr>)}</tbody>
     </table></div>
