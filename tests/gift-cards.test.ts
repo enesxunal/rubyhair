@@ -67,6 +67,11 @@ test("gift settlement and customer tender are not created on unverified purchase
  assert.ok(server.indexOf('requireCompletedCapture(raw,id')<server.indexOf('tx.giftCard.create'));
  assert.ok(server.includes('status:"captured"'));
  assert.ok(server.includes('RUBY_GIFT_CARDS_LIVE_ENABLED'));
+ const checkoutPreview=read("src/components/checkout-preview.tsx");
+ assert.ok(checkoutPreview.includes('rh-gift-summary-deduction'));
+ assert.ok(checkoutPreview.includes('rh-gift-summary-remaining'));
+ assert.ok(checkoutPreview.includes('Noch zu zahlen'));
+ assert.ok(checkoutPreview.includes('euros(remainingCents/100)'));
  const checkout=read("src/lib/customer-checkout.ts");
  assert.ok(checkout.includes('balanceCents:{gte:giftApplied}'));
  assert.ok(checkout.includes('tx.giftRedemption.create'));

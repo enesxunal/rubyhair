@@ -948,3 +948,8 @@ button.rh-editorial-cta{cursor:pointer}
 @media(max-width:640px){.rh-gift-shop{padding-bottom:60px}.rh-gift-amounts{grid-template-columns:repeat(2,minmax(0,1fr))}.rh-gift-delivery{grid-template-columns:minmax(0,1fr)}.rh-gift-form-grid{grid-template-columns:minmax(0,1fr)}.rh-gift-theme-grid{gap:7px}.rh-gift-theme>span{height:70px}.rh-gift-hero h1{letter-spacing:-2px}.rh-gift-card-preview{padding:10px}.rh-gift-card-border{padding:7%}.rh-gift-card-center small{font-size:6px;letter-spacing:1.3px}.rh-gift-card-center h3{font-size:clamp(20px,7vw,39px)}.rh-gift-card-center b{font-size:clamp(25px,8vw,45px)}.rh-gift-card-top strong{font-size:9px}.rh-gift-card-top span{font-size:6px}.rh-gift-card-message span{font-size:7px}.rh-gift-card-message span strong{font-size:11px}.rh-gift-card-message em{font-size:10px}.rh-gift-card-bottom{font-size:6px;padding-top:6px;margin-top:6px}.rh-home-gift-promo-inner{grid-template-columns:minmax(0,1fr);gap:22px}.rh-home-gift-mini-card{min-height:210px;transform:none}.rh-gift-delivered-actions{flex-direction:column}.rh-gift-delivered-actions>*{width:100%}}
 
 .rh-gift-soft-notice{padding:14px 16px;border:1px solid #e9d7df;border-radius:6px;background:#fcf7f8;color:#795a68;font-size:12px;line-height:1.75}
+
+/* Show the voucher as tender without reducing gross order/tax totals. */
+.rh-gift-summary-deduction strong{color:#6c7e5f}
+.rh-gift-summary-remaining{border-top:1px solid #d8c6ce;padding-top:13px;font-weight:700}
+.rh-gift-summary-remaining strong{font-size:18px;color:#533545}

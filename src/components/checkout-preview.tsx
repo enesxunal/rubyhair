@@ -136,7 +136,10 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
               <div className="rh-checkout-sum"><span>Gesamtbetrag</span><strong>{euros(quote.subtotalCents/100)}</strong></div></>:
               <><div className="rh-checkout-sum"><span>DHL Versand Deutschland</span><strong>{euros(shippingCents/100)}</strong></div>
               <div className="rh-checkout-sum"><span>Enthaltene 19 % USt.</span><strong>{euros(Math.round((quote.subtotalCents+shippingCents)*19/119)/100)}</strong></div>
-              <div className="rh-checkout-sum"><span>Gesamtbetrag</span><strong>{euros((quote.subtotalCents+shippingCents)/100)}</strong></div></>}
+              <div className="rh-checkout-sum"><span>Gesamtbetrag</span><strong>{euros((quote.subtotalCents+shippingCents)/100)}</strong></div>
+              {appliedGift&&<><div className="rh-checkout-sum rh-gift-summary-deduction"><span>Geschenkgutschein</span><strong>- {euros(giftUsed/100)}</strong></div>
+                <div className="rh-checkout-sum rh-gift-summary-remaining"><span>Noch zu zahlen</span><strong>{euros(remainingCents/100)}</strong></div></>}
+              </>}
           </>}
         <Link className="rh-checkout-help" href="/kontakt/">Fragen zu deiner Auswahl? Beratung anfragen ↗</Link>
       </aside>
