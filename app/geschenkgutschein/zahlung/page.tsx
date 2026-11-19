@@ -5,6 +5,7 @@ import {GiftError,reconcileGiftPurchase} from "@/lib/gift-cards/server";
 import {giftCheckoutSignature,verifyGiftSignature,giftViewUrl} from "@/lib/gift-cards/rules";
 import {deliverGiftEmails} from "@/lib/gift-cards/mail";
 import ShopLayout from "@/components/site-shell";
+import VerifiedGiftPurchase from "@/components/verified-gift-purchase";
 export const metadata:Metadata={title:"Geschenkgutschein – Zahlungsbestätigung",robots:{index:false,follow:false},referrer:"no-referrer"};
 export const dynamic="force-dynamic",runtime="nodejs",maxDuration=60;
 export default async function GiftReturn({searchParams}:{searchParams:Promise<{id?:string;state?:string;token?:string;cancel?:string}>}){
@@ -22,5 +23,5 @@ export default async function GiftReturn({searchParams}:{searchParams:Promise<{i
    }
   }catch(e){message=e instanceof GiftError&&e.code==="PAYMENT_NOT_YET_VERIFIED"?"Der Zahlungseingang wird noch geprüft. Bitte nicht erneut bezahlen.":"Die Zahlung wird abgeglichen. Bitte kontaktiere Ruby Hair, bevor du erneut bezahlst."}
  }
- return <ShopLayout><div className="rh-shell rh-gift-result"><div className="rh-eyebrow">RUBY HAIR / GESCHENKGUTSCHEIN</div><h1>{title}</h1><p>{message}</p>{link&&<Link className="rh-gift-primary" href={link}>Gutschein ansehen & herunterladen ↗</Link>}<Link href="/kontakt/" className="rh-gift-text-link">Kontakt zum Ruby Hair Team</Link></div></ShopLayout>;
+ return <ShopLayout><div className="rh-shell rh-gift-result"><div className="rh-eyebrow">RUBY HAIR / GESCHENKGUTSCHEIN</div><h1>{title}</h1><p>{message}</p>{link&&<VerifiedGiftPurchase purchaseId={p.id!}/>} {link&&<Link className="rh-gift-primary" href={link}>Gutschein ansehen & herunterladen ↗</Link>}<Link href="/kontakt/" className="rh-gift-text-link">Kontakt zum Ruby Hair Team</Link></div></ShopLayout>;
 }

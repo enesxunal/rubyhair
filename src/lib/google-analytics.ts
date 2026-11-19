@@ -2,7 +2,7 @@
 
 // Dedicated GA4 property for Ruby Hair. Not a secret or another client's measurement ID.
 export const RUBY_GA4_ID="G-RVNYKB4WP6";
-type GA4Event="page_view"|"view_item"|"add_to_cart"|"begin_checkout";
+type GA4Event="page_view"|"view_item"|"add_to_cart"|"begin_checkout"|"purchase";
 type Gtag=(...args:unknown[])=>void;
 declare global {interface Window {dataLayer?:unknown[][];gtag?:Gtag}}
 export function googleStatisticsConsent(){

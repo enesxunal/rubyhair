@@ -4,6 +4,7 @@ import { ZoomIn, Palette, Ruler, Info } from "lucide-react";
 import Link from "next/link";
 import { useCart } from "./cart-context";
 import { colorsFor, euros, type Product } from "@/lib/catalog";
+import {customerTapeAltImage} from "@/lib/customer-tape-images";
 
 export function ProductDetail({product,initialColor,initialLength}:{product:Product;initialColor?:string;initialLength?:string}){
   const groups=useMemo(()=>colorsFor(product),[product]);
@@ -24,8 +25,10 @@ export function ProductDetail({product,initialColor,initialLength}:{product:Prod
   const otherLength=length==="45-50-cm"?"55-60-cm":"45-50-cm";
   const inStock=Boolean(selected?.available&&selected?.purchasable);
   const stockLimit=Math.min(99,selected?.stock_quantity??99);
+  const extraCustomerPhoto=selected?customerTapeAltImage(product.slug,selected.color):null;
   const slides=[
     {src:selected?.image||product.image,label:"Ausgewählter Farbton",alt:product.name+" – Farbton "+(selected?.color_label||"")},
+    ...(extraCustomerPhoto?[{src:extraCustomerPhoto,label:"Weitere Originalaufnahme",alt:product.name+" – weiterer Blick auf Farbton "+selected?.color_label}]:[]),
     ...(product.image!==(selected?.image||product.image)?[
       {src:product.image,label:"Kollektion / Illustration",alt:product.name+" – allgemeines Kollektionsbild (nicht verbindlicher Farbvergleich)"}
     ]:[])

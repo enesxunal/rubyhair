@@ -1,4 +1,5 @@
 import imported from "@/data/products.json";
+import {customerTapeMainImage} from "@/lib/customer-tape-images";
 
 export type Variation = {
   id: number; color: string; color_label: string; length: string;
@@ -17,7 +18,7 @@ export const products: Product[] = Object.values(source).map((item) => ({
   id:item.id,slug:item.slug,name:item.name,original_name:item.original_name,
   headline:item.headline,intro:item.intro,pack:item.pack,material:item.material,
   currency:item.currency,image:item.image,min_price:item.min_price,
-  max_price:item.max_price,variations:item.variations
+  max_price:item.max_price,variations:item.variations.map(v=>({...v,image:customerTapeMainImage(item.slug,v.color,v.image)}))
 }));
 export const bySlug = (slug: string) => products.find(item=>item.slug===slug);
 export const byVariation = (id: number) => {

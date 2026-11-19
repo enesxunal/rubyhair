@@ -2,7 +2,7 @@ import "../../src/styles/tryon.css";
 import type {Metadata} from "next";
 import ShopLayout from "@/components/site-shell";
 import HairTryonLab from "@/components/hair-tryon-lab";
-import catalog from "@/data/products.json";
+import {products as catalogProducts} from "@/lib/catalog";
 
 export const metadata:Metadata={
  title:"Hair Preview Lab – Extensions vorher & nachher",
@@ -10,7 +10,7 @@ export const metadata:Metadata={
  robots:{index:false,follow:false}
 };
 
-const products=Object.values(catalog.products).filter(p=>p.slug==="tape-in-extensions").map(p=>({
+const products=catalogProducts.filter(p=>p.slug==="tape-in-extensions").map(p=>({
  slug:p.slug,name:p.name,pack:p.pack,material:p.material,
  variants:p.variations.map(v=>({
    color:v.color_label,code:v.color,length:v.length_label,image:v.image,

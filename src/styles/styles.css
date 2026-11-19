@@ -517,3 +517,19 @@ body{background:#fcfaf7;color:#2f2829}
 .rh-shade-gallery-rail button span{position:absolute;left:7px;bottom:7px;background:#fffcf1ea;color:#553d46;font-size:10px;font-weight:700;padding:4px 7px}
 @media(max-width:800px){.shade-visual.rh-shade-gallery{max-width:680px;height:465px}}
 @media(max-width:550px){.shade-visual.rh-shade-gallery{height:350px;grid-template-columns:minmax(0,1fr) 27%;gap:6px}.rh-shade-gallery-rail{gap:6px}.rh-shade-gallery-main>span{font-size:9px;padding:6px 8px}.rh-shade-gallery-rail button span{font-size:9px;padding:3px 5px}}
+
+
+/* Merchant-supplied Tape-in colors, 19 November. */
+.rh-tape-originals{background:#fbf8f5;padding:55px 0 80px}
+.rh-tape-originals-heading{display:flex;justify-content:space-between;align-items:end;gap:28px;margin-bottom:25px}
+.rh-tape-originals-heading span{font-size:10px;letter-spacing:1.7px;font-weight:700;color:#945c71}
+.rh-tape-originals-heading h2{font:400 clamp(36px,4.5vw,55px)/1.12 var(--serif);margin:10px 0 0;letter-spacing:-1px}
+.rh-tape-originals-heading h2 i{color:#915d72}
+.rh-tape-originals-heading p{color:#82777a;max-width:340px;margin:0;font-size:12px;line-height:1.8}
+.rh-tape-originals-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:15px}
+.rh-tape-originals-grid a{display:block;min-width:0;background:#f0ece8}
+.rh-tape-originals-grid img{width:100%;height:clamp(240px,26vw,360px);object-fit:cover;object-position:center 45%;transition:transform .3s}
+.rh-tape-originals-grid a:hover img{transform:scale(1.015)}
+.rh-tape-originals-grid a span{display:flex;align-items:center;justify-content:space-between;gap:5px;padding:15px 9px;font-size:10px;letter-spacing:1px;font-weight:700;color:#5c424c}
+@media(max-width:850px){.rh-tape-originals-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.rh-tape-originals-heading{display:block}.rh-tape-originals-heading p{margin-top:13px}}
+@media(max-width:520px){.rh-tape-originals{padding:42px 0 55px}.rh-tape-originals-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.rh-tape-originals-grid img{height:240px}.rh-tape-originals-grid a:last-child{grid-column:1/-1}.rh-tape-originals-grid a:last-child img{height:235px;object-position:center 40%}}

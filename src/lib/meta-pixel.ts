@@ -3,7 +3,7 @@
 // Public Meta Dataset ID for Ruby Hair, never an access token.
 export const RUBY_META_PIXEL_ID="1157620659939392";
 const marketingKey="ruby_marketing_choice";
-type MetaEvent="PageView"|"ViewContent"|"AddToCart"|"InitiateCheckout";
+type MetaEvent="PageView"|"ViewContent"|"AddToCart"|"InitiateCheckout"|"Purchase";
 type FacebookQueue=((...args:unknown[])=>void)&{queue?:unknown[][];callMethod?:(...args:unknown[])=>void;loaded?:boolean;version?:string};
 declare global {interface Window {fbq?:FacebookQueue;_fbq?:FacebookQueue}}
 export function marketingConsent(){

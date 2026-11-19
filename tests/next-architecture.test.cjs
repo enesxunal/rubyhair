@@ -298,7 +298,7 @@ test("virtual hair lab uses the real catalog and sends photos only with explicit
  const lab=fs.readFileSync(path.join(base,"src/components/hair-tryon-lab.tsx"),"utf8");
  const header=fs.readFileSync(path.join(base,"src/components/site-shell.tsx"),"utf8");
  const study=fs.readFileSync(path.join(base,"reports/hair-tryon-research-2026-11-02.md"),"utf8");
- assert.ok(page.includes('import catalog from "@/data/products.json"'));
+ assert.ok(page.includes('import {products as catalogProducts} from "@/lib/catalog"'));
  assert.ok(page.includes("robots:{index:false"));
  assert.ok(header.includes("href=\"/haar-anprobe/\""));
  for(const marker of ["URL.createObjectURL","URL.revokeObjectURL","image/jpeg","image/png","image/webp","maximal 8 MB", "setRatio", "Meinen Look erstellen", "RUBY HAIR"]){

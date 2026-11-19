@@ -11,13 +11,14 @@ import CookieSettingsLink from "@/components/cookie-settings-link";
 import InstagramHome from "@/components/instagram-home";
 import InfluencerStories from "@/components/influencer-stories";
 import type {InstagramFeedPost} from "@/lib/instagram-feed";
+import {customerTapePhotos} from "@/lib/customer-tape-images";
 
 const darkLogo="/media/RubyHair-WebHeader-Logo-Dunkel-70efc2b6a.png";
 const lightLogo="/media/RubyHair-WebHeader-Logo-Hell-818376d91.png";
 const nav=storefrontNav;
 const shades=[
   {key:"brown",title:"Brown",background:"#5e483a",image:"/assets/ruby-hair-shade-brown-full-20261118.webp",color:"6",slug:"tape-in-extensions"},
-  {key:"bronde",title:"Bronde",background:"#a28765",image:"/media/bronde-1-scaled-ae3a52b00.jpg",color:"bronde",slug:"tape-in-extensions"},
+  {key:"bronde",title:"Bronde",background:"#a28765",image:"/assets/ruby-tape-bronde-main.webp",color:"bronde",slug:"tape-in-extensions"},
   {key:"blonde",title:"Blonde",background:"#d7c2a1",image:"/media/60-3-scaled-e99a55c0d.jpg",color:"60",slug:"tape-in-extensions"},
   {key:"ash",title:"Ash",background:"#b4ada5",image:"/media/silber-1-scaled-7627ffcff.jpg",color:"silver",slug:"tape-in-extensions"}
 ];
@@ -249,6 +250,20 @@ export default function HomeFrontend({products,instagramPosts=[]}:{products:Prod
       </section>
       <InfluencerStories/>
       <ShadeSelector product={products.find(p=>p.slug==="tape-in-extensions")}/>
+      <section className="rh-tape-originals" aria-labelledby="rh-tape-originals-title">
+       <div className="container">
+        <div className="rh-tape-originals-heading">
+         <div><span>RUBY HAIR · ORIGINALE PRODUKTAUFNAHMEN</span><h2 id="rh-tape-originals-title">Dein Farbton. <i>Dein Look.</i></h2></div>
+         <p>Entdecke fünf echte Tape-in Farbtöne aus unserer Kollektion. Jedes Foto zeigt genau den bezeichneten Farbton.</p>
+        </div>
+        <div className="rh-tape-originals-grid">
+         {customerTapePhotos.map(item=><Link key={item.code} href={"/produkt/tape-in-extensions/?farbe="+encodeURIComponent(item.code)}>
+          <img src={item.image} alt={"Originale Ruby Hair Tape-in Extensions – Farbton "+item.name} width={1433} height={2150} loading="lazy" decoding="async"/>
+          <span>FARBTON {item.name.toUpperCase()} <ArrowUpRight size={16}/></span>
+         </Link>)}
+        </div>
+       </div>
+      </section>
       <InstagramHome posts={instagramPosts}/>
       <TapeInAtelier/>
       <section className="brand-story section-pad" id="about"><div className="container brand-grid">

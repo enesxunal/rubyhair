@@ -2,6 +2,7 @@ import "server-only";
 import {unstable_cache} from "next/cache";
 import { databaseConfigured, getPrisma } from "@/lib/prisma";
 import { products as importedProducts, type Product, type Variation } from "@/lib/catalog";
+import {customerTapeMainImage} from "@/lib/customer-tape-images";
 
 // Share one bounded read across marketing pages and serverless requests.
 // The provider pool intermittently reports P1001/P2024; frequent 15-second
@@ -22,7 +23,7 @@ const liveProducts=unstable_cache(async ():Promise<Product[]>=>{
       available:v.active&&(v.stockQuantity===null||v.stockQuantity>0),
       purchasable:v.active&&(v.stockQuantity===null||v.stockQuantity>0),
       stock_quantity:v.stockQuantity,
-      image:v.image
+      image:customerTapeMainImage(p.slug,v.colorCode,v.image)
     }));
     const prices=variations.filter(v=>v.available).map(v=>v.price);
     return {
