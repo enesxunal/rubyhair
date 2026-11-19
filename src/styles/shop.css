@@ -952,3 +952,17 @@ button.rh-editorial-cta{cursor:pointer}
 .rh-gift-summary-deduction strong{color:#6c7e5f}
 .rh-gift-summary-remaining{border-top:1px solid #d8c6ce;padding-top:13px;font-weight:700}
 .rh-gift-summary-remaining strong{font-size:18px;color:#533545}
+/* Mixed basket: digital gift certificates and physical variants share one checkout. */
+.rh-gift-cart-item{align-items:center}
+.rh-gift-cart-mini{aspect-ratio:1.15;min-width:125px;width:125px;padding:11px 9px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;background:#49303e;color:#f8e6ef;border:1px solid #b394a4;border-radius:5px;text-align:center}
+.rh-gift-cart-mini.soft{background:#eee2dd;color:#604556}
+.rh-gift-cart-mini.black{background:#232126;color:#ebd3ae}
+.rh-gift-cart-mini span{font-size:9px;letter-spacing:1.4px}
+.rh-gift-cart-mini strong{font:400 15px/1.15 var(--serif)}
+.rh-gift-cart-message{max-width:400px;overflow-wrap:anywhere;font-style:italic}
+@media(max-width:560px){.rh-gift-cart-mini{width:90px;min-width:90px;padding:6px}.rh-gift-cart-mini strong{font-size:12px}.rh-gift-cart-mini span{font-size:7px}}
+
+.rh-gift-paid-links{margin:28px 0;padding:24px;background:#f8f2f5;border:1px solid #e7d8df;border-radius:7px}
+.rh-gift-paid-links h2{font:400 30px/1.15 var(--serif);margin:0 0 12px}
+.rh-gift-paid-links p{font-size:12px;line-height:1.8;color:#715d68}
+.rh-gift-paid-links a{margin:8px 10px 8px 0;max-width:100%;overflow-wrap:anywhere}

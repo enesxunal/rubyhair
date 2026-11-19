@@ -1,5 +1,7 @@
 "use client";
 import {useState,type FormEvent} from "react";
+import {useRouter} from "next/navigation";
+import {useCart} from "@/components/cart-context";
 import {Gift,ArrowRight,Heart,Mail,Download,ShieldCheck} from "lucide-react";
 import Link from "next/link";
 import {euroGift} from "@/lib/gift-cards/public";
@@ -12,33 +14,29 @@ export default function GiftComposer({enabled}:{enabled:boolean}){
  const [recipient,setRecipient]=useState("");
  const [sender,setSender]=useState("");
  const [message,setMessage]=useState("");
- const [buyerEmail,setBuyerEmail]=useState("");
  const [recipientEmail,setRecipientEmail]=useState("");
  const [delivery,setDelivery]=useState<"download"|"email">("download");
- const [accept,setAccept]=useState(false);
  const [pending,setPending]=useState(false),[error,setError]=useState("");
+ const cart=useCart(),router=useRouter();
  const amountCents=preset==="custom"?Math.round(Number(custom)*100):Number(preset)*100;
  const validAmount=Number.isSafeInteger(amountCents)&&amountCents>=1000&&amountCents<=50000&&/^(?:\d+)(?:[.,]\d{1,2})?$/.test(preset==="custom"?custom:"100");
  const amountLabel=validAmount?euroGift(amountCents):"– €";
- const pay=async(event:FormEvent)=>{
+ const addToCart=(event:FormEvent)=>{
   event.preventDefault();setError("");
   if(!validAmount){setError("Bitte wähle einen Betrag zwischen 10 und 500 €.");return}
-  if(!accept){setError("Bitte bestätige die Gutscheinbedingungen.");return}
+  if(delivery==="email"&&!recipientEmail.trim()){setError("Bitte gib die Empfänger-E-Mail-Adresse ein.");return}
   setPending(true);
-  try{
-   const body={key:crypto.randomUUID(),amountCents,buyerEmail,recipientEmail:delivery==="email"?recipientEmail:undefined,
-    recipientName:recipient,senderName:sender||undefined,message:message||undefined,theme,delivery,provider:"paypal"};
-   const response=await fetch("/api/gutschein/kaufen",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body),cache:"no-store"});
-   const payload=await response.json();
-   if(!response.ok||!/^https:\/\/www\.paypal\.com\//.test(payload.redirectUrl||""))throw Error("PAYMENT_START_FAILED");
-   window.location.assign(payload.redirectUrl);
-  }catch{setError("Die Zahlung konnte nicht gestartet werden. Es wurde kein Gutschein ausgestellt. Bitte prüfe vor einem erneuten Versuch deinen PayPal-Status.");setPending(false)}
+  const added=cart.addGift({id:crypto.randomUUID(),amountCents,
+   recipientName:recipient.trim(),senderName:sender.trim()||undefined,message:message.trim()||undefined,
+   recipientEmail:delivery==="email"?recipientEmail.trim():undefined,theme,delivery});
+  if(!added){setError("Bitte prüfe deine Angaben. Maximal fünf Gutscheine pro Warenkorb.");setPending(false);return}
+  router.push("/warenkorb/");
  };
  return <div className="rh-gift-shop">
   <div className="rh-shell rh-gift-hero"><div className="rh-eyebrow">RUBY HAIR / GESCHENKGUTSCHEIN</div>
    <h1>Beauty is <em>a gift.</em></h1><p>Eine persönliche Aufmerksamkeit für besondere Menschen. Gestalte einen Ruby Hair Geschenkgutschein, versende ihn per E-Mail oder teile ihn als Bild.</p></div>
   <div className="rh-shell rh-gift-builder">
-   <form className="rh-gift-form" onSubmit={pay}>
+   <form className="rh-gift-form" onSubmit={addToCart}>
     <div className="rh-gift-section"><span className="rh-gift-step">01 / GUTSCHEINWERT</span><h2>Wie viel Freude darf es sein?</h2>
      <div className="rh-gift-amounts">{["50","100","200","custom"].map(value=><button type="button" className={preset===value?"selected":""} onClick={()=>setPreset(value)} key={value}>{value==="custom"?"Eigener Betrag":value+" €"}</button>)}</div>
      {preset==="custom"&&<label className="rh-gift-field">Dein Wunschbetrag (€)<input type="text" inputMode="decimal" value={custom} onChange={e=>setCustom(e.target.value.replace(",","."))} placeholder="z. B. 75,00"/><small>Zwischen 10 und 500 €</small></label>}
@@ -54,15 +52,13 @@ export default function GiftComposer({enabled}:{enabled:boolean}){
     <div className="rh-gift-section"><span className="rh-gift-step">04 / ZUSTELLUNG</span><h2>Wie möchtest du schenken?</h2>
      <div className="rh-gift-delivery"><label className={delivery==="download"?"selected":""}><input type="radio" name="gift-delivery" checked={delivery==="download"} onChange={()=>setDelivery("download")}/><Download size={20}/><span><strong>Selbst verschenken</strong><small>PNG herunterladen und über WhatsApp oder selbst teilen</small></span></label>
       <label className={delivery==="email"?"selected":""}><input type="radio" name="gift-delivery" checked={delivery==="email"} onChange={()=>setDelivery("email")}/><Mail size={20}/><span><strong>Direkt per E-Mail schenken</strong><small>Wir verschicken deine Karte nach erfolgreicher Zahlung</small></span></label></div>
-     <label className="rh-gift-field">Deine E-Mail-Adresse *<input type="email" autoComplete="email" required maxLength={254} value={buyerEmail} onChange={e=>setBuyerEmail(e.target.value)} placeholder="deine@email.de"/></label>
      {delivery==="email"&&<label className="rh-gift-field">E-Mail-Adresse des Beschenkten *<input type="email" required maxLength={254} value={recipientEmail} onChange={e=>setRecipientEmail(e.target.value)} placeholder="freundin@email.de"/></label>}
     </div>
-    <label className="rh-gift-terms"><input type="checkbox" required checked={accept} onChange={e=>setAccept(e.target.checked)}/><span>Ich akzeptiere die <Link href="/rechtliches/agb/" target="_blank">AGB</Link> und die <Link href="/rechtliches/datenschutz/" target="_blank">Datenschutzhinweise</Link> und die <Link href="/rechtliches/widerruf/" target="_blank">Widerrufsbelehrung</Link>. Mir ist bewusst, dass der Gutscheincode erst nach bestätigter Zahlung aktiviert wird.</span></label>
     <div className="rh-gift-summary"><span>DEIN GESCHENK</span><strong>{amountLabel}</strong><small>Digital · Kein Versand</small></div>
     {error&&<p role="alert" className="rh-gift-form-error">{error}</p>}
-    {!enabled&&<p className="rh-gift-soft-notice">Die Geschenkfunktion wird gerade für die sichere Auszahlung und Einlösung geprüft. Du kannst das Kartendesign bereits ansehen; ein Kauf wird noch nicht ausgelöst.</p>}
-    <button disabled={!enabled||pending||!validAmount} type="submit" className="rh-gift-buy">{pending?"Weiterleitung zu PayPal …":enabled?"Jetzt zahlungspflichtig bestellen":"Geschenkgutschein – demnächst verfügbar"}<ArrowRight size={20}/></button>
-    <p className="rh-gift-secure"><ShieldCheck size={16}/> Nur im Ruby Hair Onlineshop einlösbar · Digitale Lieferung ohne Versandkosten. Der Code wird erst nach bestätigter Zahlung aktiviert.</p>
+    {!enabled&&<p className="rh-gift-soft-notice">Der Gutscheinkauf ist momentan nicht verfügbar. Die Kartenvorschau bleibt sichtbar.</p>}
+    <button disabled={!enabled||!cart.loaded||pending||!validAmount} type="submit" className="rh-gift-buy">{pending?"Zum Warenkorb …":!cart.loaded?"Warenkorb wird geladen …":enabled?"In den Warenkorb legen":"Geschenkgutschein – demnächst verfügbar"}<ArrowRight size={20}/></button>
+    <p className="rh-gift-secure"><ShieldCheck size={16}/> Dein Gutschein wird zum Warenkorb hinzugefügt. Bezahle alle ausgewählten Produkte zusammen an der Kasse. Der Code wird erst nach bestätigter Zahlung aktiviert.</p>
    </form>
    <aside className="rh-gift-preview-sticky"><div className="rh-gift-step">DEIN GUTSCHEIN / VORSCHAU</div>
     <div className={"rh-gift-card-preview "+theme}><div className="rh-gift-card-border">

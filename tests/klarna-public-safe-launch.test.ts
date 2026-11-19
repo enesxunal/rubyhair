@@ -23,7 +23,7 @@ test("Both PayPal and Klarna remain selectable in payments_public mode",()=>{
  assert.match(core,/RUBY_PUBLIC_CHECKOUT_MODE==="payments_public"/);
  assert.match(page,/mode==="payments_public"/);
  assert.match(ui,/checkoutMode!=="klarna_public"/);
- assert.match(ui,/method={paymentMethod}/);
+ assert.match(ui,/method={activePaymentMethod}/);
  assert.match(api,/mode==="klarna_public"\|\|mode==="payments_public"/);
  assert.match(api,/mode==="klarna_public"&&input\.data\.provider!=="klarna"/);
  assert.match(api,/RUBY_MANUAL_DHL_FULFILLMENT_ENABLED/);

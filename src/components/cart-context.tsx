@@ -1,13 +1,17 @@
 "use client";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { byVariation } from "@/lib/catalog";
+import {giftCartItemSchema,normaliseGiftCart,type GiftCartItem} from "@/lib/gift-cards/cart-schema";
 import {trackRubyEvent} from "@/lib/storefront-analytics";
 import {trackRubyMetaEvent} from "@/lib/meta-pixel";
 import {trackRubyGA4Event} from "@/lib/google-analytics";
 
 export type CartLine = { id:number; quantity:number };
 type CartState = {
-  lines:CartLine[]; count:number; loaded:boolean;
+  lines:CartLine[]; gifts:GiftCartItem[]; count:number; loaded:boolean;
+  addGift:(gift:GiftCartItem)=>boolean;
+  removeGift:(id:string)=>void;
+  clearPurchased:(lines:CartLine[],giftIds:string[])=>void;
   add:(id:number,quantity?:number)=>void;
   update:(id:number,quantity:number)=>void;
   remove:(id:number)=>void;
@@ -15,6 +19,7 @@ type CartState = {
 };
 const Context=createContext<CartState|null>(null);
 const KEY="rubyhair-cart-v1";
+const GIFT_KEY="rubyhair-gift-cart-v1";
 const normalise=(v:unknown):CartLine[]=>{
   if(!Array.isArray(v))return [];
   const byId=new Map<number,number>();
@@ -30,14 +35,32 @@ const normalise=(v:unknown):CartLine[]=>{
 };
 export function CartProvider({children}:{children:React.ReactNode}){
   const [lines,setLines]=useState<CartLine[]>([]);
+  const [gifts,setGifts]=useState<GiftCartItem[]>([]);
   const [loaded,setLoaded]=useState(false);
   useEffect(()=>{
     try{setLines(normalise(JSON.parse(localStorage.getItem(KEY)||"[]")))}catch{setLines([])}
+    try{setGifts(normaliseGiftCart(JSON.parse(localStorage.getItem(GIFT_KEY)||"[]")))}catch{setGifts([])}
     setLoaded(true);
   },[]);
-  useEffect(()=>{if(loaded)localStorage.setItem(KEY,JSON.stringify(lines))},[lines,loaded]);
+  useEffect(()=>{if(loaded)try{localStorage.setItem(KEY,JSON.stringify(lines))}catch{}},[lines,loaded]);
+  useEffect(()=>{if(loaded)try{localStorage.setItem(GIFT_KEY,JSON.stringify(gifts))}catch{}},[gifts,loaded]);
   const value=useMemo<CartState>(()=>({
-    lines,loaded,count:lines.reduce((sum,line)=>sum+line.quantity,0),
+    lines,gifts,loaded,count:lines.reduce((sum,line)=>sum+line.quantity,0)+gifts.length,
+    addGift(gift){
+      const parsed=giftCartItemSchema.safeParse(gift);
+      if(!parsed.success||gifts.length>=5||gifts.some(g=>g.id===gift.id))return false;
+      setGifts(prev=>[...prev,parsed.data]);
+      trackRubyEvent("add_to_cart");trackRubyMetaEvent("AddToCart");trackRubyGA4Event("add_to_cart");
+      return true;
+    },
+    removeGift(id){setGifts(prev=>prev.filter(g=>g.id!==id))},
+    clearPurchased(purchasedLines,purchasedGiftIds){
+      setGifts(prev=>prev.filter(x=>!purchasedGiftIds.includes(x.id)));
+      setLines(prev=>prev.flatMap(line=>{
+        const bought=purchasedLines.find(p=>p.id===line.id)?.quantity||0;
+        return line.quantity>bought?[{...line,quantity:line.quantity-bought}]:[];
+      }));
+    },
     add(id,quantity=1){
       if(!byVariation(id))return;
       trackRubyEvent("add_to_cart");
@@ -55,8 +78,8 @@ export function CartProvider({children}:{children:React.ReactNode}){
         prev.map(x=>x.id===id?{...x,quantity:Math.min(99,Math.max(1,Math.floor(quantity)))}:x));
     },
     remove(id){setLines(prev=>prev.filter(x=>x.id!==id))},
-    clear(){setLines([])}
-  }),[lines,loaded]);
+    clear(){setLines([]);setGifts([])}
+  }),[lines,gifts,loaded]);
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }
 export function useCart(){

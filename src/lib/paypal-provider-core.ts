@@ -140,12 +140,12 @@ export class PaypalClient{
   /** Dedicated no-shipping gift certificate purchase; never touches physical inventory. */
   async createGiftOrder(input:{purchaseId:string;amountCents:number;returnUrl:string;cancelUrl:string}):Promise<PaypalOrderResult>{
     const purchaseId=checkId(input.purchaseId,60);
-    if(!Number.isInteger(input.amountCents)||input.amountCents<1000||input.amountCents>50000)throw new PaypalError("INVALID_GIFT_AMOUNT");
+    if(!Number.isInteger(input.amountCents)||input.amountCents<1000||input.amountCents>250000)throw new PaypalError("INVALID_GIFT_AMOUNT");
     const total=centsToEuro(input.amountCents);
     const payload=await this.api("POST","/v2/checkout/orders",{
       intent:"CAPTURE",
       purchase_units:[{reference_id:purchaseId,custom_id:purchaseId,invoice_id:"RHG-"+purchaseId.replaceAll("-",""),
-        description:"Ruby Hair digitaler Geschenkgutschein",
+        description:"Ruby Hair digitale Geschenkgutscheine",
         amount:{currency_code:"EUR",value:total}}],
       payment_source:{paypal:{experience_context:{brand_name:"Ruby Hair",user_action:"PAY_NOW",
         landing_page:"GUEST_CHECKOUT",shipping_preference:"NO_SHIPPING",

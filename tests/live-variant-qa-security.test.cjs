@@ -67,7 +67,7 @@ test("checkout payment buttons are selectable and admin login can return to 1 EU
  const loginRoute=read("app/api/admin/login/route.ts");
  assert.match(checkout,/type="radio" name="checkout-payment-method" value="paypal"/);
  assert.match(checkout,/type="radio" name="checkout-payment-method" value="klarna"/);
- assert.match(checkout,/paymentMethod==="paypal"&&liveTest/);
+ assert.match(checkout,/activePaymentMethod==="paypal"&&liveTest/);
  assert.match(checkout,/LiveVariantTestSection state=\{liveTest\}/);
  assert.match(checkout,/Mit Admin-Konto anmelden und PayPal testen/);
  assert.match(checkout,/Klarna ist für diesen Zahlungstest noch nicht freigegeben/);

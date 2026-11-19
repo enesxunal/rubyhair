@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import {useState} from "react";
+import {giftCartTotal} from "@/lib/gift-cards/cart-schema";
 import type {CheckoutAddressData} from "./checkout-address-preview";
 import CustomerPaymentSubmit from "./customer-payment-submit";
 import {Check,Truck,Wallet,ArrowUpRight,ShoppingBag,Gift} from "lucide-react";
@@ -12,12 +13,18 @@ import LiveVariantTestSection,{type LiveVariantTestView} from "./live-variant-te
 
 const process=[
   {no:"01",label:"Warenkorb",description:"Produkte, Farbe und Menge prüfen",icon:ShoppingBag},
-  {no:"02",label:"Lieferung",description:"Liefer- und Rechnungsadresse eingeben",icon:Truck},
+  {no:"02",label:"Lieferung / Rechnung",description:"Liefer- und Rechnungsadresse prüfen",icon:Truck},
   {no:"03",label:"Zahlung",description:"Zahlungsart und Bestellübersicht",icon:Wallet}
 ];
 export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippingCents=499}:{liveTest?:LiveVariantTestView|null;checkoutMode?:"disabled"|"admin_test"|"public"|"klarna_public"|"payments_public";shippingCents?:number}){
-  const {lines,loaded}=useCart();
+  const {lines,gifts,loaded}=useCart();
   const {quote,error,loading}=useCartQuote(lines);
+  const digitalOnly=!lines.length&&gifts.length>0,hasItems=lines.length>0||gifts.length>0;
+  const giftSoldCents=giftCartTotal(gifts);
+  const shipping=lines.length?shippingCents:0;
+  const physicalCents=quote?.subtotalCents||0;
+  const grossCents=physicalCents+giftSoldCents+shipping;
+  const canPay=Boolean(hasItems&&!error&&!loading&&(!lines.length||quote&&!quote.needsReview));
   const [paymentMethod,setPaymentMethod]=useState<"paypal"|"klarna">(checkoutMode==="klarna_public"?"klarna":"paypal");
   const [validatedAddress,setValidatedAddress]=useState<CheckoutAddressData|null>(null);
   const [giftInput,setGiftInput]=useState("");
@@ -36,9 +43,10 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
    }catch{setGiftError("Der Gutscheincode ist ungültig, aufgebraucht oder derzeit nicht verfügbar.")}
    finally{setGiftLoading(false)}
   };
-  const giftUsed=appliedGift?Math.min(appliedGift.balanceCents,(quote?.subtotalCents||0)+shippingCents):0;
-  const remainingCents=Math.max(0,(quote?.subtotalCents||0)+shippingCents-giftUsed);
-  const oneEuroCart=Boolean(loaded&&lines.length===1&&lines[0].id===886&&lines[0].quantity===1&&
+  const giftUsed=appliedGift&&!gifts.length?Math.min(appliedGift.balanceCents,grossCents):0;
+  const remainingCents=Math.max(0,grossCents-giftUsed);
+  const activePaymentMethod=gifts.length?"paypal":paymentMethod;
+  const oneEuroCart=Boolean(loaded&&!gifts.length&&lines.length===1&&lines[0].id===886&&lines[0].quantity===1&&
     quote&&quote.subtotalCents===100&&quote.lines.length===1);
   const payableTestCart=Boolean(oneEuroCart&&!error&&!loading&&!quote?.needsReview&&quote?.lines[0]?.status==="available");
   return <div className="rh-checkout-v2 rh-shell">
@@ -52,7 +60,7 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
     <div className="rh-checkout-grid">
       <section className="rh-checkout-process">
         <h2>Dein Einkauf.</h2>
-        <p>Prüfe deine Auswahl und die Lieferadresse.</p>
+        <p>{digitalOnly?"Prüfe deine Gutscheine und die Rechnungsdaten. Es gibt keinen Paketversand.":"Prüfe deine Auswahl und die Lieferadresse."}</p>
         <div className="rh-checkout-steps">
           {process.map((step,i)=><article key={step.no}>
             <div className="rh-checkout-number">{step.no}</div>
@@ -61,8 +69,8 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
             <span className="rh-checkout-step-state">{i===0?<Check size={18}/>:<span aria-hidden="true">{step.no}</span>}</span>
           </article>)}
         </div>
-        {loaded&&lines.length>0&&<CheckoutAddressPreview onValidated={setValidatedAddress}/>}
-        {loaded&&lines.length>0&&<section className="rh-gift-redeem-box" aria-label="Geschenkgutschein einlösen">
+        {loaded&&hasItems&&<CheckoutAddressPreview onValidated={setValidatedAddress} digitalOnly={digitalOnly}/>}
+        {loaded&&lines.length>0&&!gifts.length&&<section className="rh-gift-redeem-box" aria-label="Geschenkgutschein einlösen">
          <div className="rh-gift-redeem-heading"><Gift size={21}/><div><span>GESCHENKGUTSCHEIN</span><h3>Du hast einen Gutschein?</h3></div></div>
          <p>Gib deinen Ruby Hair Gutscheincode ein. Das Guthaben wird vor der Zahlung verrechnet.</p>
          <div className="rh-gift-redeem-row"><input aria-label="Gutscheincode" placeholder="RH-XXXX-XXXX-XXXX-XXXX-XXXX" value={giftInput} maxLength={45} onChange={e=>{setGiftInput(e.target.value);setAppliedGift(null);setGiftError("")}}/>
@@ -72,35 +80,35 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
         </section>}
         <section className="rh-checkout-payment-preview" aria-label="Zahlungsart auswählen">
           <h3>03 / ZAHLUNG</h3>
-          <p className="rh-payment-preview-heading">Wähle deine Zahlungsart</p>
+          <p className="rh-payment-preview-heading">{gifts.length?"Gemeinsame Zahlung für Waren und Gutscheine mit PayPal":"Wähle deine Zahlungsart"}</p>
           {appliedGift&&<p className="rh-gift-only-paypal-note">Bei Gutscheinzahlung steht PayPal für einen möglichen Restbetrag zur Verfügung. Ist alles gedeckt, erfolgt keine weitere Zahlung.</p>}
           <div className="rh-payment-select" role="radiogroup" aria-label="Zahlungsart">
-            {checkoutMode!=="klarna_public"&&<label className={"rh-payment-choice"+(paymentMethod==="paypal"?" is-selected":"")}>
+            {(checkoutMode!=="klarna_public"||gifts.length>0)&&<label className={"rh-payment-choice"+(activePaymentMethod==="paypal"?" is-selected":"")}>
               <input type="radio" name="checkout-payment-method" value="paypal"
-                checked={paymentMethod==="paypal"} onChange={()=>setPaymentMethod("paypal")}/>
+                checked={activePaymentMethod==="paypal"} onChange={()=>setPaymentMethod("paypal")}/>
               <span><strong>PayPal</strong><small>PayPal oder Karte bei Verfügbarkeit</small></span>
             </label>}
-            <label className={"rh-payment-choice"+(paymentMethod==="klarna"?" is-selected":"")+(appliedGift?" rh-gift-method-disabled":"")}>
+            <label className={"rh-payment-choice"+(activePaymentMethod==="klarna"?" is-selected":"")+(appliedGift||gifts.length?" rh-gift-method-disabled":"")}>
               <input type="radio" name="checkout-payment-method" value="klarna"
-                checked={paymentMethod==="klarna"} disabled={!!appliedGift} onChange={()=>setPaymentMethod("klarna")}/>
+                checked={activePaymentMethod==="klarna"} disabled={!!appliedGift||gifts.length>0} onChange={()=>setPaymentMethod("klarna")}/>
               <span><strong>Klarna</strong><small>{checkoutMode!=="disabled"?"Zahlung bei Versand":"Noch nicht freigeschaltet"}</small></span>
             </label>
           </div>
-          {paymentMethod==="paypal"&&liveTest&&<LiveVariantTestSection state={liveTest} cartReady={payableTestCart}/>}
-          {paymentMethod==="paypal"&&!liveTest&&oneEuroCart&&<div className="rh-payment-action-area">
+          {activePaymentMethod==="paypal"&&liveTest&&<LiveVariantTestSection state={liveTest} cartReady={payableTestCart}/>}
+          {activePaymentMethod==="paypal"&&!liveTest&&oneEuroCart&&<div className="rh-payment-action-area">
             <p>Der 1,00-€-Live-Test dieses Artikels ist ausschließlich über den geschützten Administratorzugang möglich.</p>
             <Link className="rh-payment-primary-link" href="/admin/login?next=live-checkout">
               Mit Admin-Konto anmelden und PayPal testen
             </Link>
           </div>}
-          {checkoutMode!=="disabled"&&!liveTest&&paymentMethod==="paypal"&&
-            <CustomerPaymentSubmit method={paymentMethod} lines={lines} address={validatedAddress} cartReady={Boolean(quote&&!quote.needsReview&&!loading&&!error&&lines.length)} totalCents={remainingCents} giftCode={appliedGift?.code}/>}
-          {checkoutMode==="disabled"&&paymentMethod==="paypal"&&!liveTest&&!oneEuroCart&&<div className="rh-payment-action-area">
+          {checkoutMode!=="disabled"&&!liveTest&&activePaymentMethod==="paypal"&&
+            <CustomerPaymentSubmit method={activePaymentMethod} lines={lines} gifts={gifts} address={validatedAddress} cartReady={canPay} totalCents={remainingCents} giftCode={gifts.length?undefined:appliedGift?.code}/>}
+          {checkoutMode==="disabled"&&activePaymentMethod==="paypal"&&!liveTest&&!oneEuroCart&&<div className="rh-payment-action-area">
             <p>Die letzte Freigabe für den regulären Kauf steht noch aus. Bis dahin wird keine Bestellung ausgelöst.</p>
           </div>}
-          {paymentMethod==="klarna"&&checkoutMode!=="disabled"&&!liveTest&&
-            <CustomerPaymentSubmit method={paymentMethod} lines={lines} address={validatedAddress} cartReady={Boolean(quote&&!quote.needsReview&&!loading&&!error&&lines.length)} totalCents={remainingCents} giftCode={appliedGift?.code}/>}
-          {paymentMethod==="klarna"&&(checkoutMode==="disabled"||!!liveTest)&&<div className="rh-payment-action-area" role="status">
+          {activePaymentMethod==="klarna"&&checkoutMode!=="disabled"&&!liveTest&&
+            <CustomerPaymentSubmit method={activePaymentMethod} lines={lines} gifts={gifts} address={validatedAddress} cartReady={canPay} totalCents={remainingCents} giftCode={gifts.length?undefined:appliedGift?.code}/>}
+          {activePaymentMethod==="klarna"&&(checkoutMode==="disabled"||!!liveTest)&&<div className="rh-payment-action-area" role="status">
             <p>Klarna ist für diesen Zahlungstest noch nicht freigegeben.</p>
             <button type="button" className="rh-payment-secondary-link" onClick={()=>setPaymentMethod("paypal")}>Stattdessen PayPal wählen</button>
           </div>}
@@ -112,13 +120,13 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
       <aside className="rh-checkout-summary">
         <div className="rh-checkout-summary-head"><div className="rh-eyebrow">DEINE AUSWAHL</div><h2>Zusammenfassung.</h2></div>
         {!loaded?<p role="status">Warenkorb wird geladen …</p>:
-          !lines.length?<div className="rh-checkout-empty"><p>Du hast noch keine Extensions ausgewählt.</p>
+          !hasItems?<div className="rh-checkout-empty"><p>Dein Warenkorb ist noch leer.</p>
             <Link href="/kollektionen/" className="rh-editorial-cta">KOLLEKTIONEN ENTDECKEN <ArrowUpRight size={17}/></Link></div>:
           error?<p role="alert">Die Produktpreise konnten nicht geprüft werden. Bitte gehe zum Warenkorb zurück und versuche es erneut.</p>:
-          loading||!quote?<p role="status">Preise werden auf dem Server geprüft …</p>:
+          lines.length&&(loading||!quote)?<p role="status">Preise werden auf dem Server geprüft …</p>:
           <>
             <div className="rh-checkout-lines">
-              {quote.lines.map(line=><div className="rh-checkout-line" key={line.id}>
+              {(quote?.lines||[]).map(line=><div className="rh-checkout-line" key={line.id}>
                 <div><strong>{line.productName||"Unbekanntes Produkt"}</strong>
                   <span>{line.color} · {line.length} · {line.quantity} ×</span>
                   {line.status!=="available"&&<small>
@@ -128,15 +136,21 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
                 </div>
                 <b>{line.lineCents!==null?euros(line.lineCents/100):"Nicht verfügbar"}</b>
               </div>)}
+              {gifts.map(gift=><div className="rh-checkout-line" key={gift.id}>
+               <div><strong>Ruby Hair Geschenkgutschein</strong>
+                 <span>Für {gift.recipientName} · {gift.delivery==="email"?"E-Mail":"Digitales Bild"}</span>
+               </div><b>{euros(gift.amountCents/100)}</b>
+              </div>)}
             </div>
-            <div className="rh-checkout-sum"><span>Artikelwert</span>
-              <strong>{euros(quote.subtotalCents/100)}</strong></div>
+            {lines.length>0&&<div className="rh-checkout-sum"><span>Artikelwert</span>
+              <strong>{euros(physicalCents/100)}</strong></div>}
+            {gifts.length>0&&<div className="rh-checkout-sum"><span>Geschenkgutscheine</span><strong>{euros(giftSoldCents/100)}</strong></div>}
             {liveTest?<><div className="rh-checkout-sum"><span>Versand (interner Test)</span><strong>{euros(0)}</strong></div>
               <div className="rh-checkout-sum"><span>Inkl. 19 % MwSt.</span><strong>{euros(0.16)}</strong></div>
-              <div className="rh-checkout-sum"><span>Gesamtbetrag</span><strong>{euros(quote.subtotalCents/100)}</strong></div></>:
-              <><div className="rh-checkout-sum"><span>DHL Versand Deutschland</span><strong>{euros(shippingCents/100)}</strong></div>
-              <div className="rh-checkout-sum"><span>Enthaltene 19 % USt.</span><strong>{euros(Math.round((quote.subtotalCents+shippingCents)*19/119)/100)}</strong></div>
-              <div className="rh-checkout-sum"><span>Gesamtbetrag</span><strong>{euros((quote.subtotalCents+shippingCents)/100)}</strong></div>
+              <div className="rh-checkout-sum"><span>Gesamtbetrag</span><strong>{euros(grossCents/100)}</strong></div></>:
+              <><div className="rh-checkout-sum"><span>{lines.length?"DHL Versand Deutschland":"Digitaler Versand"}</span><strong>{shipping?euros(shipping/100):"Kostenlos"}</strong></div>
+              <div className="rh-checkout-sum"><span>Enthaltene 19 % USt.</span><strong>{euros(Math.round(grossCents*19/119)/100)}</strong></div>
+              <div className="rh-checkout-sum"><span>Gesamtbetrag</span><strong>{euros(grossCents/100)}</strong></div>
               {appliedGift&&<><div className="rh-checkout-sum rh-gift-summary-deduction"><span>Geschenkgutschein</span><strong>- {euros(giftUsed/100)}</strong></div>
                 <div className="rh-checkout-sum rh-gift-summary-remaining"><span>Noch zu zahlen</span><strong>{euros(remainingCents/100)}</strong></div></>}
               </>}

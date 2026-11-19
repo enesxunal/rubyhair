@@ -26,7 +26,7 @@ export async function deliverQueuedOrderEmails(limit=10){
   const claim=await db().orderNotification.updateMany({where:{id:item.id,status:item.status},data:{status:"sending",attempts:{increment:1}}});
   if(claim.count!==1)continue;
   try{
-   const order=await db().order.findUnique({where:{id:item.orderId},include:{invoice:{select:{invoiceNumber:true,pdf:true}},lines:{include:{variant:{include:{product:{select:{name:true}}}}}}}});
+   const order=await db().order.findUnique({where:{id:item.orderId},include:{invoice:{select:{invoiceNumber:true,pdf:true}},lines:{include:{variant:{include:{product:{select:{name:true}}}}}},giftPurchases:{where:{status:"captured"},select:{recipientName:true,amountCents:true}}}});
    const isReceived=item.stage==="received"||item.stage==="received_admin";
    if(!order||order.testOnly||!order.customerEmail||!orderMailStages.includes(item.stage as OrderMailStage)||
       !isReceived&&item.stage!=="failed"&&!order.invoice||
@@ -40,7 +40,9 @@ export async function deliverQueuedOrderEmails(limit=10){
     String(bill.firstName||"")+" "+String(bill.lastName||""):"";
    await sendStoreOrderMail(kind,dest,{orderNumber:"RH-"+String(order.orderNumber),
     customerName:name.trim(),customerEmail:order.customerEmail,totalCents:order.totalCents,
-    items:order.lines.map(line=>({name:line.variant.product.name+" "+line.variant.colorLabel+" "+line.variant.lengthLabel,quantity:line.quantity,totalCents:line.lineTotalCents})),
+    items:[...order.lines.map(line=>({name:line.variant.product.name+" "+line.variant.colorLabel+" "+line.variant.lengthLabel,quantity:line.quantity,totalCents:line.lineTotalCents})),
+     ...order.giftPurchases.map(g=>({name:"Digitaler Geschenkgutschein für "+g.recipientName,quantity:1,totalCents:g.amountCents}))],
+    digitalOnly:order.lines.length===0&&order.giftPurchases.length>0,
     trackingNumber:order.trackingNumber||undefined,carrier:order.trackingCarrier||undefined},
     item.stage.startsWith("paid")&&order.invoice?{filename:order.invoice.invoiceNumber+".pdf",content:Buffer.from(order.invoice.pdf)}:undefined);
    await db().orderNotification.updateMany({where:{id:item.id,status:"sending"},data:{status:"sent",sentAt:new Date(),lastError:null}});

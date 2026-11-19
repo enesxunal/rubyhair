@@ -5,6 +5,7 @@ import {getPrisma} from "@/lib/prisma";
 import {giftOnlySignature} from "@/lib/customer-checkout";
 import {runCustomerJobs} from "@/lib/customer-automation";
 import ShopLayout from "@/components/site-shell";
+import CheckoutSuccessClear from "@/components/checkout-success-clear";
 export const metadata:Metadata={title:"Geschenkgutschein erfolgreich eingelöst",robots:{index:false,follow:false},referrer:"no-referrer"};
 export const dynamic="force-dynamic",runtime="nodejs";
 export default async function GiftOnlySuccess({searchParams}:{searchParams:Promise<{orderId?:string;state?:string}>}){
@@ -14,6 +15,7 @@ export default async function GiftOnlySuccess({searchParams}:{searchParams:Promi
  const paid=Boolean(order&&!order.testOnly&&order.status==="payment_confirmed"&&order.giftAppliedCents===order.totalCents&&order.invoice);
  if(paid)after(async()=>{try{await runCustomerJobs(2)}catch{}});
  return <ShopLayout><section className="rh-shell rh-gift-result"><div className="rh-eyebrow">RUBY HAIR / BESTELLUNG</div><h1>{paid?"Bestellung bestätigt.":"Bestellung wird geprüft."}</h1>
+  {paid&&<CheckoutSuccessClear orderId={p.orderId!}/>}
   <p>{paid?"Dein Geschenkgutschein wurde erfolgreich angerechnet. Es ist keine weitere Zahlung nötig. Deine Bestellbestätigung und Rechnung werden per E-Mail versendet.":"Der Bestellstatus konnte noch nicht bestätigt werden. Bitte nicht erneut bestellen, bevor die Prüfung abgeschlossen ist."}</p>
   <Link href="/konto/">Zu meinem Kundenkonto</Link><Link href="/kontakt/">Kontakt zu Ruby Hair</Link></section></ShopLayout>;
 }

@@ -26,7 +26,7 @@ export default async function MyAccount(){
  if(!customer)redirect("/konto/anmelden/");
  const orders=await getPrisma().order.findMany({
   where:{customerEmail:{equals:customer.email,mode:"insensitive"},testOnly:false},
-  include:{lines:{include:{variant:{include:{product:true}}}},invoice:{select:{invoiceNumber:true}}},
+  include:{lines:{include:{variant:{include:{product:true}}}},giftPurchases:{select:{id:true,amountCents:true,recipientName:true,status:true}},invoice:{select:{invoiceNumber:true}}},
   orderBy:{createdAt:"desc"},take:30
  });
  const addresses=[...new Set(orders.map(x=>addressText(x.shippingAddress)).filter((x):x is string=>Boolean(x)))].slice(0,3);
@@ -40,7 +40,8 @@ export default async function MyAccount(){
      const tracking=safeCustomerTrackingUrl(o.trackingCarrier,o.trackingNumber);
      return <article className="rh-account-order" key={o.id}>
       <div className="rh-account-order-top"><div><span>BESTELLUNG</span><strong>#{o.orderNumber.toString()}</strong><small>{o.createdAt.toLocaleDateString("de-DE",{timeZone:"Europe/Berlin",dateStyle:"medium"})}</small></div><div><span>STATUS</span><strong>{statusText[o.status]||"In Bearbeitung"}</strong><small>{euro(o.totalCents)}</small></div></div>
-      <div className="rh-account-order-lines">{o.lines.map(l=><div key={l.id}><span>{l.variant.product.name} · {l.variant.colorLabel} · {l.variant.lengthLabel} × {l.quantity}</span><strong>{euro(l.lineTotalCents)}</strong></div>)}</div>
+      <div className="rh-account-order-lines">{o.lines.map(l=><div key={l.id}><span>{l.variant.product.name} · {l.variant.colorLabel} · {l.variant.lengthLabel} × {l.quantity}</span><strong>{euro(l.lineTotalCents)}</strong></div>)}
+       {o.giftPurchases.map(g=><div key={g.id}><span>Ruby Hair Geschenkgutschein für {g.recipientName} · {g.status==="captured"?"Bezahlt":"Zahlung ausstehend"}</span><strong>{euro(g.amountCents)}</strong></div>)}</div>
       <div className="rh-account-order-actions">{o.invoice&&<a href={`/api/konto/rechnung/${o.id}`} download><FileText size={16}/> Rechnung als PDF</a>}
       {tracking&&<a href={tracking} target="_blank" rel="noopener noreferrer"><Truck size={16}/> DHL-Sendung verfolgen <ArrowUpRight size={14}/></a>}
       {!o.invoice&&!tracking&&<span>Updates erhältst du auch per E-Mail.</span>}</div>

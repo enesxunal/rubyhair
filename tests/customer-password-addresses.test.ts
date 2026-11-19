@@ -76,7 +76,7 @@ test("profile address APIs scope writes by authenticated customer and support cr
  assert.ok(account.includes('testOnly:false'));
  assert.ok(account.includes('CustomerAccountSettings'));
  const checkout=read('src/components/checkout-address-preview.tsx');
- assert.ok(checkout.includes('Gespeicherte Lieferadresse verwenden'));
+ assert.ok(checkout.includes('Gespeicherte Adresse verwenden'));
  assert.ok(checkout.includes('onValidated?.(null)'));
 });
 test("second customer migration adds only optional profile fields and saved address table",()=>{

@@ -5,6 +5,7 @@ import {providerForCheckout,CustomerCheckoutError} from "@/lib/customer-checkout
 import {requireOrderTransition} from "@/lib/order-lifecycle";
 import {createCustomerInvoicePdf} from "@/lib/customer-invoice";
 import {RUBY_TEST_SELLER} from "@/lib/qa-invoice";
+import {generateGiftCode,giftCodeHash,encryptGiftCode} from "@/lib/gift-cards/rules";
 import {verifiedCaptureReplay,paymentReplayOutcome} from "@/lib/payment-replay-policy";
 
 const shape=(v:Prisma.JsonValue):{firstName:string;lastName:string;street:string;postalCode:string;city:string;country:string}=>{
@@ -19,7 +20,7 @@ const validCaptureId=(v:string)=>/^[a-zA-Z0-9_-]{8,90}$/.test(v);
 export async function finishCapturedCustomerOrder(orderId:string,provider:"paypal"|"klarna",captureId:string,providerOrderReference:string){
  if(!validCaptureId(captureId))throw new CustomerCheckoutError("INVALID_PROVIDER_CAPTURE",503);
  const db=getPrisma();
- const order=await db.order.findUnique({where:{id:orderId},include:{lines:{include:{variant:{include:{product:true}}}},invoice:true}});
+ const order=await db.order.findUnique({where:{id:orderId},include:{lines:{include:{variant:{include:{product:true}}}},invoice:true,giftPurchases:true}});
  if(!order||order.testOnly||!order.customerEmail||order.totalCents<100)throw new CustomerCheckoutError("CUSTOMER_ORDER_NOT_FOUND",404);
  if(verifiedCaptureReplay(order.status,Boolean(order.invoice),Boolean(await db.paymentEvent.findFirst({
    where:{orderId:order.id,provider,eventType:"PAYMENT.CAPTURE.COMPLETED",providerEventId:captureId},select:{id:true}
@@ -28,6 +29,14 @@ export async function finishCapturedCustomerOrder(orderId:string,provider:"paypa
  if(provider==="paypal"&&order.paymentReference!==providerOrderReference)throw new CustomerCheckoutError("PROVIDER_ORDER_REFERENCE_MISMATCH",409);
  if(provider==="klarna"&&!order.paymentReference?.startsWith("KLARNA-HPP:"))throw new CustomerCheckoutError("PROVIDER_ORDER_REFERENCE_MISMATCH",409);
  if(order.lines.some(l=>l.quantity<1||l.unitPriceCents<100))throw new CustomerCheckoutError("STORED_ORDER_LINES_INVALID",503);
+ const giftSum=order.giftPurchases.reduce((sum,g)=>sum+g.amountCents,0);
+ if(order.lines.reduce((sum,l)=>sum+l.lineTotalCents,0)+giftSum+order.shippingCents!==order.totalCents||
+   order.giftPurchases.some(g=>g.status!=="pending"||g.provider!=="paypal"||!g.cartOrderId)||
+   (giftSum>0&&provider!=="paypal")||(!order.lines.length&&!giftSum))
+  throw new CustomerCheckoutError("STORED_ORDER_TOTAL_MISMATCH",503);
+ // Each gift must get one cryptographically independent code; no card is issued
+ // outside the atomic verified-capture finalization below.
+ const issuedGifts=order.giftPurchases.map(g=>{const code=generateGiftCode();return {purchase:g,...encryptGiftCode(code),codeHash:giftCodeHash(code)}});
  if(order.giftAppliedCents<0||order.giftAppliedCents>=order.totalCents)throw new CustomerCheckoutError("INVALID_GIFT_TENDER",503);
  if(order.giftAppliedCents>0){
   const redemption=await db.giftRedemption.findUnique({where:{orderId:order.id}});
@@ -35,8 +44,10 @@ export async function finishCapturedCustomerOrder(orderId:string,provider:"paypa
  }
  const billing=shape(order.billingAddress),issuedAt=new Date(),number=invoiceNo(order.orderNumber,issuedAt);
  const buyerName=billing.firstName+" "+billing.lastName;
- const invoiceLines=order.lines.map(l=>({description:`${l.variant.product.name} ${l.variant.colorLabel} ${l.variant.lengthLabel}`,
-  quantity:l.quantity,unitCents:l.unitPriceCents,totalCents:l.lineTotalCents}));
+ const invoiceLines=[...order.lines.map(l=>({description:`${l.variant.product.name} ${l.variant.colorLabel} ${l.variant.lengthLabel}`,
+  quantity:l.quantity,unitCents:l.unitPriceCents,totalCents:l.lineTotalCents})),
+  ...order.giftPurchases.map(g=>({description:`Ruby Hair Geschenkgutschein für ${g.recipientName}`,
+   quantity:1,unitCents:g.amountCents,totalCents:g.amountCents}))];
  const pdf=createCustomerInvoicePdf({
   invoiceNumber:number,issuedAt,orderNumber:String(order.orderNumber),customerName:buyerName,
   customerEmail:order.customerEmail,billingStreet:billing.street,billingPostalCode:billing.postalCode,
@@ -54,13 +65,23 @@ export async function finishCapturedCustomerOrder(orderId:string,provider:"paypa
     const settled=await tx.giftRedemption.updateMany({where:{orderId:order.id,state:"reserved",amountCents:order.giftAppliedCents},data:{state:"settled",settledAt:issuedAt}});
     if(settled.count!==1)throw new CustomerCheckoutError("GIFT_RESERVATION_CONFLICT",409);
    }
+   for(const issued of issuedGifts){
+    const purchase=issued.purchase;
+    const captured=await tx.giftPurchase.updateMany({where:{id:purchase.id,cartOrderId:order.id,status:"pending"},
+     data:{status:"captured",capturedAt:issuedAt,buyerMailStatus:"queued",
+      recipientMailStatus:purchase.delivery==="email"&&purchase.recipientEmail?"queued":"skipped"}});
+    if(captured.count!==1)throw new CustomerCheckoutError("GIFT_ISSUE_CONCURRENCY",409);
+    await tx.giftCard.create({data:{purchaseId:purchase.id,codeHash:issued.codeHash,
+     codeCiphertext:issued.codeCiphertext,codeIv:issued.codeIv,codeTag:issued.codeTag,
+     faceCents:purchase.amountCents,balanceCents:purchase.amountCents}});
+   }
    await tx.paymentEvent.create({data:{orderId:order.id,provider,providerEventId:captureId,eventType:"PAYMENT.CAPTURE.COMPLETED"}});
    await tx.orderStatusEvent.create({data:{orderId:order.id,fromStatus:order.status,toStatus:"payment_confirmed",reason:`${provider}_verified_capture`} });
    await tx.invoice.create({data:{orderId:order.id,invoiceNumber:number,issuedAt,
     seller:RUBY_TEST_SELLER,buyer:{name:buyerName,email:order.customerEmail,street:billing.street,zip:billing.postalCode,city:billing.city},
     lines:invoiceLines as Prisma.InputJsonValue,taxRate:19,taxCents:order.taxCents,totalCents:order.totalCents,pdf:new Uint8Array(pdf)}});
    await tx.orderNotification.createMany({data:[{orderId:order.id,stage:"paid"},{orderId:order.id,stage:"paid_admin"}]});
-   await tx.shippingJob.upsert({where:{orderId:order.id},create:{orderId:order.id,status:"waiting_credentials"},update:{}});
+   if(order.lines.length)await tx.shippingJob.upsert({where:{orderId:order.id},create:{orderId:order.id,status:"waiting_credentials"},update:{}});
   },{isolationLevel:Prisma.TransactionIsolationLevel.Serializable,timeout:12000});
  }catch(e){
   const existing=await db.invoice.findUnique({where:{orderId:order.id}});

@@ -1,7 +1,7 @@
 import {RUBY_TEST_SELLER} from "./qa-invoice";
 
 export type CustomerInvoiceLine={description:string;quantity:number;unitCents:number;totalCents:number};
-export type CustomerInvoiceInfo={invoiceNumber:string;orderNumber:string;issuedAt:Date;customerName:string;customerEmail:string;billingStreet:string;billingPostalCode:string;billingCity:string;paymentMethod:"paypal"|"klarna"|"gutschein";paymentReference:string;giftAppliedCents?:number;lines:CustomerInvoiceLine[];subtotalCents:number;shippingCents:number;taxCents:number;totalCents:number};
+export type CustomerInvoiceInfo={invoiceNumber:string;orderNumber:string;issuedAt:Date;customerName:string;customerEmail:string;billingStreet:string;billingPostalCode:string;billingCity:string;paymentMethod:"paypal"|"klarna"|"gutschein";paymentReference:string;giftAppliedCents?:number;giftSoldCents?:number;lines:CustomerInvoiceLine[];subtotalCents:number;shippingCents:number;taxCents:number;totalCents:number};
 const money=(value:number)=>`${(value/100).toFixed(2).replace(".",",")} EUR`;
 // WinAnsi-safe, using only standard PDF built-in fonts. The actual original name/address
 // always remains UTF-8 in the database even if a glyph cannot be printed by Helvetica.

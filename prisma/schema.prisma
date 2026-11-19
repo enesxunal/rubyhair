@@ -76,6 +76,7 @@ model Order {
   invoice           Invoice?
   notifications     OrderNotification[]
   shippingJob       ShippingJob?
+  giftPurchases    GiftPurchase[]
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
   @@index([status,createdAt(sort: Desc)])
@@ -330,6 +331,8 @@ model GiftPurchase {
   provider            String    @default("paypal") @db.VarChar(20)
   providerOrderId     String?   @unique @db.VarChar(90)
   providerCaptureId   String?   @unique @db.VarChar(100)
+  cartOrderId         String?   @db.Uuid
+  cartOrder           Order?    @relation(fields: [cartOrderId], references: [id], onDelete: Restrict)
   capturedAt          DateTime?
   buyerMailStatus     String    @default("queued") @db.VarChar(20)
   recipientMailStatus String    @default("queued") @db.VarChar(20)
@@ -342,6 +345,7 @@ model GiftPurchase {
   card                GiftCard?
 
   @@index([status, createdAt])
+  @@index([cartOrderId])
   @@index([buyerMailStatus, nextMailAttempt])
   @@map("gift_purchases")
 }

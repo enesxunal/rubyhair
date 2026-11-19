@@ -27,7 +27,7 @@ export async function POST(req:NextRequest){
     if(order&&!order.testOnly){
      // provider canonical GET verifies amount and capture before DB mutation.
      await finalizePayPalCheckout(order.id,false);
-     after(async()=>{try{await runCustomerJobs(2)}catch{}});
+     after(async()=>{try{await Promise.all([runCustomerJobs(2),deliverGiftEmails(5)])}catch{}});
     }
     else if(!order){
      const gift=await getPrisma().giftPurchase.findUnique({where:{providerOrderId:ref},select:{id:true}});

@@ -1,7 +1,7 @@
 // Pure presentation functions: safe to test without SMTP or a production database.
 export const orderMailStages=["received","received_admin","awaiting_payment","paid","paid_admin","processing","shipped","delivered","cancelled","failed"] as const;
 export type OrderMailStage=(typeof orderMailStages)[number];
-export type OrderMailData={orderNumber:string;customerName?:string;customerEmail?:string;totalCents?:number;trackingNumber?:string;carrier?:string;items?:{name:string;quantity:number;totalCents:number}[]};
+export type OrderMailData={orderNumber:string;customerName?:string;customerEmail?:string;totalCents?:number;trackingNumber?:string;carrier?:string;digitalOnly?:boolean;items?:{name:string;quantity:number;totalCents:number}[]};
 const stages:Record<OrderMailStage,{label:string;subject:string;heading:string;lead:string;action:string}>={
   received:{label:"Bestellung eingegangen",subject:"Deine Bestellung ist bei uns eingegangen",heading:"Danke für deine Bestellung.",lead:"Deine Klarna-Zahlung wurde autorisiert. Der Betrag wird erst nach bestätigtem Versand eingezogen.",action:"Wir halten dich per E-Mail auf dem Laufenden. Die Rechnung erhältst du nach der Zahlung."},
   received_admin:{label:"Neue Bestellung",subject:"Neue Klarna-Bestellung – Zahlung autorisiert",heading:"Neue Bestellung eingegangen.",lead:"Eine neue Kundenbestellung ist bestätigt. Klarna hat die Zahlung nur autorisiert; sie wurde noch nicht eingezogen.",action:"Bitte Bestellung und Versand im Admin prüfen. Erst nach bestätigtem Versand wird die Zahlung eingezogen."},
@@ -19,7 +19,12 @@ const safeText=(s:string,max=150)=>s.replace(/[\r\n\x00-\x1f\x7f]/g," ").trim().
 const euro=(cents:number)=>new Intl.NumberFormat("de-DE",{style:"currency",currency:"EUR"}).format(cents/100);
 export function renderOrderMail(stage:OrderMailStage,data:OrderMailData){
   if(!orderMailStages.includes(stage))throw new Error("INVALID_MAIL_STAGE");
-  const card=stages[stage];
+  const base=stages[stage];
+  const card=data.digitalOnly&&stage==="paid"?{...base,
+   lead:"Vielen Dank – deine digitalen Geschenkgutscheine sind bezahlt.",
+   action:"Deine Rechnung ist angehängt. Die persönlichen Geschenkkarten erhältst du per E-Mail und kannst sie als Bild teilen."}:
+   data.digitalOnly&&stage==="paid_admin"?{...base,
+   action:"Digitaler Gutscheinkauf – kein DHL-Versand erforderlich. Prüfe die automatische Geschenk-E-Mail."}:base;
   const number=safeText(data.orderNumber,70);
   if(!number)throw new Error("ORDER_NUMBER_REQUIRED");
   const person=safeText(data.customerName||"",80);

@@ -1,7 +1,6 @@
 import "server-only";
-import {createHmac,createHash,timingSafeEqual} from "node:crypto";
+import {createHmac,createHash,timingSafeEqual,randomUUID} from "node:crypto";
 import {Prisma} from "@prisma/client";
-import {z} from "zod";
 import {getPrisma} from "@/lib/prisma";
 import {loadPaymentValue} from "@/lib/payment-secrets";
 import {PaypalClient} from "@/lib/paypal-provider-core";
@@ -10,20 +9,11 @@ import {legacyStore} from "@/lib/legacy-store-facts";
 import {giftCodeHash,giftCodeLooksValid} from "@/lib/gift-cards/rules";
 import {createCustomerInvoicePdf} from "@/lib/customer-invoice";
 import {RUBY_TEST_SELLER} from "@/lib/qa-invoice";
+import {giftCartTotal} from "@/lib/gift-cards/cart-schema";
 
-const simple=z.string().trim().min(2).max(85).refine(s=>!/[<>\r\n\x00-\x1f]/.test(s));
-const postal=z.string().regex(/^\d{5}$/);
-const address=z.object({firstName:simple,lastName:simple,street:simple.max(120),postalCode:postal,city:simple,country:z.literal("DE")}).strict();
-export const checkoutInput=z.object({
- key:z.string().uuid(),provider:z.enum(["paypal","klarna"]),
- lines:z.array(z.object({id:z.number().int().positive(),quantity:z.number().int().min(1).max(99)}).strict()).min(1).max(30),
- shipping:address,billing:address.optional(),email:z.email().max(254),giftCode:z.string().min(10).max(45).optional(),consent:z.literal(true)
-}).strict().superRefine((v,ctx)=>{
- const ids=new Set<number>();let qty=0;
- for(const [i,l] of v.lines.entries()){if(ids.has(l.id))ctx.addIssue({code:"custom",path:["lines",i],message:"Duplicate variant"});ids.add(l.id);qty+=l.quantity;}
- if(qty>99)ctx.addIssue({code:"custom",path:["lines"],message:"Cart too large"});
-});
-export type CustomerCheckoutInput=z.infer<typeof checkoutInput>;
+export {checkoutInput} from "@/lib/customer-checkout-schema";
+import {checkoutInput,type CustomerCheckoutInput} from "@/lib/customer-checkout-schema";
+export type {CustomerCheckoutInput} from "@/lib/customer-checkout-schema";
 export const grossTax19=(totalCents:number)=>Math.round(totalCents*19/119);
 export const shippingDeCents=()=>{
  const raw=process.env.RUBY_SHIPPING_DE_CENTS;
@@ -36,6 +26,7 @@ export class CustomerCheckoutError extends Error{
 }
 const hash=(input:CustomerCheckoutInput)=>createHash("sha256").update(JSON.stringify({
  provider:input.provider,giftCode:input.giftCode?giftCodeHash(input.giftCode):null,lines:[...input.lines].sort((a,b)=>a.id-b.id),
+ gifts:[...input.gifts].sort((a,b)=>a.id.localeCompare(b.id)),
  shipping:input.shipping,billing:input.billing||input.shipping,email:input.email.toLowerCase()
 })).digest("hex");
 const secret=()=>{
@@ -77,6 +68,7 @@ export async function providerForCheckout(provider:"paypal"|"klarna"):Promise<{p
 
 export const giftOnlySignature=(id:string)=>createHmac("sha256",secret()).update("rubyhair-gift-only-order-v1:"+id).digest("hex");
 export async function createCustomerCheckout(input:CustomerCheckoutInput){
+ if(input.gifts.length&&process.env.RUBY_GIFT_CARDS_LIVE_ENABLED!=="true")throw new CustomerCheckoutError("GIFT_SALES_UNAVAILABLE",503);
  if(input.giftCode&&(!giftCodeLooksValid(input.giftCode)||input.provider!=="paypal"))throw new CustomerCheckoutError("GIFT_CODE_INVALID_OR_PROVIDER_UNSUPPORTED",400);
  const db=getPrisma();
  // Provider may not be needed for a fully gift-card-covered order.
@@ -88,7 +80,8 @@ export async function createCustomerCheckout(input:CustomerCheckoutInput){
   // A completed/ambiguous external checkout is never silently started again.
   throw new CustomerCheckoutError("CHECKOUT_ALREADY_STARTED",409);
  }
- const items=[...input.lines].sort((a,b)=>a.id-b.id);
+ const items=[...input.lines].sort((a,b)=>a.id-b.id),giftItems=[...input.gifts].sort((a,b)=>a.id.localeCompare(b.id));
+ const digitalTotal=giftCartTotal(giftItems);
  const order=await db.$transaction(async tx=>{
   const variants=await tx.variant.findMany({where:{legacyId:{in:items.map(i=>i.id)}},include:{product:true}});
   if(variants.length!==items.length)throw new CustomerCheckoutError("UNKNOWN_PRODUCT",409);
@@ -112,7 +105,9 @@ export async function createCustomerCheckout(input:CustomerCheckoutInput){
    const updated=await tx.variant.updateMany({where:{id:v.id,active:true,stockQuantity:{gte:l.quantity}},data:{stockQuantity:{decrement:l.quantity}}});
    if(updated.count!==1)throw new CustomerCheckoutError("STOCK_CHANGED",409);
   }
-  const shipping=shippingDeCents(),gross=subtotal+shipping,tax=grossTax19(gross);
+  const shipping=items.length?shippingDeCents():0;
+  const gross=subtotal+digitalTotal+shipping,tax=grossTax19(gross);
+  if(gross>2500000)throw new CustomerCheckoutError("ORDER_TOO_LARGE",400);
   let cardId:string|null=null,giftApplied=0;
   if(input.giftCode){
    const card=await tx.giftCard.findUnique({where:{codeHash:giftCodeHash(input.giftCode)}});
@@ -122,12 +117,24 @@ export async function createCustomerCheckout(input:CustomerCheckoutInput){
    if(spent.count!==1)throw new CustomerCheckoutError("GIFT_BALANCE_CHANGED",409);
   }
   const created=await tx.order.create({data:{
-   testOnly:false,status:"pending_payment",currency:"EUR",subtotalCents:subtotal,shippingCents:shipping,taxCents:tax,totalCents:gross,giftAppliedCents:giftApplied,
+   testOnly:false,status:"pending_payment",currency:"EUR",subtotalCents:subtotal+digitalTotal,shippingCents:shipping,taxCents:tax,totalCents:gross,giftAppliedCents:giftApplied,
    customerEmail:input.email.toLowerCase(),billingAddress:{...(input.billing||input.shipping),consentToTermsAt:new Date().toISOString()} as Prisma.InputJsonValue,
    shippingAddress:input.shipping as Prisma.InputJsonValue,reservationKey:input.key,requestDigest:digest,
    reservationExpiresAt:new Date(Date.now()+2*60*60*1000),
    lines:{create:lines},statusEvents:{create:{fromStatus:null,toStatus:"pending_payment",reason:"customer_checkout_reserved"}}
   }});
+  // Every digital voucher is a pending line of THIS physical/digital order;
+  // no spendable code exists before PayPal verifies a completed capture.
+  for(const gift of giftItems){
+   await tx.giftPurchase.create({data:{
+    cartOrderId:created.id,requestKey:randomUUID(),
+    requestHash:createHash("sha256").update(JSON.stringify({orderId:created.id,gift})).digest("hex"),
+    amountCents:gift.amountCents,buyerEmail:input.email.toLowerCase(),
+    recipientEmail:gift.delivery==="email"?gift.recipientEmail?.toLowerCase():null,
+    recipientName:gift.recipientName,senderName:gift.senderName||null,message:gift.message||null,
+    theme:gift.theme,delivery:gift.delivery,status:"pending",provider:"paypal"
+   }});
+  }
   if(cardId&&giftApplied>0)await tx.giftRedemption.create({data:{cardId,orderId:created.id,amountCents:giftApplied,state:giftApplied===gross?"settled":"reserved",settledAt:giftApplied===gross?new Date():null}});
   if(giftApplied===gross){
    const bill=input.billing||input.shipping,issuedAt=new Date();
@@ -162,7 +169,9 @@ export async function createCustomerCheckout(input:CustomerCheckoutInput){
   const base=`https://rubyhair.de/kasse/${input.provider}/return?orderId=${order.id}&state=${checkoutSignature(order.id,input.provider)}`;
   let reference:string,url:string;
   if(verifiedGateway.provider==="paypal"){
-   const a=await verifiedGateway.api.createOrder({
+   const a=giftItems.length&&!items.length
+    ?await verifiedGateway.api.createGiftOrder({purchaseId:order.id,amountCents:cashDue,returnUrl:base,cancelUrl:base+"&cancel=1"})
+    :await verifiedGateway.api.createOrder({
     orderId:order.id,invoiceId:"RH-"+order.orderNumber.toString(),requestId:"RH-CREATE-"+order.id,
     totalCents:cashDue,shippingCents:Math.min(order.shippingCents,cashDue),
     shipping:{fullName:input.shipping.firstName+" "+input.shipping.lastName,street:input.shipping.street,

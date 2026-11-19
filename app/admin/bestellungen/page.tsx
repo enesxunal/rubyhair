@@ -36,6 +36,7 @@ export default async function AdminOrders({searchParams}:{searchParams:Promise<{
   db.order.count({where}),
   db.order.findMany({where,orderBy:[{createdAt:"desc"},{id:"asc"}],skip:(page-1)*20,take:20,include:{
    lines:{select:{quantity:true,unitPriceCents:true,lineTotalCents:true,variant:{select:{colorLabel:true,lengthLabel:true,product:{select:{name:true}}}}}},
+   giftPurchases:{select:{id:true,amountCents:true,recipientName:true,delivery:true,recipientEmail:true,status:true,buyerMailStatus:true,recipientMailStatus:true}},
    payments:{select:{eventType:true,provider:true,providerEventId:true}},
    invoice:{select:{invoiceNumber:true}},
    shippingJob:{select:{status:true,trackingNumber:true,labelPdf:true}},
@@ -91,7 +92,7 @@ export default async function AdminOrders({searchParams}:{searchParams:Promise<{
         <p><strong>Kunde:</strong> {order.customerEmail||"Nicht erfasst"}</p>
         <p><strong>Rechnungsadresse:</strong> {addressText(order.billingAddress)||"Nicht erfasst"}</p>
         <p><strong>Lieferadresse:</strong> {addressText(order.shippingAddress)||"Nicht erfasst"}</p>
-        <p><strong>Versand:</strong> {order.trackingCarrier||"Noch nicht versendet"} {order.trackingNumber||""}</p>
+        <p><strong>Versand:</strong> {order.lines.length?`${order.trackingCarrier||"Noch nicht versendet"} ${order.trackingNumber||""}`:"Rein digital – kein DHL-Paket"}</p>
         {order.invoice&&<p><a href={`/api/admin/customer-document?orderId=${order.id}&type=invoice`} target="_blank" rel="noopener noreferrer">Rechnung {order.invoice.invoiceNumber} herunterladen</a></p>}
         {order.shippingJob&&<p><strong>DHL Automatik:</strong> {order.shippingJob.status} {order.shippingJob.trackingNumber||""}</p>}
         {order.shippingJob?.labelPdf&&<p><a href={`/api/admin/customer-document?orderId=${order.id}&type=label`} target="_blank" rel="noopener noreferrer">DHL Paketlabel PDF herunterladen</a></p>}
@@ -115,12 +116,17 @@ export default async function AdminOrders({searchParams}:{searchParams:Promise<{
          <td>{line.variant.product.name}</td>
          <td>{line.variant.colorLabel} · {line.variant.lengthLabel}</td>
          <td>{line.quantity}</td><td>{euro(line.unitPriceCents)}</td><td>{euro(line.lineTotalCents)}</td>
-        </tr>)}</tbody>
+        </tr>)}
+        {order.giftPurchases.map(gift=><tr key={gift.id}><td>Digitaler Geschenkgutschein</td>
+          <td>Für {gift.recipientName} · {gift.delivery==="email"?"E-Mail":"Download"} · {gift.status}</td>
+          <td>1</td><td>{euro(gift.amountCents)}</td><td>{euro(gift.amountCents)}</td></tr>)}
+        </tbody>
        </table></div>
+       {order.giftPurchases.length>0&&<p className="rh-admin-muted">Gutscheinversand: {order.giftPurchases.map(g=>`${g.recipientName}: ${g.buyerMailStatus}${g.delivery==="email"?` / Empfänger ${g.recipientMailStatus}`:""}`).join(" · ")}</p>}
        {(()=>{
         const paid= !order.testOnly&&Boolean(order.paymentReference)&&order.payments.some(p=>p.eventType==="PAYMENT.CAPTURE.COMPLETED"&&p.provider!=="manual"&&p.providerEventId.length>0);
         const next=order.status==="payment_confirmed"&&(!order.shippingJob||order.shippingJob.status!=="label_created")?"preparing":order.status==="preparing"?"shipped":order.status==="shipped"?"delivered":null;
-        return paid&&next?<form action={updateFulfillmentAction} className="rh-admin-fulfillment-form">
+        return paid&&next&&order.lines.length>0?<form action={updateFulfillmentAction} className="rh-admin-fulfillment-form">
           <h3>Versandstatus bearbeiten</h3><p>Nur nach verifiziertem Zahlungseingang. Statusänderungen werden protokolliert.</p>
           <input type="hidden" name="id" value={order.id}/>
           <input type="hidden" name="next" value={next}/>
