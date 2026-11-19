@@ -1,32 +1,41 @@
 import {ImageResponse} from "next/og";
 import {euroGift} from "./public";
-const themes={
- classic:{bg:"#47303d",gold:"#e5cbd5",text:"#fffbfa",caption:"#eed5dc",line:"#c49aab"},
- soft:{bg:"#eadbd7",gold:"#765365",text:"#563645",caption:"#795867",line:"#bc899c"},
- black:{bg:"#1c1b1c",gold:"#dabd8c",text:"#fff6e6",caption:"#ddcbaa",line:"#957752"}
-};
+import {giftLogoLightDataUrl,giftLogoDarkDataUrl} from "./brand-logos";
+
 type PreviewGift={recipientName:string;senderName:string|null;message:string|null;amountCents:number;theme:string};
+const palettes={
+ classic:{bg:"#49303e",text:"#fffaf7",muted:"#eed6de",line:"#bc94a7",accent:"#e9c1d2"},
+ soft:{bg:"#f1e8e3",text:"#513a46",muted:"#806977",line:"#bea0ad",accent:"#805667"},
+ black:{bg:"#202024",text:"#fff9f2",muted:"#ddc9b7",line:"#a58b74",accent:"#e7cba5"}
+} as const;
+
+/** The real purchased card uses the same visual hierarchy as the storefront editor. */
 export function renderGiftCardImage(p:PreviewGift,code:string){
- const theme=themes[p.theme as keyof typeof themes]||themes.classic;
- const name=p.recipientName.slice(0,50),from=p.senderName?.slice(0,50),note=p.message?.slice(0,180);
- const image=new ImageResponse(
-  <div style={{display:"flex",flexDirection:"column",background:theme.bg,color:theme.text,width:"100%",height:"100%",padding:"62px 78px",fontFamily:"Georgia,serif",position:"relative"}}>
-   <div style={{position:"absolute",top:19,left:19,right:19,bottom:19,border:`1px solid ${theme.line}`,display:"flex",borderRadius:6}}/>
-   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontFamily:"Arial,sans-serif",fontSize:21,letterSpacing:8,color:theme.gold}}><span>RUBY HAIR</span><span style={{fontSize:13,letterSpacing:3}}>EXTENSIONS</span></div>
-   <div style={{display:"flex",flexDirection:"column",alignItems:"center",flex:1,justifyContent:"center",gap:17,marginTop:14}}>
-    <div style={{fontFamily:"Arial,sans-serif",fontSize:17,letterSpacing:6,color:theme.caption}}>A LITTLE SOMETHING FOR YOU</div>
-    <div style={{fontSize:75,letterSpacing:-2,fontWeight:400}}>Gift of Beauty</div>
-    <div style={{height:2,width:110,background:theme.line,display:"flex"}}/>
-    <div style={{fontSize:88,marginTop:5}}>{euroGift(p.amountCents)}</div>
+ const style=palettes[p.theme as keyof typeof palettes]||palettes.classic;
+ const name=p.recipientName.slice(0,80),from=p.senderName?.slice(0,80),message=p.message?.slice(0,180);
+ const logo=p.theme==="soft"?giftLogoDarkDataUrl:giftLogoLightDataUrl;
+ return new ImageResponse(
+  <div style={{display:"flex",flexDirection:"column",width:1200,height:760,background:style.bg,color:style.text,padding:"68px 80px 49px",fontFamily:"Georgia,serif",position:"relative"}}>
+   <div style={{position:"absolute",left:23,right:23,top:23,bottom:23,border:`1px solid ${style.line}`,borderRadius:5,display:"flex",opacity:.78}}/>
+   <div style={{display:"flex",flexDirection:"row",alignItems:"center",justifyContent:"space-between",height:78}}>
+    <img src={logo} width={253} height={64} alt="Ruby Hair Extensions" style={{width:253,height:64,objectFit:"contain"}}/>
+    <div style={{fontFamily:"Arial,sans-serif",fontSize:13,letterSpacing:3.5,color:style.muted}}>DIGITAL GIFT CARD</div>
    </div>
-   <div style={{display:"flex",flexDirection:"column",gap:10,minHeight:130,fontFamily:"Arial,sans-serif",fontSize:22}}>
-    <div style={{display:"flex",alignItems:"center"}}>FÜR <span style={{fontFamily:"Georgia,serif",fontSize:28,paddingLeft:18}}>{name}</span></div>
-    {note&&<div style={{fontSize:20,color:theme.caption,marginTop:4}}>{note}</div>}
-    {from&&<div style={{display:"flex",fontSize:17,color:theme.caption}}>VON {from}</div>}
+   <div style={{display:"flex",flexDirection:"column",flex:1,alignItems:"center",justifyContent:"center",gap:19,paddingTop:12,paddingBottom:9}}>
+    <div style={{fontFamily:"Arial,sans-serif",fontSize:14,fontWeight:600,letterSpacing:5.5,color:style.accent}}>FÜR BESONDERE MOMENTE</div>
+    <div style={{fontFamily:"Georgia,serif",fontSize:78,letterSpacing:-2.5,lineHeight:1.1}}>Geschenkgutschein</div>
+    <div style={{width:92,height:1,background:style.line,display:"flex",marginTop:5}}/>
+    <div style={{fontFamily:"Georgia,serif",fontSize:92,letterSpacing:-1,lineHeight:1.1}}>{euroGift(p.amountCents)}</div>
    </div>
-   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontFamily:"Arial,sans-serif",fontSize:17,letterSpacing:1,color:theme.caption,borderTop:`1px solid ${theme.line}`,paddingTop:24}}>
-    <span>RUBYHAIR.DE</span><span>{code}</span>
+   <div style={{display:"flex",flexDirection:"column",borderTop:`1px solid ${style.line}`,paddingTop:21,minHeight:140}}>
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",fontFamily:"Arial,sans-serif",gap:18}}>
+     <div style={{display:"flex",alignItems:"baseline",gap:14}}><span style={{fontSize:13,letterSpacing:3,color:style.accent}}>FÜR</span><span style={{fontFamily:"Georgia,serif",fontSize:28}}>{name}</span></div>
+     {from&&<div style={{display:"flex",alignItems:"baseline",gap:11}}><span style={{fontSize:13,letterSpacing:3,color:style.accent}}>VON</span><span style={{fontFamily:"Georgia,serif",fontSize:23}}>{from}</span></div>}
+    </div>
+    {message&&<div style={{fontFamily:"Georgia,serif",fontSize:18,fontStyle:"italic",lineHeight:1.25,color:style.muted,marginTop:10,maxWidth:1000,overflow:"hidden",height:73}}>{`„${message}“`}</div>}
+   </div>
+   <div style={{display:"flex",flexDirection:"row",alignItems:"center",justifyContent:"space-between",borderTop:`1px solid ${style.line}`,paddingTop:16,fontFamily:"Arial,sans-serif",fontSize:15,letterSpacing:1.6,color:style.muted}}>
+    <div>RUBYHAIR.DE</div><div>{code}</div>
    </div>
   </div>,{width:1200,height:760});
- return image;
 }

@@ -242,7 +242,7 @@ export default function HomeFrontend({products,instagramPosts=[]}:{products:Prod
           <div className="brand-photo-caption"><span>THE BEAUTY OF INDIVIDUALITY</span><span>RUBY HAIR · EDITORIAL 02</span></div>
         </div>
       </div></section>
-      <section className="rh-home-gift-promo"><div className="rh-home-gift-promo-inner"><div><span>RUBY HAIR · GESCHENKGUTSCHEIN</span><h2>Beauty, die man <em>verschenken</em> kann.</h2><p>Ein Geschenk, das sich ganz persönlich anfühlt. Mit deinem Wunschbetrag, liebevollen Worten und einem Design, das bleibt.</p><Link href="/geschenkgutschein/">Geschenk gestalten <ArrowRight size={18}/></Link></div><div className="rh-home-gift-mini-card"><span>RUBY HAIR</span><strong>Gift of Beauty</strong><small>50 € · 100 € · 200 € · Wunschbetrag</small></div></div></section>
+      <section className="rh-home-gift-promo"><div className="rh-home-gift-promo-inner"><div><span>RUBY HAIR · GESCHENKGUTSCHEIN</span><h2>Beauty, die man <em>verschenken</em> kann.</h2><p>Ein Geschenk, das sich ganz persönlich anfühlt. Mit deinem Wunschbetrag, liebevollen Worten und einem Design, das bleibt.</p><Link href="/geschenkgutschein/">Geschenk gestalten <ArrowRight size={18}/></Link></div><div className="rh-home-gift-mini-card"><img src="/media/RubyHair-WebHeader-Logo-Hell-818376d91.png" width={478} height={121} alt="Ruby Hair Extensions"/><strong>Geschenkgutschein</strong><small>50 € · 100 € · 200 € · Wunschbetrag</small></div></div></section>
     </main>
     <HomeFooter/>
   </>;
