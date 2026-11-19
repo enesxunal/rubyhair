@@ -7,6 +7,11 @@ export async function POST(req:Request){
  const body=await req.json().catch(()=>null);
  const email=typeof body?.email==="string"?normalizeCustomerEmail(body.email):"";
  if(!validCustomerEmail(email))return NextResponse.json({error:"INVALID_EMAIL"},{status:400});
- try{await requestCustomerLogin(email)}catch{return NextResponse.json({error:"LOGIN_TEMPORARILY_UNAVAILABLE"},{status:503,headers:{"Cache-Control":"no-store"}})}
+ try{await requestCustomerLogin(email)}catch(error){
+  // The response stays generic. Log the safe Prisma code, never the address, token or SMTP credentials.
+  const code=(error as {code?:unknown})?.code;
+  console.warn("customer_login_unavailable",{errorCode:typeof code==="string"?code:"unknown"});
+  return NextResponse.json({error:"LOGIN_TEMPORARILY_UNAVAILABLE"},{status:503,headers:{"Cache-Control":"no-store","Retry-After":"10"}});
+ }
  return NextResponse.json({ok:true},{headers:{"Cache-Control":"no-store"}});
 }

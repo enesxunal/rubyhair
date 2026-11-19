@@ -51,7 +51,7 @@ export default function CustomerLoginPanel(){
     <label htmlFor="rh-account-email">Deine E-Mail-Adresse</label>
     <input id="rh-account-email" type="email" name="email" autoComplete="email" required maxLength={254} placeholder="name@beispiel.de" value={email} onChange={e=>setEmail(e.target.value)} disabled={status==="loading"}/>
     {status==="error"&&<p role="alert" className="rh-account-error">{message}</p>}
-    <button type="submit" disabled={status==="loading"}>{status==="loading"?"Einen Moment …":"Login-Link senden"} <ArrowRight size={17}/></button>
+    <button type="submit" disabled={status==="loading"}>{status==="loading"?"Login-Link wird versendet …":"Login-Link senden"} <ArrowRight size={17}/></button>
     <small>Ein Konto ist freiwillig. Du kannst weiterhin als Gast bestellen. Mit deiner Anmeldung erhältst du Zugriff auf Bestellungen, die an diese bestätigte E-Mail-Adresse gesendet wurden.</small>
   </form>}
   <div className="rh-account-access-bottom"><ShieldCheck size={16}/><span>Dein Zugang ist nur für dich. Wir fragen nie nach deinem Passwort oder deinen Zahlungsdaten.</span></div>

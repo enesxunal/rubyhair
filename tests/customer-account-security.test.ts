@@ -65,3 +65,24 @@ test("migration only adds new customer tables and preserves orders and payments"
  const cron=read("app/api/internal/customer-account-cleanup/route.ts");
  assert.ok(cron.includes('Bearer ${secret}'));
 });
+
+test("temporary PostgreSQL pool outages are retried once without resending mail",async()=>{
+ const {retryCustomerDb}=await import("../src/lib/customer-account-rules");
+ let attempts=0;
+ const result=await retryCustomerDb(async()=>{
+  attempts++;
+  if(attempts===1)throw Object.assign(new Error("transient connection wait"),{code:"P2024"});
+  return "OK";
+ },1);
+ assert.equal(result,"OK");
+ assert.equal(attempts,2);
+ let permanentAttempts=0;
+ await assert.rejects(()=>retryCustomerDb(async()=>{permanentAttempts++;throw Object.assign(new Error("invalid auth"),{code:"P2002"})},1));
+ assert.equal(permanentAttempts,1);
+ const source=read("src/lib/customer-account-mail.ts");
+ assert.ok(source.includes('retryCustomerDb(()=>loadStoreMailSettings())'));
+ assert.ok(!source.includes('retryCustomerDb(()=>smtp.sendMail'));
+ const route=read("app/api/konto/login/route.ts");
+ assert.ok(route.includes('customer_login_unavailable'));
+ assert.ok(!route.includes('console.warn(error)'));
+});

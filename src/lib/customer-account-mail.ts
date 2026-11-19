@@ -1,10 +1,11 @@
 import "server-only";
 import nodemailer from "nodemailer";
 import {loadStoreMailSettings,storeMailDefaults,validMailAddress} from "@/lib/store-mail-settings";
+import {retryCustomerDb} from "@/lib/customer-account-rules";
 
 export async function sendCustomerLoginEmail(email:string,link:string){
  if(!validMailAddress(email)||!link.startsWith("https://rubyhair.de/konto/anmelden/#token="))throw Error("INVALID_CUSTOMER_MAIL");
- const c=await loadStoreMailSettings();
+ const c=await retryCustomerDb(()=>loadStoreMailSettings());
  if(!c.ready||!c.password)throw Error("SMTP_NOT_CONFIGURED");
  const smtp=nodemailer.createTransport({host:storeMailDefaults.host,port:storeMailDefaults.port,
   secure:false,requireTLS:true,auth:{user:storeMailDefaults.user,pass:c.password},

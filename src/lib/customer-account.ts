@@ -1,7 +1,7 @@
 import "server-only";
 import {cookies,headers} from "next/headers";
 import {getPrisma} from "@/lib/prisma";
-import {CUSTOMER_COOKIE,CUSTOMER_SESSION_AGE_SEC,hashCustomerToken,normalizeCustomerEmail,customerToken,customerRateKey,validCustomerEmail,validCustomerToken,LOGIN_TOKEN_AGE_MS} from "@/lib/customer-account-rules";
+import {CUSTOMER_COOKIE,CUSTOMER_SESSION_AGE_SEC,hashCustomerToken,normalizeCustomerEmail,customerToken,customerRateKey,validCustomerEmail,validCustomerToken,LOGIN_TOKEN_AGE_MS,retryCustomerDb} from "@/lib/customer-account-rules";
 import {sendCustomerLoginEmail} from "@/lib/customer-account-mail";
 
 const BASE_URL="https://rubyhair.de";
@@ -17,13 +17,13 @@ export async function sameOriginCustomerRequest(){
 
 async function incrementRate(key:string){
  const db=getPrisma();
- const rows=await db.$queryRaw<{count:number}[]>`
+ const rows=await retryCustomerDb(()=>db.$queryRaw<{count:number}[]>`
  INSERT INTO "customer_auth_rate_limits" ("key","count","windowStart")
  VALUES (${key}, 1, NOW())
  ON CONFLICT ("key") DO UPDATE SET
  "count"=CASE WHEN "customer_auth_rate_limits"."windowStart"<NOW()-INTERVAL '1 hour' THEN 1 ELSE "customer_auth_rate_limits"."count"+1 END,
  "windowStart"=CASE WHEN "customer_auth_rate_limits"."windowStart"<NOW()-INTERVAL '1 hour' THEN NOW() ELSE "customer_auth_rate_limits"."windowStart" END
- RETURNING "count"`;
+ RETURNING "count"`);
  return rows[0]?.count||10000;
 }
 
@@ -43,7 +43,7 @@ export async function requestCustomerLogin(rawEmail:string){
  const db=getPrisma();
  const token=customerToken();
  const tokenHash=hashCustomerToken(token);
- const challenge=await db.customerLoginToken.create({data:{email,tokenHash,expiresAt:new Date(Date.now()+LOGIN_TOKEN_AGE_MS)}});
+ const challenge=await retryCustomerDb(()=>db.customerLoginToken.create({data:{email,tokenHash,expiresAt:new Date(Date.now()+LOGIN_TOKEN_AGE_MS)}}));
  try{await sendCustomerLoginEmail(email,BASE_URL+"/konto/anmelden/#token="+token)}
  catch{
   await db.customerLoginToken.updateMany({where:{id:challenge.id,usedAt:null},data:{usedAt:new Date()}}).catch(()=>{});
@@ -73,10 +73,10 @@ export async function finishCustomerLogin(rawToken:string){
 export async function getCustomerAccount(){
  const token=(await cookies()).get(CUSTOMER_COOKIE)?.value;
  if(!validCustomerToken(token))return null;
- const row=await getPrisma().customerSession.findUnique({
+ const row=await retryCustomerDb(()=>getPrisma().customerSession.findUnique({
   where:{tokenHash:hashCustomerToken(token)},
   select:{expiresAt:true,revokedAt:true,account:{select:{id:true,email:true}}}
- });
+ }));
  if(!row||row.revokedAt||row.expiresAt<=new Date())return null;
  return row.account;
 }
