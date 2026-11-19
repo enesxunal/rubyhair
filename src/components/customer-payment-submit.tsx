@@ -3,12 +3,12 @@ import {useRef,useState} from "react";
 import type {CartLine} from "@/components/cart-context";
 import type {CheckoutAddressData} from "./checkout-address-preview";
 
-type Props={method:"paypal"|"klarna";lines:CartLine[];address:CheckoutAddressData|null;cartReady:boolean;totalCents:number};
-export default function CustomerPaymentSubmit({method,lines,address,cartReady,totalCents}:Props){
+type Props={method:"paypal"|"klarna";lines:CartLine[];address:CheckoutAddressData|null;cartReady:boolean;totalCents:number;giftCode?:string};
+export default function CustomerPaymentSubmit({method,lines,address,cartReady,totalCents,giftCode}:Props){
  const [loading,setLoading]=useState(false),[error,setError]=useState("");
  const [agreed,setAgreed]=useState(false);
  const key=useRef<string|null>(null);
- const ready=Boolean(address&&cartReady&&lines.length&&totalCents>=100&&!loading&&agreed);
+ const ready=Boolean(address&&cartReady&&lines.length&&totalCents>=0&&!loading&&agreed&&(method==="paypal"||!giftCode));
  const start=async()=>{
   if(!ready||!address)return;
   setLoading(true);setError("");
@@ -17,13 +17,14 @@ export default function CustomerPaymentSubmit({method,lines,address,cartReady,to
    const res=await fetch("/api/checkout",{method:"POST",credentials:"same-origin",cache:"no-store",
     headers:{"Content-Type":"application/json"},body:JSON.stringify({
      key:key.current,provider:method,lines,shipping:address.shipping,
-     billing:address.billing,email:address.email,consent:true
+     billing:address.billing,email:address.email,giftCode,consent:true
     })});
    const payload=await res.json() as {redirectUrl?:string;error?:string};
    if(!res.ok||!payload.redirectUrl)throw new Error(payload.error||"CHECKOUT_FAILED");
    const target=new URL(payload.redirectUrl);
-   if(target.protocol!=="https:"||!
-    ["www.paypal.com","pay.klarna.com","www.pay.klarna.com"].includes(target.hostname))throw new Error("UNTRUSTED_PAYMENT_REDIRECT");
+   const giftPaid=target.origin===window.location.origin&&target.pathname==="/kasse/gutschein/erfolg"&&totalCents===0;
+   if(!giftPaid&&(target.protocol!=="https:"||!
+    ["www.paypal.com","pay.klarna.com","www.pay.klarna.com"].includes(target.hostname)))throw new Error("UNTRUSTED_PAYMENT_REDIRECT");
    window.location.assign(target.toString());
   }catch(e){
    setError(e instanceof Error?e.message:"CHECKOUT_FAILED");setLoading(false);
@@ -41,7 +42,7 @@ export default function CustomerPaymentSubmit({method,lines,address,cartReady,to
   {error&&<p role="alert" style={{color:"#a13c50"}}>Bestellung konnte nicht gestartet werden ({error}). Bitte nicht erneut versuchen, bis der Vorgang geprüft ist.</p>}
   <button type="button" className="rh-payment-primary-link" disabled={!ready} onClick={start}
    style={{border:0,cursor:ready?"pointer":"not-allowed",opacity:ready?1:.48,width:"100%",fontSize:14}}>
-   {loading?"Zahlung wird sicher vorbereitet …":`${(totalCents/100).toFixed(2).replace(".",",")} € zahlungspflichtig mit ${method==="paypal"?"PayPal":"Klarna"} bestellen`}
+   {loading?"Zahlung wird sicher vorbereitet …":totalCents===0?"Mit Geschenkgutschein bezahlen – 0,00 € Restbetrag":`${(totalCents/100).toFixed(2).replace(".",",")} € zahlungspflichtig mit ${method==="paypal"?"PayPal":"Klarna"} bestellen`}
   </button>
  </div>;
 }

@@ -137,6 +137,28 @@ export class PaypalClient{
     if(this.env==="sandbox"&&url.hostname!=="www.sandbox.paypal.com")throw new PaypalError("PAYPAL_WRONG_ENVIRONMENT");
     return {id:checkId(data.id,60),approvalUrl:url.toString()};
   }
+  /** Dedicated no-shipping gift certificate purchase; never touches physical inventory. */
+  async createGiftOrder(input:{purchaseId:string;amountCents:number;returnUrl:string;cancelUrl:string}):Promise<PaypalOrderResult>{
+    const purchaseId=checkId(input.purchaseId,60);
+    if(!Number.isInteger(input.amountCents)||input.amountCents<1000||input.amountCents>50000)throw new PaypalError("INVALID_GIFT_AMOUNT");
+    const total=centsToEuro(input.amountCents);
+    const payload=await this.api("POST","/v2/checkout/orders",{
+      intent:"CAPTURE",
+      purchase_units:[{reference_id:purchaseId,custom_id:purchaseId,invoice_id:"RHG-"+purchaseId.replaceAll("-",""),
+        description:"Ruby Hair digitaler Geschenkgutschein",
+        amount:{currency_code:"EUR",value:total}}],
+      payment_source:{paypal:{experience_context:{brand_name:"Ruby Hair",user_action:"PAY_NOW",
+        landing_page:"GUEST_CHECKOUT",shipping_preference:"NO_SHIPPING",
+        return_url:httpsUrl(input.returnUrl),cancel_url:httpsUrl(input.cancelUrl)}}}
+    },"RHG-CREATE-"+purchaseId);
+    if(!isObject(payload)||typeof payload.id!=="string"||!Array.isArray(payload.links))throw new PaypalError("PAYPAL_ORDER_INVALID");
+    const approve=payload.links.find((entry:unknown)=>isObject(entry)&&(entry.rel==="payer-action"||entry.rel==="approve")&&typeof entry.href==="string");
+    if(!isObject(approve)||typeof approve.href!=="string")throw new PaypalError("PAYPAL_APPROVAL_MISSING");
+    const url=new URL(approve.href);
+    if(url.protocol!=="https:"||url.username||url.password||!(["www.paypal.com","www.sandbox.paypal.com"].includes(url.hostname)))throw new PaypalError("PAYPAL_UNTRUSTED_REDIRECT");
+    if((this.env==="live"&&url.hostname!=="www.paypal.com")||(this.env==="sandbox"&&url.hostname!=="www.sandbox.paypal.com"))throw new PaypalError("PAYPAL_WRONG_ENVIRONMENT");
+    return {id:checkId(payload.id,60),approvalUrl:url.toString()};
+  }
   async getOrder(id:string):Promise<unknown>{return this.api("GET","/v2/checkout/orders/"+checkId(id,60));}
   /** Read-only captured payment status; does not initiate refunds. */
   async getCapture(id:string):Promise<unknown>{return this.api("GET","/v2/payments/captures/"+checkId(id,70));}

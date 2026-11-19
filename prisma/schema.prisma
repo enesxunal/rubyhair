@@ -56,6 +56,7 @@ model Order {
   shippingCents     Int            @default(0)
   taxCents          Int            @default(0)
   totalCents        Int            @default(0)
+  giftAppliedCents  Int            @default(0)
   customerEmail     String?
   billingAddress    Json?
   shippingAddress   Json?
@@ -309,4 +310,70 @@ model CustomerAddress {
 
   @@index([accountId, createdAt])
   @@map("customer_addresses")
+}
+
+// Digital gift cards are a separate non-shipping payment workflow.
+// No code or redeemable credit exists until verified PayPal capture.
+model GiftPurchase {
+  id                  String    @id @default(uuid()) @db.Uuid
+  requestKey          String    @unique @db.Uuid
+  requestHash         String    @db.Char(64)
+  amountCents         Int
+  buyerEmail          String    @db.VarChar(254)
+  recipientEmail      String?   @db.VarChar(254)
+  recipientName       String    @db.VarChar(80)
+  senderName          String?   @db.VarChar(80)
+  message             String?   @db.VarChar(180)
+  theme               String    @default("classic") @db.VarChar(20)
+  delivery            String    @default("download") @db.VarChar(20)
+  status              String    @default("pending") @db.VarChar(30)
+  provider            String    @default("paypal") @db.VarChar(20)
+  providerOrderId     String?   @unique @db.VarChar(90)
+  providerCaptureId   String?   @unique @db.VarChar(100)
+  capturedAt          DateTime?
+  buyerMailStatus     String    @default("queued") @db.VarChar(20)
+  recipientMailStatus String    @default("queued") @db.VarChar(20)
+  buyerMailSentAt     DateTime?
+  recipientMailSentAt DateTime?
+  mailAttempts        Int       @default(0)
+  nextMailAttempt     DateTime  @default(now())
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  card                GiftCard?
+
+  @@index([status, createdAt])
+  @@index([buyerMailStatus, nextMailAttempt])
+  @@map("gift_purchases")
+}
+
+model GiftCard {
+  id             String           @id @default(uuid()) @db.Uuid
+  purchaseId     String           @unique @db.Uuid
+  purchase       GiftPurchase     @relation(fields: [purchaseId], references: [id], onDelete: Restrict)
+  codeHash       String           @unique @db.Char(64)
+  codeCiphertext String
+  codeIv         String
+  codeTag        String
+  faceCents      Int
+  balanceCents   Int
+  status         String           @default("active") @db.VarChar(20)
+  issuedAt       DateTime         @default(now())
+  redemptions    GiftRedemption[]
+
+  @@index([status, issuedAt])
+  @@map("gift_cards")
+}
+
+model GiftRedemption {
+  id          String    @id @default(uuid()) @db.Uuid
+  cardId      String    @db.Uuid
+  card        GiftCard  @relation(fields: [cardId], references: [id], onDelete: Restrict)
+  orderId     String    @unique @db.Uuid
+  amountCents Int
+  state       String    @default("reserved") @db.VarChar(20)
+  createdAt   DateTime  @default(now())
+  settledAt   DateTime?
+
+  @@index([cardId, state])
+  @@map("gift_redemptions")
 }

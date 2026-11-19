@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useCart } from "@/components/cart-context";
 import {byVariation, euros, type Product} from "@/lib/catalog";
 import {useCartQuote} from "@/hooks/use-cart-quote";
+import {Gift} from "lucide-react";
 export function CartPage({shippingCents}:{shippingCents:number}){
   const {lines,update,remove,clear,loaded}=useCart();
   const [liveProducts,setLiveProducts]=useState<Product[]|null>(null);
@@ -78,6 +79,9 @@ export function CartPage({shippingCents}:{shippingCents:number}){
           {issues.some(x=>x.status==="out-of-stock")?"Einige Artikel sind nicht oder nicht in der gewünschten Menge verfügbar. ":""}
           {issues.some(x=>x.status==="unknown-variation")?"Ein Produkt ist nicht mehr im Katalog. ":""}
         </p>}
+        <div className="rh-gift-cart-upsell"><Gift size={25}/><p><strong>Schönheit zum Verschenken.</strong><span>Möchtest du auch jemandem eine Freude machen?</span></p>
+          <Link href="/geschenkgutschein/">Geschenkgutschein gestalten ↗</Link>
+        </div>
         <p>Im nächsten Schritt kannst du deine Adresse eingeben und sicher mit PayPal oder Klarna bezahlen.</p>
         {currentQuote?.checkoutEnabled&&!quoteError&&!catalogError?<Link className="rh-buy-button" href="/kasse/">ZUR KASSE<span>↗</span></Link>:<span className="rh-buy-button" aria-disabled="true" style={{opacity:.5,cursor:"not-allowed"}}>{quoteLoading?"BESTAND WIRD GEPRÜFT":"NICHT BESTELLBAR"}</span>}
         <Link className="rh-continue-shop" href="/kollektionen/">Weiter einkaufen</Link>

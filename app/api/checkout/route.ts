@@ -1,8 +1,9 @@
-import {NextRequest,NextResponse} from "next/server";
+import {NextRequest,NextResponse,after} from "next/server";
 import {isAdmin} from "@/lib/admin-auth";
 import {checkoutInput,publicCheckoutMode,createCustomerCheckout,CustomerCheckoutError} from "@/lib/customer-checkout";
 import {loadStoreMailSettings} from "@/lib/store-mail-settings";
 import {getDhlIntegrationReadiness} from "@/lib/dhl-api";
+import {runCustomerJobs} from "@/lib/customer-automation";
 export const runtime="nodejs",dynamic="force-dynamic";
 const headers={"Cache-Control":"no-store","X-Content-Type-Options":"nosniff"};
 export async function POST(req:NextRequest){
@@ -36,6 +37,7 @@ export async function POST(req:NextRequest){
   if(mode==="klarna_public"&&input.data.provider!=="klarna")
    return NextResponse.json({error:"PAYMENT_METHOD_DISABLED"},{status:403,headers});
   const result=await createCustomerCheckout(input.data);
+  if("giftOnly" in result&&result.giftOnly)after(async()=>{try{await runCustomerJobs(2)}catch{}});
   return NextResponse.json(result,{status:201,headers});
  }catch(e){
   const code=e instanceof CustomerCheckoutError?e.reason:"CHECKOUT_TEMPORARILY_UNAVAILABLE";

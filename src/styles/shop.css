@@ -826,3 +826,125 @@ button.rh-editorial-cta{cursor:pointer}
 .rh-checkout-saved-address{padding:16px 18px;border:1px solid #e6d8de;background:#faf5f5;border-radius:8px;margin:20px 0}
 .rh-checkout-saved-address label{display:block;font-size:12px;color:#654654;font-weight:700;margin-bottom:8px}
 .rh-checkout-saved-address select{width:100%;min-height:46px;padding:10px 12px;border:1px solid #d9c5ce;border-radius:5px;background:white;color:#4a303b;max-width:100%}
+/* Premium Ruby Hair digital gift certificates — own commerce flow, no physical shipping. */
+.rh-gift-shop{background:#faf7f5;padding-bottom:100px}
+.rh-gift-hero{padding-top:68px;padding-bottom:43px;max-width:1200px}
+.rh-gift-hero h1{font-size:clamp(48px,6.5vw,86px);margin:14px 0 17px;line-height:1.1;letter-spacing:-3px}
+.rh-gift-hero h1 em{color:#967083}
+.rh-gift-hero>p{font-size:15px;line-height:1.8;max-width:650px;color:#796970}
+.rh-gift-builder{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(25px,5.5vw,90px);align-items:start}
+.rh-gift-form{min-width:0}
+.rh-gift-section{padding:20px 0 35px;border-top:1px solid #e3d6d9}
+.rh-gift-step{font-size:10px;font-weight:700;letter-spacing:2px;color:#947182}
+.rh-gift-section h2{font-size:clamp(25px,2.6vw,34px);margin:12px 0 24px;letter-spacing:-.5px}
+.rh-gift-amounts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.rh-gift-amounts button{padding:15px 7px;background:#fff;border:1px solid #e2d8d7;font-size:12px;color:#553e4a;border-radius:6px;min-height:52px}
+.rh-gift-amounts button.selected{border:2px solid #6a4051;background:#f9f0f2;font-weight:700}
+.rh-gift-theme-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.rh-gift-theme{display:flex;flex-direction:column;gap:13px;padding:8px;border:1px solid #e2d5d9;border-radius:8px;background:#fff;text-align:left;color:#5c3d4d;min-width:0}
+.rh-gift-theme>span{height:85px;display:grid;place-items:center;width:100%;border-radius:4px;background:#47303d;font:400 49px/1 var(--serif);color:#f5e4ec}
+.rh-gift-theme.soft>span{background:#eadbd7;color:#6f5060}
+.rh-gift-theme.black>span{background:#19191b;color:#dcc29b}
+.rh-gift-theme strong{font-size:11px;padding:0 4px 5px}
+.rh-gift-theme.selected{border:2px solid #6a4051;box-shadow:0 4px 15px #62465616}
+.rh-gift-field{display:flex;flex-direction:column;gap:8px;font-size:12px;color:#624750;font-weight:700;margin-bottom:16px;min-width:0}
+.rh-gift-field input,.rh-gift-field textarea{background:#fff;border:1px solid #dcd0d2;border-radius:6px;padding:13px 14px;color:#422b37;width:100%;font:400 13px/1.6 var(--sans);max-width:100%;outline-color:#775267}
+.rh-gift-field textarea{resize:vertical;min-height:90px}
+.rh-gift-field small{font-size:10px;color:#93838a;font-weight:400;text-align:right}
+.rh-gift-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.rh-gift-delivery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:25px}
+.rh-gift-delivery label{display:flex;align-items:flex-start;gap:10px;border:1px solid #e2d4d9;border-radius:7px;padding:16px;background:white;cursor:pointer;min-width:0}
+.rh-gift-delivery label.selected{border:2px solid #6a4051;background:#fcf6f7}
+.rh-gift-delivery label>svg{flex:none;margin-top:2px;color:#8d6175}
+.rh-gift-delivery input{accent-color:#6d4558;flex:none;margin:5px 0 0}
+.rh-gift-delivery span{display:flex;flex-direction:column;gap:6px;min-width:0}
+.rh-gift-delivery strong{font-size:12px}
+.rh-gift-delivery small{font-size:10px;line-height:1.6;color:#89767c}
+.rh-gift-terms{display:flex;align-items:flex-start;gap:12px;font-size:11px;color:#695763;line-height:1.7;margin:5px 0 25px}
+.rh-gift-terms input{margin:4px 0 0;accent-color:#684456;flex:none;width:17px;height:17px}
+.rh-gift-terms a{text-decoration:underline;text-underline-offset:3px;font-weight:700}
+.rh-gift-summary{border-top:1px solid #decdd3;border-bottom:1px solid #decdd3;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 2px;margin:0 0 20px;flex-wrap:wrap}
+.rh-gift-summary span{font-size:11px;letter-spacing:1.1px;font-weight:700}
+.rh-gift-summary strong{font:400 32px var(--serif)}
+.rh-gift-summary small{color:#8c7982;font-size:11px}
+.rh-gift-buy,.rh-gift-primary{display:inline-flex;align-items:center;justify-content:center;gap:15px;background:#624151;border:1px solid #624151;color:white;min-height:55px;border-radius:5px;font-size:12px;font-weight:700;padding:16px 25px;transition:.18s;text-align:center}
+.rh-gift-buy{width:100%}
+.rh-gift-buy:not(:disabled):hover,.rh-gift-primary:hover{background:#49303d}
+.rh-gift-buy:disabled{opacity:.52;cursor:not-allowed}
+.rh-gift-secure{display:flex;gap:8px;align-items:center;justify-content:center;font-size:11px;color:#8a777f;margin-top:15px}
+.rh-gift-form-error{font-size:12px;color:#a83d51;background:#fff3f3;padding:12px;border-radius:6px;border:1px solid #ebc1c9}
+.rh-gift-preview-sticky{position:sticky;top:110px;min-width:0;padding:22px 0}
+.rh-gift-card-preview{aspect-ratio:1200/760;width:100%;background:#47303d;color:#fff4f6;box-shadow:0 25px 52px #4d35442d;padding:18px;border-radius:8px;overflow:hidden;min-width:0}
+.rh-gift-card-preview.soft{background:#eadbd7;color:#593d4e}
+.rh-gift-card-preview.black{background:#19191b;color:#ead3ad}
+.rh-gift-card-border{border:1px solid #bd94a6;height:100%;padding:6.5%;display:flex;flex-direction:column;min-width:0}
+.rh-gift-card-preview.soft .rh-gift-card-border{border-color:#ab8a98}
+.rh-gift-card-preview.black .rh-gift-card-border{border-color:#917b59}
+.rh-gift-card-top,.rh-gift-card-bottom{display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:9px;letter-spacing:3px;font-weight:600}
+.rh-gift-card-top strong{font-size:12px;letter-spacing:3px}
+.rh-gift-card-top span{font-size:8px}
+.rh-gift-card-center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5%;min-width:0}
+.rh-gift-card-center small{font-size:8px;letter-spacing:2px;text-align:center;white-space:nowrap}
+.rh-gift-card-center h3{font:400 clamp(23px,3.1vw,51px)/1.1 var(--serif);letter-spacing:-2px;margin:9px 0;text-align:center}
+.rh-gift-card-rule{height:1px;width:15%;background:currentColor;opacity:.58;margin:5px 0}
+.rh-gift-card-center b{font:400 clamp(30px,4vw,65px)/1.1 var(--serif)}
+.rh-gift-card-message{display:flex;flex-direction:column;gap:6px;margin-top:auto;font-size:10px;min-width:0}
+.rh-gift-card-message span{font-size:9px;letter-spacing:1px}
+.rh-gift-card-message span strong{font:400 15px var(--serif);letter-spacing:0;padding-left:5px}
+.rh-gift-card-message em{font:italic 12px/1.5 var(--serif);max-width:100%;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.rh-gift-card-message small{font-size:8px;letter-spacing:1px}
+.rh-gift-card-bottom{padding-top:12px;margin-top:12px;border-top:1px solid #af8997;font-size:8px}
+.rh-gift-preview-sticky>p{display:flex;align-items:flex-start;gap:9px;font-size:11px;color:#8c7680;line-height:1.8;margin:21px 0}
+.rh-gift-preview-sticky>p svg{flex:none}
+.rh-gift-confidence{padding:16px;background:#f2e9ea;color:#765363;display:flex;gap:9px;font-size:11px;align-items:center;border-radius:5px}
+.rh-gift-result,.rh-gift-error{padding:110px 0 130px;max-width:850px;min-height:60vh}
+.rh-gift-result h1,.rh-gift-error h1{font-size:clamp(42px,5vw,65px);margin:20px 0}
+.rh-gift-result p,.rh-gift-error p{font-size:15px;line-height:1.9;color:#7b6872;margin-bottom:32px}
+.rh-gift-result>a,.rh-gift-error>a{display:inline-flex;margin-right:18px;margin-bottom:14px}
+.rh-gift-text-link{text-decoration:underline;text-underline-offset:4px;font-size:12px;color:#745163}
+.rh-gift-card-page{padding:45px 0 100px;max-width:940px;text-align:center}
+.rh-gift-card-page .rh-breadcrumb{text-align:left}
+.rh-gift-card-page h1{font-size:clamp(46px,5vw,73px);margin:15px 0}
+.rh-gift-card-page>p{max-width:650px;margin:12px auto 28px;font-size:14px;line-height:1.85;color:#816c74}
+.rh-gift-delivered-image{width:100%;border-radius:8px;box-shadow:0 18px 55px #48303827;margin:25px auto;display:block}
+.rh-gift-delivered-actions{display:flex;justify-content:center;gap:12px;margin:25px 0;flex-wrap:wrap}
+.rh-gift-outline{border:1px solid #b9a5ad;padding:15px 22px;border-radius:5px;min-height:55px;background:white;font-size:12px;font-weight:700;color:#583a47}
+.rh-gift-redeem-info{padding:23px;background:#f3eced;border-radius:7px;display:flex;flex-direction:column;gap:10px;align-items:center;margin:33px auto;max-width:600px}
+.rh-gift-redeem-info span{letter-spacing:2px;font-size:10px;font-weight:700;color:#8d6a7a}
+.rh-gift-redeem-info strong{font-size:clamp(14px,2.2vw,24px);letter-spacing:2px;color:#4d3140;overflow-wrap:anywhere}
+.rh-gift-redeem-info small{font-size:11px;color:#85717c}
+.rh-gift-share-warning{max-width:640px;font-size:11px!important}
+.rh-gift-checkout-upsell,.rh-gift-cart-upsell{border:1px solid #e4ccd4;background:#f8f1f2;border-radius:9px;padding:18px;display:flex;gap:13px;align-items:flex-start;margin:25px 0}
+.rh-gift-checkout-upsell>svg,.rh-gift-cart-upsell>svg{flex:none;color:#86586d}
+.rh-gift-checkout-upsell strong,.rh-gift-cart-upsell strong{font-size:13px;color:#543b46;display:block}
+.rh-gift-checkout-upsell p,.rh-gift-cart-upsell p{font-size:11px;line-height:1.65;color:#806e77;margin:6px 0}
+.rh-gift-checkout-upsell a,.rh-gift-cart-upsell a{font-size:11px;font-weight:700;color:#714558;text-decoration:underline;text-underline-offset:3px}
+.rh-gift-cart-upsell{flex-direction:column;gap:9px}
+.rh-gift-cart-upsell p{margin:0}
+.rh-gift-cart-upsell p span{display:block;color:#806e77;line-height:1.7;margin-top:4px}
+.rh-gift-redeem-box{padding:21px;background:#faf3f5;border:1px solid #e4d2d9;border-radius:9px;margin:24px 0}
+.rh-gift-redeem-heading{display:flex;gap:12px;align-items:center;color:#765265}
+.rh-gift-redeem-heading span{font-size:9px;letter-spacing:1.5px;font-weight:700}
+.rh-gift-redeem-heading h3{font:400 26px/1.2 var(--serif);margin:3px 0;color:#49313d}
+.rh-gift-redeem-box>p{font-size:11px;line-height:1.75;color:#826f79;margin:12px 0}
+.rh-gift-redeem-row{display:flex;align-items:stretch;gap:8px;min-width:0}
+.rh-gift-redeem-row input{flex:1;min-width:0;border:1px solid #d8c3cd;background:white;padding:11px;font-size:12px;border-radius:5px;letter-spacing:.4px}
+.rh-gift-redeem-row button{background:#654353;color:white;border:0;border-radius:5px;padding:10px 17px;font-size:11px;font-weight:700}
+.rh-gift-applied{color:#527b5e!important;font-weight:700}
+.rh-gift-only-paypal-note{font-size:11px;color:#7c5c6b;background:#f8f2f3;border-left:3px solid #ad8a99;padding:10px}
+.rh-gift-method-disabled{opacity:.45;cursor:not-allowed}
+.rh-home-gift-promo{background:#f1e8e5;padding:70px 25px}
+.rh-home-gift-promo-inner{max-width:1200px;margin:auto;display:grid;grid-template-columns:1fr 0.85fr;gap:45px;align-items:center}
+.rh-home-gift-promo-inner>div:first-child>span{font-size:10px;letter-spacing:2px;color:#946b7c}
+.rh-home-gift-promo h2{font:400 clamp(38px,4.2vw,60px)/1.14 var(--serif);letter-spacing:-1.8px;margin:18px 0;color:#49333e}
+.rh-home-gift-promo h2 em{color:#9b7182}
+.rh-home-gift-promo p{font-size:13px;color:#77626e;max-width:500px;line-height:1.8}
+.rh-home-gift-promo a{display:inline-flex;align-items:center;gap:10px;background:#634554;padding:14px 21px;color:white;font-size:12px;font-weight:700;margin-top:10px}
+.rh-home-gift-mini-card{background:#48313f;border:1px solid #b98e9f;color:#f4dae4;border-radius:8px;min-height:280px;display:flex;flex-direction:column;align-items:center;justify-content:space-around;box-shadow:0 25px 40px #472e3e22;padding:36px;text-align:center;transform:rotate(2deg)}
+.rh-home-gift-mini-card span{font-size:12px;letter-spacing:5px}
+.rh-home-gift-mini-card strong{font:400 clamp(30px,3vw,46px)/1.1 var(--serif)}
+.rh-home-gift-mini-card small{font-size:10px;letter-spacing:1px}
+@media(max-width:950px){.rh-gift-builder{grid-template-columns:minmax(0,1fr)}.rh-gift-preview-sticky{position:static;order:-1;padding-top:0;max-width:660px}.rh-gift-hero{padding-top:42px;padding-bottom:20px}.rh-gift-card-center h3{font-size:clamp(30px,5vw,53px)}.rh-gift-card-center b{font-size:clamp(38px,6vw,65px)}}
+@media(max-width:640px){.rh-gift-shop{padding-bottom:60px}.rh-gift-amounts{grid-template-columns:repeat(2,minmax(0,1fr))}.rh-gift-delivery{grid-template-columns:minmax(0,1fr)}.rh-gift-form-grid{grid-template-columns:minmax(0,1fr)}.rh-gift-theme-grid{gap:7px}.rh-gift-theme>span{height:70px}.rh-gift-hero h1{letter-spacing:-2px}.rh-gift-card-preview{padding:10px}.rh-gift-card-border{padding:7%}.rh-gift-card-center small{font-size:6px;letter-spacing:1.3px}.rh-gift-card-center h3{font-size:clamp(20px,7vw,39px)}.rh-gift-card-center b{font-size:clamp(25px,8vw,45px)}.rh-gift-card-top strong{font-size:9px}.rh-gift-card-top span{font-size:6px}.rh-gift-card-message span{font-size:7px}.rh-gift-card-message span strong{font-size:11px}.rh-gift-card-message em{font-size:10px}.rh-gift-card-bottom{font-size:6px;padding-top:6px;margin-top:6px}.rh-home-gift-promo-inner{grid-template-columns:minmax(0,1fr);gap:22px}.rh-home-gift-mini-card{min-height:210px;transform:none}.rh-gift-delivered-actions{flex-direction:column}.rh-gift-delivered-actions>*{width:100%}}
+
+.rh-gift-soft-notice{padding:14px 16px;border:1px solid #e9d7df;border-radius:6px;background:#fcf7f8;color:#795a68;font-size:12px;line-height:1.75}

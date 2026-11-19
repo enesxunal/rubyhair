@@ -1,7 +1,7 @@
 import {RUBY_TEST_SELLER} from "./qa-invoice";
 
 export type CustomerInvoiceLine={description:string;quantity:number;unitCents:number;totalCents:number};
-export type CustomerInvoiceInfo={invoiceNumber:string;orderNumber:string;issuedAt:Date;customerName:string;customerEmail:string;billingStreet:string;billingPostalCode:string;billingCity:string;paymentMethod:"paypal"|"klarna";paymentReference:string;lines:CustomerInvoiceLine[];subtotalCents:number;shippingCents:number;taxCents:number;totalCents:number};
+export type CustomerInvoiceInfo={invoiceNumber:string;orderNumber:string;issuedAt:Date;customerName:string;customerEmail:string;billingStreet:string;billingPostalCode:string;billingCity:string;paymentMethod:"paypal"|"klarna"|"gutschein";paymentReference:string;giftAppliedCents?:number;lines:CustomerInvoiceLine[];subtotalCents:number;shippingCents:number;taxCents:number;totalCents:number};
 const money=(value:number)=>`${(value/100).toFixed(2).replace(".",",")} EUR`;
 // WinAnsi-safe, using only standard PDF built-in fonts. The actual original name/address
 // always remains UTF-8 in the database even if a glyph cannot be printed by Helvetica.
@@ -61,7 +61,8 @@ export function createCustomerInvoicePdf(data:CustomerInvoiceInfo):Buffer{
  draw(332,y,"Enthaltene 19% USt.:",10);draw(475,y,money(data.taxCents),10);y-=25;
  draw(332,y,"Gesamtbetrag:",12,true);draw(469,y,money(data.totalCents),12,true);
  y-=35;
- draw(45,y,`Bezahlt mit ${data.paymentMethod==="paypal"?"PayPal":"Klarna"} - Zahlung bestaetigt`,10);
+ draw(45,y,`Bezahlt mit ${data.paymentMethod==="paypal"?"PayPal":data.paymentMethod==="klarna"?"Klarna":"Geschenkgutschein"} - Zahlung bestaetigt`,10);
+ if(data.giftAppliedCents){y-=17;draw(45,y,`Per Gutschein bezahlt: ${money(data.giftAppliedCents)} / Restzahlung: ${money(data.totalCents-data.giftAppliedCents)}`,9)}
  y-=18;draw(45,y,`Zahlungsreferenz: ${safe(data.paymentReference,63)}`,9);
  for(const [i,items] of pages.entries()){
   const previous=page;page=items;

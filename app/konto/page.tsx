@@ -7,7 +7,8 @@ import {getCustomerAccount} from "@/lib/customer-account";
 import {safeCustomerTrackingUrl} from "@/lib/customer-account-rules";
 import CustomerLogoutButton from "@/components/customer-logout-button";
 import CustomerAccountSettings from "@/components/customer-account-settings";
-import {FileText,Package,Truck,ShieldCheck,ArrowUpRight} from "lucide-react";
+import {FileText,Package,Truck,ShieldCheck,ArrowUpRight,Gift} from "lucide-react";
+import {giftViewUrl,euroGift} from "@/lib/gift-cards/rules";
 export const metadata:Metadata={title:"Mein Konto – Bestellungen & Rechnungen",robots:{index:false,follow:false}};
 export const dynamic="force-dynamic";
 export const runtime="nodejs";
@@ -29,6 +30,7 @@ export default async function MyAccount(){
   orderBy:{createdAt:"desc"},take:30
  });
  const addresses=[...new Set(orders.map(x=>addressText(x.shippingAddress)).filter((x):x is string=>Boolean(x)))].slice(0,3);
+ const giftPurchases=await getPrisma().giftPurchase.findMany({where:{buyerEmail:customer.email,status:"captured"},select:{id:true,recipientName:true,amountCents:true,createdAt:true},orderBy:{createdAt:"desc"},take:15});
  return <ShopLayout><div className="rh-shell rh-account-dashboard">
   <nav className="rh-breadcrumb"><Link href="/">Startseite</Link><span>/</span><span>Mein Konto</span></nav>
   <header className="rh-account-dashboard-header"><div><div className="rh-eyebrow">RUBY HAIR / MEIN KONTO</div><h1>Willkommen{customer.firstName?`, ${customer.firstName}`:""}.</h1><p>{customer.email}</p></div><CustomerLogoutButton/></header>
@@ -45,6 +47,9 @@ export default async function MyAccount(){
      </article>;
     })}
   </section>
+  {giftPurchases.length>0&&<section className="rh-account-orders" style={{marginTop:36}}><div className="rh-account-heading"><h2>Deine Geschenkgutscheine</h2><span>Bereits bezahlte Geschenke</span></div>
+   <div className="rh-account-address-grid">{giftPurchases.map(g=><div className="rh-account-saved-address" key={g.id}><Gift size={22} color="#81516a"/><strong style={{display:"block",fontSize:18,marginTop:13}}>{euroGift(g.amountCents)}</strong><p>Für {g.recipientName} · {g.createdAt.toLocaleDateString("de-DE")}</p><Link href={giftViewUrl(g.id)}>Geschenkkarte anzeigen ↗</Link></div>)}</div>
+  </section>}
   {!customer.hasPassword&&<div className="rh-account-legacy-notice"><ShieldCheck size={20}/><p>Dein Konto wurde bisher ohne Passwort genutzt. <Link href="/konto/anmelden/">Bestätige deine E-Mail erneut und lege deinen Namen und dein Passwort fest.</Link></p></div>}
   <CustomerAccountSettings firstName={customer.firstName||""} lastName={customer.lastName||""} email={customer.email}/>
   <section className="rh-account-addresses"><div><h2>Adressen früherer Bestellungen</h2><p>Diese Daten stammen aus vergangenen Bestellungen und bleiben unverändert.</p></div>

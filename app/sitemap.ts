@@ -7,7 +7,7 @@ export default function sitemap():MetadataRoute.Sitemap{
  const origin="https://rubyhair.de";
  const paths=["/","/kollektionen/","/kollektionen/tape-in-extensions/","/kollektionen/keratin-bondings/",
    "/produkt/tape-in-extensions/","/produkt/keratin-bondings/",
-   "/ratgeber/",...guides.map(g=>`/ratgeber/${g.slug}/`),"/kontakt/","/versand-zahlung/",
+   "/ratgeber/","/geschenkgutschein/",...guides.map(g=>`/ratgeber/${g.slug}/`),"/kontakt/","/versand-zahlung/",
    "/rechtliches/impressum/","/rechtliches/datenschutz/","/rechtliches/agb/","/rechtliches/widerruf/"];
  return paths.map(path=>({url:origin+path,changeFrequency:"weekly" as const,priority:path==="/"?1:.6}));
 }

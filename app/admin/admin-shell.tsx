@@ -3,7 +3,7 @@ import Image from "next/image";
 import {
  ArrowUpRight,Boxes,LayoutDashboard,ClipboardList,BarChart3,
  WalletCards,ExternalLink,ShieldCheck,LogOut,ChevronRight,Store,
- CircleDot,Settings2,Mail,FlaskConical
+ CircleDot,Settings2,Mail,FlaskConical,Gift
 } from "lucide-react";
 import {logoutAction} from "./actions";
 import {publicCheckoutMode} from "@/lib/customer-checkout";
@@ -13,18 +13,19 @@ const sections=[
  {href:"/admin/analytics",label:"Analytics",icon:BarChart3},
  {href:"/admin/produkte",label:"Produkte & Bestand",icon:Boxes},
  {href:"/admin/bestellungen",label:"Bestellungen",icon:ClipboardList},
+ {href:"/admin/gutscheine",label:"Gutscheine",icon:Gift},
  {href:"/admin/zahlungen",label:"Zahlungen",icon:WalletCards},
  {href:"/admin/benachrichtigungen",label:"E-Mails & Vorlagen",icon:Mail}
 ] as const;
 
-type Area="dashboard"|"products"|"orders"|"analytics"|"payments"|"emails"|"testorder";
+type Area="dashboard"|"products"|"orders"|"analytics"|"payments"|"emails"|"testorder"|"gifts";
 const name:Record<Area,string>={
  dashboard:"Übersicht",analytics:"Analytics",products:"Produkte & Bestand",
- orders:"Bestellungen",payments:"Zahlungen",emails:"E-Mails & Vorlagen",testorder:"1 € Testbestellung"
+ orders:"Bestellungen",gifts:"Gutscheine",payments:"Zahlungen",emails:"E-Mails & Vorlagen",testorder:"1 € Testbestellung"
 };
 const paths:Record<Area,string>={
  dashboard:"/admin",analytics:"/admin/analytics",products:"/admin/produkte",
- orders:"/admin/bestellungen",payments:"/admin/zahlungen",emails:"/admin/benachrichtigungen",testorder:"/admin/testbestellung"
+ orders:"/admin/bestellungen",gifts:"/admin/gutscheine",payments:"/admin/zahlungen",emails:"/admin/benachrichtigungen",testorder:"/admin/testbestellung"
 };
 export default function AdminShell({
  current,title,description,children

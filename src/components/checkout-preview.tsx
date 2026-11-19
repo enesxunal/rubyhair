@@ -3,7 +3,7 @@ import Link from "next/link";
 import {useState} from "react";
 import type {CheckoutAddressData} from "./checkout-address-preview";
 import CustomerPaymentSubmit from "./customer-payment-submit";
-import {Check,Truck,Wallet,ArrowUpRight,ShoppingBag} from "lucide-react";
+import {Check,Truck,Wallet,ArrowUpRight,ShoppingBag,Gift} from "lucide-react";
 import {useCart} from "@/components/cart-context";
 import {useCartQuote} from "@/hooks/use-cart-quote";
 import {euros} from "@/lib/catalog";
@@ -20,6 +20,24 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
   const {quote,error,loading}=useCartQuote(lines);
   const [paymentMethod,setPaymentMethod]=useState<"paypal"|"klarna">(checkoutMode==="klarna_public"?"klarna":"paypal");
   const [validatedAddress,setValidatedAddress]=useState<CheckoutAddressData|null>(null);
+  const [giftInput,setGiftInput]=useState("");
+  const [appliedGift,setAppliedGift]=useState<{code:string;balanceCents:number}|null>(null);
+  const [giftError,setGiftError]=useState("");
+  const [giftLoading,setGiftLoading]=useState(false);
+  const verifyGift=async()=>{
+   setGiftError("");setAppliedGift(null);setGiftLoading(true);
+   try{
+    const res=await fetch("/api/gutschein/guthaben",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({code:giftInput.trim()}),cache:"no-store"});
+    if(!res.ok)throw Error("GIFT_UNAVAILABLE");
+    const payload=await res.json();
+    if(!Number.isInteger(payload.balanceCents)||payload.balanceCents<=0)throw Error("GIFT_EMPTY");
+    setAppliedGift({code:giftInput.trim().toUpperCase(),balanceCents:payload.balanceCents});
+    setPaymentMethod("paypal");
+   }catch{setGiftError("Der Gutscheincode ist ungültig, aufgebraucht oder derzeit nicht verfügbar.")}
+   finally{setGiftLoading(false)}
+  };
+  const giftUsed=appliedGift?Math.min(appliedGift.balanceCents,(quote?.subtotalCents||0)+shippingCents):0;
+  const remainingCents=Math.max(0,(quote?.subtotalCents||0)+shippingCents-giftUsed);
   const oneEuroCart=Boolean(loaded&&lines.length===1&&lines[0].id===886&&lines[0].quantity===1&&
     quote&&quote.subtotalCents===100&&quote.lines.length===1);
   const payableTestCart=Boolean(oneEuroCart&&!error&&!loading&&!quote?.needsReview&&quote?.lines[0]?.status==="available");
@@ -44,18 +62,27 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
           </article>)}
         </div>
         {loaded&&lines.length>0&&<CheckoutAddressPreview onValidated={setValidatedAddress}/>}
+        {loaded&&lines.length>0&&<section className="rh-gift-redeem-box" aria-label="Geschenkgutschein einlösen">
+         <div className="rh-gift-redeem-heading"><Gift size={21}/><div><span>GESCHENKGUTSCHEIN</span><h3>Du hast einen Gutschein?</h3></div></div>
+         <p>Gib deinen Ruby Hair Gutscheincode ein. Das Guthaben wird vor der Zahlung verrechnet.</p>
+         <div className="rh-gift-redeem-row"><input aria-label="Gutscheincode" placeholder="RH-XXXX-XXXX-XXXX-XXXX-XXXX" value={giftInput} maxLength={45} onChange={e=>{setGiftInput(e.target.value);setAppliedGift(null);setGiftError("")}}/>
+         <button type="button" onClick={verifyGift} disabled={!giftInput.trim()||giftLoading}>{giftLoading?"Prüfen …":"Einlösen"}</button></div>
+         {giftError&&<p role="alert" className="rh-gift-form-error">{giftError}</p>}
+         {appliedGift&&<p className="rh-gift-applied" role="status">Gutschein erkannt: {euros(appliedGift.balanceCents/100)} verfügbar. Angerechnet werden {euros(giftUsed/100)}.</p>}
+        </section>}
         <section className="rh-checkout-payment-preview" aria-label="Zahlungsart auswählen">
           <h3>03 / ZAHLUNG</h3>
           <p className="rh-payment-preview-heading">Wähle deine Zahlungsart</p>
+          {appliedGift&&<p className="rh-gift-only-paypal-note">Bei Gutscheinzahlung steht PayPal für einen möglichen Restbetrag zur Verfügung. Ist alles gedeckt, erfolgt keine weitere Zahlung.</p>}
           <div className="rh-payment-select" role="radiogroup" aria-label="Zahlungsart">
             {checkoutMode!=="klarna_public"&&<label className={"rh-payment-choice"+(paymentMethod==="paypal"?" is-selected":"")}>
               <input type="radio" name="checkout-payment-method" value="paypal"
                 checked={paymentMethod==="paypal"} onChange={()=>setPaymentMethod("paypal")}/>
               <span><strong>PayPal</strong><small>PayPal oder Karte bei Verfügbarkeit</small></span>
             </label>}
-            <label className={"rh-payment-choice"+(paymentMethod==="klarna"?" is-selected":"")}>
+            <label className={"rh-payment-choice"+(paymentMethod==="klarna"?" is-selected":"")+(appliedGift?" rh-gift-method-disabled":"")}>
               <input type="radio" name="checkout-payment-method" value="klarna"
-                checked={paymentMethod==="klarna"} onChange={()=>setPaymentMethod("klarna")}/>
+                checked={paymentMethod==="klarna"} disabled={!!appliedGift} onChange={()=>setPaymentMethod("klarna")}/>
               <span><strong>Klarna</strong><small>{checkoutMode!=="disabled"?"Zahlung bei Versand":"Noch nicht freigeschaltet"}</small></span>
             </label>
           </div>
@@ -67,17 +94,18 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
             </Link>
           </div>}
           {checkoutMode!=="disabled"&&!liveTest&&paymentMethod==="paypal"&&
-            <CustomerPaymentSubmit method={paymentMethod} lines={lines} address={validatedAddress} cartReady={Boolean(quote&&!quote.needsReview&&!loading&&!error&&lines.length)} totalCents={(quote?.subtotalCents||0)+shippingCents}/>}
+            <CustomerPaymentSubmit method={paymentMethod} lines={lines} address={validatedAddress} cartReady={Boolean(quote&&!quote.needsReview&&!loading&&!error&&lines.length)} totalCents={remainingCents} giftCode={appliedGift?.code}/>}
           {checkoutMode==="disabled"&&paymentMethod==="paypal"&&!liveTest&&!oneEuroCart&&<div className="rh-payment-action-area">
             <p>Die letzte Freigabe für den regulären Kauf steht noch aus. Bis dahin wird keine Bestellung ausgelöst.</p>
           </div>}
           {paymentMethod==="klarna"&&checkoutMode!=="disabled"&&!liveTest&&
-            <CustomerPaymentSubmit method={paymentMethod} lines={lines} address={validatedAddress} cartReady={Boolean(quote&&!quote.needsReview&&!loading&&!error&&lines.length)} totalCents={(quote?.subtotalCents||0)+shippingCents}/>}
+            <CustomerPaymentSubmit method={paymentMethod} lines={lines} address={validatedAddress} cartReady={Boolean(quote&&!quote.needsReview&&!loading&&!error&&lines.length)} totalCents={remainingCents} giftCode={appliedGift?.code}/>}
           {paymentMethod==="klarna"&&(checkoutMode==="disabled"||!!liveTest)&&<div className="rh-payment-action-area" role="status">
             <p>Klarna ist für diesen Zahlungstest noch nicht freigegeben.</p>
             <button type="button" className="rh-payment-secondary-link" onClick={()=>setPaymentMethod("paypal")}>Stattdessen PayPal wählen</button>
           </div>}
         </section>
+        <div className="rh-gift-checkout-upsell"><Gift size={22}/><div><strong>Auch einer Freundin eine Freude machen?</strong><p>Verschenke Beauty mit einem persönlichen Ruby Hair Geschenkgutschein.</p><Link href="/geschenkgutschein/">Gutschein gestalten ↗</Link></div></div>
         <Link className="rh-continue-shop" href="/versand-zahlung/">Versand, Zahlung & Widerruf ansehen ↗</Link>
         <Link className="rh-checkout-return" href="/warenkorb/">← ZURÜCK ZUM WARENKORB</Link>
       </section>

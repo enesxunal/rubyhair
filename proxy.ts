@@ -16,7 +16,7 @@ const storefrontPublic=()=>process.env.VERCEL_ENV==="production" &&
   process.env.RUBY_CANONICAL_SITE_URL==="https://rubyhair.de";
 // Only known public endpoints may be accessed without an administrator session.
 const publicGetApis=new Set(["/api/catalog","/api/tryon/generate"]);
-const publicPostApis=new Set(["/api/cart/quote","/api/analytics/event","/api/tryon/generate","/api/checkout","/api/widerruf","/api/konto/login","/api/konto/verify","/api/konto/password","/api/konto/profile","/api/konto/adressen","/api/konto/logout"]);
+const publicPostApis=new Set(["/api/cart/quote","/api/analytics/event","/api/tryon/generate","/api/checkout","/api/widerruf","/api/konto/login","/api/konto/verify","/api/konto/password","/api/konto/profile","/api/konto/adressen","/api/konto/logout","/api/gutschein/kaufen","/api/gutschein/guthaben"]);
 
 /** Admin JWT uses the same signed, eight-hour token as src/lib/admin-auth.ts.
  * Only a verified session may bypass the Coming Soon wall on customer domains.
@@ -49,7 +49,7 @@ export async function proxy(request:NextRequest){
  if(adminLoginPaths.has(path))return NextResponse.next();
  // Only these two automated endpoints may cross the public API gate.
  // Their own handlers enforce CRON_SECRET or PayPal signature verification.
- if((path==="/api/internal/customer-jobs"||path==="/api/internal/customer-account-cleanup")&&(request.method==="GET"||request.method==="HEAD")){
+ if((path==="/api/internal/customer-jobs"||path==="/api/internal/customer-account-cleanup"||path==="/api/internal/gift-card-jobs")&&(request.method==="GET"||request.method==="HEAD")){
   const r=NextResponse.next();r.headers.set("Cache-Control","private, no-store");return r;
  }
  if(path==="/api/payments/paypal/webhook"&&request.method==="POST"){
@@ -82,7 +82,7 @@ export async function proxy(request:NextRequest){
  if(storefrontPublic()){
   if(path.startsWith("/api/")){
    const isGet=request.method==="GET"||request.method==="HEAD";
-   const permitted=isGet?((publicGetApis.has(path)||path==="/api/konto/adressen")||/^\/api\/konto\/rechnung\/[a-f0-9-]{36}$/i.test(path)||path.startsWith("/api/instagram-thumbnail/")):
+   const permitted=isGet?((publicGetApis.has(path)||path==="/api/konto/adressen"||/^\/api\/gutschein\/bild\/[0-9a-f-]{36}$/i.test(path))||/^\/api\/konto\/rechnung\/[a-f0-9-]{36}$/i.test(path)||path.startsWith("/api/instagram-thumbnail/")):
     (request.method==="POST"&&publicPostApis.has(path))||
     (request.method==="PUT"&&path==="/api/konto/profile")||
     ((request.method==="PATCH"||request.method==="DELETE")&&path==="/api/konto/adressen");

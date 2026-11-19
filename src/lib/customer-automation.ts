@@ -175,6 +175,11 @@ async function cancelUnpaidCustomerOrder(orderId:string){
    if(!line.stockReserved)continue;
    await tx.variant.updateMany({where:{id:line.variantId,stockQuantity:{not:null}},data:{stockQuantity:{increment:line.quantity}}});
   }
+  const redemption=await tx.giftRedemption.findUnique({where:{orderId}});
+  if(redemption?.state==="reserved"){
+   const released=await tx.giftRedemption.updateMany({where:{id:redemption.id,state:"reserved"},data:{state:"released"}});
+   if(released.count===1)await tx.giftCard.update({where:{id:redemption.cardId},data:{balanceCents:{increment:redemption.amountCents}}});
+  }
   await tx.orderStatusEvent.create({data:{orderId,fromStatus:"pending_payment",toStatus:"cancelled",reason:"verified_unpaid_payment_timeout"}});
   await tx.orderNotification.upsert({where:{orderId_stage:{orderId,stage:"failed"}},create:{orderId,stage:"failed"},update:{}});
   return true;

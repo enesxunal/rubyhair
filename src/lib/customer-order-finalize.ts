@@ -28,6 +28,11 @@ export async function finishCapturedCustomerOrder(orderId:string,provider:"paypa
  if(provider==="paypal"&&order.paymentReference!==providerOrderReference)throw new CustomerCheckoutError("PROVIDER_ORDER_REFERENCE_MISMATCH",409);
  if(provider==="klarna"&&!order.paymentReference?.startsWith("KLARNA-HPP:"))throw new CustomerCheckoutError("PROVIDER_ORDER_REFERENCE_MISMATCH",409);
  if(order.lines.some(l=>l.quantity<1||l.unitPriceCents<100))throw new CustomerCheckoutError("STORED_ORDER_LINES_INVALID",503);
+ if(order.giftAppliedCents<0||order.giftAppliedCents>=order.totalCents)throw new CustomerCheckoutError("INVALID_GIFT_TENDER",503);
+ if(order.giftAppliedCents>0){
+  const redemption=await db.giftRedemption.findUnique({where:{orderId:order.id}});
+  if(!redemption||redemption.state!=="reserved"||redemption.amountCents!==order.giftAppliedCents)throw new CustomerCheckoutError("GIFT_RESERVATION_MISMATCH",503);
+ }
  const billing=shape(order.billingAddress),issuedAt=new Date(),number=invoiceNo(order.orderNumber,issuedAt);
  const buyerName=billing.firstName+" "+billing.lastName;
  const invoiceLines=order.lines.map(l=>({description:`${l.variant.product.name} ${l.variant.colorLabel} ${l.variant.lengthLabel}`,
@@ -36,7 +41,8 @@ export async function finishCapturedCustomerOrder(orderId:string,provider:"paypa
   invoiceNumber:number,issuedAt,orderNumber:String(order.orderNumber),customerName:buyerName,
   customerEmail:order.customerEmail,billingStreet:billing.street,billingPostalCode:billing.postalCode,
   billingCity:billing.city,paymentMethod:provider,paymentReference:providerOrderReference,
-  lines:invoiceLines,subtotalCents:order.subtotalCents,shippingCents:order.shippingCents,taxCents:order.taxCents,totalCents:order.totalCents
+  lines:invoiceLines,subtotalCents:order.subtotalCents,shippingCents:order.shippingCents,taxCents:order.taxCents,totalCents:order.totalCents,
+  giftAppliedCents:order.giftAppliedCents
  });
  try{
   await db.$transaction(async tx=>{
@@ -44,6 +50,10 @@ export async function finishCapturedCustomerOrder(orderId:string,provider:"paypa
     data:{status:"payment_confirmed",reservationExpiresAt:null}});
    if(changed.count!==1)throw new CustomerCheckoutError("ORDER_CONCURRENCY_REVIEW",409);
    requireOrderTransition(order.status,"payment_confirmed","payment_provider");
+   if(order.giftAppliedCents>0){
+    const settled=await tx.giftRedemption.updateMany({where:{orderId:order.id,state:"reserved",amountCents:order.giftAppliedCents},data:{state:"settled",settledAt:issuedAt}});
+    if(settled.count!==1)throw new CustomerCheckoutError("GIFT_RESERVATION_CONFLICT",409);
+   }
    await tx.paymentEvent.create({data:{orderId:order.id,provider,providerEventId:captureId,eventType:"PAYMENT.CAPTURE.COMPLETED"}});
    await tx.orderStatusEvent.create({data:{orderId:order.id,fromStatus:order.status,toStatus:"payment_confirmed",reason:`${provider}_verified_capture`} });
    await tx.invoice.create({data:{orderId:order.id,invoiceNumber:number,issuedAt,
@@ -81,7 +91,7 @@ export async function finalizePayPalCheckout(orderId:string,allowCapture:boolean
   raw=await gateway.api.getOrder(order.paymentReference) as {status?:string};
  }
  let verified;
- try{verified=gateway.api.requireCompletedCapture(raw,order.id,order.totalCents,order.paymentReference)}
+ try{verified=gateway.api.requireCompletedCapture(raw,order.id,order.totalCents-order.giftAppliedCents,order.paymentReference)}
  catch{throw new CustomerCheckoutError("PAYPAL_CAPTURE_NOT_YET_VERIFIED",409)}
  return finishCapturedCustomerOrder(order.id,"paypal",verified.captureId,order.paymentReference);
 }

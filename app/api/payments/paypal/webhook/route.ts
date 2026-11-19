@@ -3,6 +3,8 @@ import {providerForCheckout} from "@/lib/customer-checkout";
 import {getPrisma} from "@/lib/prisma";
 import {finalizePayPalCheckout} from "@/lib/customer-order-finalize";
 import {runCustomerJobs} from "@/lib/customer-automation";
+import {reconcileGiftPurchase} from "@/lib/gift-cards/server";
+import {deliverGiftEmails} from "@/lib/gift-cards/mail";
 export const runtime="nodejs",dynamic="force-dynamic";
 export const maxDuration=60;
 export async function POST(req:NextRequest){
@@ -26,6 +28,13 @@ export async function POST(req:NextRequest){
      // provider canonical GET verifies amount and capture before DB mutation.
      await finalizePayPalCheckout(order.id,false);
      after(async()=>{try{await runCustomerJobs(2)}catch{}});
+    }
+    else if(!order){
+     const gift=await getPrisma().giftPurchase.findUnique({where:{providerOrderId:ref},select:{id:true}});
+     if(gift){
+      await reconcileGiftPurchase(gift.id,false);
+      after(async()=>{try{await deliverGiftEmails(2)}catch{}});
+     }
     }
    }
   }
