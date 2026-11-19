@@ -1,5 +1,5 @@
 "use client";
-import {useState,type FormEvent} from "react";
+import {useEffect,useRef,useState,type FormEvent} from "react";
 import type {CustomerCheckoutInput} from "@/lib/customer-checkout";
 import {CheckCircle2,ShieldCheck} from "lucide-react";
 
@@ -7,6 +7,27 @@ export type CheckoutAddressData={shipping:CustomerCheckoutInput["shipping"];bill
 /** Validation is local; a purchase sends data only on explicit confirmation. */
 export default function CheckoutAddressPreview({onValidated}:{onValidated?:(data:CheckoutAddressData|null)=>void}){
  const [otherBilling,setOtherBilling]=useState(false);
+ const formRef=useRef<HTMLFormElement>(null);
+ const [savedAddresses,setSavedAddresses]=useState<{id:string;label:string;firstName:string;lastName:string;street:string;postalCode:string;city:string}[]>([]);
+ const [savedEmail,setSavedEmail]=useState("");
+ useEffect(()=>{
+  let active=true;
+  fetch("/api/konto/adressen",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(data=>{
+   if(!active||!data)return;
+   setSavedAddresses(data.addresses||[]);setSavedEmail(data.email||"");
+  }).catch(()=>{});
+  return()=>{active=false};
+ },[]);
+ const applySavedAddress=(id:string)=>{
+  const address=savedAddresses.find(a=>a.id===id);
+  if(!address||!formRef.current)return;
+  const fields:Record<string,string>={givenName:address.firstName,familyName:address.lastName,street:address.street,zip:address.postalCode,city:address.city,email:savedEmail};
+  for(const [name,value] of Object.entries(fields)){
+   const input=formRef.current.elements.namedItem(name);
+   if(input instanceof HTMLInputElement)input.value=value;
+  }
+  setChecked(false);onValidated?.(null);
+ };
  const [checked,setChecked]=useState(false);
  const validate=(event:FormEvent<HTMLFormElement>)=>{
   event.preventDefault();
@@ -21,7 +42,13 @@ export default function CheckoutAddressPreview({onValidated}:{onValidated?:(data
  return <section className="rh-checkout-address" aria-label="Liefer- und Rechnungsadresse vorbereiten">
   <div className="rh-checkout-address-heading"><span>02 / LIEFERUNG</span><h2>Deine Lieferadresse.</h2>
    <p>Trage deine Lieferadresse und bei Bedarf eine abweichende Rechnungsadresse ein.</p></div>
-  <form onSubmit={validate} onChange={()=>{setChecked(false);onValidated?.(null)}}>
+  {savedAddresses.length>0&&<div className="rh-checkout-saved-address"><label htmlFor="rh-checkout-saved-address">Gespeicherte Lieferadresse verwenden</label>
+   <select id="rh-checkout-saved-address" defaultValue="" onChange={e=>applySavedAddress(e.target.value)}>
+    <option value="">Adresse auswählen …</option>
+    {savedAddresses.map(a=><option key={a.id} value={a.id}>{a.label} – {a.street}, {a.postalCode} {a.city}</option>)}
+   </select>
+  </div>}
+  <form ref={formRef} onSubmit={validate} onChange={()=>{setChecked(false);onValidated?.(null)}}>
    <div className="rh-checkout-field-grid">
     <label>Vorname <input required autoComplete="given-name" name="givenName" maxLength={80} placeholder="Vorname"/></label>
     <label>Nachname <input required autoComplete="family-name" name="familyName" maxLength={80} placeholder="Nachname"/></label>

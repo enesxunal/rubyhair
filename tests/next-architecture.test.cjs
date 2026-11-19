@@ -28,7 +28,7 @@ test("Next.js runtime does not reference WordPress endpoints",()=>{
       else if(/\.(?:ts|tsx|html|js|json)$/.test(item.name)){
         const content=fs.readFileSync(full,"utf8");
         // Publicly documented legacy pages are linked as sources, not fetched at runtime.
-        if(!["legacy-store-facts.ts","seo.ts","robots.ts","sitemap.ts","qa-live-paypal.ts","qa-live-klarna.ts","klarna-provider-core.ts","live-variant-qa.ts","customer-checkout.ts","order-mail-templates.ts","customer-account.ts","customer-account-mail.ts"].some(name=>full.endsWith(name)))assert.equal(content.includes("https://rubyhair.de/"),false,full);
+        if(!["legacy-store-facts.ts","seo.ts","robots.ts","sitemap.ts","qa-live-paypal.ts","qa-live-klarna.ts","klarna-provider-core.ts","live-variant-qa.ts","customer-checkout.ts","order-mail-templates.ts","customer-account.ts","customer-account-mail.ts","customer-account-mail-template.ts"].some(name=>full.endsWith(name)))assert.equal(content.includes("https://rubyhair.de/"),false,full);
         assert.equal(content.includes("/wp-json/"),false,full);
         if(full.endsWith("qa-live-paypal.ts"))assert.ok(content.includes("https://rubyhair.de/qa/paypal/return"));
       }
@@ -361,7 +361,8 @@ test("checkout address form is browser-local and cannot initiate payment or cust
  const payment=fs.readFileSync(path.join(base,"src/components/checkout-preview.tsx"),"utf8");
  assert.ok(form.includes('event.preventDefault()'));
  assert.ok(form.includes('pattern="[0-9]{5}"'));
- assert.ok(!form.includes('fetch('));
+ assert.ok(form.includes('fetch("/api/konto/adressen"'));
+ assert.ok(!form.includes('fetch("/api/checkout'));
  assert.ok(!form.includes('localStorage'));
  assert.ok(payment.includes('LiveVariantTestSection'));
  assert.ok(payment.includes('checkout-payment-method'));

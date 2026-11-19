@@ -16,7 +16,7 @@ const storefrontPublic=()=>process.env.VERCEL_ENV==="production" &&
   process.env.RUBY_CANONICAL_SITE_URL==="https://rubyhair.de";
 // Only known public endpoints may be accessed without an administrator session.
 const publicGetApis=new Set(["/api/catalog","/api/tryon/generate"]);
-const publicPostApis=new Set(["/api/cart/quote","/api/analytics/event","/api/tryon/generate","/api/checkout","/api/widerruf","/api/konto/login","/api/konto/verify","/api/konto/logout"]);
+const publicPostApis=new Set(["/api/cart/quote","/api/analytics/event","/api/tryon/generate","/api/checkout","/api/widerruf","/api/konto/login","/api/konto/verify","/api/konto/password","/api/konto/profile","/api/konto/adressen","/api/konto/logout"]);
 
 /** Admin JWT uses the same signed, eight-hour token as src/lib/admin-auth.ts.
  * Only a verified session may bypass the Coming Soon wall on customer domains.
@@ -82,8 +82,10 @@ export async function proxy(request:NextRequest){
  if(storefrontPublic()){
   if(path.startsWith("/api/")){
    const isGet=request.method==="GET"||request.method==="HEAD";
-   const permitted=isGet?(publicGetApis.has(path)||/^\/api\/konto\/rechnung\/[a-f0-9-]{36}$/i.test(path)||path.startsWith("/api/instagram-thumbnail/")):
-    request.method==="POST"&&publicPostApis.has(path);
+   const permitted=isGet?((publicGetApis.has(path)||path==="/api/konto/adressen")||/^\/api\/konto\/rechnung\/[a-f0-9-]{36}$/i.test(path)||path.startsWith("/api/instagram-thumbnail/")):
+    (request.method==="POST"&&publicPostApis.has(path))||
+    (request.method==="PUT"&&path==="/api/konto/profile")||
+    ((request.method==="PATCH"||request.method==="DELETE")&&path==="/api/konto/adressen");
    if(!permitted)return restrictedResponse();
    return NextResponse.next();
   }

@@ -59,7 +59,7 @@ test("migration only adds new customer tables and preserves orders and payments"
  const page=read("src/components/customer-login-panel.tsx");
  assert.ok(page.includes('new URLSearchParams(window.location.hash'));
  assert.ok(page.includes('window.history.replaceState'));
- assert.ok(page.includes('Anmeldung bestätigen'));
+ assert.ok(page.includes('Konto erstellen & anmelden'));
  const verify=read("app/api/konto/verify/route.ts");
  assert.ok(verify.includes('sameOriginCustomerRequest()'));
  const cron=read("app/api/internal/customer-account-cleanup/route.ts");

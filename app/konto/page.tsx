@@ -6,6 +6,7 @@ import {getPrisma} from "@/lib/prisma";
 import {getCustomerAccount} from "@/lib/customer-account";
 import {safeCustomerTrackingUrl} from "@/lib/customer-account-rules";
 import CustomerLogoutButton from "@/components/customer-logout-button";
+import CustomerAccountSettings from "@/components/customer-account-settings";
 import {FileText,Package,Truck,ShieldCheck,ArrowUpRight} from "lucide-react";
 export const metadata:Metadata={title:"Mein Konto – Bestellungen & Rechnungen",robots:{index:false,follow:false}};
 export const dynamic="force-dynamic";
@@ -30,7 +31,7 @@ export default async function MyAccount(){
  const addresses=[...new Set(orders.map(x=>addressText(x.shippingAddress)).filter((x):x is string=>Boolean(x)))].slice(0,3);
  return <ShopLayout><div className="rh-shell rh-account-dashboard">
   <nav className="rh-breadcrumb"><Link href="/">Startseite</Link><span>/</span><span>Mein Konto</span></nav>
-  <header className="rh-account-dashboard-header"><div><div className="rh-eyebrow">RUBY HAIR / MEIN KONTO</div><h1>Willkommen zurück.</h1><p>{customer.email}</p></div><CustomerLogoutButton/></header>
+  <header className="rh-account-dashboard-header"><div><div className="rh-eyebrow">RUBY HAIR / MEIN KONTO</div><h1>Willkommen{customer.firstName?`, ${customer.firstName}`:""}.</h1><p>{customer.email}</p></div><CustomerLogoutButton/></header>
   <section className="rh-account-summary" aria-label="Kontoübersicht"><div><Package size={22}/><strong>{orders.length}{orders.length===30?"+":""}</strong><span>Bestellungen</span></div><div><FileText size={22}/><strong>{orders.filter(x=>x.invoice).length}</strong><span>Rechnungen</span></div><div><Truck size={22}/><strong>{orders.filter(x=>Boolean(x.trackingNumber)).length}</strong><span>Sendungsverfolgungen</span></div></section>
   <section className="rh-account-orders"><div className="rh-account-heading"><h2>Deine Bestellungen</h2><span>Die letzten 30 Bestellungen</span></div>
    {orders.length===0?<div className="rh-account-empty"><Package size={30}/><h3>Noch keine Bestellungen</h3><p>Hier erscheinen deine Bestellungen, sobald du mit dieser E-Mail-Adresse bei Ruby Hair einkaufst.</p><Link href="/kollektionen/">Extensions entdecken <ArrowUpRight size={16}/></Link></div>:orders.map(o=>{
@@ -44,9 +45,11 @@ export default async function MyAccount(){
      </article>;
     })}
   </section>
-  <section className="rh-account-addresses"><div><h2>Deine Lieferadressen</h2><p>Diese Anschriften stammen aus deinen Bestellungen. Bei einer neuen Bestellung kannst du eine andere Adresse angeben.</p></div>
-    {addresses.length?<ul>{addresses.map(a=><li key={a}>{a}</li>)}</ul>:<p>Noch keine gespeicherten Lieferanschriften aus Bestellungen.</p>}
+  {!customer.hasPassword&&<div className="rh-account-legacy-notice"><ShieldCheck size={20}/><p>Dein Konto wurde bisher ohne Passwort genutzt. <Link href="/konto/anmelden/">Bestätige deine E-Mail erneut und lege deinen Namen und dein Passwort fest.</Link></p></div>}
+  <CustomerAccountSettings firstName={customer.firstName||""} lastName={customer.lastName||""} email={customer.email}/>
+  <section className="rh-account-addresses"><div><h2>Adressen früherer Bestellungen</h2><p>Diese Daten stammen aus vergangenen Bestellungen und bleiben unverändert.</p></div>
+    {addresses.length?<ul>{addresses.map(a=><li key={a}>{a}</li>)}</ul>:<p>Es liegen keine Lieferadressen aus früheren Bestellungen vor.</p>}
   </section>
-  <p className="rh-account-trust"><ShieldCheck size={17}/> Deine Rechnungen und Bestellungen sind nur nach bestätigter E-Mail-Anmeldung sichtbar. Ein Kundenkonto ist für einen Kauf nicht erforderlich.</p>
+  <p className="rh-account-trust"><ShieldCheck size={17}/> Deine Rechnungen und Bestellungen sind nur nach einer verifizierten Anmeldung sichtbar. Ein Kundenkonto ist für einen Kauf nicht erforderlich.</p>
  </div></ShopLayout>;
 }

@@ -785,3 +785,44 @@ button.rh-editorial-cta{cursor:pointer}
 .rh-account-trust{display:flex;align-items:center;gap:9px;color:#796972;font-size:11px;margin-top:40px}
 @media(max-width:740px){.rh-account-dashboard-header{align-items:flex-start;flex-direction:column;margin:22px 0 26px}.rh-account-summary{grid-template-columns:1fr;gap:7px;margin-bottom:35px}.rh-account-summary>div{padding:16px}.rh-account-addresses{flex-direction:column;gap:10px;margin-top:38px}.rh-account-login-page{padding:35px 0 60px}}
 @media(max-width:420px){.rh-account-access-card{padding:23px 18px}.rh-account-order{padding:17px 14px}.rh-account-order-top strong{font-size:15px}.rh-account-dashboard-header h1{font-size:38px}}
+/* Account onboarding and address book */
+.rh-account-two-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.rh-account-two-fields label{min-width:0}
+.rh-account-password-field{position:relative}
+.rh-account-password-field input{padding-right:51px}
+.rh-account-password-field .rh-account-eye{position:absolute;right:4px;top:3px;margin:0;width:45px;min-height:45px;background:transparent;color:#765d66;box-shadow:none;padding:0}
+.rh-account-mode-tabs{display:flex;gap:5px;background:#f6f0f1;padding:5px;border-radius:8px;margin-bottom:27px}
+.rh-account-mode-tabs button{flex:1;margin:0;min-height:40px;background:transparent;color:#68515c;border-radius:6px;padding:7px 12px}
+.rh-account-mode-tabs button.active{background:white;color:#3b2931;box-shadow:0 2px 8px #32212a12}
+.rh-account-access-card .rh-account-text-button{background:none;border:0;color:#775364;font-size:11px;min-height:35px;margin:-6px 0 5px;text-decoration:underline;box-shadow:none}
+.rh-account-profile-management{border-top:1px solid #e6d9dd;margin-top:58px;padding-top:37px}
+.rh-account-profile-card,.rh-account-address-form{border:1px solid #e8dcdf;background:#fff;border-radius:11px;padding:27px;margin:23px 0 35px;max-width:660px}
+.rh-account-profile-card label,.rh-account-address-form label{display:block;font-size:11px;color:#604850;font-weight:650;margin:13px 0 7px}
+.rh-account-profile-card input,.rh-account-address-form input:not([type=checkbox]){display:block;width:100%;height:46px;padding:10px 12px;border:1px solid #ddcfd4;border-radius:6px;background:#fffdfc;margin-top:7px;color:#30232b}
+.rh-account-profile-card input[disabled],.rh-account-address-form input[disabled]{background:#f4f0f0;color:#847782}
+.rh-account-save,.rh-account-address-form-actions button,.rh-account-address-header button,.rh-account-empty-address button{border:0;border-radius:7px;background:#603e50;color:#fff;padding:12px 18px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:8px;cursor:pointer}
+.rh-account-save{margin-top:12px}
+.rh-account-success{display:flex;align-items:center;gap:7px;color:#427553;font-size:12px}
+.rh-account-address-header{margin-top:40px}
+.rh-account-address-intro{font-size:12px;color:#7f6973;margin:0 0 19px}
+.rh-account-address-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.rh-account-saved-address{background:#fff;border:1px solid #e7dadd;border-radius:10px;padding:22px}
+.rh-account-address-title{display:flex;align-items:center;gap:8px}
+.rh-account-address-title strong{font-size:15px}
+.rh-account-address-title span{background:#f0e4e7;padding:5px 8px;border-radius:5px;font-size:10px;color:#805363}
+.rh-account-saved-address>p{font-size:12px;line-height:1.9;color:#77656f;margin:16px 0 19px}
+.rh-account-address-actions{display:flex;gap:15px;flex-wrap:wrap;border-top:1px solid #f0e7e9;padding-top:13px}
+.rh-account-address-actions button{border:0;background:none;padding:6px 0;font-size:11px;color:#6b4a5b;display:flex;gap:6px;align-items:center;cursor:pointer}
+.rh-account-address-form h3{font-family:var(--serif);font-size:29px;margin:0 0 16px}
+.rh-account-check{display:flex!important;align-items:center;gap:9px;margin:17px 0!important}
+.rh-account-check input{accent-color:#634152}
+.rh-account-address-form-actions{display:flex;gap:10px;margin-top:20px}
+.rh-account-address-form-actions .secondary{background:#f3edef;color:#694a57}
+.rh-account-empty-address{padding:24px;border:1px dashed #d9cbd0;border-radius:9px;color:#7a6470;background:#fff;font-size:12px}
+.rh-account-empty-address svg{color:#846071}
+.rh-account-legacy-notice{display:flex;align-items:center;gap:14px;background:#f9efee;padding:15px 20px;border:1px solid #e8d7d8;border-radius:8px;font-size:12px;color:#644651;margin:25px 0}
+.rh-account-legacy-notice p{margin:0}.rh-account-legacy-notice a{text-decoration:underline;font-weight:700}
+@media(max-width:650px){.rh-account-two-fields,.rh-account-address-grid{grid-template-columns:minmax(0,1fr)}.rh-account-profile-card,.rh-account-address-form{padding:20px}.rh-account-address-header{align-items:flex-start}}
+.rh-checkout-saved-address{padding:16px 18px;border:1px solid #e6d8de;background:#faf5f5;border-radius:8px;margin:20px 0}
+.rh-checkout-saved-address label{display:block;font-size:12px;color:#654654;font-weight:700;margin-bottom:8px}
+.rh-checkout-saved-address select{width:100%;min-height:46px;padding:10px 12px;border:1px solid #d9c5ce;border-radius:5px;background:white;color:#4a303b;max-width:100%}

@@ -248,7 +248,11 @@ model CustomerAccount {
   verifiedAt  DateTime          @default(now())
   lastLoginAt DateTime          @default(now())
   createdAt   DateTime          @default(now())
+  firstName   String?           @db.VarChar(80)
+  lastName    String?           @db.VarChar(80)
+  passwordHash String?          @db.VarChar(255)
   sessions    CustomerSession[]
+  addresses   CustomerAddress[]
 
   @@map("customer_accounts")
 }
@@ -286,4 +290,23 @@ model CustomerAuthRateLimit {
   windowStart DateTime @default(now())
 
   @@map("customer_auth_rate_limits")
+}
+
+model CustomerAddress {
+  id         String          @id @default(uuid()) @db.Uuid
+  accountId  String          @db.Uuid
+  account    CustomerAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  label      String          @db.VarChar(40)
+  firstName  String          @db.VarChar(80)
+  lastName   String          @db.VarChar(80)
+  street     String          @db.VarChar(160)
+  postalCode String          @db.VarChar(5)
+  city       String          @db.VarChar(100)
+  country    String          @default("DE") @db.VarChar(2)
+  isDefault  Boolean         @default(false)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  @@index([accountId, createdAt])
+  @@map("customer_addresses")
 }
