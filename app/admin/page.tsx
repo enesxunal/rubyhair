@@ -16,12 +16,12 @@ export default async function AdminHome(){
  if(!await isAdmin())redirect("/admin/login");
  const db=getPrisma();
  // Never mix hidden QA products or technical test orders into merchant KPIs.
- const [products,variants,recentOrders,realOrders]=await Promise.all([
-  db.product.findMany({where:{active:true},select:{id:true,name:true}}),
-  db.variant.findMany({where:{product:{active:true}},select:{stockQuantity:true,active:true}}),
+ const [products,recentOrders,realOrders]=await Promise.all([
+  db.product.findMany({where:{active:true},select:{id:true,name:true,variants:{select:{stockQuantity:true,active:true}}}}),
   db.order.findMany({where:{testOnly:false},select:{id:true,orderNumber:true,status:true,createdAt:true},orderBy:{createdAt:"desc"},take:5}),
   db.order.count({where:{testOnly:false}})
  ]);
+ const variants=products.flatMap(product=>product.variants);
  const unknown=variants.filter(v=>v.stockQuantity===null).length;
  const soldOut=variants.filter(v=>v.stockQuantity===0).length;
  const low=variants.filter(v=>v.active&&v.stockQuantity!==null&&v.stockQuantity>0&&v.stockQuantity<=5).length;

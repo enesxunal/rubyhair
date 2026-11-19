@@ -2,189 +2,159 @@ import type {Metadata} from "next";
 import Link from "next/link";
 import {redirect} from "next/navigation";
 import {
- ArrowDownRight,ArrowRight,ArrowUpRight,BarChart3,CalendarDays,CheckCircle2,
- Download,Info,MousePointer2,ShoppingBag,ShoppingCart,Eye,ShieldCheck
+ BarChart3,CalendarDays,Download,Eye,Info,MousePointer2,ShoppingBag,
+ ShoppingCart,Sparkles,ShieldCheck,TrendingUp
 } from "lucide-react";
 import {isAdmin} from "@/lib/admin-auth";
 import {
- analyticsPeriods,parseAnalyticsPeriod,analyticsSourceLabels,analyticsDeviceLabels,analyticsPathLabel,
- type AnalyticsReport
+ parseAnalyticsRange,analyticsPathLabel,analyticsSourceLabels,analyticsDeviceLabels,
+ isoDay,addUtcDays,type AnalyticsReport
 } from "@/lib/admin-analytics-report";
 import {loadAnalyticsReport} from "@/lib/admin-analytics-server";
 import AdminActivityChart from "@/components/admin-activity-chart";
 import AdminShell from "../admin-shell";
 
-export const metadata:Metadata={title:"Analytics | Ruby Hair Verwaltung",robots:{index:false,follow:false}};
+export const metadata:Metadata={title:"Statistik | Ruby Hair Verwaltung",robots:{index:false,follow:false}};
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
-const number=(n:number)=>n.toLocaleString("de-DE");
-const percent=(n:number)=>n.toLocaleString("de-DE",{maximumFractionDigits:1,minimumFractionDigits:1})+" %";
-const date=(d:Date)=>d.toLocaleDateString("de-DE",{day:"2-digit",month:"short",year:"numeric",timeZone:"UTC"});
-const numeral=(enabled:boolean,value:number)=>enabled?number(value):"—";
-function Change({value,prior,current}:{value:number|null;prior:number;current:number}){
- if(value===null)return <span className="rh-delta is-neutral">{prior===0&&current>0?"Neu im Zeitraum":"Ohne Vergleichsbasis"}</span>;
- if(value===0)return <span className="rh-delta is-neutral">0 % zum Vorzeitraum</span>;
- const Up=value>0;
- return <span className={"rh-delta "+(Up?"is-up":"is-down")}>
-  {Up?<ArrowUpRight size={13}/>:<ArrowDownRight size={13}/>}
-  {Up?"+":""}{percent(value)} <em>zum Vorzeitraum</em>
- </span>;
-}
-function MetricCard({title,value,note,change,prior,current,icon}:{
- title:string;value:string;note:string;change?:number|null;prior?:number;current?:number;
- icon:React.ReactNode
-}){
- return <article className="rh-insight-metric">
-  <div className="rh-insight-metric-label"><span>{title}</span>{icon}</div>
-  <div className="rh-insight-metric-value">{value}</div>
-  <div className="rh-insight-metric-foot">
-   {change!==undefined&&prior!==undefined&&current!==undefined?<Change value={change} prior={prior} current={current}/>:null}
-   <small>{note}</small>
-  </div>
+const number=(n:number)=>new Intl.NumberFormat("de-DE").format(n);
+const enabledValue=(enabled:boolean,n:number)=>enabled?number(n):"—";
+const date=(d:Date)=>d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric",timeZone:"UTC"});
+const pct=(n:number)=>n.toLocaleString("de-DE",{maximumFractionDigits:1,minimumFractionDigits:1})+" %";
+
+function OverviewCard({label,value,note,icon,highlight=false}:{label:string;value:string;note:string;icon:React.ReactNode;highlight?:boolean}){
+ return <article className={"rh-ops-metric"+(highlight?" is-featured":"")}>
+  <div className="rh-ops-metric-heading"><span>{label}</span>{icon}</div>
+  <strong>{value}</strong><small>{note}</small>
  </article>;
 }
-function Distribution({title,subtitle,items,label}:{
- title:string;subtitle:string;items:AnalyticsReport["sources"];label:(key:string)=>string
-}){
- return <section className="rh-admin-panel-card rh-insight-distribution">
-  <div className="rh-admin-card-title"><div><span>{subtitle}</span><h2>{title}</h2></div></div>
-  {items.length?<div className="rh-insight-distribution-list">{items.map((item,i)=><div className="rh-insight-distribution-row" key={item.key}>
-   <div className="rh-insight-distribution-title"><span><i className={"rh-insight-chart-dot tone-"+(i%5)}/>{label(item.key)}</span><strong>{number(item.count)}</strong></div>
-   <div className="rh-insight-distribution-progress"><span style={{width:item.share+"%"}}/></div>
-   <small>{percent(item.share)} der gemessenen Seitenaufrufe</small>
-  </div>)}</div>:<div className="rh-insight-empty">Noch keine freigegebenen Seitenaufrufe für diese Auswertung.</div>}
+
+function EventFunnel({report,enabled}:{report:AnalyticsReport;enabled:boolean}){
+ const items=[
+  {name:"Shop aufgerufen",n:report.current.views,description:"Alle gezählten Seitenansichten"},
+  {name:"Produkte angesehen",n:report.funnel.productViews,description:"Produktseiten-Aufrufe"},
+  {name:"Zum Warenkorb hinzugefügt",n:report.current.added,description:"Klicks auf Warenkorb hinzufügen"},
+  {name:"Kasse geöffnet",n:report.current.checkouts,description:"Aufrufe des Checkouts"}
+ ];
+ const max=Math.max(1,...items.map(x=>x.n));
+ return <section className="rh-admin-panel-card rh-ops-funnel" aria-labelledby="rh-ops-funnel-title">
+  <div className="rh-ops-section-head"><div><span>02 / SHOPPING FUNNEL</span><h2 id="rh-ops-funnel-title">Wo entsteht Kaufinteresse?</h2>
+   <p>Vom Seitenaufruf bis zur Kasse – als einfache Übersicht der erfassten Aktionen.</p></div></div>
+  <div className="rh-ops-funnel-steps">
+   {items.map((item,i)=><div className="rh-ops-funnel-step" key={item.name}>
+    <div className="rh-ops-funnel-step-title"><span><b>{String(i+1).padStart(2,"0")}</b>{item.name}</span><strong>{enabledValue(enabled,item.n)}</strong></div>
+    <div className="rh-ops-funnel-track"><span style={{width:enabled?Math.max(item.n?2:0,item.n/max*100)+"%":"0%"}}/></div>
+    <small>{item.description}</small>
+   </div>)}
+  </div>
+  <p className="rh-ops-funnel-disclaimer"><Info size={16}/><span><strong>Wichtig:</strong> Dies sind unabhängige Ereigniszahlen, kein Verlauf einzelner Personen. Derselbe Besucher kann mehrfach klicken. Daher ist daraus <strong>keine Conversion-Rate</strong>, Nutzerzahl oder Abbruchquote ableitbar. Umsatz wird hier nicht aus anonymen Klicks geschätzt.</span></p>
  </section>;
 }
-export default async function AdminAnalytics({searchParams}:{searchParams:Promise<{tage?:string}>}){
+
+function Breakdown({title,items,labels}:{title:string;items:AnalyticsReport["sources"];labels:Record<string,string>}){
+ return <div className="rh-ops-breakdown"><h3>{title}</h3>
+  {items.length?items.map(({key,count,share})=><div className="rh-ops-breakdown-row" key={key}>
+    <span>{labels[key]||key}</span><strong>{number(count)} <small>· {pct(share)}</small></strong>
+   </div>):<p>Noch keine passenden Seitenaufrufe.</p>}
+ </div>;
+}
+
+export default async function AdminAnalytics({searchParams}:{searchParams:Promise<{zeitraum?:string;von?:string;bis?:string;tage?:string}>}){
  if(!await isAdmin())redirect("/admin/login");
  const params=await searchParams;
- const period=parseAnalyticsPeriod(params.tage);
+ const range=parseAnalyticsRange(params);
  const enabled=process.env.RUBY_ANALYTICS_ENABLED==="APPROVED";
- const report=await loadAnalyticsReport(period);
+ const report=await loadAnalyticsReport(range);
  const {current,previous}=report;
- const trackable=enabled&&current.views>0;
- const topInterest=report.pages.filter(p=>p.views>0||p.cartActions>0).slice(0,9);
- const totalActions=current.views+current.added+current.checkouts;
- const steps=[
-  {label:"Seitenaufrufe",value:current.views,help:"Jedes geladene, einwilligte Seitenereignis"},
-  {label:"In den Warenkorb",value:current.added,help:"Klick-Ereignisse, keine einzelnen Käufer"},
-  {label:"Kasse aufgerufen",value:current.checkouts,help:"Kassen-Seitenereignisse, keine Bestellungen"}
+ const exportQuery=new URLSearchParams({zeitraum:range.mode});
+ if(range.mode==="frei"){exportQuery.set("von",isoDay(range.start));exportQuery.set("bis",isoDay(range.end));}
+ const presets=[
+  {value:"heute",label:"Heute"},{value:"gestern",label:"Gestern"},
+  {value:"7",label:"7 Tage"},{value:"30",label:"30 Tage"},{value:"90",label:"90 Tage"}
  ];
- return <AdminShell current="analytics" title="Analytics & Insights."
-  description="Bewegungen verstehen, Artikelinteresse erkennen und Maßnahmen ableiten – ausschließlich aus freigegebenen Ereignissen.">
-  <div className="rh-insight-toolbar">
-   <div className="rh-insight-toolbar-meta"><CalendarDays size={16}/><span>{date(report.start)} – {date(report.end)} · UTC</span></div>
-   <nav className="rh-insight-periods" aria-label="Auswertungszeitraum">
-    {analyticsPeriods.map(n=><Link key={n} href={"/admin/analytics?tage="+n}
-     aria-current={period===n?"page":undefined} className={period===n?"is-active":undefined}>{n} Tage</Link>)}
-   </nav>
-   <Link className="rh-insight-export" href={"/admin/analytics/export?tage="+period}>
-    <Download size={16}/> CSV exportieren
+ const dateLimit=isoDay(addUtcDays(new Date(new Date().toISOString().slice(0,10)+"T00:00:00Z"),-179));
+ return <AdminShell current="analytics" title="Statistik im Überblick."
+  description="Einfach sehen, was im Shop passiert: Aufrufe, Produktinteresse, Warenkorb und Storys.">
+  <section className="rh-ops-filters" aria-label="Zeitraum der Statistik">
+   <div className="rh-ops-presets" role="group" aria-label="Schnellauswahl">
+    {presets.map(item=><Link key={item.value} prefetch={false}
+     className={range.mode===item.value?"is-active":""}
+     aria-current={range.mode===item.value?"page":undefined}
+     href={"/admin/analytics?zeitraum="+item.value}>{item.label}</Link>)}
+   </div>
+   <form className="rh-ops-custom" action="/admin/analytics" method="GET">
+    <input type="hidden" name="zeitraum" value="frei"/>
+    <label>Von <input type="date" name="von" required min={dateLimit} max={isoDay(new Date())}
+      defaultValue={isoDay(range.start)}/></label>
+    <label>Bis <input type="date" name="bis" required min={dateLimit} max={isoDay(new Date())}
+      defaultValue={isoDay(range.end)}/></label>
+    <button type="submit">Anwenden</button>
+   </form>
+   <Link className="rh-ops-export" prefetch={false} href={"/admin/analytics/export?"+exportQuery.toString()}>
+    <Download size={15}/> CSV exportieren
    </Link>
+   <p className="rh-ops-filter-caption"><CalendarDays size={14}/> {range.label}: {date(report.start)} – {date(report.end)} · {range.days} {range.days===1?"Tag":"Tage"} · UTC-Tageswerte</p>
+  </section>
+  <section className="rh-ops-kpis" aria-label="Wichtigste Kennzahlen">
+   <OverviewCard label="Seitenaufrufe" icon={<Eye size={19}/>} value={enabledValue(enabled,current.views)}
+    note="Aufrufe, keine eindeutigen Besucher" highlight/>
+   <OverviewCard label="Produktansichten" icon={<TrendingUp size={19}/>} value={enabledValue(enabled,report.funnel.productViews)}
+    note="Aufrufe der Produktseiten"/>
+   <OverviewCard label="Zum Warenkorb" icon={<ShoppingCart size={19}/>} value={enabledValue(enabled,current.added)}
+    note="Warenkorb-Aktionen"/>
+   <OverviewCard label="Kassenaufrufe" icon={<ShoppingBag size={19}/>} value={enabledValue(enabled,current.checkouts)}
+    note="Kassenbesuche, keine Käufe"/>
+  </section>
+  <div className="rh-ops-analytics-note"><ShieldCheck size={16}/><span>
+   {enabled?"Erfassung aktiv – nur mit Einwilligung.":"Erfassung deaktiviert."}
+   {" "}Anonyme Tageswerte, keine Kundenprofile. Aktualisierung spätestens nach ca. 30 Sekunden.
+   </span></div>
+  <div className="rh-ops-primary">
+   <section className="rh-admin-panel-card rh-ops-activity">
+    <div className="rh-ops-section-head"><div><span>01 / ENTWICKLUNG</span><h2>Aktivität im Zeitverlauf</h2>
+     <p>Wie oft wurden Seiten angesehen und Produkte zum Warenkorb hinzugefügt?</p></div></div>
+    {enabled&&report.current.views>0?<AdminActivityChart daily={report.daily}/>:<div className="rh-insight-empty">Noch keine freigegebenen Daten für diesen Zeitraum.</div>}
+    <p className="rh-ops-muted">Vorherige {range.days} {range.days===1?"Tag":"Tage"}: {enabledValue(enabled,previous.views)} Seitenaufrufe. Keine eindeutigen Besucher.</p>
+   </section>
+   <EventFunnel report={report} enabled={enabled}/>
   </div>
-  <div className="rh-insight-consent-bar">
-   <div><span className={"rh-insight-signal "+(enabled?"enabled":"disabled")}/>
-    <strong>{enabled?"Statistik-Erfassung aktiv":"Statistik-Erfassung deaktiviert"}</strong>
-    <p>Nur nach ausdrücklicher Einwilligung · anonymisierte Tagesaggregate · 180 Tage Aufbewahrung</p>
-   </div>
-   <div className="rh-insight-consent-help"><ShieldCheck size={19}/><span>Keine Nutzerprofile oder einzelnen Sitzungen</span></div>
+  <div className="rh-ops-community-head"><span>03 / COMMUNITY</span><h2>Storys & KI-Haaranprobe</h2>
+   <p>Sieh auf einen Blick, welche Storys angeschaut und wie oft Haarfarben getestet werden.</p></div>
+  <div className="rh-ops-community-kpis">
+   <OverviewCard label="Story-Aufrufe" value={enabledValue(enabled,report.engagement.storyViews)} icon={<Eye size={17}/>}
+    note="Alle Story-Wiedergaben"/>
+   <OverviewCard label="KI gestartet" value={enabledValue(enabled,report.engagement.aiStarts)} icon={<Sparkles size={17}/>}
+    note="Begonnene Versuche"/>
+   <OverviewCard label="KI-Ergebnisse" value={enabledValue(enabled,report.engagement.aiTryons)} icon={<Sparkles size={17}/>}
+    note="Erfolgreich erstellt"/>
+   <OverviewCard label="KI → Warenkorb" value={enabledValue(enabled,report.engagement.aiAdds)} icon={<ShoppingBag size={17}/>}
+    note="Aus dem Ergebnis zum Warenkorb"/>
   </div>
-  <div className="rh-insight-kpis">
-   <MetricCard title="Seitenaufrufe" value={numeral(enabled,current.views)} icon={<Eye size={19}/>}
-    current={current.views} prior={previous.views} change={enabled?report.viewChange:undefined}
-    note="Keine eindeutigen Besucher"/>
-   <MetricCard title="Warenkorb-Aktionen" value={numeral(enabled,current.added)} icon={<ShoppingCart size={19}/>}
-    current={current.added} prior={previous.added} change={enabled?report.cartChange:undefined}
-    note="Klicks, keine Sitzungen"/>
-   <MetricCard title="Kassenaufrufe" value={numeral(enabled,current.checkouts)} icon={<ShoppingBag size={19}/>}
-    current={current.checkouts} prior={previous.checkouts} change={enabled?report.checkoutChange:undefined}
-    note="Kein bestätigter Kauf"/>
-   <MetricCard title="Bezahlter Umsatz" value="—" icon={<BarChart3 size={19}/>}
-    note="Umsatz wird hier nicht aus anonymen Klicks geschätzt"/>
-  </div>
-  <section className="rh-admin-panel-card rh-community-report" aria-labelledby="rh-community-stat-title">
-   <div className="rh-admin-card-title"><div><span>COMMUNITY & KI / NUR NACH EINWILLIGUNG</span><h2 id="rh-community-stat-title">Story-Aufrufe & KI-Haaranprobe</h2></div></div>
-   <p className="rh-admin-muted">Ab Aktivierung erfasste Aufrufe und erfolgreiche KI-Ergebnisse. Keine eindeutigen Personen, keine Foto- oder Kundendaten.</p>
-   <div className="rh-community-kpis">
-    <div><small>Story-Aufrufe</small><strong>{numeral(enabled,report.engagement.storyViews)}</strong><span>Wiedergaben der Community-Stories</span></div>
-    <div><small>KI gestartet</small><strong>{numeral(enabled,report.engagement.aiStarts)}</strong><span>Gestartete Bildversuche</span></div>
-    <div><small>KI-Vorschauen erstellt</small><strong>{numeral(enabled,report.engagement.aiTryons)}</strong><span>Erfolgreich abgeschlossene Bildgenerierungen</span></div>
-    <div><small>KI → Warenkorb</small><strong>{numeral(enabled,report.engagement.aiAdds)}</strong><span>Nach der Vorschau ausgewählte Haarvarianten</span></div>
-   </div>
-   <div className="rh-community-story-list" aria-label="Aufrufe je Story">
-    {report.stories.map(story=><div className="rh-community-story-row" key={story.path}>
-     <img src={story.image} alt="" loading="lazy" width={64} height={76}/>
-     <div><strong>{story.name}</strong><small>Community-Beitrag · keine eindeutigen Personen</small></div>
-     <span>{numeral(enabled,story.views)} <small>Aufrufe</small></span>
+  <section className="rh-admin-panel-card rh-ops-stories" aria-labelledby="rh-ops-stories-title">
+   <div className="rh-ops-section-head"><div><span>COMMUNITY-STORYS</span><h2 id="rh-ops-stories-title">Welche Story wird angesehen?</h2></div></div>
+   <div className="rh-ops-story-grid">
+    {report.stories.map((story,i)=><div className="rh-ops-story-item" key={story.path}>
+     <img src={story.image} width="54" height="68" alt="" loading="lazy"/>
+     <div><strong>{story.name}</strong><small>Story {String(i+1).padStart(2,"0")}</small></div>
+     <div className="rh-ops-story-count"><strong>{enabledValue(enabled,story.views)}</strong><small>Aufrufe</small></div>
     </div>)}
    </div>
+   <p className="rh-ops-muted">Die Werte zählen Wiedergaben nach Einwilligung; keine eindeutigen Nutzer oder einzelnen Personen.</p>
   </section>
-  <div className="rh-insight-main-grid">
-   <section className="rh-admin-panel-card rh-insight-trend-card">
-    <div className="rh-admin-card-title">
-     <div><span>VERLAUF / {period} TAGE</span><h2>Aktivität im Zeitverlauf</h2></div>
-     <span>UTC · täglich</span>
+  <details className="rh-admin-panel-card rh-ops-more">
+   <summary><span><MousePointer2 size={18}/> Weitere Analysen</span><small>Beliebte Seiten, Herkunft und Geräte anzeigen</small></summary>
+   <div className="rh-ops-more-content">
+    <div className="rh-ops-top-pages"><h3>Beliebte Seiten</h3>
+     {report.pages.filter(p=>p.views>0||p.cartActions>0).slice(0,10).map(p=><div key={p.path}>
+      <span>{analyticsPathLabel(p.path)}<small>{p.path}</small></span>
+      <strong>{number(p.views)} <small>Aufrufe</small></strong>
+     </div>)}
+     {!report.pages.length&&<p>Noch keine Seitenaufrufe verfügbar.</p>}
     </div>
-    <div className="rh-insight-legend">
-     <span><i className="views"/>Seitenaufrufe</span>
-     <span><i className="cart"/>Warenkorb-Aktionen</span>
-    </div>
-    {trackable?<><AdminActivityChart daily={report.daily}/>
-      <div className="rh-insight-chart-footer"><span>{report.observedDays} Tage mit aufgezeichneten Seitenaufrufen</span><span>Höchster Tageswert: {number(Math.max(...report.daily.map(d=>d.views)))}</span></div>
-     </>:<div className="rh-insight-chart-empty">
-      <BarChart3 size={28}/>
-      <strong>Noch keine auswertbare Verlaufskurve</strong>
-      <p>Wenn Kundinnen zustimmen und Seiten aufrufen, erscheint hier der Tagesverlauf. Ohne Freigabe werden keine Daten gezählt.</p>
-     </div>}
-   </section>
-   <section className="rh-admin-panel-card rh-insight-health-card">
-    <div className="rh-admin-card-title"><div><span>INTERPRETATION</span><h2>Was zeigen die Daten?</h2></div></div>
-    <div className="rh-insight-readout">
-     <div><span>Erfasste Aktivität</span><strong>{enabled?number(totalActions):"—"}</strong><small>Event-Vorkommen im ausgewählten Zeitraum</small></div>
-     <div><span>Vorzeitraum</span><strong>{enabled?number(previous.views):"—"}</strong><small>Seitenaufrufe in den vorangegangenen {period} Tagen</small></div>
-     <div><span>Tage mit Seitenaufrufen</span><strong>{enabled?report.observedDays+" / "+period:"—"}</strong><small>Keine Aussage über aktive Nutzer pro Tag</small></div>
-    </div>
-    <div className="rh-insight-action-note"><Info size={18}/>
-     <p>{current.views===0?"Für Entscheidungen ist noch mehr freigegebene Aktivität erforderlich.":"Bei geringen Datenmengen sind einzelne Schwankungen nicht aussagekräftig. Seitenaufrufe und Warenkorb-Klicks sind keine Besucher- oder Kaufquoten."}</p>
-    </div>
-   </section>
-  </div>
-  <div className="rh-insight-main-grid rh-insight-secondary-grid">
-   <section className="rh-admin-panel-card">
-    <div className="rh-admin-card-title"><div><span>SEITEN / NACHFRAGE</span><h2>Welche Inhalte werden genutzt?</h2></div><span>Top 9</span></div>
-    <p className="rh-admin-muted">Seitenaufrufe und Warenkorb-Aktionen je Seitenpfad. Ein Klick kann mehrfach vorkommen.</p>
-    {enabled&&topInterest.length?<div className="rh-insight-table-wrap"><table className="rh-insight-table">
-     <thead><tr><th>Bereich</th><th>Aufrufe</th><th>Warenkorb-Klicks</th><th>Anteil an Aufrufen</th></tr></thead>
-     <tbody>{topInterest.map(p=><tr key={p.path}>
-      <td><span className="rh-insight-path-name">{analyticsPathLabel(p.path)}</span><small>{p.path}</small></td>
-      <td>{number(p.views)}</td><td>{number(p.cartActions)}</td>
-      <td><div className="rh-insight-table-bar"><span style={{width:current.views?Math.min(100,p.views/current.views*100)+"%":"0%"}}/></div>
-       <small>{current.views?percent(p.views/current.views*100):"—"}</small></td>
-     </tr>)}</tbody></table></div>:<div className="rh-insight-empty">Noch keine passenden Seitenereignisse.</div>}
-   </section>
-   <section className="rh-admin-panel-card rh-insight-events-card">
-    <div className="rh-admin-card-title"><div><span>SHOPPING / INTERAKTIONEN</span><h2>Ereignisfolge</h2></div></div>
-    <p className="rh-admin-muted">Drei unabhängig gezählte Ereignistypen. Keine personengebundene Conversion-Funnel-Analyse.</p>
-    <div className="rh-insight-event-steps">{steps.map((step,i)=><div key={step.label} className="rh-insight-event-step">
-     <span className="rh-insight-event-index">0{i+1}</span>
-     <div><strong>{step.label}</strong><small>{step.help}</small></div>
-     <b>{numeral(enabled,step.value)}</b>
-    </div>)}</div>
-    <div className="rh-insight-not-a-conversion"><MousePointer2 size={16}/><p>Eine Person kann dieselbe Seite mehrfach öffnen oder den Warenkorb mehrfach anklicken. Deshalb berechnen wir daraus <strong>keine Conversion-Rate</strong>.</p></div>
-   </section>
-  </div>
-  <div className="rh-insight-distributions">
-   <Distribution title="Referrer-Kategorien" subtitle="AUFRUFQUELLEN / NICHT ATTRIBUTION" items={enabled?report.sources:[]} label={key=>analyticsSourceLabels[key]||key}/>
-   <Distribution title="Gerätenutzung" subtitle="GERÄTE / SEITENAUFRUFE" items={enabled?report.devices:[]} label={key=>analyticsDeviceLabels[key]||key}/>
-  </div>
-  <section className="rh-admin-panel-card rh-insight-methodology">
-   <div className="rh-insight-method-head"><CheckCircle2 size={20}/><div><strong>Datengrundlage und Grenzen</strong><p>Worauf du dich bei diesen Kennzahlen verlassen kannst – und worauf nicht.</p></div></div>
-   <div className="rh-insight-method-grid">
-    <div><span>01 / ERFASST</span><p>Seitenaufrufe, Warenkorb-Aktionen, Kassenaufrufe, kategorisierte Referrer und Mobil/Desktop. Nur mit Zustimmung.</p></div>
-    <div><span>02 / NICHT ERFASST</span><p>Einzelne Besucher, Sitzungsdauer, eindeutige Nutzer, Abbruch- oder Checkout-Conversion-Rate, Suchbegriffe oder Warenkorbinhalte.</p></div>
-    <div><span>03 / GETRENNT</span><p>Bezahlte Bestellungen und reale Umsätze werden aus den bestätigten Zahlungs- und Bestelldaten geprüft, nicht aus anonymen Klickereignissen errechnet.</p></div>
+    <Breakdown title="Referrer-Kategorien" items={enabled?report.sources:[]} labels={analyticsSourceLabels}/>
+    <Breakdown title="Geräte" items={enabled?report.devices:[]} labels={analyticsDeviceLabels}/>
    </div>
-   <p className="rh-insight-method-foot">Referrer zeigen die Herkunft einzelner Seitenaufrufe und enthalten interne Navigation. Sie sind keine belastbare Marketingkanal-Zuordnung. Gespeicherte Tage sind UTC-Tage.</p>
-  </section>
+  </details>
+  <p className="rh-ops-privacy-footer"><BarChart3 size={15}/> Bezahlter Umsatz wird hier nicht aus anonymen Klicks geschätzt. Bestätigte Zahlungen und Rechnungen findest du unter Bestellungen/Zahlungen. Eine echte, personenbezogene Funnel- oder Conversion-Rate-Analyse findet nicht statt.</p>
  </AdminShell>;
 }

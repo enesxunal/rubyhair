@@ -23,6 +23,7 @@ export default function AnalyticsConsent(){
  const [draftMarketing,setDraftMarketing]=useState(false);
  const [draftGoogle,setDraftGoogle]=useState(false);
  const [open,setOpen]=useState(false);
+ const [detailsOpen,setDetailsOpen]=useState(false);
  const [initialized,setInitialized]=useState(false);
  const statsAvailable=analyticsEnabled();
  const trackable=isTrackableRubyPath(path)||path.startsWith("/ratgeber/");
@@ -35,7 +36,7 @@ export default function AnalyticsConsent(){
   if((statsAvailable&&stats===null)||ads===null||ga===null)setOpen(true);
  },[trackable,statsAvailable]);
  useEffect(()=>{
-  const showSettings=()=>setOpen(true);
+  const showSettings=()=>{setDetailsOpen(true);setOpen(true)};
   window.addEventListener("ruby-open-analytics-settings",showSettings);
   return ()=>window.removeEventListener("ruby-open-analytics-settings",showSettings);
  },[]);
@@ -82,16 +83,22 @@ export default function AnalyticsConsent(){
   if((oldMarketing==="allow"&&ads==="deny")||(oldGA==="allow"&&ga==="deny"))window.location.reload();
  };
  if(path.startsWith("/admin")||path.startsWith("/api")||path.startsWith("/konto")||path.startsWith("/coming-soon"))return null;
- return <>{open&&<aside className="rh-consent-panel" role="dialog" aria-modal="false" aria-label="Datenschutz- und Cookie-Einstellungen">
-    <strong>Privatsphäre & Cookies</strong>
-    <p>Notwendige Funktionen sind immer aktiv. Optionale Dienste starten erst nach deiner Zustimmung. Du kannst deine Entscheidung jederzeit über den Seitenfuß ändern. <Link href="/rechtliches/datenschutz/">Datenschutzerklärung</Link></p>
-    {statsAvailable&&<label className="rh-consent-option"><input type="checkbox" checked={draftStatistics} onChange={e=>setDraftStatistics(e.target.checked)}/><span><b>Statistik</b><small>Anonyme Tageszähler für Seiten, Community-Stories, KI-Versuche und Warenkorb-Aktionen. Keine Fotos oder Nutzerprofile.</small></span></label>}
-    <label className="rh-consent-option"><input type="checkbox" checked={draftGoogle} onChange={e=>setDraftGoogle(e.target.checked)}/><span><b>Google Analytics 4 (Statistik)</b><small>Mit eigener Einwilligung: Seiten- und Shop-Ereignisse an Google Ireland. Frühere Zustimmungen zur internen Statistik gelten hierfür nicht.</small></span></label>
-    <label className="rh-consent-option"><input type="checkbox" checked={draftMarketing} onChange={e=>setDraftMarketing(e.target.checked)}/><span><b>Marketing (Meta Pixel)</b><small>Erst mit Zustimmung: Seitenaufruf, Produktansicht, Warenkorb und Checkout an Meta. Es werden keine Fotos oder Namen übertragen.</small></span></label>
+ return <>{open&&<aside className="rh-consent-panel rh-consent-simplified" role="dialog" aria-modal="false" aria-label="Datenschutz- und Cookie-Einstellungen">
+    <header className="rh-consent-head"><span>RUBY HAIR / DATENSCHUTZ</span><strong>Deine Privatsphäre.</strong></header>
+    <p>Wir verwenden notwendige Cookies, damit der Shop funktioniert. Statistik und Marketing sind freiwillig und bleiben ohne Zustimmung aus.</p>
+    {detailsOpen&&<div className="rh-consent-preferences" role="group" aria-label="Optionale Cookie-Einstellungen">
+     <div className="rh-consent-necessary"><b>Notwendig</b><span>Immer aktiv · Warenkorb und sicherer Checkout</span></div>
+     {statsAvailable&&<label className="rh-consent-option"><input type="checkbox" checked={draftStatistics} onChange={e=>setDraftStatistics(e.target.checked)}/><span><b>Interne Statistik</b><small>Anonyme Seiten-, Story- und KI-Nutzungszahlen, keine Fotos und keine Personenprofile.</small></span></label>}
+     <label className="rh-consent-option"><input type="checkbox" checked={draftGoogle} onChange={e=>setDraftGoogle(e.target.checked)}/><span><b>Google Analytics 4 (Statistik)</b><small>Freiwillige Shop-Nutzungsmessung durch Google, nur bei eigener Zustimmung.</small></span></label>
+     <label className="rh-consent-option"><input type="checkbox" checked={draftMarketing} onChange={e=>setDraftMarketing(e.target.checked)}/><span><b>Marketing (Meta Pixel)</b><small>Freiwillige Werbungsmessung durch Meta, ohne persönliche Fotos.</small></span></label>
+    </div>}
     <div className="rh-consent-actions">
-     <button type="button" onClick={()=>save("deny","deny","deny")}>Alle ablehnen</button>
-     <button type="button" onClick={()=>save(draftStatistics&&statsAvailable?"allow":"deny",draftMarketing?"allow":"deny",draftGoogle?"allow":"deny")}>Auswahl speichern</button>
-     <button type="button" onClick={()=>save(statsAvailable?"allow":"deny","allow","allow")}>Alle akzeptieren</button>
+     <button type="button" className="rh-consent-reject" onClick={()=>save("deny","deny","deny")}>Alle ablehnen</button>
+     {detailsOpen
+       ?<button type="button" className="rh-consent-manage" onClick={()=>save(draftStatistics&&statsAvailable?"allow":"deny",draftMarketing?"allow":"deny",draftGoogle?"allow":"deny")}>Auswahl speichern</button>
+       :<button type="button" className="rh-consent-manage" onClick={()=>setDetailsOpen(true)}>Anpassen</button>}
+     <button type="button" className="rh-consent-accept" onClick={()=>save(statsAvailable?"allow":"deny","allow","allow")}>Alle akzeptieren</button>
     </div>
+    <footer className="rh-consent-foot"><span>Du kannst deine Wahl jederzeit im Footer ändern.</span><Link href="/rechtliches/datenschutz/">Datenschutzerklärung</Link></footer>
    </aside>}</>;
 }

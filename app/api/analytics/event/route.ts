@@ -5,7 +5,7 @@ import {storyAnalyticsPaths} from "@/data/story-analytics";
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
 const cache={"Cache-Control":"private, no-store"};
-const publicPaths=new Set(["/","/kollektionen","/kollektionen/tape-in-extensions","/produkt/tape-in-extensions","/ratgeber","/kontakt","/versand-zahlung","/warenkorb","/kasse","/haar-anprobe","/suche","/geschenkgutschein"]);
+const publicPaths=new Set(["/","/kollektionen","/kollektionen/tape-in-extensions","/produkt/tape-in-extensions","/produkt/keratin-bondings","/ratgeber","/kontakt","/versand-zahlung","/warenkorb","/kasse","/haar-anprobe","/suche","/geschenkgutschein"]);
 const schema=z.object({
   event:z.enum(["page_view","add_to_cart","begin_checkout","story_view","ai_tryon_start","ai_tryon_success","ai_to_cart"]),
   path:z.string().min(1).max(80),

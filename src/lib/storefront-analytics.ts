@@ -3,7 +3,7 @@ import {storyAnalyticsPaths} from "@/data/story-analytics";
 export type RubyEvent="page_view"|"add_to_cart"|"begin_checkout"|"story_view"|"ai_tryon_start"|"ai_tryon_success"|"ai_to_cart";
 const enabled=process.env.NEXT_PUBLIC_RUBY_ANALYTICS_ENABLED==="APPROVED";
 export const analyticsEnabled=()=>enabled;
-const allowed=new Set(["/","/kollektionen","/kollektionen/tape-in-extensions","/produkt/tape-in-extensions","/ratgeber","/kontakt","/versand-zahlung","/warenkorb","/kasse","/haar-anprobe","/suche","/geschenkgutschein"]);
+const allowed=new Set(["/","/kollektionen","/kollektionen/tape-in-extensions","/produkt/tape-in-extensions","/produkt/keratin-bondings","/ratgeber","/kontakt","/versand-zahlung","/warenkorb","/kasse","/haar-anprobe","/suche","/geschenkgutschein"]);
 const source=()=>{
  if(!document.referrer)return "direct";
  try{

@@ -43,7 +43,7 @@ export default function AdminShell({
    <div className="rh-admin-sidebar-main">
     <p className="rh-admin-menu-title">WORKSPACE</p>
     <nav aria-label="Admin Navigation" className="rh-admin-nav">
-     {sections.map(section=><Link href={section.href} key={section.href}
+     {sections.map(section=><Link href={section.href} prefetch={false} key={section.href}
       aria-current={active===section.href?"page":undefined}
       className={active===section.href?"is-current":undefined}>
       <section.icon size={17} strokeWidth={1.75}/><span>{section.label}</span>
@@ -51,8 +51,8 @@ export default function AdminShell({
      </Link>)}
     </nav>
     <details className="rh-admin-advanced-nav"><summary><FlaskConical size={15}/> Erweiterte Werkzeuge</summary>
-     <Link href="/admin/testbestellung">1 € Testbestellung</Link>
-     <Link href="/admin/dhl">DHL-Verbindung</Link>
+     <Link prefetch={false} href="/admin/testbestellung">1 € Testbestellung</Link>
+     <Link prefetch={false} href="/admin/dhl">DHL-Verbindung</Link>
     </details>
    </div>
    <div className="rh-admin-sidebar-bottom">

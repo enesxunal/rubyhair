@@ -762,7 +762,7 @@ test("live merchant administration defaults to real orders and keeps test invent
  const orders=fs.readFileSync(path.join(base,"app/admin/bestellungen/page.tsx"),"utf8");
  const shell=fs.readFileSync(path.join(base,"app/admin/admin-shell.tsx"),"utf8");
  const css=fs.readFileSync(path.join(base,"src/styles/admin-v2.css"),"utf8");
- assert.ok(dash.includes('db.variant.findMany({where:{product:{active:true}}'));
+ assert.ok(dash.includes('db.product.findMany({where:{active:true},select:{id:true,name:true,variants:'));
  assert.ok(dash.includes('db.order.findMany({where:{testOnly:false}'));
  assert.ok(dash.includes('Ruby Hair ist live.'));
  assert.ok(!dash.includes('Keine Live-Zahlungen aktiviert'));
