@@ -1,16 +1,23 @@
 import {NextRequest,NextResponse} from "next/server";
 import {z} from "zod";
 import {databaseConfigured,getPrisma} from "@/lib/prisma";
+import {storyAnalyticsPaths} from "@/data/story-analytics";
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
 const cache={"Cache-Control":"private, no-store"};
+const publicPaths=new Set(["/","/kollektionen","/kollektionen/tape-in-extensions","/produkt/tape-in-extensions","/ratgeber","/kontakt","/versand-zahlung","/warenkorb","/kasse","/haar-anprobe","/suche","/geschenkgutschein"]);
 const schema=z.object({
-  event:z.enum(["page_view","add_to_cart","begin_checkout"]),
-  path:z.enum(["/","/kollektionen","/kollektionen/tape-in-extensions","/produkt/tape-in-extensions","/ratgeber","/kontakt","/versand-zahlung","/warenkorb","/kasse","/haar-anprobe","/suche"]),
+  event:z.enum(["page_view","add_to_cart","begin_checkout","story_view","ai_tryon_start","ai_tryon_success","ai_to_cart"]),
+  path:z.string().min(1).max(80),
   source:z.enum(["direct","search","social","referral","internal"]),
   device:z.enum(["mobile","desktop"]),
   consent:z.literal(true)
-}).strict();
+}).strict().superRefine((data,ctx)=>{
+ const allowed=data.event==="story_view"?storyAnalyticsPaths.has(data.path):
+  data.event==="ai_tryon_start"||data.event==="ai_tryon_success"||data.event==="ai_to_cart"?data.path==="/haar-anprobe":
+  publicPaths.has(data.path);
+ if(!allowed)ctx.addIssue({code:"custom",path:["path"],message:"Event path not allowed"});
+});
 export async function POST(request:NextRequest){
  // Collect only after explicit consent and both server/client activation flags.
  if(process.env.RUBY_ANALYTICS_ENABLED!=="APPROVED"||!databaseConfigured())

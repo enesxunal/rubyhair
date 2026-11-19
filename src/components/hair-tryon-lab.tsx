@@ -2,7 +2,11 @@
 
 import {useEffect,useMemo,useRef,useState,type ChangeEvent,type DragEvent,type PointerEvent} from "react";
 import Link from "next/link";
-import {ArrowLeft,ArrowRight,ArrowLeftRight,Check,ChevronDown,Download,ImagePlus,LockKeyhole,RefreshCw,Scissors,Sparkles,Upload,WandSparkles,X} from "lucide-react";
+import {useRouter} from "next/navigation";
+import {useCart} from "@/components/cart-context";
+import {byVariation} from "@/lib/catalog";
+import {trackRubyEvent} from "@/lib/storefront-analytics";
+import {ArrowLeft,ArrowRight,ArrowLeftRight,Check,ChevronDown,Download,ImagePlus,LockKeyhole,RefreshCw,Scissors,Sparkles,Upload,WandSparkles,ShoppingBag,X} from "lucide-react";
 
 type Variation={color:string;code:string;length:string;image:string;key:string};
 const SHADE_ORDER=["1","1b","2","2b","4","6","7","8","9a","10","60","ari","eve","banu","bronde","loui","ruby","silver"];
@@ -37,6 +41,7 @@ async function shrinkImage(file:File):Promise<Blob>{
 
 export default function HairTryonLab({products}:{products:Product[]}){
  const product=products[0];
+ const cart=useCart(),router=useRouter();
  const [color,setColor]=useState(product?.variants.find(v=>v.code.toLowerCase()==="1")?.color||product?.variants[0]?.color||"");
  const [wizardStep,setWizardStep]=useState<0|1|2|3|4>(0);
  const [length,setLength]=useState(product?.variants[0]?.length||"");
@@ -61,6 +66,12 @@ export default function HairTryonLab({products}:{products:Product[]}){
  const picked=available.find(v=>v.length===length)||available[0]||product?.variants[0];
  const currentColor=picked?.color||color;
  const currentLength=picked?.length||length;
+ const selectedId=Number(picked?.key.split("-").pop());
+ const selectedProduct=Number.isInteger(selectedId)?byVariation(selectedId):null;
+ const canBuySelected=Boolean(selectedProduct?.variation.available&&selectedProduct.variation.purchasable);
+ const productHref=selectedProduct?
+  "/produkt/"+selectedProduct.product.slug+"/?farbe="+encodeURIComponent(selectedProduct.variation.color)+"&laenge="+encodeURIComponent(selectedProduct.variation.length):
+  "/produkt/tape-in-extensions/";
  const colorOptions=(product?colors.map(tone=>product.variants.find(v=>v.color===tone)!).filter(Boolean):[])
   .sort((a,b)=>shadeRank(a.code)-shadeRank(b.code)||new Intl.Collator("de",{numeric:true}).compare(a.code,b.code));
 
@@ -114,6 +125,7 @@ export default function HairTryonLab({products}:{products:Product[]}){
   if(!before?.file||!picked||!aiAvailable||generating)return;
   if(!consent){setAiIssue("Bitte stimme zuerst der Fotoverarbeitung durch OpenAI zu.");return;}
   setGenerating(true);setIssue("");setAiIssue("");setAiInfo("");
+  trackRubyEvent("ai_tryon_start");
   try{
    const compressed=await shrinkImage(before.file);
    const payload=new FormData();
@@ -131,9 +143,17 @@ export default function HairTryonLab({products}:{products:Product[]}){
    setAfter({url:data.image,name:"Ruby Hair KI-Vorschau"});
    setRatio(50);setWizardStep(4);
    setAiInfo("Dein Ergebnis ist fertig. Prüfe bitte Haarfarbe und Haaransatz.");
+   trackRubyEvent("ai_tryon_success");
   }catch(error){
    setAiIssue(error instanceof Error?error.message:"Die KI-Haaranprobe ist fehlgeschlagen.");
   }finally{setGenerating(false);}
+ };
+
+ const addLookToCart=()=>{
+  if(!after||!selectedProduct||!canBuySelected||!cart.loaded)return;
+  cart.add(selectedProduct.variation.id,1);
+  trackRubyEvent("ai_to_cart");
+  router.push("/warenkorb/");
  };
 
  const goStep=(next:0|1|2|3|4)=>{
@@ -343,6 +363,20 @@ export default function HairTryonLab({products}:{products:Product[]}){
       <span>Nachher</span>
      </div>
      <p className="rh-wizard-result-note">Dies ist eine unverbindliche KI-Vorschau. Bitte vergleiche den Haaransatz und die ursprüngliche Haarfarbe mit dem Original.</p>
+     <div className="rh-wizard-shop-choice">
+      <img src={picked?.image} alt={"Ausgewählte Ruby Hair Extensions – Farbton "+currentColor} width={130} height={155}/>
+      <div className="rh-wizard-shop-choice-copy"><small>DEIN AUSGEWÄHLTER LOOK</small>
+       <strong>Tape-in Extensions · Farbton {currentColor}</strong>
+       <span>Farbnummer {picked?.code.toUpperCase()} · {currentLength}</span>
+       <p>Lege genau die Farbe und Länge aus deiner KI-Vorschau in den Warenkorb. Preis und Lagerbestand werden vor dem Kauf geprüft.</p>
+      </div>
+      <div className="rh-wizard-shop-choice-actions">
+       <button className="rh-wizard-main-button" type="button" onClick={addLookToCart} disabled={!canBuySelected||!cart.loaded}>
+        <ShoppingBag size={18}/> {canBuySelected?"In den Warenkorb":"Momentan nicht verfügbar"}
+       </button>
+       <Link href={productHref}>Produkt ansehen <ArrowRight size={15}/></Link>
+      </div>
+     </div>
      <div className="rh-wizard-buttons">
       <button type="button" className="rh-wizard-back" onClick={()=>{clearResult();goStep(2);}}>
        <RefreshCw size={17}/> Anderen Look testen

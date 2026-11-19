@@ -100,8 +100,25 @@ export default async function AdminAnalytics({searchParams}:{searchParams:Promis
     current={current.checkouts} prior={previous.checkouts} change={enabled?report.checkoutChange:undefined}
     note="Kein bestätigter Kauf"/>
    <MetricCard title="Bezahlter Umsatz" value="—" icon={<BarChart3 size={19}/>}
-    note="Checkout und PSP noch deaktiviert"/>
+    note="Umsatz wird hier nicht aus anonymen Klicks geschätzt"/>
   </div>
+  <section className="rh-admin-panel-card rh-community-report" aria-labelledby="rh-community-stat-title">
+   <div className="rh-admin-card-title"><div><span>COMMUNITY & KI / NUR NACH EINWILLIGUNG</span><h2 id="rh-community-stat-title">Story-Aufrufe & KI-Haaranprobe</h2></div></div>
+   <p className="rh-admin-muted">Ab Aktivierung erfasste Aufrufe und erfolgreiche KI-Ergebnisse. Keine eindeutigen Personen, keine Foto- oder Kundendaten.</p>
+   <div className="rh-community-kpis">
+    <div><small>Story-Aufrufe</small><strong>{numeral(enabled,report.engagement.storyViews)}</strong><span>Wiedergaben der Community-Stories</span></div>
+    <div><small>KI gestartet</small><strong>{numeral(enabled,report.engagement.aiStarts)}</strong><span>Gestartete Bildversuche</span></div>
+    <div><small>KI-Vorschauen erstellt</small><strong>{numeral(enabled,report.engagement.aiTryons)}</strong><span>Erfolgreich abgeschlossene Bildgenerierungen</span></div>
+    <div><small>KI → Warenkorb</small><strong>{numeral(enabled,report.engagement.aiAdds)}</strong><span>Nach der Vorschau ausgewählte Haarvarianten</span></div>
+   </div>
+   <div className="rh-community-story-list" aria-label="Aufrufe je Story">
+    {report.stories.map(story=><div className="rh-community-story-row" key={story.path}>
+     <img src={story.image} alt="" loading="lazy" width={64} height={76}/>
+     <div><strong>{story.name}</strong><small>Community-Beitrag · keine eindeutigen Personen</small></div>
+     <span>{numeral(enabled,story.views)} <small>Aufrufe</small></span>
+    </div>)}
+   </div>
+  </section>
   <div className="rh-insight-main-grid">
    <section className="rh-admin-panel-card rh-insight-trend-card">
     <div className="rh-admin-card-title">
@@ -165,7 +182,7 @@ export default async function AdminAnalytics({searchParams}:{searchParams:Promis
    <div className="rh-insight-method-grid">
     <div><span>01 / ERFASST</span><p>Seitenaufrufe, Warenkorb-Aktionen, Kassenaufrufe, kategorisierte Referrer und Mobil/Desktop. Nur mit Zustimmung.</p></div>
     <div><span>02 / NICHT ERFASST</span><p>Einzelne Besucher, Sitzungsdauer, eindeutige Nutzer, Abbruch- oder Checkout-Conversion-Rate, Suchbegriffe oder Warenkorbinhalte.</p></div>
-    <div><span>03 / NICHT LIVE</span><p>Bezahlte Bestellungen, echte Umsätze und Marketing-ROI sind ohne freigeschalteten und verifizierten Checkout nicht auswertbar.</p></div>
+    <div><span>03 / GETRENNT</span><p>Bezahlte Bestellungen und reale Umsätze werden aus den bestätigten Zahlungs- und Bestelldaten geprüft, nicht aus anonymen Klickereignissen errechnet.</p></div>
    </div>
    <p className="rh-insight-method-foot">Referrer zeigen die Herkunft einzelner Seitenaufrufe und enthalten interne Navigation. Sie sind keine belastbare Marketingkanal-Zuordnung. Gespeicherte Tage sind UTC-Tage.</p>
   </section>

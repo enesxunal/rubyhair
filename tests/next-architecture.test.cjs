@@ -99,7 +99,7 @@ test("native homepage uses React and current server catalog, not injected HTML b
   assert.ok(home.includes("<HomeFrontend products={products} instagramPosts={instagramPosts}/>"));
   assert.ok(frontend.includes('className="hero rh-hero-product"'));
   assert.ok(frontend.includes("tapeInLengths.map("));
-  assert.ok(!frontend.includes('KERATIN BONDINGS'));
+  assert.ok(!frontend.includes('className="rh-keratin-feature"'));
   assert.ok(frontend.includes("aria-pressed={i===index}"));
   assert.ok(frontend.includes("useCart()"));
   assert.ok(!home.includes("dangerouslySetInnerHTML"));
@@ -434,7 +434,7 @@ test("admin analytics reads anonymous aggregates and never invents sessions or s
   assert.ok(page.includes('RUBY_ANALYTICS_ENABLED==="APPROVED"'));
   assert.ok(page.includes("Keine eindeutigen Besucher"));
   assert.ok(page.includes("keine Conversion-Rate"));
-  assert.ok(page.includes("Checkout und PSP noch deaktiviert"));
+  assert.ok(page.includes("Umsatz wird hier nicht aus anonymen Klicks geschätzt"));
   assert.ok(report.includes("never estimates people, sessions, conversion rates"));
   assert.ok(exportRoute.includes('if(!await isAdmin())'));
   assert.ok(exportRoute.includes("private, no-store"));
@@ -709,12 +709,12 @@ test("Ruby Hair homepage uses approved editorial copy and removes the redundant 
 test("Ruby Hair homepage shows three equally prominent collection cards and a full-width mobile Keratin card",()=>{
  const home=fs.readFileSync(path.join(base,"src/components/home-frontend.tsx"),"utf8");
  const css=fs.readFileSync(path.join(base,"src/styles/styles.css"),"utf8");
- const asset=path.join(base,"public/assets/ruby-hair-keratin-original-20261118.webp");
+ const asset=path.join(base,"public/assets/ruby-customer-keratin-banu.webp");
  assert.ok(home.includes('collection-grid rh-collection-trio'));
  assert.ok(home.includes('Entdecke deine <i>Extensions.</i>'));
  assert.ok(home.includes('className="rh-collection-card rh-collection-card-keratin"'));
  assert.ok(home.includes('href="/kollektionen/keratin-bondings/"'));
- assert.ok(home.includes('src="/assets/ruby-hair-keratin-original-20261118.webp"'));
+ assert.ok(home.includes('src="/assets/ruby-customer-keratin-banu.webp"'));
  assert.ok(!home.includes('className="rh-keratin-feature"'),"Keratin must not remain a small secondary banner");
  assert.ok(css.includes('.rh-length-collection .collection-grid.rh-collection-trio'));
  assert.ok(css.includes('grid-template-columns:repeat(3,minmax(0,1fr))'));
@@ -749,9 +749,9 @@ test("Keratin category card uses the original full-resolution product photograph
  const fs=require("node:fs");
  const path=require("node:path");
  const home=fs.readFileSync(path.join(base,"src/components/home-frontend.tsx"),"utf8");
- const file=path.join(base,"public/assets/ruby-hair-keratin-original-20261118.webp");
- assert.ok(home.includes('/assets/ruby-hair-keratin-original-20261118.webp'));
- assert.ok(home.includes('width={1707} height={2560}'));
+ const file=path.join(base,"public/assets/ruby-customer-keratin-banu.webp");
+ assert.ok(home.includes('/assets/ruby-customer-keratin-banu.webp'));
+ assert.ok(home.includes('width={1300} height={1950}'));
  assert.ok(fs.existsSync(file));
  assert.ok(fs.statSync(file).size>100000);
 });

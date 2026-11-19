@@ -3,6 +3,8 @@
 import {useCallback,useEffect,useRef,useState} from "react";
 import {ArrowLeft,ArrowRight,ArrowUpRight,X} from "lucide-react";
 import {influencerStories} from "@/data/influencer-stories";
+import {storyAnalyticsPath} from "@/data/story-analytics";
+import {trackRubyEvent} from "@/lib/storefront-analytics";
 
 const STORY_DURATION=7000;
 
@@ -71,6 +73,12 @@ export default function InfluencerStories(){
     document.addEventListener("keydown",onKeyDown);
     return ()=>{document.body.style.overflow=originalOverflow;document.removeEventListener("keydown",onKeyDown);};
   },[active,close,next,prev]);
+
+  useEffect(()=>{
+    if(active===null)return;
+    const path=storyAnalyticsPath(influencerStories[active].postUrl);
+    if(path)trackRubyEvent("story_view",path);
+  },[active]);
 
   useEffect(()=>{
     if(active===null||paused)return;

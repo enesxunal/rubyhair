@@ -101,8 +101,19 @@ function ShadeSelector({product}:{product?:Product}){
   const canBuy=Boolean(product?.variations.some(v=>v.color===active.color&&v.available&&v.purchasable));
   return <section id="shade" className="shade section-pad">
     <div className="container shade-grid">
-      <div className={"shade-visual"+(active.key==="brown"?" is-landscape":"")}>
-        <img key={active.key} loading="lazy" src={active.image} alt={"Ruby Hair Farbton "+active.title}/>
+      <div className="shade-visual rh-shade-gallery">
+        <div className="rh-shade-gallery-main">
+          <img key={active.key} loading="lazy" src={active.image} alt={"Ruby Hair Tape-in Extensions – Farbton "+active.title}/>
+          <span>DEINE FARBE / {active.title.toUpperCase()}</span>
+        </div>
+        <div className="rh-shade-gallery-rail" aria-label="Weitere echte Ruby Hair Farbtöne">
+          {shades.filter(tone=>tone.key!==active.key).map(tone=><button type="button" key={tone.key}
+            onClick={()=>setIndex(shades.findIndex(item=>item.key===tone.key))}
+            aria-label={"Farbton "+tone.title+" ansehen"}>
+            <img src={tone.image} alt={"Ruby Hair Farbton "+tone.title} loading="lazy"/>
+            <span>{tone.title}</span>
+          </button>)}
+        </div>
       </div>
       <div className="shade-copy">
         <h2>Deine <i>Farbe.</i></h2>
@@ -210,7 +221,7 @@ export default function HomeFrontend({products,instagramPosts=[]}:{products:Prod
               </div>
             </Link>)}
             <Link className="rh-collection-card rh-collection-card-keratin" href="/kollektionen/keratin-bondings/">
-              <div className="collection-media"><img src="/assets/ruby-hair-keratin-original-20261118.webp" width={1707} height={2560} alt="Keratin Bondings aus Echthaar – Ruby Hair Originalproduktfotografie" loading="lazy" decoding="async"/>
+              <div className="collection-media"><img src="/assets/ruby-customer-keratin-banu.webp" width={1300} height={1950} alt="Keratin Bondings aus Echthaar – Ruby Hair Originalproduktfotografie" loading="lazy" decoding="async"/>
                 <span className="rh-length-tag">KERATIN</span>
               </div>
               <div className="collection-caption">
@@ -220,6 +231,19 @@ export default function HomeFrontend({products,instagramPosts=[]}:{products:Prod
                 <span className="round-arrow" aria-hidden="true"><ArrowUpRight size={20}/></span>
               </div>
             </Link>
+          </div>
+        </div>
+      </section>
+      <section className="rh-keratin-editorial" aria-labelledby="rh-keratin-editorial-title">
+        <div className="container">
+          <div className="rh-keratin-editorial-heading">
+            <div><span>RUBY HAIR / ORIGINAL PRODUKTFOTOGRAFIE</span><h2 id="rh-keratin-editorial-title">Keratin in <i>echten Nuancen.</i></h2></div>
+            <Link href="/kollektionen/keratin-bondings/">Keratin entdecken <ArrowUpRight size={17}/></Link>
+          </div>
+          <div className="rh-keratin-editorial-photos">
+            <figure><img src="/assets/ruby-customer-keratin-4.webp" loading="lazy" width={1400} height={1950} alt="Ruby Hair Keratin Bondings, dunkler Braunton, echtes Produktfoto"/><figcaption>BRUNETTE / KERATIN BONDINGS</figcaption></figure>
+            <figure><img src="/assets/ruby-customer-keratin-60.webp" loading="lazy" width={1400} height={1950} alt="Ruby Hair Keratin Bondings, heller Blondton und Zopf"/><figcaption>BLONDE / KERATIN BONDINGS</figcaption></figure>
+            <figure><img src="/assets/ruby-customer-keratin-1006.webp" loading="lazy" width={1400} height={1950} alt="Ruby Hair Keratin Bondings, heller Farbton, echtes Produktfoto"/><figcaption>LIGHT / KERATIN BONDINGS</figcaption></figure>
           </div>
         </div>
       </section>

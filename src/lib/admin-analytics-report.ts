@@ -6,7 +6,8 @@
  */
 export const analyticsPeriods=[7,28,90] as const;
 export type AnalyticsPeriod=typeof analyticsPeriods[number];
-export type AnalyticsEvent="page_view"|"add_to_cart"|"begin_checkout";
+import {storyAnalyticsEntries} from "@/data/story-analytics";
+export type AnalyticsEvent="page_view"|"add_to_cart"|"begin_checkout"|"story_view"|"ai_tryon_start"|"ai_tryon_success"|"ai_to_cart";
 export type AnalyticsRow={
   day:Date;event:string;path:string;source:string;device:string;count:number
 };
@@ -46,12 +47,22 @@ export function createAnalyticsReport(rows:AnalyticsRow[],period:AnalyticsPeriod
   days.set(isoDay(date),{day:isoDay(date),label:date.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",timeZone:"UTC"}),...empty()});
  }
  const pages=new Map<string,{views:number;cartActions:number}>(),sources=new Map<string,number>(),devices=new Map<string,number>();
+ const storyCounts=new Map<string,number>();
+ const engagement={storyViews:0,aiStarts:0,aiTryons:0,aiAdds:0},previousEngagement={storyViews:0,aiStarts:0,aiTryons:0,aiAdds:0};
+ const addEngagement=(target:typeof engagement,event:string,count:number)=>{
+  if(event==="story_view")target.storyViews+=count;
+  else if(event==="ai_tryon_start")target.aiStarts+=count;
+  else if(event==="ai_tryon_success")target.aiTryons+=count;
+  else if(event==="ai_to_cart")target.aiAdds+=count;
+ };
  let observedDays=0;
  const observed=new Set<string>();
  for(const row of rows){
   const day=isoDay(row.day), count=Number.isFinite(row.count)?Math.max(0,row.count):0;
   if(row.day<previousStart||row.day>end||count===0)continue;
-  if(row.day<start){addEvent(previous,row.event,count);continue;}
+  if(row.day<start){addEvent(previous,row.event,count);addEngagement(previousEngagement,row.event,count);continue;}
+  addEngagement(engagement,row.event,count);
+  if(row.event==="story_view")countInto(storyCounts,row.path,count);
   addEvent(current,row.event,count);
   const record=days.get(day);
   if(record){
@@ -75,6 +86,9 @@ export function createAnalyticsReport(rows:AnalyticsRow[],period:AnalyticsPeriod
  return {
   period,start,end,previousStart,current,previous,daily:[...days.values()],observedDays,
   pages:pagePerformance,topPages,
+  engagement,previousEngagement,
+  stories:storyAnalyticsEntries.map(story=>({...story,views:storyCounts.get(story.path)||0}))
+   .sort((a,b)=>b.views-a.views||a.name.localeCompare(b.name)),
   sources:ranking(sources,current.views),devices:ranking(devices,current.views),
   viewChange:comparePercent(current.views,previous.views),
   cartChange:comparePercent(current.added,previous.added),
@@ -92,7 +106,7 @@ export function analyticsPathLabel(path:string){
   "/":"Startseite","/kollektionen":"Kollektionen","/kollektionen/tape-in-extensions":"Tape-in-Kollektion",
   "/produkt/tape-in-extensions":"Tape-in-Produkt","/warenkorb":"Warenkorb",
   "/kasse":"Kasse","/haar-anprobe":"KI-Haaranprobe","/ratgeber":"Ratgeber",
-  "/kontakt":"Kontakt","/versand-zahlung":"Versand & Zahlung","/suche":"Suche"
+  "/kontakt":"Kontakt","/versand-zahlung":"Versand & Zahlung","/suche":"Suche","/geschenkgutschein":"Geschenkgutschein"
  };
  return names[path]||path;
 }
