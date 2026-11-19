@@ -81,7 +81,7 @@ export default function AnalyticsConsent(){
   setStatistics(stats);setMarketing(ads);setGoogleChoice(ga);setOpen(false);
   if((oldMarketing==="allow"&&ads==="deny")||(oldGA==="allow"&&ga==="deny"))window.location.reload();
  };
- if(path.startsWith("/admin")||path.startsWith("/api")||path.startsWith("/coming-soon"))return null;
+ if(path.startsWith("/admin")||path.startsWith("/api")||path.startsWith("/konto")||path.startsWith("/coming-soon"))return null;
  return <>{open&&<aside className="rh-consent-panel" role="dialog" aria-modal="false" aria-label="Datenschutz- und Cookie-Einstellungen">
     <strong>Privatsphäre & Cookies</strong>
     <p>Notwendige Funktionen sind immer aktiv. Optionale Dienste starten erst nach deiner Zustimmung. Du kannst deine Entscheidung jederzeit über den Seitenfuß ändern. <Link href="/rechtliches/datenschutz/">Datenschutzerklärung</Link></p>

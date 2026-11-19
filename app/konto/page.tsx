@@ -1,0 +1,52 @@
+import type {Metadata} from "next";
+import Link from "next/link";
+import {redirect} from "next/navigation";
+import ShopLayout from "@/components/site-shell";
+import {getPrisma} from "@/lib/prisma";
+import {getCustomerAccount} from "@/lib/customer-account";
+import {safeCustomerTrackingUrl} from "@/lib/customer-account-rules";
+import CustomerLogoutButton from "@/components/customer-logout-button";
+import {FileText,Package,Truck,ShieldCheck,ArrowUpRight} from "lucide-react";
+export const metadata:Metadata={title:"Mein Konto – Bestellungen & Rechnungen",robots:{index:false,follow:false}};
+export const dynamic="force-dynamic";
+export const runtime="nodejs";
+const euro=(c:number)=>new Intl.NumberFormat("de-DE",{style:"currency",currency:"EUR"}).format(c/100);
+const statusText:Record<string,string>={pending_payment:"Zahlung ausstehend",payment_authorized:"Zahlung autorisiert",payment_confirmed:"Bezahlt",preparing:"Wird vorbereitet",shipped:"Versendet",delivered:"Zugestellt",cancelled:"Storniert",failed:"Fehlgeschlagen",refunded:"Erstattung vermerkt"};
+const addressText=(value:unknown)=>{
+ if(!value||typeof value!=="object"||Array.isArray(value))return null;
+ const a=value as Record<string,unknown>;
+ const str=(key:string)=>typeof a[key]==="string"?String(a[key]).slice(0,125):"";
+ const street=str("street"),postalCode=str("postalCode"),city=str("city");
+ return street&&postalCode&&city?`${street}, ${postalCode} ${city}`:null;
+};
+export default async function MyAccount(){
+ const customer=await getCustomerAccount();
+ if(!customer)redirect("/konto/anmelden/");
+ const orders=await getPrisma().order.findMany({
+  where:{customerEmail:{equals:customer.email,mode:"insensitive"},testOnly:false},
+  include:{lines:{include:{variant:{include:{product:true}}}},invoice:{select:{invoiceNumber:true}}},
+  orderBy:{createdAt:"desc"},take:30
+ });
+ const addresses=[...new Set(orders.map(x=>addressText(x.shippingAddress)).filter((x):x is string=>Boolean(x)))].slice(0,3);
+ return <ShopLayout><div className="rh-shell rh-account-dashboard">
+  <nav className="rh-breadcrumb"><Link href="/">Startseite</Link><span>/</span><span>Mein Konto</span></nav>
+  <header className="rh-account-dashboard-header"><div><div className="rh-eyebrow">RUBY HAIR / MEIN KONTO</div><h1>Willkommen zurück.</h1><p>{customer.email}</p></div><CustomerLogoutButton/></header>
+  <section className="rh-account-summary" aria-label="Kontoübersicht"><div><Package size={22}/><strong>{orders.length}{orders.length===30?"+":""}</strong><span>Bestellungen</span></div><div><FileText size={22}/><strong>{orders.filter(x=>x.invoice).length}</strong><span>Rechnungen</span></div><div><Truck size={22}/><strong>{orders.filter(x=>Boolean(x.trackingNumber)).length}</strong><span>Sendungsverfolgungen</span></div></section>
+  <section className="rh-account-orders"><div className="rh-account-heading"><h2>Deine Bestellungen</h2><span>Die letzten 30 Bestellungen</span></div>
+   {orders.length===0?<div className="rh-account-empty"><Package size={30}/><h3>Noch keine Bestellungen</h3><p>Hier erscheinen deine Bestellungen, sobald du mit dieser E-Mail-Adresse bei Ruby Hair einkaufst.</p><Link href="/kollektionen/">Extensions entdecken <ArrowUpRight size={16}/></Link></div>:orders.map(o=>{
+     const tracking=safeCustomerTrackingUrl(o.trackingCarrier,o.trackingNumber);
+     return <article className="rh-account-order" key={o.id}>
+      <div className="rh-account-order-top"><div><span>BESTELLUNG</span><strong>#{o.orderNumber.toString()}</strong><small>{o.createdAt.toLocaleDateString("de-DE",{timeZone:"Europe/Berlin",dateStyle:"medium"})}</small></div><div><span>STATUS</span><strong>{statusText[o.status]||"In Bearbeitung"}</strong><small>{euro(o.totalCents)}</small></div></div>
+      <div className="rh-account-order-lines">{o.lines.map(l=><div key={l.id}><span>{l.variant.product.name} · {l.variant.colorLabel} · {l.variant.lengthLabel} × {l.quantity}</span><strong>{euro(l.lineTotalCents)}</strong></div>)}</div>
+      <div className="rh-account-order-actions">{o.invoice&&<a href={`/api/konto/rechnung/${o.id}`} download><FileText size={16}/> Rechnung als PDF</a>}
+      {tracking&&<a href={tracking} target="_blank" rel="noopener noreferrer"><Truck size={16}/> DHL-Sendung verfolgen <ArrowUpRight size={14}/></a>}
+      {!o.invoice&&!tracking&&<span>Updates erhältst du auch per E-Mail.</span>}</div>
+     </article>;
+    })}
+  </section>
+  <section className="rh-account-addresses"><div><h2>Deine Lieferadressen</h2><p>Diese Anschriften stammen aus deinen Bestellungen. Bei einer neuen Bestellung kannst du eine andere Adresse angeben.</p></div>
+    {addresses.length?<ul>{addresses.map(a=><li key={a}>{a}</li>)}</ul>:<p>Noch keine gespeicherten Lieferanschriften aus Bestellungen.</p>}
+  </section>
+  <p className="rh-account-trust"><ShieldCheck size={17}/> Deine Rechnungen und Bestellungen sind nur nach bestätigter E-Mail-Anmeldung sichtbar. Ein Kundenkonto ist für einen Kauf nicht erforderlich.</p>
+ </div></ShopLayout>;
+}

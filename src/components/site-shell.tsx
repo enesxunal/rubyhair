@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { Menu, Search, ShoppingBag, X } from "lucide-react";
+import { Menu, Search, ShoppingBag, UserRound, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useCart } from "./cart-context";
@@ -37,6 +37,7 @@ export function SiteHeader(){
         </nav>
         <div className="rh-actions">
           <Link href="/suche/" className="rh-search" aria-label="Produkte und Haarfarben suchen"><Search size={22}/></Link>
+          <Link href="/konto/" className="rh-cart" aria-label="Mein Kundenkonto" title="Mein Konto"><UserRound size={22}/></Link>
           <Link href="/warenkorb/" className="rh-cart" aria-label={"Warenkorb, "+count+" Artikel"}>
             <ShoppingBag size={22}/>{count>0&&<span className="rh-cart-count">{count}</span>}
           </Link>
@@ -51,6 +52,7 @@ export function SiteHeader(){
         {categories.map(item=><Link key={item.href} href={item.href} onClick={()=>setOpen(false)}>{item.label}</Link>)}
         <Link href="/ratgeber/" onClick={()=>setOpen(false)}>Hair Guide</Link>
         <Link href="/haar-anprobe/" onClick={()=>setOpen(false)}>KI-Haarvorschau</Link>
+        <Link href="/konto/" onClick={()=>setOpen(false)}>Mein Konto</Link>
       </nav>}
     </header>
     {open&&<button type="button" className="rh-mobile-backdrop" aria-label="Menü schließen" onClick={()=>setOpen(false)}/>}
@@ -64,7 +66,7 @@ export function SiteFooter(){
       <div><strong>INFORMATIONEN</strong>{storefrontInfoLinks.map(item=><Link href={item.href} key={item.href} style={item.href==="/widerruf/"?{fontWeight:700,textDecoration:"underline",textUnderlineOffset:4}:undefined}>{item.label}</Link>)}</div>
     </div>
     <div className="rh-footer-bottom"><span>© 2026 RUBY HAIR</span><div>
-      <Link href="/rechtliches/impressum/">Impressum</Link><Link href="/rechtliches/datenschutz/">Datenschutz</Link><CookieSettingsLink/>
+      <Link href="/konto/">Mein Konto</Link><Link href="/rechtliches/impressum/">Impressum</Link><Link href="/rechtliches/datenschutz/">Datenschutz</Link><CookieSettingsLink/>
     </div></div>
   </footer></>;
 }

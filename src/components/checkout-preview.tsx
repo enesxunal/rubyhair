@@ -29,6 +29,7 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
       <Link href="/warenkorb/">Warenkorb</Link><span>/</span><span>Kasse</span>
     </nav>
     <div className="rh-eyebrow">RUBY HAIR / CHECKOUT</div>
+    <p className="rh-checkout-account-note">Du kannst ohne Registrierung bestellen. <Link href="/konto/anmelden/">Optionales Kundenkonto erstellen</Link> – für Bestellungen, Rechnungen und Versandstatus.</p>
     <h1>Almost <em>yours.</em></h1>
     <div className="rh-checkout-grid">
       <section className="rh-checkout-process">

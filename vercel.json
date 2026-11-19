@@ -7,6 +7,10 @@
     {
       "path": "/api/internal/customer-jobs",
       "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/internal/customer-account-cleanup",
+      "schedule": "15 4 * * *"
     }
   ]
 }

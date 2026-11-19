@@ -86,6 +86,9 @@ function LegalContent({slug}:{slug:string}){
    <p>Wenn du etwas bestellst, verarbeiten wir die für Vertrag und Versand erforderlichen Angaben, insbesondere Namen, Kontakt- und Lieferdaten, bestellte Artikel und den Zahlungsstatus. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO; für gesetzliche Aufbewahrungspflichten Art. 6 Abs. 1 lit. c DSGVO.</p>
    <p>Für die Zahlungsabwicklung werden erforderliche Daten an PayPal beziehungsweise Klarna übermittelt, wenn du den Anbieter auswählst. Ruby Hair speichert Zahlungsreferenzen und Bestätigungsstatus, aber keine vollständigen Zahlungs- oder Kreditkartendaten. Für die Paketbeförderung werden Versanddaten an DHL übermittelt. Bestellbenachrichtigungen und Eingangsbestätigungen werden über IONOS-E-Mail-Dienste versandt.</p>
   </Section>
+  <Section title="Freiwilliges Kundenkonto und E-Mail-Anmeldung">
+   <p>Die Einrichtung eines Kundenkontos ist freiwillig; du kannst auch ohne Konto bestellen. Wenn du einen Login-Link anforderst, verarbeiten wir die eingegebene E-Mail-Adresse und versenden über unseren IONOS-Mailanbieter einen einmaligen, 15 Minuten gültigen Anmeldelink. Der verwendete Bestätigungscode wird nur als Hash gespeichert und nach der Nutzung ungültig. Für deine Anmeldung verwenden wir ein technisch notwendiges, geschütztes Sitzungscookie mit einer Gültigkeit von bis zu 30 Tagen. Du kannst dich jederzeit abmelden. Nach nachgewiesener Kontrolle über die E-Mail-Adresse werden nur Bestellungen und Rechnungen angezeigt, die an diese Adresse gerichtet wurden. Es erfolgt keine automatische Registrierung durch eine Gastbestellung. Zur Missbrauchsvermeidung speichern wir befristete, gehashte Begrenzungszähler für Login-Anfragen.</p>
+  </Section>
   <Section title="Hosting und technische Protokolle">
    <p>Der Shop nutzt Vercel zum Hosting und eine PostgreSQL-Datenbank. Für die technische Bereitstellung und Sicherheit können Serverprotokolle (z. B. IP-Adresse, Zeitpunkt, angefragte Seite und technische Fehlerdaten) verarbeitet werden. Die Verarbeitung erfolgt zur Bereitstellung des Dienstes und zur Sicherheit auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO.</p>
   </Section>
@@ -116,7 +119,7 @@ export default async function Legal({params}:{params:Promise<{slug:string}>}){
   <nav className="rh-breadcrumb" aria-label="Breadcrumb"><Link href="/">Startseite</Link><span>/</span><span>{pages[slug]}</span></nav>
   <div className="rh-eyebrow">RUBY HAIR / RECHTLICHE INFORMATIONEN</div>
   <h1>{pages[slug]}</h1>
-  <p className="rh-legal-intro">Informationen zum Ruby Hair Online-Shop. Stand: 18. November 2026.</p>
+  <p className="rh-legal-intro">Informationen zum Ruby Hair Online-Shop. Stand: 19. November 2026.</p>
   <LegalContent slug={slug}/>
   <div className="rh-legal-nav">
    <Link href="/rechtliches/impressum/">Impressum</Link>

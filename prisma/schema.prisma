@@ -240,3 +240,50 @@ model TryonQuotaAttempt {
   @@index([finishedAt,expiresAt])
   @@map("tryon_quota_attempts")
 }
+
+// Optional, email-verified customer accounts. Orders stay guest-compatible.
+model CustomerAccount {
+  id          String            @id @default(uuid()) @db.Uuid
+  email       String            @unique @db.VarChar(254)
+  verifiedAt  DateTime          @default(now())
+  lastLoginAt DateTime          @default(now())
+  createdAt   DateTime          @default(now())
+  sessions    CustomerSession[]
+
+  @@map("customer_accounts")
+}
+
+model CustomerLoginToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  email     String    @db.VarChar(254)
+  tokenHash String    @unique @db.Char(64)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([email, createdAt])
+  @@index([expiresAt])
+  @@map("customer_login_tokens")
+}
+
+model CustomerSession {
+  id        String          @id @default(uuid()) @db.Uuid
+  accountId String          @db.Uuid
+  account   CustomerAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  tokenHash String          @unique @db.Char(64)
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime        @default(now())
+
+  @@index([accountId, expiresAt])
+  @@index([expiresAt])
+  @@map("customer_sessions")
+}
+
+model CustomerAuthRateLimit {
+  key         String   @id @db.Char(64)
+  count       Int      @default(0)
+  windowStart DateTime @default(now())
+
+  @@map("customer_auth_rate_limits")
+}
