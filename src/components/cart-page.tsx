@@ -59,9 +59,13 @@ export function CartPage({shippingCents}:{shippingCents:number}){
               <p className="rh-cart-line-status">Lagerbestand noch nicht bestätigt</p>}
             {currentQuote?.lines.find(line=>line.id===item.id)?.status==="out-of-stock"&&
               <p className="rh-cart-line-status rh-cart-line-problem">Diese Menge ist nicht verfügbar</p>}
-            <p>{currentQuote?.lines.find(line=>line.id===item.id)?.unitCents!=null
+            <p>
+             {result.variation.original_price!=null&&<del className="rh-bf-cart-original">{euros(result.variation.original_price)}</del>}
+             {currentQuote?.lines.find(line=>line.id===item.id)?.unitCents!=null
               ?euros((currentQuote.lines.find(line=>line.id===item.id)!.unitCents!)/100)
-              :"Preis wird geprüft"} / Packung</p>
+              :"Preis wird geprüft"} / Packung
+             {result.variation.original_price!=null&&<span className="rh-bf-sale-flag" style={{marginLeft:8}}>−15 %</span>}
+            </p>
             <div className="rh-cart-qty"><button onClick={()=>update(item.id,item.quantity-1)}
               aria-label="Menge verringern" type="button">−</button><span>{item.quantity}</span>
               <button onClick={()=>update(item.id,item.quantity+1)} aria-label="Menge erhöhen" type="button">+</button></div>

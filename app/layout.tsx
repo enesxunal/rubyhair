@@ -10,6 +10,8 @@ import type { Metadata } from "next";
 import { CartProvider } from "@/components/cart-context";
 import {publicShopEnabled,siteOrigin} from "@/lib/seo";
 import AnalyticsConsent from "@/components/analytics-consent";
+import BlackFridayExperience from "@/components/black-friday-experience";
+import "../src/styles/black-friday.css";
 import HairTryonFloatingLink from "@/components/hair-tryon-floating-link";
 import "../src/styles/styles.css";
 import "../src/styles/shop.css";
@@ -31,5 +33,5 @@ export const metadata:Metadata={
   twitter:{card:"summary_large_image"}
 };
 export default function RootLayout({children}:{children:React.ReactNode}){
-  return <html lang="de"><body><CartProvider>{children}<HairTryonFloatingLink/><AnalyticsConsent/></CartProvider></body></html>;
+  return <html lang="de"><body><CartProvider><BlackFridayExperience/>{children}<HairTryonFloatingLink/><AnalyticsConsent/></CartProvider></body></html>;
 }

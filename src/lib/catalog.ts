@@ -5,12 +5,13 @@ export type Variation = {
   id: number; color: string; color_label: string; length: string;
   length_label: string; price: number; available: boolean;
   purchasable: boolean; image: string; stock_quantity?:number|null;
+  original_price?:number; documented_prior_price?:number;
 };
 export type Product = {
   id: number; slug: string; name: string; original_name: string;
   headline: string; intro: string; pack: string; material: string;
   currency: string; image: string; min_price: number; max_price: number;
-  variations: Variation[];
+  variations: Variation[]; original_min_price?:number;
 };
 type SourceProduct = Product & { category: string };
 const source = imported.products as Record<string, SourceProduct>;

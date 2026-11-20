@@ -10,6 +10,7 @@ import {giftCodeHash,giftCodeLooksValid} from "@/lib/gift-cards/rules";
 import {createCustomerInvoicePdf} from "@/lib/customer-invoice";
 import {RUBY_TEST_SELLER} from "@/lib/qa-invoice";
 import {giftCartTotal} from "@/lib/gift-cards/cart-schema";
+import {blackFridayUnitCents} from "@/lib/black-friday";
 
 export {checkoutInput} from "@/lib/customer-checkout-schema";
 import {checkoutInput,type CustomerCheckoutInput} from "@/lib/customer-checkout-schema";
@@ -71,6 +72,7 @@ export async function createCustomerCheckout(input:CustomerCheckoutInput){
  if(input.gifts.length&&process.env.RUBY_GIFT_CARDS_LIVE_ENABLED!=="true")throw new CustomerCheckoutError("GIFT_SALES_UNAVAILABLE",503);
  if(input.giftCode&&(!giftCodeLooksValid(input.giftCode)||input.provider!=="paypal"))throw new CustomerCheckoutError("GIFT_CODE_INVALID_OR_PROVIDER_UNSUPPORTED",400);
  const db=getPrisma();
+ const pricedAt=new Date(); // Fixed for the entire transaction / invoice.
  // Provider may not be needed for a fully gift-card-covered order.
  const gateway=input.giftCode?null:await providerForCheckout(input.provider);
  const digest=hash(input);
@@ -93,9 +95,11 @@ export async function createCustomerCheckout(input:CustomerCheckoutInput){
    if(!v.active||!v.product.active||v.product.currency!=="EUR"||v.priceCents<100||
      !Number.isSafeInteger(v.priceCents)||v.stockQuantity!==null&&v.stockQuantity<item.quantity)
      throw new CustomerCheckoutError("ITEM_UNAVAILABLE",409);
-   const total=v.priceCents*item.quantity;
+   const unitPriceCents=blackFridayUnitCents(v.priceCents,v.product.slug,pricedAt,v.product.material);
+   if(unitPriceCents<1)throw new CustomerCheckoutError("ITEM_PRICE_UNAVAILABLE",409);
+   const total=unitPriceCents*item.quantity;
    if(total>2000000||subtotal+total>2000000)throw new CustomerCheckoutError("ORDER_TOO_LARGE",400);
-   subtotal+=total;lines.push({variantId:v.id,quantity:item.quantity,unitPriceCents:v.priceCents,lineTotalCents:total,stockReserved:v.stockQuantity!==null});
+   subtotal+=total;lines.push({variantId:v.id,quantity:item.quantity,unitPriceCents,lineTotalCents:total,stockReserved:v.stockQuantity!==null});
   }
   // NULL inventory is *unlimited/available* by merchant policy; positive stock is
   // reserved atomically, and restored exactly once if an external order is unpaid.
@@ -141,7 +145,8 @@ export async function createCustomerCheckout(input:CustomerCheckoutInput){
    const number=`RH-${issuedAt.getUTCFullYear()}-${String(created.orderNumber).padStart(7,"0")}`;
    const invoiceLines=items.map(item=>{
     const v=variants.find(v=>v.legacyId===item.id)!;
-    return {description:`${v.product.name} ${v.colorLabel} ${v.lengthLabel}`,quantity:item.quantity,unitCents:v.priceCents,totalCents:v.priceCents*item.quantity};
+    const stored=lines.find(l=>l.variantId===v.id)!;
+    return {description:`${v.product.name} ${v.colorLabel} ${v.lengthLabel}`,quantity:item.quantity,unitCents:stored.unitPriceCents,totalCents:stored.lineTotalCents};
    });
    const pdf=createCustomerInvoicePdf({invoiceNumber:number,issuedAt,orderNumber:String(created.orderNumber),
     customerName:bill.firstName+" "+bill.lastName,customerEmail:input.email,

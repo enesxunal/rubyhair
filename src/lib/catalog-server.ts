@@ -3,6 +3,7 @@ import {unstable_cache} from "next/cache";
 import { databaseConfigured, getPrisma } from "@/lib/prisma";
 import { products as importedProducts, type Product, type Variation } from "@/lib/catalog";
 import {customerTapeMainImage} from "@/lib/customer-tape-images";
+import {blackFridayCatalog} from "@/lib/black-friday";
 
 // Share one bounded read across marketing pages and serverless requests.
 // The provider pool intermittently reports P1001/P2024; frequent 15-second
@@ -39,9 +40,9 @@ const liveProducts=unstable_cache(async ():Promise<Product[]>=>{
   return products;
 },["rubyhair-live-store-catalog"],{revalidate:60,tags:["rubyhair-live-catalog"]});
 export async function getStoreCatalog():Promise<{source:"postgresql"|"imported-preview";products:Product[]}>{
-  if(!databaseConfigured())return {source:"imported-preview",products:importedProducts};
+  if(!databaseConfigured())return {source:"imported-preview",products:blackFridayCatalog(importedProducts)};
   // A failed database read still fails closed; never display fabricated stock.
-  return {source:"postgresql",products:await liveProducts()};
+  return {source:"postgresql",products:blackFridayCatalog(await liveProducts())};
 }
 export async function getStoreProduct(slug:string){
   const catalog=await getStoreCatalog();

@@ -1,0 +1,52 @@
+/* Ruby Hair Black Friday 2026 — sitewide, responsive, non-tracking */
+.rh-bf-bar{background:#33212a;color:#fff8f4;position:relative;z-index:4;border-bottom:1px solid #d7ad955e}
+.rh-bf-bar-inner{max-width:1400px;margin:auto;min-height:62px;padding:9px 25px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+.rh-bf-bar-kicker{font-weight:750;letter-spacing:1.5px;font-size:12px;white-space:nowrap}
+.rh-bf-bar-kicker b{color:#f7bfcc;font-size:15px;margin-left:7px}
+.rh-bf-bar-copy{color:#eadbdc;font-size:11px;letter-spacing:.25px}
+.rh-bf-countdown{display:flex;gap:7px;align-items:center}
+.rh-bf-count-unit{display:grid;place-items:center;min-width:44px;background:#fff8f412;border:1px solid #ffffff30;border-radius:5px;padding:5px 7px;line-height:1.2}
+.rh-bf-count-unit strong{font-size:18px;line-height:1.08;font-variant-numeric:tabular-nums;font-weight:600;color:#fff5ee}
+.rh-bf-count-unit small{font-size:8px;color:#e8ced6;letter-spacing:.4px;margin-top:3px}
+.rh-bf-bar-cta{font-size:11px;letter-spacing:.6px;font-weight:700;white-space:nowrap;color:#fff0ef;border-bottom:1px solid #efc6c9;padding-bottom:3px}
+.rh-bf-modal-layer{position:fixed;inset:0;z-index:1080;background:rgba(24,14,19,.72);display:grid;place-items:center;padding:20px;backdrop-filter:blur(5px)}
+.rh-bf-popup{position:relative;display:grid;grid-template-columns:210px minmax(0,1fr);width:min(630px,100%);overflow:hidden;background:#f9f3ef;color:#352731;border-radius:10px;box-shadow:0 30px 90px #12080c8a}
+.rh-bf-popup-top{background:linear-gradient(155deg,#4a303b,#301b26);display:flex;justify-content:center;align-items:center;position:relative;padding:30px 20px}
+.rh-bf-popup-top:before{content:"";position:absolute;inset:15px;border:1px solid #fff4e326;pointer-events:none}
+.rh-bf-popup-top img{width:195px;max-width:100%;height:auto;object-fit:contain}
+.rh-bf-close{position:absolute;z-index:2;top:12px;right:14px;background:transparent;border:0;color:#523641;font-size:31px;line-height:1;padding:3px 8px}
+.rh-bf-popup-content{padding:44px 35px 31px}
+.rh-bf-popup-eyebrow{font-size:9px;letter-spacing:2px;color:#997082;font-weight:700}
+.rh-bf-popup h2{font:400 36px/1.17 var(--serif,Georgia,serif);letter-spacing:-1.2px;margin:14px 0 12px}
+.rh-bf-popup h2 em{color:#a07085}
+.rh-bf-popup-number{display:flex;align-items:center;gap:22px;margin:0 0 16px;color:#53313f}
+.rh-bf-popup-number>strong{font:400 100px/.95 var(--serif,Georgia,serif);letter-spacing:-6px}
+.rh-bf-popup-number>strong span{font-size:49px;letter-spacing:-2px}
+.rh-bf-popup-number>div{font-size:13px;line-height:1.6;letter-spacing:1.2px;font-weight:750}
+.rh-bf-popup-content p{font-size:12px;line-height:1.7;color:#74646b;margin:0 0 19px}
+.rh-bf-popup-button{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:#503341;color:white;font-size:11px;font-weight:700;letter-spacing:1px;border-radius:5px}
+.rh-bf-popup-content>small{font-size:9px;line-height:1.5;display:block;color:#91838a;margin-top:15px}
+.rh-bf-sale-flag,.rh-bf-card-badge{display:inline-block;background:#4d2c3a;color:#fff6f5;border-radius:4px;padding:5px 9px;font-size:10px;font-weight:750;letter-spacing:.9px;line-height:1.35}
+.rh-bf-price{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 12px}
+.rh-bf-price .rh-bf-now{color:#a04b68;font-weight:750}
+.rh-bf-price del,.rh-bf-old{font-size:.73em;color:#96848a;font-weight:450}
+.rh-bf-prior{display:block;font-size:10px;color:#847881;line-height:1.55;margin-top:4px;font-weight:450}
+.rh-bf-detail-flag{margin:12px 0 10px}
+.rh-bf-cart-original{color:#9a8c90;font-size:11px;text-decoration:line-through;margin-right:7px}
+.rh-bf-card-badge{position:absolute;z-index:3;top:10px;left:10px}
+.rh-bf-image-price{display:inline-flex;gap:7px;align-items:baseline;flex-wrap:wrap}
+.rh-bf-image-price del{color:#96858b;font-size:11px}
+.rh-bf-image-price b{color:#9d4f65}
+.rh-bf-hero-label{position:absolute;z-index:2;top:25px;left:25px}
+@media(max-width:870px){.rh-bf-bar-inner{gap:10px;flex-wrap:wrap;justify-content:center}.rh-bf-bar-copy{display:none}.rh-bf-bar-cta{display:none}}
+@media(max-width:550px){.rh-bf-bar-inner{padding:8px 12px;min-height:51px;gap:8px 12px;justify-content:space-between}.rh-bf-bar-kicker{font-size:10px}.rh-bf-bar-kicker b{font-size:13px;margin-left:2px}.rh-bf-countdown{gap:3px}.rh-bf-count-unit{min-width:33px;padding:4px 5px}.rh-bf-count-unit strong{font-size:14px}.rh-bf-count-unit small{font-size:7px}.rh-bf-popup{grid-template-columns:1fr;max-width:370px;max-height:calc(100dvh - 24px);overflow-y:auto}.rh-bf-popup-top{min-height:76px;padding:12px}.rh-bf-popup-top:before{inset:6px}.rh-bf-popup-top img{width:120px}.rh-bf-popup-content{padding:20px 23px 22px}.rh-bf-popup h2{font-size:30px;margin:10px 0}.rh-bf-popup-number>strong{font-size:81px}.rh-bf-popup-number>strong span{font-size:37px}.rh-bf-popup-number>div{font-size:11px}.rh-bf-popup-content p{font-size:11px}.rh-bf-close{color:white;top:8px;right:9px}.rh-bf-hero-label{top:13px;left:12px}}
+@media(prefers-reduced-motion:reduce){.rh-bf-popup *{transition:none!important;animation:none!important}}
+
+.rh-shade-image,.rh-gallery-main,.rh-category-photo,.collection-media{position:relative}
+.rh-shade-image .rh-bf-card-badge{top:10px;left:auto;right:10px}
+.rh-gallery-main .rh-bf-card-badge{position:absolute;left:12px;right:auto;top:12px;z-index:3}
+.rh-price.rh-bf-price{gap:8px 15px}
+.rh-price.rh-bf-price del{font-size:.58em;line-height:1.2}
+.rh-price.rh-bf-price .rh-bf-now{font-size:inherit}
+.rh-product-info .rh-bf-prior{margin:3px 0 12px}
+@media(max-width:550px){.rh-shade-image .rh-bf-card-badge{font-size:8px;right:6px;top:7px}.rh-gallery-main .rh-bf-card-badge{top:8px;left:7px}.rh-bf-image-price{gap:2px 5px}.rh-bf-image-price del{font-size:9px}}

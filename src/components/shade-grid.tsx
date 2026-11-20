@@ -33,13 +33,19 @@ export function ShadeGrid({product,selectedLength}:{product:Product;selectedLeng
      <div className="rh-shade-image">
       <img src={card.image} alt={product.name+" Farbmuster "+label} loading="lazy"/>
       <span className="rh-shade-badge">FARBE {label}</span>
+      {available.some(v=>v.original_price!=null)&&<span className="rh-bf-card-badge">BLACK FRIDAY −15 %</span>}
       {card.status!=="listed"&&<span className="rh-shade-status">{card.status==="unavailable"?"AUSVERKAUFT":"NICHT BESTELLBAR"}</span>}
      </div>
      <div className="rh-shade-meta"><div>
       <strong>{product.name}{labelLength?" · "+labelLength:""}</strong>
       <small>Farbe {label}</small>
      </div><span className="rh-price-small">
-      {available.length?"ab "+euros(Math.min(...available.map(v=>v.price))):card.status==="unavailable"?"Ausverkauft":"Nur auf Anfrage"}
+      {available.length>0&&available.some(v=>v.original_price!=null)
+       ?<span className="rh-bf-image-price">
+         <del>{euros(Math.min(...available.map(v=>v.original_price??v.price)))}</del>
+         <b>ab {euros(Math.min(...available.map(v=>v.price)))}</b>
+        </span>
+       :available.length?"ab "+euros(Math.min(...available.map(v=>v.price))):card.status==="unavailable"?"Ausverkauft":"Nur auf Anfrage"}
      </span></div>
     </>;
     if(card.status==="listed"){
