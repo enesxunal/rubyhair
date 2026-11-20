@@ -50,3 +50,11 @@
 .rh-price.rh-bf-price .rh-bf-now{font-size:inherit}
 .rh-product-info .rh-bf-prior{margin:3px 0 12px}
 @media(max-width:550px){.rh-shade-image .rh-bf-card-badge{font-size:8px;right:6px;top:7px}.rh-gallery-main .rh-bf-card-badge{top:8px;left:7px}.rh-bf-image-price{gap:2px 5px}.rh-bf-image-price del{font-size:9px}}
+/* Homepage collection cards: leave the length label at upper left; sale at upper right. */
+.rh-length-collection .rh-collection-trio .collection-media>.rh-bf-card-badge{left:auto;right:16px;top:16px;max-width:calc(100% - 32px);text-align:center}
+@media(max-width:550px){.rh-length-collection .rh-collection-trio .collection-media>.rh-bf-card-badge{left:auto;right:10px;top:10px;font-size:9px;padding:6px 8px}}
+/* Narrow two-column layout has no room for both labels on the same baseline. */
+@media(max-width:600px){
+ .rh-length-collection .rh-collection-trio .collection-media>.rh-length-tag{top:70px;left:10px}
+ .rh-length-collection .rh-collection-trio .collection-media>.rh-bf-card-badge{left:auto;right:10px;top:10px}
+}
