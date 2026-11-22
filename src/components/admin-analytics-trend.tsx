@@ -40,7 +40,7 @@ export default function AdminAnalyticsTrend({daily,previousDaily}:{daily:DailyCo
     {points.map((point,i)=><g key={daily[i].day}>
       <circle cx={point.x} cy={point.y} r={selected===i?6:4} fill="#75405a" stroke="#fff" strokeWidth="2.5" tabIndex={0}
        onFocus={()=>setSelected(i)} onMouseEnter={()=>setSelected(i)} onClick={()=>setSelected(i)} aria-label={`${point.label}: ${point.value}`}>
-       <title>{point.label}: {point.value} · Vergleichstag: {old[i]||0}</title>
+       <title>{`${point.label}: ${point.value} · Vergleichstag: ${old[i]||0}`}</title>
       </circle>
     </g>)}
     {[0,Math.round((daily.length-1)/2),daily.length-1].filter((n,i,a)=>a.indexOf(n)===i).map(i=><text key={i} x={x(i)} y={height-10} textAnchor="middle" fill="#9f8a96" fontSize="11">{daily[i]?.label}</text>)}
