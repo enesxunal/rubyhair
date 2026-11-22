@@ -3,8 +3,8 @@ import {useEffect,useState} from "react";
 import type {CartLine} from "@/components/cart-context";
 import type {CartQuote} from "@/lib/cart-quote";
 
-export function useCartQuote(lines:CartLine[]){
-  const key=JSON.stringify(lines);
+export function useCartQuote(lines:CartLine[],couponCode=""){
+  const key=JSON.stringify({lines,couponCode});
   const [result,setResult]=useState<{key:string;quote:CartQuote}|null>(null);
   const [errorKey,setErrorKey]=useState<string|null>(null);
   useEffect(()=>{
@@ -13,7 +13,7 @@ export function useCartQuote(lines:CartLine[]){
     fetch("/api/cart/quote",{
       method:"POST",cache:"no-store",signal:controller.signal,
       headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({lines})
+      body:JSON.stringify({lines,...(couponCode?{couponCode}:{})})
     }).then(response=>{
       if(!response.ok)throw new Error("Serverseitige Preisprüfung nicht verfügbar");
       return response.json() as Promise<CartQuote>;

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCart } from "./cart-context";
 import { colorsFor, euros, type Product } from "@/lib/catalog";
 import {customerTapeAltImage} from "@/lib/customer-tape-images";
+import BlackFridayBadge from "@/components/black-friday-badge";
 
 export function ProductDetail({product,initialColor,initialLength}:{product:Product;initialColor?:string;initialLength?:string}){
   const groups=useMemo(()=>colorsFor(product),[product]);
@@ -46,7 +47,7 @@ export function ProductDetail({product,initialColor,initialLength}:{product:Prod
             <span className="rh-gallery-magnify"><ZoomIn size={19}/> VERGRÖSSERN</span>
           </button>
           <span>RUBY HAIR / ORIGINAL COLLECTION</span>
-          {selected?.original_price!=null&&<b className="rh-bf-card-badge">BLACK FRIDAY −15 %</b>}
+          <BlackFridayBadge/>
         </div>
         <div className="rh-gallery-thumbs" role="group" aria-label="Produktbilder">
           {slides.map((item,i)=><button key={item.src} type="button"
@@ -67,13 +68,8 @@ export function ProductDetail({product,initialColor,initialLength}:{product:Prod
         <div className="rh-eyebrow">RUBY HAIR · 100 % ECHTHAAR</div>
         <h1>{product.name}</h1>
         <p className="rh-detail-summary">{product.intro}</p>
-        {selected?.original_price!=null&&<span className="rh-bf-sale-flag rh-bf-detail-flag">BLACK FRIDAY · −15 %</span>}
-        <div className={"rh-price"+(selected?.original_price!=null?" rh-bf-price":"")} aria-live="polite">
-         {selected?.original_price!=null&&<del aria-label="Preis vor Black Friday">{euros(selected.original_price)}</del>}
-         <span className={selected?.original_price!=null?"rh-bf-now":""}>{selected?euros(selected.price):"Preis auf Anfrage"}</span>
-        </div>
-        {selected?.documented_prior_price!=null&&selected?.original_price!=null&&
-          <p className="rh-bf-prior">Dokumentierter Preis vor der Anpassung am 17.11.: {euros(selected.documented_prior_price)}</p>}
+        <div className="rh-price" aria-live="polite">{selected?euros(selected.price):"Preis auf Anfrage"}</div>
+        <BlackFridayBadge hint/>
         <p className="rh-price-note">Alle Preise inkl. 19 % MwSt., zzgl. 4,99 € DHL-Versand innerhalb Deutschlands. Preis und Verfügbarkeit werden an der Kasse nochmals geprüft. <Link href="/versand-zahlung/">Versand & Zahlung ↗</Link></p>
         <div className="rh-product-summary-tags"><span>{product.material}</span><span>{product.pack} / Packung</span></div>
         <fieldset className="rh-choice"><legend>01 / WÄHLE DEINE FARBE <span>· {selected?.color_label}</span></legend>

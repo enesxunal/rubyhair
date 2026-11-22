@@ -80,7 +80,7 @@ test("server cart quote validates IDs and uses server catalog prices",()=>{
   assert.ok(route.includes("quoteRequestSchema.safeParse"));
   assert.ok(source.includes("getStoreCatalog()"));
   assert.ok(source.includes("Math.round(v.price*100)"));
-  assert.ok(source.includes('checkoutEnabled:catalog.source==="postgresql"'));
+  assert.ok(source.includes('checkoutEnabled:!couponError&&catalog.source==="postgresql"'));
   assert.ok(source.includes("unverified-stock"));
   assert.ok(source.includes("out-of-stock"));
 });
@@ -178,8 +178,8 @@ test("checkout preview reuses authoritative cart quotation and cannot collect pa
   const quoteHook=fs.readFileSync(path.join(base,"src/hooks/use-cart-quote.ts"),"utf8");
   const cart=fs.readFileSync(path.join(base,"src/components/cart-page.tsx"),"utf8");
   assert.ok(quoteHook.includes('fetch("/api/cart/quote"'));
-  assert.ok(checkout.includes("useCartQuote(lines)"));
-  assert.ok(cart.includes("useCartQuote(lines)"));
+  assert.ok(checkout.includes("useCartQuote(lines,couponCode)"));
+  assert.ok(cart.includes("useCartQuote(lines,couponCode)"));
   assert.ok(!checkout.includes("NOCH NICHT ZUR BESTELLUNG FREIGEGEBEN"));
   assert.ok(!checkout.includes("CHECKOUT-VORSCHAU"));
   assert.ok(checkout.includes("Wähle deine Zahlungsart"));

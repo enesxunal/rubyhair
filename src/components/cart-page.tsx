@@ -7,10 +7,12 @@ import {useCartQuote} from "@/hooks/use-cart-quote";
 import {Gift} from "lucide-react";
 import {giftCartTotal} from "@/lib/gift-cards/cart-schema";
 export function CartPage({shippingCents}:{shippingCents:number}){
-  const {lines,gifts,update,remove,removeGift,clear,loaded}=useCart();
+  const {lines,gifts,update,remove,removeGift,clear,loaded,couponCode,setCouponCode}=useCart();
+  const [couponDraft,setCouponDraft]=useState("");
+  useEffect(()=>{setCouponDraft(couponCode)},[couponCode]);
   const [liveProducts,setLiveProducts]=useState<Product[]|null>(null);
   const [catalogError,setCatalogError]=useState(false);
-  const {quote:currentQuote,error:quoteError,loading:quoteLoading}=useCartQuote(lines);
+  const {quote:currentQuote,error:quoteError,loading:quoteLoading}=useCartQuote(lines,couponCode);
   useEffect(()=>{
     if(!lines.length)return;
     const controller=new AbortController();
@@ -60,11 +62,9 @@ export function CartPage({shippingCents}:{shippingCents:number}){
             {currentQuote?.lines.find(line=>line.id===item.id)?.status==="out-of-stock"&&
               <p className="rh-cart-line-status rh-cart-line-problem">Diese Menge ist nicht verfügbar</p>}
             <p>
-             {result.variation.original_price!=null&&<del className="rh-bf-cart-original">{euros(result.variation.original_price)}</del>}
              {currentQuote?.lines.find(line=>line.id===item.id)?.unitCents!=null
               ?euros((currentQuote.lines.find(line=>line.id===item.id)!.unitCents!)/100)
               :"Preis wird geprüft"} / Packung
-             {result.variation.original_price!=null&&<span className="rh-bf-sale-flag" style={{marginLeft:8}}>−15 %</span>}
             </p>
             <div className="rh-cart-qty"><button onClick={()=>update(item.id,item.quantity-1)}
               aria-label="Menge verringern" type="button">−</button><span>{item.quantity}</span>
@@ -89,7 +89,21 @@ export function CartPage({shippingCents}:{shippingCents:number}){
       </div>
       <aside className="rh-order-summary"><h2>Zusammenfassung</h2>
         <p className="rh-cart-checking" aria-live="polite">{quoteLoading?"Preise werden auf dem Server geprüft":currentQuote?"Preisprüfung abgeschlossen":gifts.length&&!lines.length?"Digitale Gutscheine · keine Versandkosten":quoteError?"Preisprüfung derzeit nicht möglich":""}</p>
-        {lines.length>0&&<div><span>Produkte (serverseitig)</span><strong>{physicalTotal===null?"Wird geprüft":euros(physicalTotal/100)}</strong></div>}
+        {lines.length>0&&<div><span>Produkte</span><strong>{currentQuote?euros(currentQuote.regularSubtotalCents/100):"Wird geprüft"}</strong></div>}
+        {lines.length>0&&<section className="rh-bf-coupon-box" aria-label="Black Friday Rabattcode">
+          <label htmlFor="rh-bf-coupon">Black Friday Rabattcode</label>
+          <div className="rh-bf-coupon-row">
+            <input id="rh-bf-coupon" type="text" autoComplete="off" maxLength={32} placeholder="BLACKFRIDAY" value={couponDraft} onChange={e=>setCouponDraft(e.target.value.toUpperCase())} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();setCouponCode(couponDraft)}}}/>
+            <button type="button" onClick={()=>setCouponCode(couponDraft)} disabled={!couponDraft.trim()}>Einlösen</button>
+          </div>
+          {couponCode&&<div className="rh-bf-coupon-status" role="status">
+            {currentQuote?.couponApplied?"BLACKFRIDAY eingelöst – 15 % auf Extensions.":
+              currentQuote?.couponError?"Code ungültig oder Aktion abgelaufen. Bitte entfernen.":
+              quoteLoading?"Rabatt wird geprüft …":"Rabatt konnte nicht bestätigt werden."}
+            <button type="button" onClick={()=>{setCouponCode("");setCouponDraft("")}}>Entfernen</button>
+          </div>}
+        </section>}
+        {(currentQuote?.discountCents??0)>0&&<div className="rh-bf-coupon-discount"><span>BLACKFRIDAY · 15 %</span><strong>− {euros((currentQuote?.discountCents??0)/100)}</strong></div>}
         {gifts.length>0&&<div><span>Geschenkgutscheine ({gifts.length})</span><strong>{euros(giftTotal/100)}</strong></div>}
         <div><span>{lines.length?"DHL-Versand innerhalb Deutschlands":"Digitaler Versand"}</span><strong>{lines.length?euros(shipping/100):"Kostenlos"}</strong></div>
         {lines.length>0&&<Link className="rh-cart-shipping-link" href="/versand-zahlung/">Informationen zu Versand & Zahlung ↗</Link>}

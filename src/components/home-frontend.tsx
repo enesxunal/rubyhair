@@ -1,4 +1,5 @@
 "use client";
+import BlackFridayBadge from "@/components/black-friday-badge";
 
 import Link from "next/link";
 import {useEffect,useRef,useState} from "react";
@@ -197,8 +198,7 @@ export default function HomeFrontend({products,instagramPosts=[]}:{products:Prod
     <HomeNavigation/>
     <main id="main">
       <Link className="hero rh-hero-product" id="home" href="/produkt/tape-in-extensions/?farbe=6&laenge=55-60-cm" aria-label="Tape-in Extensions entdecken, zum Produkt">
-        {products.some(p=>p.variations.some(v=>v.original_price!=null))&&
-          <span className="rh-bf-sale-flag rh-bf-hero-label">BLACK FRIDAY · −15 %</span>}
+        <BlackFridayBadge hero/>
         <div className="hero-photo">
           <img className="hero-primary" src="/assets/hero-brunette.webp" alt="Model mit langen braunen Haaren" width={1672} height={941} fetchPriority="high"/>
         </div>
@@ -215,7 +215,7 @@ export default function HomeFrontend({products,instagramPosts=[]}:{products:Prod
             {tapeInLengths.map((choice,index)=><Link href={tapeInLengthHref(choice.key)} className={"rh-collection-card rh-collection-card-tape rh-collection-card-"+(index+1)} key={choice.key}>
               <div className="collection-media"><img src={choice.image} alt={choice.alt} loading="lazy" decoding="async"/>
                 <span className="rh-length-tag">{choice.label}</span>
-                {products.some(p=>p.variations.some(v=>v.original_price!=null))&&<span className="rh-bf-card-badge">BLACK FRIDAY −15 %</span>}
+                <BlackFridayBadge/>
               </div>
               <div className="collection-caption">
                 <div className="rh-collection-card-copy"><span className="rh-collection-card-kicker">TAPE-IN EXTENSIONS</span>
@@ -227,7 +227,7 @@ export default function HomeFrontend({products,instagramPosts=[]}:{products:Prod
             <Link className="rh-collection-card rh-collection-card-keratin" href="/kollektionen/keratin-bondings/">
               <div className="collection-media"><img src="/assets/ruby-home-keratin-hq.webp" width={1300} height={1950} alt="Ruby Hair Keratin Bondings aus Echthaar – echte dunkelbraune Produktfotografie" loading="lazy" decoding="async"/>
                 <span className="rh-length-tag">KERATIN</span>
-                {products.some(p=>p.variations.some(v=>v.original_price!=null))&&<span className="rh-bf-card-badge">BLACK FRIDAY −15 %</span>}
+                <BlackFridayBadge/>
               </div>
               <div className="collection-caption">
                 <div className="rh-collection-card-copy"><span className="rh-collection-card-kicker">KERATIN EXTENSIONS</span>

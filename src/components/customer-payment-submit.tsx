@@ -4,8 +4,8 @@ import type {CartLine} from "@/components/cart-context";
 import type {GiftCartItem} from "@/lib/gift-cards/cart-schema";
 import type {CheckoutAddressData} from "./checkout-address-preview";
 
-type Props={method:"paypal"|"klarna";lines:CartLine[];gifts?:GiftCartItem[];address:CheckoutAddressData|null;cartReady:boolean;totalCents:number;giftCode?:string};
-export default function CustomerPaymentSubmit({method,lines,gifts=[],address,cartReady,totalCents,giftCode}:Props){
+type Props={method:"paypal"|"klarna";lines:CartLine[];gifts?:GiftCartItem[];address:CheckoutAddressData|null;cartReady:boolean;totalCents:number;giftCode?:string;couponCode?:string};
+export default function CustomerPaymentSubmit({method,lines,gifts=[],address,cartReady,totalCents,giftCode,couponCode}:Props){
  const [loading,setLoading]=useState(false),[error,setError]=useState("");
  const [agreed,setAgreed]=useState(false);
  const key=useRef<string|null>(null);
@@ -18,7 +18,7 @@ export default function CustomerPaymentSubmit({method,lines,gifts=[],address,car
    const res=await fetch("/api/checkout",{method:"POST",credentials:"same-origin",cache:"no-store",
     headers:{"Content-Type":"application/json"},body:JSON.stringify({
      key:key.current,provider:method,lines,gifts,shipping:address.shipping,
-     billing:address.billing,email:address.email,giftCode,consent:true
+     billing:address.billing,email:address.email,giftCode,couponCode,consent:true
     })});
    const payload=await res.json() as {redirectUrl?:string;orderId?:string;error?:string};
    if(!res.ok||!payload.redirectUrl)throw new Error(payload.error||"CHECKOUT_FAILED");

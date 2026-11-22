@@ -1,13 +1,15 @@
 import "server-only";
 import { z } from "zod";
 import { getStoreCatalog } from "@/lib/catalog-server";
+import {blackFridayCouponValid,blackFridayUnitCents} from "@/lib/black-friday";
 
 const cartItem=z.object({
   id:z.number().int().positive(),
   quantity:z.number().int().min(1).max(99)
 }).strict();
 export const quoteRequestSchema=z.object({
-  lines:z.array(cartItem).min(1).max(30)
+  lines:z.array(cartItem).min(1).max(30),
+  couponCode:z.string().trim().min(1).max(32).optional()
 }).strict().superRefine((data,ctx)=>{
   const ids=new Set<number>();
   let quantity=0;
@@ -28,6 +30,7 @@ export type QuoteLine={
 export type CartQuote={
   source:"postgresql"|"imported-preview";
   currency:"EUR";lines:QuoteLine[];subtotalCents:number;
+  regularSubtotalCents:number;discountCents:number;couponApplied:boolean;couponError:boolean;
   needsReview:boolean;checkoutEnabled:boolean;
   message:string;
 };
@@ -36,7 +39,9 @@ export type CartQuote={
 export async function buildCartQuote(request:QuoteRequest):Promise<CartQuote>{
   const catalog=await getStoreCatalog();
   const map=new Map(catalog.products.flatMap(p=>p.variations.map(v=>[v.id,{p,v}] as const)));
-  let subtotalCents=0;
+  const couponError=Boolean(request.couponCode&&!blackFridayCouponValid(request.couponCode));
+  let subtotalCents=0,regularSubtotalCents=0;
+  const pricedAt=new Date();
   const lines:QuoteLine[]=request.lines.map(item=>{
     const entry=map.get(item.id);
     if(!entry)return {
@@ -45,7 +50,9 @@ export async function buildCartQuote(request:QuoteRequest):Promise<CartQuote>{
     };
     const {p,v}=entry;
     const stockQuantity=v.stock_quantity??null;
-    const unitCents=Math.round(v.price*100);
+    const regularCents=Math.round(v.price*100);
+    const unitCents=blackFridayUnitCents(regularCents,p.slug,pricedAt,p.material,request.couponCode);
+    regularSubtotalCents+=regularCents*item.quantity;
     const lineCents=unitCents*item.quantity;
     const status:QuoteLine["status"]=!v.available||!v.purchasable ||
       (stockQuantity!==null&&stockQuantity<item.quantity)
@@ -58,9 +65,10 @@ export async function buildCartQuote(request:QuoteRequest):Promise<CartQuote>{
     };
   });
   return {
-    source:catalog.source,currency:"EUR",lines,subtotalCents,
-    needsReview:lines.some(line=>line.status!=="available"),
-    checkoutEnabled:catalog.source==="postgresql"&&!lines.some(line=>line.status!=="available"),
+    source:catalog.source,currency:"EUR",lines,subtotalCents,regularSubtotalCents,
+    discountCents:regularSubtotalCents-subtotalCents,couponApplied:!couponError&&regularSubtotalCents>subtotalCents,
+    couponError,needsReview:couponError||lines.some(line=>line.status!=="available"),
+    checkoutEnabled:!couponError&&catalog.source==="postgresql"&&!lines.some(line=>line.status!=="available"),
     message:catalog.source==="postgresql"?"Preise und Bestand wurden serverseitig geprüft; der Bestellabschluss erfolgt an der Kasse.":"Verbindliche Preisprüfung derzeit nicht verfügbar."
   };
 }

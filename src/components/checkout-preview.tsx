@@ -17,8 +17,8 @@ const process=[
   {no:"03",label:"Zahlung",description:"Zahlungsart und Bestellübersicht",icon:Wallet}
 ];
 export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippingCents=499}:{liveTest?:LiveVariantTestView|null;checkoutMode?:"disabled"|"admin_test"|"public"|"klarna_public"|"payments_public";shippingCents?:number}){
-  const {lines,gifts,loaded}=useCart();
-  const {quote,error,loading}=useCartQuote(lines);
+  const {lines,gifts,loaded,couponCode}=useCart();
+  const {quote,error,loading}=useCartQuote(lines,couponCode);
   const digitalOnly=!lines.length&&gifts.length>0,hasItems=lines.length>0||gifts.length>0;
   const giftSoldCents=giftCartTotal(gifts);
   const shipping=lines.length?shippingCents:0;
@@ -102,12 +102,12 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
             </Link>
           </div>}
           {checkoutMode!=="disabled"&&!liveTest&&activePaymentMethod==="paypal"&&
-            <CustomerPaymentSubmit method={activePaymentMethod} lines={lines} gifts={gifts} address={validatedAddress} cartReady={canPay} totalCents={remainingCents} giftCode={gifts.length?undefined:appliedGift?.code}/>}
+            <CustomerPaymentSubmit method={activePaymentMethod} lines={lines} gifts={gifts} address={validatedAddress} cartReady={canPay} totalCents={remainingCents} giftCode={gifts.length?undefined:appliedGift?.code} couponCode={lines.length?couponCode||undefined:undefined}/>}
           {checkoutMode==="disabled"&&activePaymentMethod==="paypal"&&!liveTest&&!oneEuroCart&&<div className="rh-payment-action-area">
             <p>Die letzte Freigabe für den regulären Kauf steht noch aus. Bis dahin wird keine Bestellung ausgelöst.</p>
           </div>}
           {activePaymentMethod==="klarna"&&checkoutMode!=="disabled"&&!liveTest&&
-            <CustomerPaymentSubmit method={activePaymentMethod} lines={lines} gifts={gifts} address={validatedAddress} cartReady={canPay} totalCents={remainingCents} giftCode={gifts.length?undefined:appliedGift?.code}/>}
+            <CustomerPaymentSubmit method={activePaymentMethod} lines={lines} gifts={gifts} address={validatedAddress} cartReady={canPay} totalCents={remainingCents} giftCode={gifts.length?undefined:appliedGift?.code} couponCode={lines.length?couponCode||undefined:undefined}/>}
           {activePaymentMethod==="klarna"&&(checkoutMode==="disabled"||!!liveTest)&&<div className="rh-payment-action-area" role="status">
             <p>Klarna ist für diesen Zahlungstest noch nicht freigegeben.</p>
             <button type="button" className="rh-payment-secondary-link" onClick={()=>setPaymentMethod("paypal")}>Stattdessen PayPal wählen</button>
@@ -143,7 +143,9 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
               </div>)}
             </div>
             {lines.length>0&&<div className="rh-checkout-sum"><span>Artikelwert</span>
-              <strong>{euros(physicalCents/100)}</strong></div>}
+              <strong>{euros((quote?.regularSubtotalCents??0)/100)}</strong></div>}
+            {(quote?.discountCents??0)>0&&<div className="rh-checkout-sum rh-bf-coupon-discount"><span>BLACKFRIDAY · 15 % Rabatt</span><strong>− {euros((quote?.discountCents??0)/100)}</strong></div>}
+            {quote?.couponError&&<p role="alert">Black Friday Code ungültig oder abgelaufen. Bitte im Warenkorb entfernen.</p>}
             {gifts.length>0&&<div className="rh-checkout-sum"><span>Geschenkgutscheine</span><strong>{euros(giftSoldCents/100)}</strong></div>}
             {liveTest?<><div className="rh-checkout-sum"><span>Versand (interner Test)</span><strong>{euros(0)}</strong></div>
               <div className="rh-checkout-sum"><span>Inkl. 19 % MwSt.</span><strong>{euros(0.16)}</strong></div>

@@ -2,75 +2,73 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {products} from "../src/lib/catalog";
+import {checkoutInput} from "../src/lib/customer-checkout-schema";
 import {
- blackFridayActive,blackFridayUnitCents,blackFridayCatalog,documentedEarlierPriceCents,
- BLACK_FRIDAY_START,BLACK_FRIDAY_END
+ blackFridayActive,blackFridayCouponValid,blackFridayUnitCents,blackFridayCatalog,
+ BLACK_FRIDAY_START,BLACK_FRIDAY_END,BLACK_FRIDAY_CODE
 } from "../src/lib/black-friday";
-
 const read=(s:string)=>readFileSync(s,"utf8");
-test("Berlin 20–30 Nov 2026 campaign boundaries are exact, automatically expire",()=>{
+const at=new Date("2026-11-22T14:00:00Z");
+test("BLACKFRIDAY 15% coupon campaign Berlin start and end strictly enforced",()=>{
  assert.equal(BLACK_FRIDAY_START,"2026-11-19T23:00:00.000Z");
  assert.equal(BLACK_FRIDAY_END,"2026-11-30T23:00:00.000Z");
+ assert.equal(BLACK_FRIDAY_CODE,"BLACKFRIDAY");
  assert.equal(blackFridayActive(new Date("2026-11-19T22:59:59Z")),false);
- assert.equal(blackFridayActive(new Date("2026-11-19T23:00:00Z")),true);
- assert.equal(blackFridayActive(new Date("2026-11-30T22:59:59Z")),true);
- assert.equal(blackFridayActive(new Date("2026-11-30T23:00:00Z")),false);
+ assert.equal(blackFridayCouponValid("BLACKFRIDAY",new Date("2026-11-19T22:59:59Z")),false);
+ assert.equal(blackFridayCouponValid("blackfriday",new Date("2026-11-19T23:00:00Z")),true);
+ assert.equal(blackFridayCouponValid(" BlackFriday ",new Date("2026-11-30T22:59:59Z")),true);
+ assert.equal(blackFridayCouponValid("BLACKFRIDAY",new Date("2026-11-30T23:00:00Z")),false);
+ assert.equal(blackFridayCouponValid("BF15",at),false);
 });
-test("Sale prices are rounded once per unit in integer cents, never from client input",()=>{
- const inside=new Date("2026-11-20T13:00:00Z");
- assert.equal(blackFridayUnitCents(14000,"tape-in-extensions",inside),11900);
- assert.equal(blackFridayUnitCents(16500,"tape-in-extensions",inside),14025);
- assert.equal(blackFridayUnitCents(10001,"keratin-bondings",inside),8501);
- assert.equal(blackFridayUnitCents(14000,"tape-in-extensions",new Date("2026-12-01")),14000);
- assert.equal(blackFridayUnitCents(10000,"geschenkgutschein",inside),10000);
- assert.equal(blackFridayUnitCents(100,"rubyhair-intern-qa-1-eur",inside,"INTERNAL_QA"),100);
+test("No coupon retains original unit price; only the correct code discounts physical extensions",()=>{
+ assert.equal(blackFridayUnitCents(14000,"tape-in-extensions",at),14000);
+ assert.equal(blackFridayUnitCents(14000,"tape-in-extensions",at,undefined,"badcode"),14000);
+ assert.equal(blackFridayUnitCents(14000,"tape-in-extensions",at,undefined,"blackfriday"),11900);
+ assert.equal(blackFridayUnitCents(16500,"tape-in-extensions",at,undefined,"BLACKFRIDAY"),14025);
+ assert.equal(blackFridayUnitCents(10001,"keratin-bondings",at,undefined,"BLACKFRIDAY"),8501);
+ assert.equal(blackFridayUnitCents(14000,"tape-in-extensions",new Date("2026-12-01T00:00:00Z"),undefined,"BLACKFRIDAY"),14000);
+ assert.equal(blackFridayUnitCents(5000,"geschenkgutschein",at,undefined,"BLACKFRIDAY"),5000);
+ assert.equal(blackFridayUnitCents(100,"rubyhair-intern-qa-1-eur",at,"INTERNAL_QA","BLACKFRIDAY"),100);
+ assert.equal(blackFridayUnitCents(14000,"tape-in-extensions",at,undefined,"BLACKFRIDAY")*2,23800);
 });
-test("Every active physical catalog variation shows discount, old price and documented earlier amount without base mutation",()=>{
- const now=new Date("2026-11-20T15:00:00Z");
- const before=JSON.stringify(products);
- const sale=blackFridayCatalog(products,now);
- let active=0;
- for(const item of sale)for(const v of item.variations){
-  const original=products.find(p=>p.slug===item.slug)!.variations.find(old=>old.id===v.id)!;
-  if(!v.available||!v.purchasable){
-   assert.equal(v.original_price,undefined);
-   continue;
-  }
-  active++;
-  assert.equal(v.original_price,original.price);
-  assert.equal(Math.round(v.price*100),Math.round(Math.round(original.price*100)*0.85));
-  const recorded=documentedEarlierPriceCents(v.id,item.slug,Math.round(original.price*100));
-  if(recorded!==null)assert.equal(v.documented_prior_price,recorded/100);
+test("Catalog renders regular prices, not automatic sale price or crossed-out original price",()=>{
+ assert.strictEqual(blackFridayCatalog(products,at),products);
+ for(const product of blackFridayCatalog(products,at))for(const v of product.variations){
+  assert.equal(v.original_price,undefined);
+  assert.equal(v.documented_prior_price,undefined);
  }
- assert.ok(active>30);
- assert.equal(JSON.stringify(products),before);
- assert.deepEqual(blackFridayCatalog(products,new Date("2026-12-01")),products);
+ const server=read("src/lib/catalog-server.ts");
+ assert.ok(server.includes("blackFridayCatalog(await liveProducts())"));
 });
-test("Price reduction is applied to stored order lines, invoices and providers after stock check",()=>{
- const checkout=read("src/lib/customer-checkout.ts");
- assert.ok(checkout.includes("blackFridayUnitCents(v.priceCents,v.product.slug,pricedAt,v.product.material)"));
+test("Server quote, checkout reservation, providers, order lines and invoices use coupon-only pricing",()=>{
+ const quote=read("src/lib/cart-quote.ts"),checkout=read("src/lib/customer-checkout.ts");
+ assert.ok(quote.includes("blackFridayUnitCents(regularCents,p.slug,pricedAt,p.material,request.couponCode)"));
+ assert.ok(quote.includes("couponError")&&quote.includes("regularSubtotalCents-subtotalCents"));
+ assert.ok(quote.includes("checkoutEnabled:!couponError"));
+ assert.ok(checkout.includes('if(input.couponCode&&!blackFridayCouponValid(input.couponCode,pricedAt))'));
+ assert.ok(checkout.includes("blackFridayUnitCents(v.priceCents,v.product.slug,pricedAt,v.product.material,input.couponCode)"));
  assert.ok(checkout.includes("unitPriceCents,lineTotalCents:total"));
- assert.ok(checkout.includes("unitCents:stored.unitPriceCents,totalCents:stored.lineTotalCents"));
  assert.ok(checkout.includes("subtotalCents:subtotal+digitalTotal"));
  assert.ok(checkout.includes("giftCartTotal(giftItems)"));
- const priceFeed=read("src/lib/catalog-server.ts");
- assert.ok(priceFeed.includes('blackFridayCatalog(await liveProducts())'));
- assert.ok(priceFeed.includes('blackFridayCatalog(importedProducts)'));
- const quote=read("src/lib/cart-quote.ts");
- assert.ok(quote.includes("Math.round(v.price*100)"));
+ assert.ok(checkout.includes("couponCode:normalizedPromoCode(input.couponCode)||null"));
+ assert.ok(read("src/components/customer-payment-submit.tsx").includes("giftCode,couponCode,consent:true"));
+ assert.ok(read("src/components/checkout-preview.tsx").includes("useCartQuote(lines,couponCode)"));
+ assert.ok(read("src/components/cart-page.tsx").includes("setCouponCode(couponDraft)"));
 });
-test("UI has per-second banner, responsive popup, all-products labels and original prices",()=>{
+test("Checkout schema accepts separate coupon and existing gift code, rejects excessive input",()=>{
+ const address={firstName:"Julia",lastName:"Muster",street:"Beispielstrasse 5",postalCode:"45127",city:"Essen",country:"DE"};
+ const basic={key:"123e4567-e89b-42d3-a456-426614174000",provider:"paypal",lines:[{id:886,quantity:1}],shipping:address,email:"test@example.com",consent:true};
+ assert.equal(checkoutInput.safeParse({...basic,couponCode:"BLACKFRIDAY"}).success,true);
+ assert.equal(checkoutInput.safeParse({...basic,couponCode:"x".repeat(100)}).success,false);
+ assert.equal(checkoutInput.safeParse({...basic,giftCode:"RH-ABCD-ABCD-ABCD-ABCD-ABCD",couponCode:"BLACKFRIDAY"}).success,true);
+});
+test("Campaign displays code on banner, popup, product cards; not automatic discount",()=>{
  const promo=read("src/components/black-friday-experience.tsx");
- const css=read("src/styles/black-friday.css");
  assert.ok(promo.includes("setInterval(tick,1000)"));
- assert.ok(promo.includes("sessionStorage.setItem(SHOWN_KEY"));
- assert.ok(promo.includes('role="dialog"'));
- assert.ok(promo.includes("localStorage.getItem"));
- assert.ok(promo.includes("setOpen(false)"));
- assert.ok(promo.includes("window.location.reload()"));
- assert.ok(css.includes("max-width:550px"));
- for(const file of ["src/components/product-detail.tsx","src/components/shade-grid.tsx","src/components/product-search.tsx","src/components/cart-page.tsx"]){
-  assert.ok(read(file).includes("original_price"),file);
- }
+ assert.ok(promo.includes("coupon-popup-shown"));
+ assert.ok(promo.includes("Code BLACKFRIDAY im Warenkorb"));
+ assert.ok(!promo.includes("Der Aktionspreis wird direkt im Shop"));
+ assert.ok(read("src/components/black-friday-badge.tsx").includes("BLACK FRIDAY · 15 % MIT CODE"));
  assert.ok(read("app/kollektionen/page.tsx").includes("BlackFridayBadge"));
+ assert.ok(!read("src/components/product-detail.tsx").includes("<del aria-label=\"Preis vor Black Friday\""));
 });

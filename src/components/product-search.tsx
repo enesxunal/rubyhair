@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import {colorsFor,euros,type Product} from "@/lib/catalog";
+import BlackFridayBadge from "@/components/black-friday-badge";
 export function ProductSearch({initialQuery="",products}:{initialQuery?:string;products:Product[]}){
   const [query,setQuery]=useState(initialQuery);
   const items=products.flatMap(product=>Array.from(colorsFor(product),([color,variants])=>{
@@ -23,12 +24,9 @@ export function ProductSearch({initialQuery="",products}:{initialQuery?:string;p
       <Link key={x.product.slug+"-"+x.color} className="rh-shade-card"
         href={"/produkt/"+x.product.slug+"/?farbe="+encodeURIComponent(x.color)}>
         <div className="rh-shade-image"><img src={x.sample.image} alt={x.product.name+" Farbe "+x.sample.color_label} loading="lazy"/>
-         {x.available.some(v=>v.original_price!=null)&&<span className="rh-bf-card-badge">BLACK FRIDAY −15 %</span>}</div>
+         <BlackFridayBadge/></div>
         <div><div><strong>{x.product.name}</strong><small>Farbe {x.sample.color_label}</small></div>
-          <span className="rh-price-small">{x.available.length&&x.available.some(v=>v.original_price!=null)
-           ?<span className="rh-bf-image-price"><del>{euros(Math.min(...x.available.map(v=>v.original_price??v.price)))}</del>
-            <b>ab {euros(Math.min(...x.available.map(v=>v.price)))}</b></span>
-           :x.available.length?"ab "+euros(Math.min(...x.available.map(v=>v.price))):"Ausverkauft"}</span></div>
+          <span className="rh-price-small">{x.available.length?"ab "+euros(Math.min(...x.available.map(v=>v.price))):"Ausverkauft"}</span></div>
       </Link>
     )}</div>
     {filtered.length===0&&<p>Keine Treffer. Probiere eine andere Haarfarbe oder Produktart.</p>}

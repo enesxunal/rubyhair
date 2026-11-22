@@ -8,7 +8,7 @@ export const checkoutInput=z.object({
  key:z.string().uuid(),provider:z.enum(["paypal","klarna"]),
  lines:z.array(z.object({id:z.number().int().positive(),quantity:z.number().int().min(1).max(99)}).strict()).max(30),
  gifts:z.array(giftCartItemSchema).max(5).default([]),
- shipping:address,billing:address.optional(),email:z.email().max(254),giftCode:z.string().min(10).max(45).optional(),consent:z.literal(true)
+ shipping:address,billing:address.optional(),email:z.email().max(254),giftCode:z.string().min(10).max(45).optional(),couponCode:z.string().trim().min(1).max(32).optional(),consent:z.literal(true)
 }).strict().superRefine((v,ctx)=>{
  if(!v.lines.length&&!v.gifts.length)ctx.addIssue({code:"custom",path:["lines"],message:"Cart is empty"});
  if(v.gifts.length&&v.provider!=="paypal")ctx.addIssue({code:"custom",path:["provider"],message:"Digital gift cards require PayPal"});

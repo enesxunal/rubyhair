@@ -58,3 +58,16 @@
  .rh-length-collection .rh-collection-trio .collection-media>.rh-length-tag{top:70px;left:10px}
  .rh-length-collection .rh-collection-trio .collection-media>.rh-bf-card-badge{left:auto;right:10px;top:10px}
 }
+
+/* Coupon-only promotion: regular catalog price, discount appears only with validated code. */
+.rh-bf-coupon-hint{display:block;margin:6px 0 12px;font-size:12px;letter-spacing:.4px;color:#78465d;font-weight:650}
+.rh-bf-coupon-box{display:block;margin:16px 0;padding:14px 0;border-top:1px solid #e5dce0;border-bottom:1px solid #e5dce0}
+.rh-bf-coupon-box label{display:block;font-weight:650;font-size:12px;letter-spacing:.3px;margin-bottom:8px}
+.rh-bf-coupon-row{display:flex;gap:7px;min-width:0}
+.rh-bf-coupon-row input{flex:1;min-width:0;max-width:100%;padding:11px 12px;border:1px solid #cfc2c7;border-radius:3px;font-size:13px;letter-spacing:.8px;background:#fff;color:#282022}
+.rh-bf-coupon-row button{flex-shrink:0;padding:10px 13px;background:#503341;color:white;border:0;border-radius:3px;font-size:12px;font-weight:650;cursor:pointer}
+.rh-bf-coupon-row button:disabled{opacity:.5;cursor:not-allowed}
+.rh-bf-coupon-status{font-size:11px;line-height:1.6;margin-top:8px;color:#6e4d59}
+.rh-bf-coupon-status button{margin-left:8px;text-decoration:underline;border:0;background:none;color:inherit;cursor:pointer;font-size:11px}
+.rh-bf-coupon-discount{color:#78455b}
+@media(max-width:550px){.rh-bf-coupon-row{gap:5px}.rh-bf-coupon-row button{padding:10px 9px}.rh-bf-card-badge{letter-spacing:.35px;font-size:8px}}

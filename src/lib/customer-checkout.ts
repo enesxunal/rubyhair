@@ -10,7 +10,7 @@ import {giftCodeHash,giftCodeLooksValid} from "@/lib/gift-cards/rules";
 import {createCustomerInvoicePdf} from "@/lib/customer-invoice";
 import {RUBY_TEST_SELLER} from "@/lib/qa-invoice";
 import {giftCartTotal} from "@/lib/gift-cards/cart-schema";
-import {blackFridayUnitCents} from "@/lib/black-friday";
+import {blackFridayUnitCents,blackFridayCouponValid,normalizedPromoCode} from "@/lib/black-friday";
 
 export {checkoutInput} from "@/lib/customer-checkout-schema";
 import {checkoutInput,type CustomerCheckoutInput} from "@/lib/customer-checkout-schema";
@@ -26,7 +26,7 @@ export class CustomerCheckoutError extends Error{
  constructor(public readonly reason:string,public readonly http=400){super(reason);this.name="CustomerCheckoutError"}
 }
 const hash=(input:CustomerCheckoutInput)=>createHash("sha256").update(JSON.stringify({
- provider:input.provider,giftCode:input.giftCode?giftCodeHash(input.giftCode):null,lines:[...input.lines].sort((a,b)=>a.id-b.id),
+ provider:input.provider,giftCode:input.giftCode?giftCodeHash(input.giftCode):null,couponCode:normalizedPromoCode(input.couponCode)||null,lines:[...input.lines].sort((a,b)=>a.id-b.id),
  gifts:[...input.gifts].sort((a,b)=>a.id.localeCompare(b.id)),
  shipping:input.shipping,billing:input.billing||input.shipping,email:input.email.toLowerCase()
 })).digest("hex");
@@ -72,7 +72,8 @@ export async function createCustomerCheckout(input:CustomerCheckoutInput){
  if(input.gifts.length&&process.env.RUBY_GIFT_CARDS_LIVE_ENABLED!=="true")throw new CustomerCheckoutError("GIFT_SALES_UNAVAILABLE",503);
  if(input.giftCode&&(!giftCodeLooksValid(input.giftCode)||input.provider!=="paypal"))throw new CustomerCheckoutError("GIFT_CODE_INVALID_OR_PROVIDER_UNSUPPORTED",400);
  const db=getPrisma();
- const pricedAt=new Date(); // Fixed for the entire transaction / invoice.
+ const pricedAt=new Date();
+ if(input.couponCode&&!blackFridayCouponValid(input.couponCode,pricedAt))throw new CustomerCheckoutError("COUPON_INVALID_OR_EXPIRED",400); // Fixed for the entire transaction / invoice.
  // Provider may not be needed for a fully gift-card-covered order.
  const gateway=input.giftCode?null:await providerForCheckout(input.provider);
  const digest=hash(input);
@@ -95,7 +96,7 @@ export async function createCustomerCheckout(input:CustomerCheckoutInput){
    if(!v.active||!v.product.active||v.product.currency!=="EUR"||v.priceCents<100||
      !Number.isSafeInteger(v.priceCents)||v.stockQuantity!==null&&v.stockQuantity<item.quantity)
      throw new CustomerCheckoutError("ITEM_UNAVAILABLE",409);
-   const unitPriceCents=blackFridayUnitCents(v.priceCents,v.product.slug,pricedAt,v.product.material);
+   const unitPriceCents=blackFridayUnitCents(v.priceCents,v.product.slug,pricedAt,v.product.material,input.couponCode);
    if(unitPriceCents<1)throw new CustomerCheckoutError("ITEM_PRICE_UNAVAILABLE",409);
    const total=unitPriceCents*item.quantity;
    if(total>2000000||subtotal+total>2000000)throw new CustomerCheckoutError("ORDER_TOO_LARGE",400);

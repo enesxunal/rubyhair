@@ -5,7 +5,7 @@ import {usePathname} from "next/navigation";
 import {BLACK_FRIDAY_START,BLACK_FRIDAY_END,BLACK_FRIDAY_CAMPAIGN} from "@/lib/black-friday";
 
 const END=Date.parse(BLACK_FRIDAY_END),START=Date.parse(BLACK_FRIDAY_START);
-const SHOWN_KEY=BLACK_FRIDAY_CAMPAIGN+"-popup-shown";
+const SHOWN_KEY=BLACK_FRIDAY_CAMPAIGN+"-coupon-popup-shown";
 function remaining(now:number){
  const seconds=Math.max(0,Math.ceil((END-now)/1000));
  return [Math.floor(seconds/86400),Math.floor(seconds/3600)%24,Math.floor(seconds/60)%60,seconds%60];
@@ -62,7 +62,7 @@ export default function BlackFridayExperience(){
   <div className="rh-bf-bar" role="region" aria-label="Black Friday Aktion">
    <div className="rh-bf-bar-inner">
     <span className="rh-bf-bar-kicker">BLACK FRIDAY <b>–15%</b></span>
-    <span className="rh-bf-bar-copy">15 % auf alle Produkte* · bis 30.11.</span>
+    <span className="rh-bf-bar-copy">15 % mit Code BLACKFRIDAY · bis 30.11.</span>
     <div className="rh-bf-countdown" aria-label="Verbleibende Zeit bis zum Angebotsende">
      {[[days,"Tage"],[hours,"Std."],[minutes,"Min."],[seconds,"Sek."]].map(([value,label])=>
       <span className="rh-bf-count-unit" key={label}><strong>{two(Number(value))}</strong><small>{label}</small></span>)}
@@ -78,10 +78,10 @@ export default function BlackFridayExperience(){
     <div className="rh-bf-popup-content">
      <span className="rh-bf-popup-eyebrow">LIMITED BLACK FRIDAY EDITION · 2026</span>
      <h2 id="rh-bf-modal-title">Beautiful hair.<br/><em>Better price.</em></h2>
-     <div className="rh-bf-popup-number"><strong>15<span>%</span></strong><div>RABATT<br/>AUF ALLE<br/>PRODUKTE*</div></div>
-     <p id="rh-bf-modal-desc">Nur bis 30. November 2026. Der Aktionspreis wird direkt im Shop und an der Kasse berücksichtigt.</p>
+     <div className="rh-bf-popup-number"><strong>15<span>%</span></strong><div>RABATT<br/>MIT CODE<br/>BLACKFRIDAY</div></div>
+     <p id="rh-bf-modal-desc">Code BLACKFRIDAY im Warenkorb eingeben und 15 % auf Extensions sparen. Nur bis 30. November 2026.</p>
      <Link href="/kollektionen/" onClick={()=>setOpen(false)} className="rh-bf-popup-button">KOLLEKTION ENTDECKEN <span aria-hidden="true">↗</span></Link>
-     <small>* Ausgenommen Geschenkgutscheine. Solange der Vorrat reicht.</small>
+     <small>* Nicht kombinierbar mit anderen Aktionscodes. Geschenkgutscheine und Versand ausgenommen.</small>
     </div>
    </section>
   </div>}
