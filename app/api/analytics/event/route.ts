@@ -2,6 +2,7 @@ import {NextRequest,NextResponse} from "next/server";
 import {z} from "zod";
 import {databaseConfigured,getPrisma} from "@/lib/prisma";
 import {storyAnalyticsPaths} from "@/data/story-analytics";
+import {berlinDateKey} from "@/lib/analytics-calendar";
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
 const cache={"Cache-Control":"private, no-store"};
@@ -9,7 +10,7 @@ const publicPaths=new Set(["/","/kollektionen","/kollektionen/tape-in-extensions
 const schema=z.object({
   event:z.enum(["page_view","add_to_cart","begin_checkout","story_view","ai_tryon_start","ai_tryon_success","ai_to_cart"]),
   path:z.string().min(1).max(80),
-  source:z.enum(["direct","search","social","referral","internal"]),
+  source:z.enum(["direct","search","social","referral","internal","meta_paid","meta_post","meta_reels"]),
   device:z.enum(["mobile","desktop"]),
   consent:z.literal(true)
 }).strict().superRefine((data,ctx)=>{
@@ -45,11 +46,11 @@ export async function POST(request:NextRequest){
  const parsed=schema.safeParse(body);
  if(!parsed.success)return NextResponse.json({error:"invalid_event"},{status:400,headers:cache});
  const {path,event,source,device}=parsed.data;
- const now=new Date();const day=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate()));
+ const now=new Date();const day=berlinDateKey(now);
  try{
   const db=getPrisma();
   // The database contains only aggregates. Delete rows older than 180 days.
-  const cutoff=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate()-180));
+  const cutoff=new Date(day);cutoff.setUTCDate(cutoff.getUTCDate()-180);
   await db.analyticsAggregate.deleteMany({where:{day:{lt:cutoff}}});
   await db.analyticsAggregate.upsert({
    where:{day_path_event_source_device:{day,path,event,source,device}},

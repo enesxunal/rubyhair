@@ -1,18 +1,19 @@
 "use client";
 import {storyAnalyticsPaths} from "@/data/story-analytics";
+import {classifyRubyTraffic,type RubyTrafficSource} from "@/lib/analytics-attribution";
 export type RubyEvent="page_view"|"add_to_cart"|"begin_checkout"|"story_view"|"ai_tryon_start"|"ai_tryon_success"|"ai_to_cart";
 const enabled=process.env.NEXT_PUBLIC_RUBY_ANALYTICS_ENABLED==="APPROVED";
 export const analyticsEnabled=()=>enabled;
 const allowed=new Set(["/","/kollektionen","/kollektionen/tape-in-extensions","/produkt/tape-in-extensions","/produkt/keratin-bondings","/ratgeber","/kontakt","/versand-zahlung","/warenkorb","/kasse","/haar-anprobe","/suche","/geschenkgutschein"]);
-const source=()=>{
- if(!document.referrer)return "direct";
- try{
-  const ref=new URL(document.referrer);
-  if(ref.origin===location.origin)return "internal";
-  if(/(^|\.)(google|bing|duckduckgo|yandex)\./.test(ref.hostname))return "search";
-  if(/(^|\.)(instagram|facebook|tiktok|pinterest)\./.test(ref.hostname))return "social";
-  return "referral";
- }catch{return "direct";}
+const attributionKey="ruby_analytics_source_tab";
+const allowedSource=new Set<RubyTrafficSource>(["meta_paid","meta_post","meta_reels","social","search","referral","direct","internal"]);
+const source=():RubyTrafficSource=>{
+ // Only called after analyticsConsent; store the source category for SPA navigation in this tab.
+ let previous:RubyTrafficSource|null=null;
+ try{const value=sessionStorage.getItem(attributionKey) as RubyTrafficSource|null;previous=value&&allowedSource.has(value)?value:null;}catch{}
+ const result=classifyRubyTraffic(location.href,document.referrer,previous);
+ try{sessionStorage.setItem(attributionKey,result)}catch{}
+ return result;
 };
 export const isTrackableRubyPath=(path:string)=>allowed.has(path.replace(/\/$/,"")||"/");
 export const analyticsConsent=()=>enabled&&typeof window!=="undefined"&&localStorage.getItem("ruby_analytics_choice")==="allow";

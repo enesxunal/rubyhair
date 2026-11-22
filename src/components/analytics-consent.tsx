@@ -68,6 +68,7 @@ export default function AnalyticsConsent(){
    localStorage.setItem(marketingKey,ads);
    localStorage.setItem(gaKey,ga);
    document.cookie="ruby_analytics="+stats+"; Path=/; Max-Age=31536000; SameSite=Lax"+(location.protocol==="https:"?"; Secure":"");
+   if(stats==="deny")try{sessionStorage.removeItem("ruby_analytics_source_tab")}catch{}
    if(ads==="deny"){
     // Remove the most common browser cookie created by Meta, as far as first party control allows.
     for(const key of ["_fbp","_fbc"])document.cookie=key+"=; Path=/; Max-Age=0; SameSite=Lax";

@@ -388,7 +388,7 @@ test("opt-in analytics handles page paths and purges daily aggregates after 180 
  const consent=fs.readFileSync(path.join(base,"src/components/analytics-consent.tsx"),"utf8");
  const legal=fs.readFileSync(path.join(base,"app/rechtliches/[slug]/page.tsx"),"utf8");
  assert.ok(server.includes('analyticsAggregate.deleteMany({where:{day:{lt:cutoff}}})'));
- assert.ok(server.includes('now.getUTCDate()-180'));
+ assert.ok(server.includes('cutoff.setUTCDate(cutoff.getUTCDate()-180)'));
  assert.ok(consent.includes('isTrackableRubyPath(path)'));
  assert.ok(consent.includes('ruby_analytics_choice'));
  assert.ok(consent.includes('setOpen(true)'));
@@ -532,7 +532,7 @@ test("admin V2 analytics and launch readiness stay grounded in aggregates",()=>{
  const dashboard=fs.readFileSync(path.join(base,"app/admin/page.tsx"),"utf8");
  const products=fs.readFileSync(path.join(base,"app/admin/produkte/page.tsx"),"utf8");
  const chart=fs.readFileSync(path.join(base,"src/components/admin-activity-chart.tsx"),"utf8");
- assert.ok(page.includes("Referrer-Kategorien"));
+ assert.ok(page.includes("Traffic-Quellen (mit Einwilligung)"));
  assert.ok(page.includes("Conversion-Rate"));
  assert.ok(page.includes("CSV exportieren"));
  assert.ok(helper.includes("select:{day:true,event:true,path:true,source:true,device:true,count:true}"));

@@ -11,6 +11,7 @@ import {
  isoDay,addUtcDays,type AnalyticsReport
 } from "@/lib/admin-analytics-report";
 import {loadAnalyticsReport} from "@/lib/admin-analytics-server";
+import {berlinDateKey} from "@/lib/analytics-calendar";
 import AdminActivityChart from "@/components/admin-activity-chart";
 import AdminShell from "../admin-shell";
 
@@ -72,7 +73,7 @@ export default async function AdminAnalytics({searchParams}:{searchParams:Promis
   {value:"heute",label:"Heute"},{value:"gestern",label:"Gestern"},
   {value:"7",label:"7 Tage"},{value:"30",label:"30 Tage"},{value:"90",label:"90 Tage"}
  ];
- const dateLimit=isoDay(addUtcDays(new Date(new Date().toISOString().slice(0,10)+"T00:00:00Z"),-179));
+ const dateLimit=isoDay(addUtcDays(berlinDateKey(),-179));
  return <AdminShell current="analytics" title="Statistik im Überblick."
   description="Einfach sehen, was im Shop passiert: Aufrufe, Produktinteresse, Warenkorb und Storys.">
   <section className="rh-ops-filters" aria-label="Zeitraum der Statistik">
@@ -93,7 +94,7 @@ export default async function AdminAnalytics({searchParams}:{searchParams:Promis
    <Link className="rh-ops-export" prefetch={false} href={"/admin/analytics/export?"+exportQuery.toString()}>
     <Download size={15}/> CSV exportieren
    </Link>
-   <p className="rh-ops-filter-caption"><CalendarDays size={14}/> {range.label}: {date(report.start)} – {date(report.end)} · {range.days} {range.days===1?"Tag":"Tage"} · UTC-Tageswerte</p>
+   <p className="rh-ops-filter-caption"><CalendarDays size={14}/> {range.label}: {date(report.start)} – {date(report.end)} · {range.days} {range.days===1?"Tag":"Tage"} · Europe/Berlin · ältere Einträge wurden vor der Umstellung in UTC gezählt</p>
   </section>
   <section className="rh-ops-kpis" aria-label="Wichtigste Kennzahlen">
    <OverviewCard label="Seitenaufrufe" icon={<Eye size={19}/>} value={enabledValue(enabled,current.views)}
@@ -104,6 +105,15 @@ export default async function AdminAnalytics({searchParams}:{searchParams:Promis
     note="Warenkorb-Aktionen"/>
    <OverviewCard label="Kassenaufrufe" icon={<ShoppingBag size={19}/>} value={enabledValue(enabled,current.checkouts)}
     note="Kassenbesuche, keine Käufe"/>
+  </section>
+  <section className="rh-ops-paid-overview" aria-label="Meta Black Friday Werbeanzeigen">
+   <div className="rh-ops-section-head"><div><span>BLACK FRIDAY / META ADS</span><h2>Werbe-Traffic nach Herkunft</h2>
+    <p>Nur Seitenansichten nach Zustimmung zur internen Statistik. Keine eindeutigen Besucher und nicht mit den Meta-Klicks gleichzusetzen.</p></div></div>
+   <div className="rh-ops-paid-kpis">
+    <OverviewCard label="Instagram-Post" icon={<Eye size={18}/>} value={enabledValue(enabled,report.sources.find(x=>x.key==="meta_post")?.count||0)} note="Mit dem Instagram-Post verknüpfte Ansichten"/>
+    <OverviewCard label="Elaine Reels" icon={<Eye size={18}/>} value={enabledValue(enabled,report.sources.find(x=>x.key==="meta_reels")?.count||0)} note="Mit der Elaine-Reels-Anzeige verknüpfte Ansichten"/>
+    <OverviewCard label="Weitere Meta Ads" icon={<Eye size={18}/>} value={enabledValue(enabled,report.sources.find(x=>x.key==="meta_paid")?.count||0)} note="Meta-Anzeigen ohne eindeutige Creative-Zuordnung"/>
+   </div>
   </section>
   <div className="rh-ops-analytics-note"><ShieldCheck size={16}/><span>
    {enabled?"Erfassung aktiv – nur mit Einwilligung.":"Erfassung deaktiviert."}
@@ -151,10 +161,10 @@ export default async function AdminAnalytics({searchParams}:{searchParams:Promis
      </div>)}
      {!report.pages.length&&<p>Noch keine Seitenaufrufe verfügbar.</p>}
     </div>
-    <Breakdown title="Referrer-Kategorien" items={enabled?report.sources:[]} labels={analyticsSourceLabels}/>
+    <Breakdown title="Traffic-Quellen (mit Einwilligung)" items={enabled?report.sources:[]} labels={analyticsSourceLabels}/>
     <Breakdown title="Geräte" items={enabled?report.devices:[]} labels={analyticsDeviceLabels}/>
    </div>
   </details>
-  <p className="rh-ops-privacy-footer"><BarChart3 size={15}/> Bezahlter Umsatz wird hier nicht aus anonymen Klicks geschätzt. Bestätigte Zahlungen und Rechnungen findest du unter Bestellungen/Zahlungen. Eine echte, personenbezogene Funnel- oder Conversion-Rate-Analyse findet nicht statt.</p>
+  <p className="rh-ops-privacy-footer"><BarChart3 size={15}/> Neue Ereignisse werden nach Europe/Berlin-Tagen gezählt; ältere Werte wurden nach UTC erfasst. Quellen zählen nur Einwilligungen, keine Meta-Klicks oder eindeutigen Sitzungen. Bezahlter Umsatz wird hier nicht aus anonymen Klicks geschätzt. Bestätigte Zahlungen und Rechnungen findest du unter Bestellungen/Zahlungen. Eine echte, personenbezogene Funnel- oder Conversion-Rate-Analyse findet nicht statt.</p>
  </AdminShell>;
 }

@@ -1,8 +1,9 @@
 import "server-only";
 import {unstable_cache} from "next/cache";
 import {getPrisma} from "@/lib/prisma";
+import {berlinDateKey} from "@/lib/analytics-calendar";
 import {
-  createAnalyticsReport,addUtcDays,utcDay,
+  createAnalyticsReport,addUtcDays,
   type AnalyticsPeriod,type AnalyticsRange,type AnalyticsRow
 } from "@/lib/admin-analytics-report";
 
@@ -21,7 +22,7 @@ const cachedAggregateRows=unstable_cache(async(startISO:string,endISO:string)=>{
 
 /** Only anonymous aggregate counts. Never pull user identifiers or session-level events. */
 export async function loadAnalyticsReport(selection:AnalyticsPeriod|AnalyticsRange,now:Date=new Date()){
- const end=typeof selection==="number"?utcDay(now):selection.end;
+ const end=typeof selection==="number"?berlinDateKey(now):selection.end;
  const days=typeof selection==="number"?selection:selection.days;
  const start=typeof selection==="number"?addUtcDays(end,1-days):selection.start;
  const previousStart=addUtcDays(start,-days);

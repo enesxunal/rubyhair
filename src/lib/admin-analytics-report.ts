@@ -7,6 +7,7 @@
 export const analyticsPeriods=[7,28,90] as const;
 export type AnalyticsPeriod=typeof analyticsPeriods[number];
 import {storyAnalyticsEntries} from "@/data/story-analytics";
+import {berlinDateKey} from "@/lib/analytics-calendar";
 export type AnalyticsEvent="page_view"|"add_to_cart"|"begin_checkout"|"story_view"|"ai_tryon_start"|"ai_tryon_success"|"ai_to_cart";
 export type AnalyticsRow={
   day:Date;event:string;path:string;source:string;device:string;count:number
@@ -31,7 +32,7 @@ export function parseAnalyticsRange(
  params:{zeitraum?:string;von?:string;bis?:string;tage?:string},
  now:Date=new Date()
 ):AnalyticsRange{
- const today=utcDay(now);
+ const today=berlinDateKey(now);
  const fallback=(days:number,mode:AnalyticsRange["mode"],label:string):AnalyticsRange=>({
   start:addUtcDays(today,1-days),end:today,days,mode,label
  });
@@ -76,7 +77,7 @@ export function comparePercent(current:number,previous:number):number|null{
 }
 export function createAnalyticsReport(rows:AnalyticsRow[],selection:AnalyticsPeriod|AnalyticsRange,now:Date=new Date()){
  const period=typeof selection==="number"?selection:selection.days;
- const end=typeof selection==="number"?utcDay(now):selection.end;
+ const end=typeof selection==="number"?berlinDateKey(now):selection.end;
  const start=typeof selection==="number"?addUtcDays(end,1-period):selection.start;
  const previousStart=addUtcDays(start,-period);
  const current=empty(),previous=empty(),days=new Map<string,DailyCounts>();
@@ -144,7 +145,7 @@ export function createAnalyticsReport(rows:AnalyticsRow[],selection:AnalyticsPer
 }
 export type AnalyticsReport=ReturnType<typeof createAnalyticsReport>;
 export const analyticsSourceLabels:Record<string,string>={
- direct:"Direkter / unbekannter Referrer",search:"Suchmaschinen",social:"Soziale Netzwerke",
+ meta_paid:"Meta Ads · andere Anzeigen",meta_post:"Meta Ads · Instagram-Post",meta_reels:"Meta Ads · Elaine-Reels",direct:"Direkter / unbekannter Referrer",search:"Suchmaschinen",social:"Soziale Netzwerke (organisch / unklar)",
  referral:"Externe Verweise",internal:"Interne Navigation"
 };
 export const analyticsDeviceLabels:Record<string,string>={mobile:"Mobil",desktop:"Desktop"};
