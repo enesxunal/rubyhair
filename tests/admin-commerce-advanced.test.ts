@@ -56,11 +56,15 @@ test('Advanced page uses admin authentication, safe independent verified payment
  const exportCSV=readFileSync('app/admin/analytics/export/route.ts','utf8');
  const pure=readFileSync('src/lib/admin-commerce-report.ts','utf8');
  const styles=readFileSync('src/styles/admin-v2.css','utf8');
- assert.ok(page.indexOf('if(!await isAdmin())redirect')<page.indexOf('loadCommerceReport(range)'));
+ assert.ok(page.indexOf('if(!await isAdmin())redirect')<page.indexOf('loadCommerceReportSafely(range)'));
  assert.ok(page.includes('<AdminCommercePanel data={commerce}/>'));
  assert.ok(page.includes('AdminAnalyticsTrend daily={report.daily} previousDaily={report.previousDaily}'));
  assert.ok(page.includes('<AdminAnalyticsChannels report={report} enabled={enabled}/>'));
  assert.ok(service.includes('order:{testOnly:false}'));
+ assert.ok(service.includes('loadCommerceReportSafely'));
+ assert.ok(service.includes('P2024'));
+ assert.ok(service.includes('RUBY_ANALYTICS_COMMERCE_READ_FAILED'));
+ assert.ok(page.indexOf('await loadAnalyticsReport(range)')<page.indexOf('await loadCommerceReportSafely(range)'));
  assert.ok(service.includes('"PAYMENT.CAPTURE.COMPLETED"'));
  assert.ok(service.includes('"KLARNA.CAPTURE.COMPLETED"'));
  assert.ok(!service.includes('customerEmail'));

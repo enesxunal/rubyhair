@@ -11,7 +11,7 @@ import {
  isoDay,addUtcDays,type AnalyticsReport
 } from "@/lib/admin-analytics-report";
 import {loadAnalyticsReport} from "@/lib/admin-analytics-server";
-import {loadCommerceReport} from "@/lib/admin-commerce-server";
+import {loadCommerceReportSafely} from "@/lib/admin-commerce-server";
 import AdminCommercePanel from "@/components/admin-commerce-panel";
 import AdminAnalyticsTrend from "@/components/admin-analytics-trend";
 import AdminAnalyticsChannels from "@/components/admin-analytics-channels";
@@ -68,7 +68,9 @@ export default async function AdminAnalytics({searchParams}:{searchParams:Promis
  const params=await searchParams;
  const range=parseAnalyticsRange(params);
  const enabled=process.env.RUBY_ANALYTICS_ENABLED==="APPROVED";
- const [report,commerce]=await Promise.all([loadAnalyticsReport(range),loadCommerceReport(range).catch(()=>null)]);
+ // Finish the analytics query before commerce to avoid exhausting the Vercel pool.
+ const report=await loadAnalyticsReport(range);
+ const commerce=await loadCommerceReportSafely(range);
  const {current,previous}=report;
  const exportQuery=new URLSearchParams({zeitraum:range.mode});
  if(range.mode==="frei"){exportQuery.set("von",isoDay(range.start));exportQuery.set("bis",isoDay(range.end));}
