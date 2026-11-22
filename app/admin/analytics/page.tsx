@@ -2,7 +2,7 @@ import type {Metadata} from "next";
 import Link from "next/link";
 import {redirect} from "next/navigation";
 import {
- BarChart3,CalendarDays,Download,Eye,Info,MousePointer2,ShoppingBag,
+ BarChart3,CalendarDays,Download,Eye,Info,MousePointer2,ShoppingBag,RefreshCw,
  ShoppingCart,Sparkles,ShieldCheck,TrendingUp
 } from "lucide-react";
 import {isAdmin} from "@/lib/admin-auth";
@@ -11,8 +11,11 @@ import {
  isoDay,addUtcDays,type AnalyticsReport
 } from "@/lib/admin-analytics-report";
 import {loadAnalyticsReport} from "@/lib/admin-analytics-server";
+import {loadCommerceReport} from "@/lib/admin-commerce-server";
+import AdminCommercePanel from "@/components/admin-commerce-panel";
+import AdminAnalyticsTrend from "@/components/admin-analytics-trend";
+import AdminAnalyticsChannels from "@/components/admin-analytics-channels";
 import {berlinDateKey} from "@/lib/analytics-calendar";
-import AdminActivityChart from "@/components/admin-activity-chart";
 import AdminShell from "../admin-shell";
 
 export const metadata:Metadata={title:"Statistik | Ruby Hair Verwaltung",robots:{index:false,follow:false}};
@@ -39,7 +42,7 @@ function EventFunnel({report,enabled}:{report:AnalyticsReport;enabled:boolean}){
  ];
  const max=Math.max(1,...items.map(x=>x.n));
  return <section className="rh-admin-panel-card rh-ops-funnel" aria-labelledby="rh-ops-funnel-title">
-  <div className="rh-ops-section-head"><div><span>02 / SHOPPING FUNNEL</span><h2 id="rh-ops-funnel-title">Wo entsteht Kaufinteresse?</h2>
+  <div className="rh-ops-section-head"><div><span>SHOPPING EVENTS</span><h2 id="rh-ops-funnel-title">Wo entsteht Kaufinteresse?</h2>
    <p>Vom Seitenaufruf bis zur Kasse – als einfache Übersicht der erfassten Aktionen.</p></div></div>
   <div className="rh-ops-funnel-steps">
    {items.map((item,i)=><div className="rh-ops-funnel-step" key={item.name}>
@@ -65,7 +68,7 @@ export default async function AdminAnalytics({searchParams}:{searchParams:Promis
  const params=await searchParams;
  const range=parseAnalyticsRange(params);
  const enabled=process.env.RUBY_ANALYTICS_ENABLED==="APPROVED";
- const report=await loadAnalyticsReport(range);
+ const [report,commerce]=await Promise.all([loadAnalyticsReport(range),loadCommerceReport(range).catch(()=>null)]);
  const {current,previous}=report;
  const exportQuery=new URLSearchParams({zeitraum:range.mode});
  if(range.mode==="frei"){exportQuery.set("von",isoDay(range.start));exportQuery.set("bis",isoDay(range.end));}
@@ -75,7 +78,7 @@ export default async function AdminAnalytics({searchParams}:{searchParams:Promis
  ];
  const dateLimit=isoDay(addUtcDays(berlinDateKey(),-179));
  return <AdminShell current="analytics" title="Statistik im Überblick."
-  description="Einfach sehen, was im Shop passiert: Aufrufe, Produktinteresse, Warenkorb und Storys.">
+  description="Umsatz, Anzeigenquellen, Nachfrage, Warenkorb und Produkte: die operative Sicht auf echte Shop-Daten.">
   <section className="rh-ops-filters" aria-label="Zeitraum der Statistik">
    <div className="rh-ops-presets" role="group" aria-label="Schnellauswahl">
     {presets.map(item=><Link key={item.value} prefetch={false}
@@ -85,9 +88,9 @@ export default async function AdminAnalytics({searchParams}:{searchParams:Promis
    </div>
    <form className="rh-ops-custom" action="/admin/analytics" method="GET">
     <input type="hidden" name="zeitraum" value="frei"/>
-    <label>Von <input type="date" name="von" required min={dateLimit} max={isoDay(new Date())}
+    <label>Von <input type="date" name="von" required min={dateLimit} max={isoDay(berlinDateKey())}
       defaultValue={isoDay(range.start)}/></label>
-    <label>Bis <input type="date" name="bis" required min={dateLimit} max={isoDay(new Date())}
+    <label>Bis <input type="date" name="bis" required min={dateLimit} max={isoDay(berlinDateKey())}
       defaultValue={isoDay(range.end)}/></label>
     <button type="submit">Anwenden</button>
    </form>
@@ -96,16 +99,24 @@ export default async function AdminAnalytics({searchParams}:{searchParams:Promis
    </Link>
    <p className="rh-ops-filter-caption"><CalendarDays size={14}/> {range.label}: {date(report.start)} – {date(report.end)} · {range.days} {range.days===1?"Tag":"Tage"} · Europe/Berlin · ältere Einträge wurden vor der Umstellung in UTC gezählt</p>
   </section>
+  <section className="rh-adv-hero" aria-label="Kennzahlen-Übersicht">
+   <div><span>RUBY HAIR · PERFORMANCE STUDIO</span><h2>Alle Zahlen. Ein klarer Überblick.</h2>
+    <p>Black Friday 2026 · Anzeigen, Kundeninteresse und bezahlte Bestellungen auf einen Blick.</p>
+    <div className="rh-adv-hero-tags"><span>Europe/Berlin</span><span>{enabled?"Statistik mit Einwilligung aktiv":"Besucherstatistik deaktiviert"}</span><span>Bezahlte Bestellungen aus verifizierten Zahlungen</span></div>
+   </div>
+   <Link className="rh-adv-refresh" href={"/admin/analytics?"+exportQuery.toString()} prefetch={false}><RefreshCw size={17}/> Aktualisieren</Link>
+  </section>
   <section className="rh-ops-kpis" aria-label="Wichtigste Kennzahlen">
    <OverviewCard label="Seitenaufrufe" icon={<Eye size={19}/>} value={enabledValue(enabled,current.views)}
-    note="Aufrufe, keine eindeutigen Besucher" highlight/>
+    note={"Aufrufe, keine eindeutigen Besucher · zuvor "+(enabled?number(previous.views):"—")} highlight/>
    <OverviewCard label="Produktansichten" icon={<TrendingUp size={19}/>} value={enabledValue(enabled,report.funnel.productViews)}
-    note="Aufrufe der Produktseiten"/>
+    note="Aufrufe der Produktseiten; kein Besucherzähler"/>
    <OverviewCard label="Zum Warenkorb" icon={<ShoppingCart size={19}/>} value={enabledValue(enabled,current.added)}
-    note="Warenkorb-Aktionen"/>
+    note={"Warenkorb-Aktionen · zuvor "+(enabled?number(previous.added):"—")}/>
    <OverviewCard label="Kassenaufrufe" icon={<ShoppingBag size={19}/>} value={enabledValue(enabled,current.checkouts)}
-    note="Kassenbesuche, keine Käufe"/>
+    note={"Kassenbesuche, keine Käufe · zuvor "+(enabled?number(previous.checkouts):"—")}/>
   </section>
+  <AdminCommercePanel data={commerce}/>
   <section className="rh-ops-paid-overview" aria-label="Meta Black Friday Werbeanzeigen">
    <div className="rh-ops-section-head"><div><span>BLACK FRIDAY / META ADS</span><h2>Werbe-Traffic nach Herkunft</h2>
     <p>Nur Seitenansichten nach Zustimmung zur internen Statistik. Keine eindeutigen Besucher und nicht mit den Meta-Klicks gleichzusetzen.</p></div></div>
@@ -121,13 +132,15 @@ export default async function AdminAnalytics({searchParams}:{searchParams:Promis
    </span></div>
   <div className="rh-ops-primary">
    <section className="rh-admin-panel-card rh-ops-activity">
-    <div className="rh-ops-section-head"><div><span>01 / ENTWICKLUNG</span><h2>Aktivität im Zeitverlauf</h2>
+    <div className="rh-ops-section-head"><div><span>03 / ENTWICKLUNG</span><h2>Traffic & Nachfrage im Zeitverlauf</h2>
      <p>Wie oft wurden Seiten angesehen und Produkte zum Warenkorb hinzugefügt?</p></div></div>
-    {enabled&&report.current.views>0?<AdminActivityChart daily={report.daily}/>:<div className="rh-insight-empty">Noch keine freigegebenen Daten für diesen Zeitraum.</div>}
+    {enabled&&report.current.views>0?<AdminAnalyticsTrend daily={report.daily} previousDaily={report.previousDaily}/>:<div className="rh-insight-empty">Noch keine freigegebenen Daten für diesen Zeitraum.</div>}
     <p className="rh-ops-muted">Vorherige {range.days} {range.days===1?"Tag":"Tage"}: {enabledValue(enabled,previous.views)} Seitenaufrufe. Keine eindeutigen Besucher.</p>
    </section>
    <EventFunnel report={report} enabled={enabled}/>
   </div>
+  <details className="rh-adv-community">
+   <summary><span>05 / COMMUNITY & KI</span><strong>Storys & Haaranprobe im Detail</strong><small>{enabled?number(report.engagement.storyViews):"—"} Story-Aufrufe · {enabled?number(report.engagement.aiStarts):"—"} KI-Versuche</small></summary>
   <div className="rh-ops-community-head"><span>03 / COMMUNITY</span><h2>Storys & KI-Haaranprobe</h2>
    <p>Sieh auf einen Blick, welche Storys angeschaut und wie oft Haarfarben getestet werden.</p></div>
   <div className="rh-ops-community-kpis">
@@ -151,20 +164,17 @@ export default async function AdminAnalytics({searchParams}:{searchParams:Promis
    </div>
    <p className="rh-ops-muted">Die Werte zählen Wiedergaben nach Einwilligung; keine eindeutigen Nutzer oder einzelnen Personen.</p>
   </section>
-  <details className="rh-admin-panel-card rh-ops-more">
-   <summary><span><MousePointer2 size={18}/> Weitere Analysen</span><small>Beliebte Seiten, Herkunft und Geräte anzeigen</small></summary>
-   <div className="rh-ops-more-content">
-    <div className="rh-ops-top-pages"><h3>Beliebte Seiten</h3>
-     {report.pages.filter(p=>p.views>0||p.cartActions>0).slice(0,10).map(p=><div key={p.path}>
-      <span>{analyticsPathLabel(p.path)}<small>{p.path}</small></span>
-      <strong>{number(p.views)} <small>Aufrufe</small></strong>
-     </div>)}
-     {!report.pages.length&&<p>Noch keine Seitenaufrufe verfügbar.</p>}
-    </div>
-    <Breakdown title="Traffic-Quellen (mit Einwilligung)" items={enabled?report.sources:[]} labels={analyticsSourceLabels}/>
-    <Breakdown title="Geräte" items={enabled?report.devices:[]} labels={analyticsDeviceLabels}/>
-   </div>
   </details>
+  <AdminAnalyticsChannels report={report} enabled={enabled}/>
+  <section className="rh-adv-audit" aria-label="Datenqualität und Messmethode">
+   <h2>Messqualität & Daten-Grenzen</h2>
+   <div className="rh-adv-audit-list">
+    <div><b>Werbeanzeigen</b><span>Meta Ads unterscheidet Klicks von Landing-Page-Views. Anzeigenausgaben kommen ausschließlich aus dem Meta Ads Manager, nicht aus internen Klickschätzungen.</span></div>
+    <div><b>Web-Traffic</b><span>Nur zugestimmte, anonym aggregierte Ereignisse. Keine Nutzer-IDs, personenbezogenen Pfade, Sessions oder künstliche Absprungrate.</span></div>
+    <div><b>Umsatz</b><span>Nur bestätigte, nicht erstattete Captures. Gutschein-Einlösungen und offene/autorisierten Zahlungen zählen nicht als eingenommenes Geld.</span></div>
+    <div><b>Vergleich</b><span>Der heutige Tag ist unvollständig. Früher erfasste tägliche Events wurden in UTC zusammengefasst; neue Einträge verwenden Europe/Berlin.</span></div>
+   </div>
+  </section>
   <p className="rh-ops-privacy-footer"><BarChart3 size={15}/> Neue Ereignisse werden nach Europe/Berlin-Tagen gezählt; ältere Werte wurden nach UTC erfasst. Quellen zählen nur Einwilligungen, keine Meta-Klicks oder eindeutigen Sitzungen. Bezahlter Umsatz wird hier nicht aus anonymen Klicks geschätzt. Bestätigte Zahlungen und Rechnungen findest du unter Bestellungen/Zahlungen. Eine echte, personenbezogene Funnel- oder Conversion-Rate-Analyse findet nicht statt.</p>
  </AdminShell>;
 }

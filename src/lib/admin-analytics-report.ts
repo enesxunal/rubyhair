@@ -16,6 +16,8 @@ export type EventCounts={views:number;added:number;checkouts:number};
 export type DailyCounts=EventCounts&{day:string;label:string;storyViews:number;aiStarts:number;aiSuccess:number;aiAdds:number};
 export type RankedEntry={key:string;count:number;share:number};
 export type PagePerformance={path:string;views:number;cartActions:number};
+export type DetailedChannel={key:string;views:number;added:number;checkouts:number;productViews:number};
+export type DetailedDevice={key:string;views:number;added:number;checkouts:number};
 const empty=():EventCounts=>({views:0,added:0,checkouts:0});
 export function isoDay(date:Date){return date.toISOString().slice(0,10);}
 export function utcDay(date:Date){return new Date(Date.UTC(date.getUTCFullYear(),date.getUTCMonth(),date.getUTCDate()));}
@@ -86,6 +88,13 @@ export function createAnalyticsReport(rows:AnalyticsRow[],selection:AnalyticsPer
   days.set(isoDay(date),{day:isoDay(date),label:date.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",timeZone:"UTC"}),...empty(),storyViews:0,aiStarts:0,aiSuccess:0,aiAdds:0});
  }
  const pages=new Map<string,{views:number;cartActions:number}>(),sources=new Map<string,number>(),devices=new Map<string,number>();
+ const channels=new Map<string,DetailedChannel>();
+ const deviceMetrics=new Map<string,DetailedDevice>();
+ const previousDaily=new Map<string,DailyCounts>();
+ for(let i=0;i<period;i++){
+  const day=addUtcDays(previousStart,i);
+  previousDaily.set(isoDay(day),{day:isoDay(day),label:day.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",timeZone:"UTC"}),...empty(),storyViews:0,aiStarts:0,aiSuccess:0,aiAdds:0});
+ }
  const storyCounts=new Map<string,number>();
  const funnel={productViews:0,cartViews:0,giftViews:0,aiViews:0};
  const engagement={storyViews:0,aiStarts:0,aiTryons:0,aiAdds:0},previousEngagement={storyViews:0,aiStarts:0,aiTryons:0,aiAdds:0};
@@ -100,10 +109,32 @@ export function createAnalyticsReport(rows:AnalyticsRow[],selection:AnalyticsPer
  for(const row of rows){
   const day=isoDay(row.day), count=Number.isFinite(row.count)?Math.max(0,row.count):0;
   if(row.day<previousStart||row.day>end||count===0)continue;
-  if(row.day<start){addEvent(previous,row.event,count);addEngagement(previousEngagement,row.event,count);continue;}
+  if(row.day<start){
+   addEvent(previous,row.event,count);addEngagement(previousEngagement,row.event,count);
+   const prior=previousDaily.get(day);
+   if(prior){
+    addEvent(prior,row.event,count);
+    if(row.event==="story_view")prior.storyViews+=count;
+    if(row.event==="ai_tryon_start")prior.aiStarts+=count;
+    if(row.event==="ai_tryon_success")prior.aiSuccess+=count;
+    if(row.event==="ai_to_cart")prior.aiAdds+=count;
+   }
+   continue;
+  }
   addEngagement(engagement,row.event,count);
   if(row.event==="story_view")countInto(storyCounts,row.path,count);
   addEvent(current,row.event,count);
+  const channel=channels.get(row.source)||{key:row.source,views:0,added:0,checkouts:0,productViews:0};
+  const device=deviceMetrics.get(row.device)||{key:row.device,views:0,added:0,checkouts:0};
+  if(row.event==="page_view"){
+   channel.views+=count;device.views+=count;
+   if(row.path.startsWith("/produkt/"))channel.productViews+=count;
+  }else if(row.event==="add_to_cart"){
+   channel.added+=count;device.added+=count;
+  }else if(row.event==="begin_checkout"){
+   channel.checkouts+=count;device.checkouts+=count;
+  }
+  channels.set(row.source,channel);deviceMetrics.set(row.device,device);
   const record=days.get(day);
   if(record){
    addEvent(record,row.event,count);
@@ -132,7 +163,10 @@ export function createAnalyticsReport(rows:AnalyticsRow[],selection:AnalyticsPer
   .sort((a,b)=>b.views-a.views||b.cartActions-a.cartActions||a.path.localeCompare(b.path));
  const topPages=ranking(new Map(pagePerformance.map(p=>[p.path,p.views])),current.views);
  return {
-  period,start,end,previousStart,current,previous,daily:[...days.values()],observedDays,
+  period,start,end,previousStart,current,previous,daily:[...days.values()],
+  previousDaily:[...previousDaily.values()],observedDays,
+  channels:[...channels.values()].sort((a,b)=>b.views-a.views||a.key.localeCompare(b.key)),
+  deviceMetrics:[...deviceMetrics.values()].sort((a,b)=>b.views-a.views||a.key.localeCompare(b.key)),
   pages:pagePerformance,topPages,
   engagement,previousEngagement,funnel,
   stories:storyAnalyticsEntries.map(story=>({...story,views:storyCounts.get(story.path)||0}))

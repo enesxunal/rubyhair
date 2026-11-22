@@ -532,7 +532,7 @@ test("admin V2 analytics and launch readiness stay grounded in aggregates",()=>{
  const dashboard=fs.readFileSync(path.join(base,"app/admin/page.tsx"),"utf8");
  const products=fs.readFileSync(path.join(base,"app/admin/produkte/page.tsx"),"utf8");
  const chart=fs.readFileSync(path.join(base,"src/components/admin-activity-chart.tsx"),"utf8");
- assert.ok(page.includes("Traffic-Quellen (mit Einwilligung)"));
+ assert.ok(page.includes("<AdminAnalyticsChannels report={report} enabled={enabled}/>"));
  assert.ok(page.includes("Conversion-Rate"));
  assert.ok(page.includes("CSV exportieren"));
  assert.ok(helper.includes("select:{day:true,event:true,path:true,source:true,device:true,count:true}"));
