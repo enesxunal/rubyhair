@@ -17,7 +17,7 @@ export default async function DhlStatus({searchParams}:{searchParams:Promise<{st
  const params=await searchParams;
  const [readiness,order]=await Promise.all([
   getDhlIntegrationReadiness("live"),
-  getPrisma().order.findFirst({where:{testOnly:false,orderNumber:BigInt(5)},select:{status:true,totalCents:true,trackingNumber:true,shippingJob:{select:{status:true,trackingNumber:true}},invoice:{select:{invoiceNumber:true}}}})
+  getPrisma().order.findFirst({where:{testOnly:false,invoice:{isNot:null}},orderBy:{createdAt:"desc"},select:{orderNumber:true,status:true,totalCents:true,trackingNumber:true,shippingJob:{select:{status:true,trackingNumber:true,labelPdf:true}},invoice:{select:{invoiceNumber:true}}}})
  ]);
  const liveEnabled=process.env.RUBY_DHL_LIVE_LABELS_ENABLED==="true";
  const weightGrams=Number(process.env.RUBY_DHL_WEIGHT_G||"0");
@@ -50,10 +50,11 @@ export default async function DhlStatus({searchParams}:{searchParams:Promise<{st
    <p style={{fontSize:13}}>DHL Developer Portal: <a href="https://developer.dhl.com/" target="_blank" rel="noopener noreferrer">API App anlegen / Zugriffe prüfen</a>. Geschäftskundenportal: <a href="https://geschaeftskunden.dhl.de/" target="_blank" rel="noopener noreferrer">Vertragsdaten und Abrechnungsnummer prüfen</a>.</p>
   </section>
   <section className="rh-admin-panel-card" style={{padding:24,marginTop:20}}>
-   <h2>Bestellung RH-5</h2>
+   <h2>Letzte bezahlte Bestellung {order?`RH-${order.orderNumber}`:"—"}</h2>
    <p><strong>Bezahlstatus:</strong> {order?.status||"Nicht gefunden"}</p>
    <p><strong>Rechnung:</strong> {order?.invoice?.invoiceNumber||"Nicht vorhanden"}</p>
    <p><strong>DHL-Verarbeitungsstatus:</strong> {order?.shippingJob?.status||"Noch nicht vorbereitet"}</p>
+   <p><strong>Automatisch erzeugtes DHL-Etikett:</strong> {order?.shippingJob?.labelPdf?"PDF vorhanden":"Nicht vorhanden"}</p>
    <p><strong>Sendungsnummer:</strong> {order?.trackingNumber||"Noch nicht vergeben"}</p>
    <p className="rh-admin-warning">Kein DHL-Etikett wurde über diese Seite erzeugt. Ohne vollständigen und authentifizierten DHL-Zugang keine automatische Live-Buchung. Eine manuelle Sendung darf erst nach tatsächlicher Paketübergabe als versendet bestätigt werden.</p>
    <p><Link href="/admin/bestellungen">Bei bestehendem DHL-Versandschein: Sendungsnummer und reale Übergabe in der Bestellung bestätigen</Link></p>
