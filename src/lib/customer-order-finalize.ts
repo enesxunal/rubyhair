@@ -94,7 +94,7 @@ export async function finishCapturedCustomerOrder(orderId:string,provider:"paypa
 
 /** The only PayPal capture entry: canonical GET after any POST, exact order, exact amount,
  * PayPal idempotency key tied to our order. Safe to call again after a callback timeout. */
-export async function finalizePayPalCheckout(orderId:string,allowCapture:boolean,returnToken?:string){
+export async function finalizePayPalCheckout(orderId:string,allowCapture:boolean,returnToken?:string,verifiedCardFlow=false){
  const db=getPrisma(),order=await db.order.findUnique({where:{id:orderId},include:{invoice:{select:{invoiceNumber:true}}}});
  if(!order||order.testOnly||!order.paymentReference||order.paymentReference.startsWith("KLARNA-"))
   throw new CustomerCheckoutError("PAYPAL_CUSTOMER_ORDER_NOT_FOUND",404);
@@ -106,14 +106,50 @@ export async function finalizePayPalCheckout(orderId:string,allowCapture:boolean
  }
  const gateway=await providerForCheckout("paypal");
  let raw=await gateway.api.getOrder(order.paymentReference) as {status?:string};
- if(raw?.status==="APPROVED"&&allowCapture){
-  try{await gateway.api.captureOrder(order.paymentReference,"RH-CAPTURE-"+order.id)}
+ let captureResponse:unknown=null;
+ if(verifiedCardFlow&&allowCapture&&(raw?.status==="CREATED"||raw?.status==="APPROVED")){
+  // The v6 SDK may leave an approved card payment at CREATED until the first
+  // capture. Verify funding, 3DS, order identity and amount from PayPal, not JS.
+  const remote=await gateway.api.getOrderWithPaymentSource(order.paymentReference);
+  const o=remote&&typeof remote==="object"&&!Array.isArray(remote)?remote as Record<string,unknown>:null;
+  const src=o?.payment_source&&typeof o.payment_source==="object"?o.payment_source as Record<string,unknown>:null;
+  const card=src?.card&&typeof src.card==="object"?src.card as Record<string,unknown>:null;
+  const auth=card?.authentication_result&&typeof card.authentication_result==="object"?card.authentication_result as Record<string,unknown>:null;
+  const units=Array.isArray(o?.purchase_units)?o.purchase_units:[];
+  const u=units.length===1&&units[0]&&typeof units[0]==="object"?units[0] as Record<string,unknown>:null;
+  const amount=u?.amount&&typeof u.amount==="object"?u.amount as Record<string,unknown>:null;
+  const payments=u?.payments&&typeof u.payments==="object"?u.payments as Record<string,unknown>:null;
+  const captures=Array.isArray(payments?.captures)?payments.captures:[];
+  if(!o||o.id!==order.paymentReference||!(["CREATED","APPROVED"] as unknown[]).includes(o.status)||
+    !card||auth?.liability_shift!=="POSSIBLE"||u?.custom_id!==order.id||
+    amount?.currency_code!=="EUR"||amount?.value!==((order.totalCents-order.giftAppliedCents)/100).toFixed(2))
+   throw new CustomerCheckoutError("CARD_PROVIDER_DETAILS_REQUIRE_REVIEW",409);
+  if(captures.length!==0)throw new CustomerCheckoutError("CARD_EXISTING_CAPTURE_REQUIRES_REVIEW",409);
+  // Only one attempt is allowed per Ruby Hair order, including a timeout.
+  // No client retry, return navigation or webhook can initiate a second card capture.
+  try{
+   await db.$transaction(async tx=>{
+    const attempted=await tx.orderStatusEvent.findFirst({where:{orderId:order.id,reason:"customer_card_capture_attempted_review"},select:{id:true}});
+    if(attempted)throw new CustomerCheckoutError("CARD_CAPTURE_ATTEMPT_ALREADY_RECORDED",409);
+    const current=await tx.order.findFirst({where:{id:order.id,status:"pending_payment",testOnly:false},select:{id:true}});
+    if(!current)throw new CustomerCheckoutError("CARD_ORDER_STATE_CHANGED",409);
+    await tx.orderStatusEvent.create({data:{orderId:order.id,fromStatus:"pending_payment",toStatus:"pending_payment",reason:"customer_card_capture_attempted_review"}});
+   },{isolationLevel:Prisma.TransactionIsolationLevel.Serializable,timeout:10000});
+  }catch{throw new CustomerCheckoutError("CARD_CAPTURE_ATTEMPT_REQUIRES_REVIEW",409)}
+  try{captureResponse=await gateway.api.captureOrder(order.paymentReference,"RH-CAPTURE-"+order.id)}
+  catch{/* A lost response is not permission to capture again. */}
+  raw=await gateway.api.getOrder(order.paymentReference) as {status?:string};
+ }else if(raw?.status==="APPROVED"&&allowCapture){
+  try{captureResponse=await gateway.api.captureOrder(order.paymentReference,"RH-CAPTURE-"+order.id)}
   catch{/* The provider may have captured before its response was lost. */}
   raw=await gateway.api.getOrder(order.paymentReference) as {status?:string};
  }
  let verified;
  try{verified=gateway.api.requireCompletedCapture(raw,order.id,order.totalCents-order.giftAppliedCents,order.paymentReference)}
- catch{throw new CustomerCheckoutError("PAYPAL_CAPTURE_NOT_YET_VERIFIED",409)}
+ catch{
+  try{verified=gateway.api.requireCompletedCapture(captureResponse,order.id,order.totalCents-order.giftAppliedCents,order.paymentReference)}
+  catch{throw new CustomerCheckoutError("PAYPAL_CAPTURE_NOT_YET_VERIFIED",409)}
+ }
  return finishCapturedCustomerOrder(order.id,"paypal",verified.captureId,order.paymentReference);
 }
 

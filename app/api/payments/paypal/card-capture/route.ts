@@ -38,7 +38,7 @@ export async function POST(req:NextRequest){
   const source=isObj(remote.payment_source)?remote.payment_source:null;
   const card=source&&isObj(source.card)?source.card:null;
   if(!card)return NextResponse.json({error:"CARD_PAYMENT_SOURCE_UNVERIFIED"},{status:409,headers});
-  if(remote.status==="APPROVED"){
+  if(remote.status==="APPROVED"||remote.status==="CREATED"){
    const auth=isObj(card.authentication_result)?card.authentication_result:null;
    // Conservative German 3DS policy: never capture NO, UNKNOWN or absent liability shift.
    if(!auth||auth.liability_shift!=="POSSIBLE")
@@ -46,7 +46,7 @@ export async function POST(req:NextRequest){
   }else if(remote.status!=="COMPLETED"){
    return NextResponse.json({error:"CARD_PAYMENT_NOT_APPROVED"},{status:409,headers});
   }
-  const done=await finalizePayPalCheckout(data.orderId,true,data.paypalOrderId);
+  const done=await finalizePayPalCheckout(data.orderId,true,data.paypalOrderId,true);
   if(!done.paid)return NextResponse.json({error:"CARD_PAYMENT_REQUIRES_REVIEW"},{status:409,headers});
   after(async()=>{try{await runCustomerJobs(2);}catch{}});
   return NextResponse.json({paid:true,invoiceNumber:done.invoiceNumber},{headers});

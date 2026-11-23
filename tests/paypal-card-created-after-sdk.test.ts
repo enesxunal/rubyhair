@@ -1,0 +1,21 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+test('approved Card Fields SDK can capture provider CREATED once only after 3DS and exact order checks',()=>{
+ const route=readFileSync('app/api/payments/paypal/card-capture/route.ts','utf8');
+ const settle=readFileSync('src/lib/customer-order-finalize.ts','utf8');
+ assert.match(route,/remote\.status==="APPROVED"\|\|remote\.status==="CREATED"/);
+ assert.match(route,/auth\.liability_shift!=="POSSIBLE"/);
+ assert.match(route,/finalizePayPalCheckout\(data\.orderId,true,data\.paypalOrderId,true\)/);
+ assert.match(settle,/verifiedCardFlow&&allowCapture&&\(raw\?\.status==="CREATED"\|\|raw\?\.status==="APPROVED"\)/);
+ assert.match(settle,/getOrderWithPaymentSource\(order\.paymentReference\)/);
+ assert.match(settle,/auth\?\.liability_shift!=="POSSIBLE"/);
+ assert.match(settle,/u\?\.custom_id!==order\.id/);
+ assert.match(settle,/amount\?\.value!==\(\(order\.totalCents-order\.giftAppliedCents\)\/100\)\.toFixed\(2\)/);
+ assert.match(settle,/customer_card_capture_attempted_review/);
+ assert.match(settle,/isolationLevel:Prisma\.TransactionIsolationLevel\.Serializable/);
+ assert.match(settle,/CARD_CAPTURE_ATTEMPT_REQUIRES_REVIEW/);
+ assert.match(settle,/requireCompletedCapture\(captureResponse/);
+ const status=readFileSync('app/api/payments/paypal/card-status/route.ts','utf8');
+ assert.match(status,/finalizePayPalCheckout\(orderId,false,paypalOrderId\)/);
+});
