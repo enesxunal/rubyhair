@@ -52,3 +52,19 @@ test("DHL label creation never charges Klarna before physical handover",()=>{
  const orderUi=read("app/admin/bestellungen/page.tsx");
  assert.match(orderUi,/readOnly=\{\["label_created","awaiting_handover"\]/);
 });
+
+test("DHL fulfillment defaults to 500g but never purchases old orders or books without explicit sender approval",()=>{
+ const label=read("src/lib/dhl-labels.ts");
+ const worker=read("src/lib/customer-automation.ts");
+ const dhlAction=read("app/admin/dhl/actions.ts");
+ assert.match(label,/uom:"kg",value:input.weightG\/1000/);
+ assert.match(label,/splitGermanStreetAddress\(input.recipient.street\)/);
+ assert.match(label,/addressHouse/);
+ assert.match(label,/url="https:\/\/api-eu\.dhl\.com\/parcel\/de\/shipping\/v2\/orders\?validate=true"/);
+ assert.match(label,/RUBY_DHL_SENDER_APPROVED/);
+ assert.match(worker,/RUBY_DHL_AUTOMATION_START_AT/);
+ assert.match(worker,/order.createdAt.getTime\(\)<Date.parse\(startAt\)/);
+ assert.match(worker,/status:"waiting_credentials",trackingNumber:null/);
+ assert.match(dhlAction,/validateDhlLiveTemplateOnly\(\)/);
+ assert.doesNotMatch(dhlAction,/createDhlShipmentLabel\(/);
+});

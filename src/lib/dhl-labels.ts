@@ -6,19 +6,29 @@ import {RUBY_TEST_SELLER} from "@/lib/qa-invoice";
 export class DhlShipmentError extends Error{constructor(public readonly reason:string){super(reason);this.name="DhlShipmentError"}}
 export type ShippingAddress={firstName:string;lastName:string;street:string;postalCode:string;city:string;country:"DE"};
 
+// The DHL API has separate street and house number fields. Checkout stores a
+// single street string; reject unusual formats rather than silently mislabel.
+export function splitGermanStreetAddress(full:string){
+ const match=/^(.{2,90}?)\s+(\d+[a-zA-Z]?(?:[-/]\d+[a-zA-Z]?)?)$/.exec(full.trim());
+ if(!match)throw new DhlShipmentError("DHL_HOUSE_NUMBER_REQUIRES_REVIEW");
+ return {addressStreet:match[1].slice(0,50),addressHouse:match[2]};
+}
+
 export function buildDhlShipmentBody(input:{billingNumber:string;orderNumber:string;recipient:ShippingAddress;weightG:number;shipDate:string}){
  if(!/^\d{4}-\d{2}-\d{2}$/.test(input.shipDate)||!/^\d{5}$/.test(input.recipient.postalCode)||
   input.recipient.country!=="DE"||!Number.isSafeInteger(input.weightG)||input.weightG<1||input.weightG>31500||
   !/^[0-9]{10}01[A-Za-z0-9]{2}$/.test(input.billingNumber))throw new DhlShipmentError("DHL_SHIPMENT_INPUT_INVALID");
+ const shipperStreet=splitGermanStreetAddress(RUBY_TEST_SELLER.street);
+ const recipientStreet=splitGermanStreetAddress(input.recipient.street);
  return {profile:"STANDARD_GRUPPENPROFIL",shipments:[{
   product:"V01PAK",billingNumber:input.billingNumber,refNo:"RH-"+input.orderNumber,
   shipDate:input.shipDate,
-  shipper:{name1:RUBY_TEST_SELLER.name.slice(0,50),addressStreet:RUBY_TEST_SELLER.street.slice(0,50),
+  shipper:{name1:RUBY_TEST_SELLER.name.slice(0,50),...shipperStreet,
    postalCode:RUBY_TEST_SELLER.postalCode,city:RUBY_TEST_SELLER.city,country:"DEU",email:RUBY_TEST_SELLER.email},
   consignee:{name1:(input.recipient.firstName+" "+input.recipient.lastName).slice(0,50),
-   addressStreet:input.recipient.street.slice(0,50),postalCode:input.recipient.postalCode,
+   ...recipientStreet,postalCode:input.recipient.postalCode,
    city:input.recipient.city.slice(0,40),country:"DEU"},
-  details:{weight:{uom:"g",value:input.weightG}}
+  details:{weight:{uom:"kg",value:input.weightG/1000}}
  }]};
 }
 
@@ -47,6 +57,10 @@ export async function createDhlShipmentLabel(input:{orderNumber:string;recipient
   "Content-Type":"application/json",Accept:"application/json"};
  const dry=await send(root+"?validate=true",{method:"POST",headers,body:JSON.stringify(payload),redirect:"error",signal:AbortSignal.timeout(13000)});
  if(!dry.ok)throw new DhlShipmentError("DHL_DRY_RUN_REJECTED_"+dry.status);
+ const dryResponse=await dry.json() as {items?:{sstatus?:{status?:number};validationMessages?:{validationState?:string}[]}[]};
+ if(!dryResponse.items||dryResponse.items.length!==1||dryResponse.items[0].sstatus?.status!==200||
+    dryResponse.items[0].validationMessages?.some(m=>m.validationState==="Error"))
+  throw new DhlShipmentError("DHL_DRY_RUN_ITEM_INVALID");
  // A successful live label creation can incur carrier charges. Call only from
  // the separately enabled, claimed, provider-verified fulfillment worker.
  const res=await send(root+"?includeDocs=include&docFormat=PDF",{
@@ -60,4 +74,32 @@ export async function createDhlShipmentLabel(input:{orderNumber:string;recipient
  if(!/^\d{12,36}$/.test(tracking)||!pdf||pdf.length<150||pdf.length>5000000||pdf.subarray(0,5).toString()!=="%PDF-")
   throw new DhlShipmentError("DHL_LABEL_RESPONSE_NEEDS_REVIEW");
  return {trackingNumber:tracking,labelPdf:pdf};
+}
+
+/** Validate the known Ruby Hair sender and 500g template without booking postage.
+ * The validate=true DHL endpoint is distinct from the chargeable POST /orders.
+ */
+export async function validateDhlLiveTemplateOnly(send:typeof fetch=fetch):Promise<"valid"|"rejected"|"unavailable">{
+ if(process.env.RUBY_DHL_WEIGHT_G!=="500")return "unavailable";
+ try{
+  const creds=await credentials();
+  const auth=buildDhlTokenRequest("live",creds);
+  const response=await send(auth.url,{...auth.init,signal:AbortSignal.timeout(11000),redirect:"error"});
+  if(!response.ok)return "unavailable";
+  const result=await response.json() as {access_token?:string};
+  if(!result.access_token)return "unavailable";
+  const day=new Intl.DateTimeFormat("en-CA",{year:"numeric",month:"2-digit",day:"2-digit",timeZone:"Europe/Berlin"}).format(new Date());
+  const payload=buildDhlShipmentBody({billingNumber:creds.billingNumber,orderNumber:"VALIDATE-ONLY",
+    recipient:{firstName:"Ruby",lastName:"Hair",street:RUBY_TEST_SELLER.street,
+      postalCode:RUBY_TEST_SELLER.postalCode,city:RUBY_TEST_SELLER.city,country:"DE"},
+    weightG:500,shipDate:day});
+  const url="https://api-eu.dhl.com/parcel/de/shipping/v2/orders?validate=true";
+  const dry=await send(url,{method:"POST",headers:{Authorization:"Bearer "+result.access_token,
+    "dhl-api-key":creds.clientId,"Content-Type":"application/json",Accept:"application/json"},
+    body:JSON.stringify(payload),redirect:"error",signal:AbortSignal.timeout(13000)});
+  if(!dry.ok)return dry.status>=500?"unavailable":"rejected";
+  const body=await dry.json() as {items?:{sstatus?:{status?:number};validationMessages?:{validationState?:string}[]}[]};
+  return body.items?.length===1&&body.items[0].sstatus?.status===200&&
+    !body.items[0].validationMessages?.some(m=>m.validationState==="Error")?"valid":"rejected";
+ }catch{return "unavailable"}
 }

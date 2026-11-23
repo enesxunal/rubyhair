@@ -88,13 +88,19 @@ export async function captureAuthorizedKlarna(orderId:string){
  * An ambiguous label response is held for manual reconciliation to avoid buying two labels. */
 export async function createQueuedDhlLabels(limit=5){
  if(process.env.RUBY_DHL_LIVE_LABELS_ENABLED!=="true"||process.env.RUBY_DHL_SENDER_APPROVED!=="true"||!process.env.RUBY_DHL_WEIGHT_G)return {created:0,skipped:"DHL_LABELS_DISABLED"};
+ // No retrospective bookings for orders placed before the automation launch.
+ // A live label can incur charges; old orders require manual reconciliation.
+ const startAt=process.env.RUBY_DHL_AUTOMATION_START_AT||"";
+ if(!/^20\d{2}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(startAt)||
+   !Number.isFinite(Date.parse(startAt)))return {created:0,skipped:"DHL_START_DATE_NOT_SET"};
  const ready=await getDhlIntegrationReadiness("live");
  if(!ready.credentialsComplete)return {created:0,skipped:"DHL_CREDENTIALS_INCOMPLETE"};
  const rows=await db().shippingJob.findMany({where:{status:"waiting_credentials"},orderBy:{createdAt:"asc"},take:Math.max(1,Math.min(limit,10))});
  let created=0;
  for(const job of rows){
   const order=await db().order.findUnique({where:{id:job.orderId}});
-  if(!order||order.testOnly||!(["payment_confirmed","payment_authorized","preparing"].includes(order.status)))continue;
+  if(!order||order.testOnly||order.createdAt.getTime()<Date.parse(startAt)||
+    !(["payment_confirmed","payment_authorized","preparing"].includes(order.status)))continue;
   const claim=await db().shippingJob.updateMany({where:{id:job.id,status:"waiting_credentials",trackingNumber:null},data:{status:"submitting",attemptCount:{increment:1}}});
   if(claim.count!==1)continue;
   try{

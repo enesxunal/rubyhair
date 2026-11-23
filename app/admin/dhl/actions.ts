@@ -2,6 +2,7 @@
 import {redirect} from "next/navigation";
 import {isAdmin} from "@/lib/admin-auth";
 import {checkDhlAuthFromAdmin} from "@/lib/dhl-api";
+import {validateDhlLiveTemplateOnly} from "@/lib/dhl-labels";
 
 /** No label, payment, tracking number or DB mutation; just DHL OAuth. */
 export async function verifyDhlCredentialsAction(){
@@ -10,4 +11,11 @@ export async function verifyDhlCredentialsAction(){
  try{outcome=await checkDhlAuthFromAdmin("live")}
  catch(e){console.error("RUBY_DHL_AUTH_TEST_FAILED",e instanceof Error?e.name:"UNKNOWN")}
  redirect("/admin/dhl?status="+outcome);
+}
+
+/** Production validation-only: no label, shipment, payment or order mutation. */
+export async function validateDhlTemplateAction(){
+ if(!await isAdmin())redirect("/admin/login");
+ const outcome=await validateDhlLiveTemplateOnly();
+ redirect("/admin/dhl?validation="+outcome);
 }
