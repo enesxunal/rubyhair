@@ -42,6 +42,10 @@ export default async function DhlStatus({searchParams}:{searchParams:Promise<{st
    <p><Link href="/admin/zahlungen">Fehlende Daten sicher unter Zahlungen / DHL eintragen</Link></p>
    <form action={verifyDhlCredentialsAction}><button type="submit" className="rh-admin-mail-test-button" disabled={!readiness.credentialsComplete}>DHL Live-Zugang prüfen – keine Sendung erstellen</button></form>
    <form action={validateDhlTemplateAction}><button type="submit" className="rh-admin-mail-test-button" disabled={!readiness.credentialsComplete||!weightReady}>DHL 500-g-Sendung validieren – kein Label kaufen</button></form>
+   <form action="/api/admin/dhl-test-label" method="post" target="_blank">
+    <button type="submit" className="rh-admin-mail-test-button" disabled={!readiness.credentialsComplete}>Sandbox-Testetikett als PDF erstellen (ohne Gebühr)</button>
+   </form>
+   <p>Dieser Test verwendet ausschließlich DHL-Sandbox-Musterdaten und eine fiktive Abrechnungsnummer. Er erzeugt weder eine echte Sendung noch eine Kundenbenachrichtigung.</p>
    <p>Vorgesehener Absender laut Ruby Hair Impressum: Ruby Hair, Klara Strasse 19, 45130 Essen. Vor Live-Aktivierung muss die tatsächliche Versand-/Retourenadresse bestätigt sein.</p>
    <p style={{fontSize:13}}>DHL Developer Portal: <a href="https://developer.dhl.com/" target="_blank" rel="noopener noreferrer">API App anlegen / Zugriffe prüfen</a>. Geschäftskundenportal: <a href="https://geschaeftskunden.dhl.de/" target="_blank" rel="noopener noreferrer">Vertragsdaten und Abrechnungsnummer prüfen</a>.</p>
   </section>

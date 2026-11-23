@@ -70,3 +70,20 @@ test("DHL fulfillment defaults to 500g but never purchases old orders or books w
  assert.match(dhlAction,/validateDhlLiveTemplateOnly\(\)/);
  assert.doesNotMatch(dhlAction,/createDhlShipmentLabel\(/);
 });
+
+test("DHL sandbox manual test can never create a live shipment or touch a real order",()=>{
+ const sandbox=read("src/lib/dhl-sandbox-label.ts");
+ const route=read("app/api/admin/dhl-test-label/route.ts");
+ const page=read("app/admin/dhl/page.tsx");
+ assert.match(sandbox,/https:\/\/api-sandbox\.dhl\.com\/parcel\/de/);
+ assert.match(sandbox,/33333333330101/);
+ assert.match(sandbox,/SandboxPasswort2023!/);
+ assert.match(sandbox,/validate=true/);
+ assert.match(sandbox,/uom:"kg",value:0\.5/);
+ assert.doesNotMatch(sandbox,/https:\/\/api-eu\.dhl\.com/);
+ assert.doesNotMatch(sandbox,/createDhlShipmentLabel/);
+ assert.doesNotMatch(route,/order\.(?:update|create|delete)/);
+ assert.match(route,/await isAdmin\(\)/);
+ assert.match(route,/CROSS_SITE_DENIED/);
+ assert.match(page,/Sandbox-Testetikett als PDF erstellen/);
+});
