@@ -35,10 +35,11 @@ export async function POST(req:NextRequest){
   const remote=await api.getOrderWithPaymentSource(data.paypalOrderId);
   if(!isObj(remote)||remote.id!==data.paypalOrderId||typeof remote.status!=="string")
    return NextResponse.json({error:"PAYPAL_STATUS_UNVERIFIED"},{status:409,headers});
+  const source=isObj(remote.payment_source)?remote.payment_source:null;
+  const card=source&&isObj(source.card)?source.card:null;
+  if(!card)return NextResponse.json({error:"CARD_PAYMENT_SOURCE_UNVERIFIED"},{status:409,headers});
   if(remote.status==="APPROVED"){
-   const source=isObj(remote.payment_source)?remote.payment_source:null;
-   const card=source&&isObj(source.card)?source.card:null;
-   const auth=card&&isObj(card.authentication_result)?card.authentication_result:null;
+   const auth=isObj(card.authentication_result)?card.authentication_result:null;
    // Conservative German 3DS policy: never capture NO, UNKNOWN or absent liability shift.
    if(!auth||auth.liability_shift!=="POSSIBLE")
     return NextResponse.json({error:"CARD_3DS_REQUIRES_REVIEW"},{status:409,headers});

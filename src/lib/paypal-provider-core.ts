@@ -130,7 +130,11 @@ export class PaypalClient{
           item_total:{currency_code:"EUR",value:centsToEuro(input.totalCents-input.shippingCents)},
           shipping:{currency_code:"EUR",value:shipping}
         }}}
-      ]
+      ],
+      payment_source:{card:{
+        attributes:{verification:{method:"SCA_ALWAYS"}},
+        experience_context:{return_url:httpsUrl(input.returnUrl),cancel_url:httpsUrl(input.cancelUrl)}
+      }}
     },input.requestId);
     if(!isObject(data)||typeof data.id!=="string")throw new PaypalError("PAYPAL_ORDER_INVALID");
     return {id:checkId(data.id,60)};

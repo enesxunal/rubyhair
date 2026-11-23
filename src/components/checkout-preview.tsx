@@ -4,6 +4,7 @@ import {useState} from "react";
 import {giftCartTotal} from "@/lib/gift-cards/cart-schema";
 import type {CheckoutAddressData} from "./checkout-address-preview";
 import CustomerPaymentSubmit from "./customer-payment-submit";
+import PayPalCardFieldsCheckout from "./paypal-card-fields-checkout";
 import {Check,Truck,Wallet,ArrowUpRight,ShoppingBag,Gift} from "lucide-react";
 import {useCart} from "@/components/cart-context";
 import {useCartQuote} from "@/hooks/use-cart-quote";
@@ -16,7 +17,7 @@ const process=[
   {no:"02",label:"Lieferung / Rechnung",description:"Liefer- und Rechnungsadresse prüfen",icon:Truck},
   {no:"03",label:"Zahlung",description:"Zahlungsart und Bestellübersicht",icon:Wallet}
 ];
-export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippingCents=499}:{liveTest?:LiveVariantTestView|null;checkoutMode?:"disabled"|"admin_test"|"public"|"klarna_public"|"payments_public";shippingCents?:number}){
+export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippingCents=499,cardFieldsEnabled=false}:{liveTest?:LiveVariantTestView|null;checkoutMode?:"disabled"|"admin_test"|"public"|"klarna_public"|"payments_public";shippingCents?:number;cardFieldsEnabled?:boolean}){
   const {lines,gifts,loaded,couponCode}=useCart();
   const {quote,error,loading}=useCartQuote(lines,couponCode);
   const digitalOnly=!lines.length&&gifts.length>0,hasItems=lines.length>0||gifts.length>0;
@@ -25,7 +26,7 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
   const physicalCents=quote?.subtotalCents||0;
   const grossCents=physicalCents+giftSoldCents+shipping;
   const canPay=Boolean(hasItems&&!error&&!loading&&(!lines.length||quote&&!quote.needsReview));
-  const [paymentMethod,setPaymentMethod]=useState<"paypal"|"klarna">(checkoutMode==="klarna_public"?"klarna":"paypal");
+  const [paymentMethod,setPaymentMethod]=useState<"paypal"|"klarna"|"paypal_card">(checkoutMode==="klarna_public"?"klarna":"paypal");
   const [validatedAddress,setValidatedAddress]=useState<CheckoutAddressData|null>(null);
   const [giftInput,setGiftInput]=useState("");
   const [appliedGift,setAppliedGift]=useState<{code:string;balanceCents:number}|null>(null);
@@ -45,7 +46,7 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
   };
   const giftUsed=appliedGift&&!gifts.length?Math.min(appliedGift.balanceCents,grossCents):0;
   const remainingCents=Math.max(0,grossCents-giftUsed);
-  const activePaymentMethod=gifts.length?"paypal":paymentMethod;
+  const activePaymentMethod=gifts.length||appliedGift?"paypal":paymentMethod;
   const oneEuroCart=Boolean(loaded&&!gifts.length&&lines.length===1&&lines[0].id===886&&lines[0].quantity===1&&
     quote&&quote.subtotalCents===100&&quote.lines.length===1);
   const payableTestCart=Boolean(oneEuroCart&&!error&&!loading&&!quote?.needsReview&&quote?.lines[0]?.status==="available");
@@ -88,12 +89,20 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
                 checked={activePaymentMethod==="paypal"} onChange={()=>setPaymentMethod("paypal")}/>
               <span><strong>PayPal</strong><small>PayPal oder Karte bei Verfügbarkeit</small></span>
             </label>}
+            {cardFieldsEnabled&&checkoutMode!=="disabled"&&checkoutMode!=="klarna_public"&&!liveTest&&!oneEuroCart&&<label className={"rh-payment-choice"+(activePaymentMethod==="paypal_card"?" is-selected":"")+(appliedGift||gifts.length?" rh-gift-method-disabled":"")}>
+              <input type="radio" name="checkout-payment-method" value="paypal_card" checked={activePaymentMethod==="paypal_card"}
+                disabled={Boolean(appliedGift||gifts.length)} onChange={()=>setPaymentMethod("paypal_card")}/>
+              <span><strong>Kredit- / Debitkarte</strong><small>Visa oder Mastercard ohne PayPal-Konto</small></span>
+            </label>}
             <label className={"rh-payment-choice"+(activePaymentMethod==="klarna"?" is-selected":"")+(appliedGift||gifts.length?" rh-gift-method-disabled":"")}>
               <input type="radio" name="checkout-payment-method" value="klarna"
                 checked={activePaymentMethod==="klarna"} disabled={!!appliedGift||gifts.length>0} onChange={()=>setPaymentMethod("klarna")}/>
               <span><strong>Klarna</strong><small>{checkoutMode!=="disabled"?"Zahlung bei Versand":"Noch nicht freigeschaltet"}</small></span>
             </label>
           </div>
+          {activePaymentMethod==="paypal_card"&&cardFieldsEnabled&&checkoutMode!=="disabled"&&!liveTest&&
+           <PayPalCardFieldsCheckout lines={lines} address={validatedAddress} cartReady={canPay}
+            totalCents={remainingCents} couponCode={lines.length?couponCode||undefined:undefined}/>}
           {activePaymentMethod==="paypal"&&liveTest&&<LiveVariantTestSection state={liveTest} cartReady={payableTestCart}/>}
           {activePaymentMethod==="paypal"&&!liveTest&&oneEuroCart&&<div className="rh-payment-action-area">
             <p>Der 1,00-€-Live-Test dieses Artikels ist ausschließlich über den geschützten Administratorzugang möglich.</p>
