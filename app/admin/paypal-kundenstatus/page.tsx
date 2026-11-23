@@ -5,6 +5,7 @@ import {isAdmin} from "@/lib/admin-auth";
 import {getPrisma} from "@/lib/prisma";
 import {providerForCheckout} from "@/lib/customer-checkout";
 import AdminShell from "../admin-shell";
+import {reconcileCapturedPayPalCustomerOrder} from "./actions";
 
 export const metadata:Metadata={title:"PayPal Kundenbestellung prüfen | Ruby Hair",robots:{index:false,follow:false}};
 export const dynamic="force-dynamic";
@@ -12,7 +13,7 @@ const obj=(v:unknown):v is Record<string,unknown>=>Boolean(v)&&typeof v==="objec
 const euro=(c:number)=>new Intl.NumberFormat("de-DE",{style:"currency",currency:"EUR"}).format(c/100);
 
 /** Read-only incident audit. No capture, authorization, refund or order writes. */
-export default async function CustomerPayPalStatus({searchParams}:{searchParams:Promise<{orderNumber?:string}>}){
+export default async function CustomerPayPalStatus({searchParams}:{searchParams:Promise<{orderNumber?:string;result?:string}>}){
  if(!await isAdmin())redirect("/admin/login");
  const p=await searchParams;
  const number=/^\d{1,10}$/.test(p.orderNumber||"")?BigInt(p.orderNumber!):BigInt(10);
@@ -62,7 +63,15 @@ export default async function CustomerPayPalStatus({searchParams}:{searchParams:
    <p><strong>PayPal Capture-Betrag:</strong> {captureAmount}</p>
    <p><strong>Exakte Capture-Zuordnung:</strong> {verified?"JA":"NEIN / NICHT BESTÄTIGT"}</p>
    {providerError&&<p className="rh-admin-warning" role="alert">PayPal konnte nicht abgefragt werden: {providerError}. Keine neue Zahlung ausgelöst.</p>}
-   {verified&&order?.status==="pending_payment"&&<p className="rh-admin-success">PayPal bestätigt vollständig eingezogene Zahlung. Ruby Hair muss OHNE neuen Capture abgeglichen werden.</p>}
+   {p.result==="paid"&&<p className="rh-admin-success">Der bereits erfasste PayPal-Betrag wurde mit der Ruby-Hair-Bestellung und Rechnung abgeglichen. Keine neue Abbuchung.</p>}
+   {p.result==="review"&&<p className="rh-admin-warning">Keine bestätigte Buchung übernommen. Bitte den PayPal-Status prüfen; keine neue Zahlung auslösen.</p>}
+   {verified&&order?.status==="pending_payment"&&<>
+    <p className="rh-admin-success">PayPal bestätigt vollständig eingezogene Zahlung. Ruby Hair muss OHNE neuen Capture abgeglichen werden.</p>
+    <form action={reconcileCapturedPayPalCustomerOrder} style={{marginTop:15}}>
+     <input type="hidden" name="orderNumber" value={String(order.orderNumber)}/>
+     <button type="submit" className="rh-admin-primary-button">Erfasste PayPal-Zahlung ohne erneute Abbuchung übernehmen</button>
+    </form>
+   </>}
    {order?.status==="pending_payment"&&!verified&&<p className="rh-admin-warning">Keine abgeschlossene PayPal-Zahlung nachgewiesen. Eine Bankfreigabe ist nicht automatisch ein Capture. Nicht erneut bezahlen.</p>}
    <p style={{marginTop:22}}><Link href={"/admin/paypal-kundenstatus?orderNumber="+String(number)}>Nur lesen: erneut prüfen</Link> · <Link href="/admin/bestellungen">Zurück zu Bestellungen</Link></p>
   </section>
