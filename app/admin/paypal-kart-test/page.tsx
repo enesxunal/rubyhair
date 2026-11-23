@@ -19,7 +19,7 @@ export default async function CardQaPage(){
     <div style={{fontSize:12,lineHeight:1.7,color:"#6b5661"}}>Einmaliger realer Testbetrag inklusive 19 % USt. Keine Ware, kein Versand, kein Eingriff in die normalen Shop-Bestellungen.</div>
    </div>
    <p style={{display:"flex",gap:8,alignItems:"center",marginTop:17,fontSize:12,lineHeight:1.7}}><ShieldCheck size={17} color="#52744e"/> Kartennummer, Ablaufdatum und CVV werden nur in PayPal-gesicherten Feldern eingegeben.</p>
-   {existing&&<p style={{fontSize:13,color:"#97546e",marginTop:18}}>Es existiert bereits ein interner Karten-Testauftrag #{String(existing.orderNumber)} ({existing.status}). Ein weiterer Auftrag wird nicht erstellt. Falls PayPal noch keine Zahlung erfasst hat, kann dieselbe Bestellung erneut bestaetigt werden.</p>}
+   {existing&&<p style={{fontSize:13,color:"#97546e",marginTop:18}}>Es existiert bereits ein interner Karten-Testauftrag #{String(existing.orderNumber)} ({existing.status}). Es wurde bereits versucht, diesen Auftrag zu belasten. Bis PayPal den Capture verbindlich bestaetigt oder ablehnt, sind weitere Zahlungsversuche gesperrt.</p>}
    <CardQaForm existingOrderId={existing?.id} existingPaypalOrderId={existing?.paymentReference||undefined}/>
   </section>
   <p style={{fontSize:12,marginTop:16}}><Link href="/admin/testbestellung">Andere interne Testbestellungen</Link></p>

@@ -62,6 +62,15 @@ export async function captureCardQaOrder(orderId:string,paypalOrderId:string,sdk
  const checked=assessOneEuroCardCapture(remote,orderId,paypalOrderId,sdkLiabilityShift);
  if(!checked.ok){console.warn("RUBY_CARD_QA_CAPTURE_HELD",{orderId,reason:checked.reason,remoteStatus:remote.status});throw new CardQaError(checked.reason)}
  console.info("RUBY_CARD_QA_PAYMENT_SOURCE_VERIFIED",{orderId,remoteStatus:checked.providerStatus,amountCents:100});
+ // Serialize the one and only capture attempt. A previous ambiguous result must
+ // never be repeated by another click, a stale browser tab or a manual API call.
+ await db.$transaction(async tx=>{
+  const previous=await tx.orderStatusEvent.findFirst({where:{orderId,reason:"admin_card_capture_attempted_review"},select:{id:true}});
+  if(previous)throw new CardQaError("CAPTURE_ALREADY_ATTEMPTED_REQUIRES_REVIEW");
+  const stillPending=await tx.order.findFirst({where:{id:orderId,status:"pending_payment",testOnly:true},select:{id:true}});
+  if(!stillPending)throw new CardQaError("CAPTURE_ORDER_CHANGED_REQUIRES_REVIEW");
+  await tx.orderStatusEvent.create({data:{orderId,fromStatus:"pending_payment",toStatus:"pending_payment",reason:"admin_card_capture_attempted_review"}});
+ },{isolationLevel:Prisma.TransactionIsolationLevel.Serializable,timeout:9000});
  console.info("RUBY_CARD_QA_CAPTURE_REQUEST",{orderId,amountCents:100});
  try{
   const result=await confirmOneEuroQaPayment(paypalOrderId);
@@ -75,13 +84,34 @@ export async function cardQaStatus(orderId:string){
  if(!uuid.test(orderId))throw new CardQaError("INVALID_ID",400);
  const order=await getPrisma().order.findFirst({where:{id:orderId,...qaWhere},select:{id:true,status:true,totalCents:true,paymentReference:true,invoice:{select:{invoiceNumber:true}}}});
  if(!order)return null;
- let paypalStatus="NOT_CREATED",canRetry=false;
+ let paypalStatus="NOT_CREATED",paypalFunding="UNVERIFIED",paypalAmount="UNKNOWN",captureStatus="NOT_VERIFIED",captureAmount="UNKNOWN",captureCount=-1,liabilityShift="UNVERIFIED";
  if(order.paymentReference)try{
-  const {api}=await providerForCheckout("paypal");const p=await api.getOrder(order.paymentReference);
-  paypalStatus=obj(p)&&typeof p.status==="string"?p.status:"UNKNOWN";
-  const units=obj(p)&&Array.isArray(p.purchase_units)?p.purchase_units:[];
-  const hasCapture=units.some((u:unknown)=>obj(u)&&obj(u.payments)&&Array.isArray(u.payments.captures)&&u.payments.captures.length>0);
-  canRetry=order.status==="pending_payment"&&!hasCapture&&(paypalStatus==="CREATED"||paypalStatus==="PAYER_ACTION_REQUIRED");
+  const {api}=await providerForCheckout("paypal");const p=await api.getOrderWithPaymentSource(order.paymentReference);
+  if(obj(p)){
+   paypalStatus=typeof p.status==="string"?p.status:"UNKNOWN";
+   const source=obj(p.payment_source)?p.payment_source:null;
+   paypalFunding=source?Object.keys(source).join(",")||"NONE":"NONE";
+   const card=source&&obj(source.card)?source.card:null;
+   const auth=card&&obj(card.authentication_result)?card.authentication_result:null;
+   liabilityShift=auth&&typeof auth.liability_shift==="string"?auth.liability_shift:"UNVERIFIED";
+   const units=Array.isArray(p.purchase_units)?p.purchase_units:[];
+   if(units.length===1&&obj(units[0])){
+    const unit=units[0];
+    const amt=obj(unit.amount)?unit.amount:null;
+    paypalAmount=amt&&amt.currency_code==="EUR"&&typeof amt.value==="string"?amt.value+" EUR":"INVALID_AMOUNT";
+    const pay=obj(unit.payments)?unit.payments:null;
+    const caps=pay&&Array.isArray(pay.captures)?pay.captures:[];
+    captureCount=caps.length;
+    if(caps.length===0)captureStatus="NO_CAPTURE_IN_PAYPAL_ORDER";
+    else if(caps.length===1&&obj(caps[0])){
+     const c=caps[0];captureStatus=typeof c.status==="string"?c.status:"UNKNOWN";
+     captureAmount=obj(c.amount)&&c.amount.currency_code==="EUR"&&typeof c.amount.value==="string"?c.amount.value+" EUR":"UNKNOWN";
+    }else captureStatus="MULTIPLE_CAPTURES_REQUIRES_REVIEW";
+   }
+  }
  }catch{paypalStatus="TEMPORARILY_UNAVAILABLE"}
- return {orderId:order.id,orderStatus:order.status,amountCents:order.totalCents,paypalStatus,canRetry,invoiceNumber:order.invoice?.invoiceNumber||null};
+ // A capture was already attempted on this one-off QA. Do not allow repeated
+ // card approval based solely on an order still showing CREATED.
+ const canRetry=false;
+ return {orderId:order.id,orderStatus:order.status,amountCents:order.totalCents,paypalStatus,paypalFunding,paypalAmount,captureStatus,captureAmount,captureCount,liabilityShift,canRetry,invoiceNumber:order.invoice?.invoiceNumber||null};
 }

@@ -93,6 +93,25 @@ test("previous 1-EUR order is reusable without opening a second order or automat
  assert.match(ui,/result\.data\?\.liabilityShift!=="POSSIBLE"/);
  assert.match(ui,/sdkLiabilityShift:result\.data\.liabilityShift/);
  assert.match(page,/existingPaypalOrderId=\{existing\?\.paymentReference/);
- assert.match(code,/canRetry=order\.status==="pending_payment"&&!hasCapture/);
+ assert.match(code,/const canRetry=false/);
  assert.match(code,/assessOneEuroCardCapture/);
+ assert.match(code,/admin_card_capture_attempted_review/);
+ assert.match(code,/Prisma.TransactionIsolationLevel.Serializable/);
+ assert.match(code,/getOrderWithPaymentSource/);
+ assert.match(code,/captureStatus/);
+ assert.match(ui,/safeExisting=false/);
+ assert.match(ui,/Capture bereits versucht/);
+});
+
+
+test("PayPal capture rejection log is sanitized; never store card details",()=>{
+ const provider=readFileSync("src/lib/paypal-provider-core.ts","utf8");
+ assert.match(provider,/RUBY_PAYPAL_CAPTURE_REJECTED/);
+ assert.match(provider,/debugId/);
+ assert.match(provider,/issue/);
+ assert.ok(!provider.includes("console.warn(\"RUBY_PAYPAL_CAPTURE_REJECTED\",{detail}"));
+ const ui=readFileSync("app/admin/paypal-kart-test/card-qa-form.tsx","utf8");
+ assert.match(ui,/PayPal Zahlung:/);
+ assert.match(ui,/PayPal Bestellbetrag:/);
+ assert.match(ui,/PayPal 3DS:/);
 });

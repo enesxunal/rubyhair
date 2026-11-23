@@ -10,7 +10,7 @@ type PayPalV6={createInstance:(o:{clientToken:string;components:string[];locale:
  createCardFieldsOneTimePaymentSession:()=>CardSession;
 }>};
 type TestOrder={orderId:string;paypalOrderId:string;amountCents:number};
-type TestStatus={orderStatus?:string;paypalStatus?:string;canRetry?:boolean;invoiceNumber?:string|null;error?:string};
+type TestStatus={orderStatus?:string;paypalStatus?:string;paypalFunding?:string;paypalAmount?:string;captureStatus?:string;captureAmount?:string;captureCount?:number;liabilityShift?:string;canRetry?:boolean;invoiceNumber?:string|null;error?:string};
 const sdkUrl="https://www.paypal.com/web-sdk/v6/core";
 const inputStyle={width:"100%",border:"1px solid #d8c6cf",borderRadius:7,padding:"13px 14px",fontSize:15,background:"white"} as const;
 const fieldStyle={height:49,border:"1px solid #d8c6cf",borderRadius:7,background:"white",marginTop:6} as const;
@@ -29,6 +29,7 @@ export default function CardQaForm({existingOrderId,existingPaypalOrderId}:{exis
  const [order,setOrder]=useState<TestOrder|null>(null),[orderId,setOrderId]=useState(existingOrderId||"");
  const [status,setStatus]=useState<TestStatus|null>(null),[invoice,setInvoice]=useState("");
  useEffect(()=>{
+  if(existingOrderId){setSdk("unavailable");setStage("Capture bereits versucht. Nur PayPal-Statuspruefung, keine neue Abbuchung.");return}
   let canceled=false;
   async function init(){
    try{
@@ -58,7 +59,7 @@ export default function CardQaForm({existingOrderId,existingPaypalOrderId}:{exis
   }
   void init();
   return()=>{canceled=true;card.current=null;number.current?.replaceChildren();expiry.current?.replaceChildren();cvv.current?.replaceChildren()};
- },[]);
+ },[existingOrderId]);
  useEffect(()=>{
   if(!orderId)return;
   let canceled=false;
@@ -70,7 +71,7 @@ export default function CardQaForm({existingOrderId,existingPaypalOrderId}:{exis
   void refresh();const timer=setInterval(()=>void refresh(),8000);
   return()=>{canceled=true;clearInterval(timer)};
  },[orderId]);
- const safeExisting=Boolean(existingOrderId&&existingPaypalOrderId&&status?.canRetry===true);
+ const safeExisting=false; // Retry only after independent PayPal merchant reconciliation; never from CREATED alone.
  const ready=sdk==="ready"&&buyerName.trim().length>=2&&buyerEmail.includes("@")&&/^[0-9]{5}$/.test(postalCode)&&seller&&tax&&charge&&!busy&&!submitted.current&&(!existingOrderId||safeExisting);
  async function submit(){
   if(!ready||!card.current)return;
@@ -132,7 +133,13 @@ export default function CardQaForm({existingOrderId,existingPaypalOrderId}:{exis
    <strong>Status:</strong> {stage}
    {error&&<p role="alert" style={{color:"#a33b53",fontWeight:700,marginTop:10}}>{error}</p>}
    {orderId&&<p style={{marginTop:10}}>Test-ID: {orderId}</p>}
-   {status&&<p style={{marginTop:6}}>Ruby Hair: <strong>{status.orderStatus}</strong> | PayPal: <strong>{status.paypalStatus}</strong>{existingOrderId&&status.canRetry===true?" | Gleiche Testbestellung erneut bestaetigen moeglich":""}</p>}
+   {status&&<>
+    <p style={{marginTop:6}}>Ruby Hair: <strong>{status.orderStatus}</strong> | PayPal: <strong>{status.paypalStatus}</strong></p>
+    <p style={{marginTop:6}}>PayPal Zahlung: <strong>{status.captureStatus||"UNVERIFIED"}</strong> | Capture-Betrag: <strong>{status.captureAmount||"UNKNOWN"}</strong></p>
+    <p style={{marginTop:6}}>PayPal Bestellbetrag: <strong>{status.paypalAmount||"UNKNOWN"}</strong> | Funding: <strong>{status.paypalFunding||"UNVERIFIED"}</strong></p>
+    <p style={{marginTop:6}}>PayPal 3DS: <strong>{status.liabilityShift||"UNVERIFIED"}</strong></p>
+    {status.orderStatus==="pending_payment"&&<p style={{marginTop:10,color:"#a33b53",fontWeight:700}}>Ein Capture wurde versucht. Bitte keine neue Zahlung starten. Provider-Ergebnis und Zahlungseingang zuerst abgleichen.</p>}
+   </>}
    {invoice&&<p style={{marginTop:7}}>Rechnung: <strong>{invoice}</strong> | <a href={"/api/admin/qa-invoice?orderId="+orderId} target="_blank" rel="noreferrer">PDF ansehen</a></p>}
    {order&&<p style={{marginTop:10}}>Ein Testauftrag wurde gespeichert. Der Status wird alle 8 Sekunden nur lesend geprueft.</p>}
   </div>
