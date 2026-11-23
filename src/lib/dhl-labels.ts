@@ -97,9 +97,20 @@ export async function validateDhlLiveTemplateOnly(send:typeof fetch=fetch):Promi
   const dry=await send(url,{method:"POST",headers:{Authorization:"Bearer "+result.access_token,
     "dhl-api-key":creds.clientId,"Content-Type":"application/json",Accept:"application/json"},
     body:JSON.stringify(payload),redirect:"error",signal:AbortSignal.timeout(13000)});
-  if(!dry.ok)return dry.status>=500?"unavailable":"rejected";
-  const body=await dry.json() as {items?:{sstatus?:{status?:number};validationMessages?:{validationState?:string}[]}[]};
-  return body.items?.length===1&&body.items[0].sstatus?.status===200&&
-    !body.items[0].validationMessages?.some(m=>m.validationState==="Error")?"valid":"rejected";
+  // Log only protocol status and validated field names, never body values,
+  // shipment addresses, credentials, tokens or arbitrary provider messages.
+  const body=await dry.json() as {items?:{sstatus?:{status?:number;statusCode?:number};
+    validationMessages?:{property?:string;validationState?:string}[]}[];title?:string;status?:number};
+  const valid=dry.ok&&body.items?.length===1&&body.items[0].sstatus?.status===200&&
+    !body.items[0].validationMessages?.some(m=>m.validationState==="Error");
+  if(!valid){
+    const fields=(body.items||[]).flatMap(i=>i.validationMessages||[])
+      .map(m=>(m.property||"").replace(/[^a-zA-Z0-9_.\/:-]/g,"").slice(0,75)).filter(Boolean).slice(0,8);
+    console.warn("RUBY_DHL_VALIDATE_ONLY_REJECTED",JSON.stringify({http:dry.status,
+      itemStatuses:(body.items||[]).map(i=>i.sstatus?.status).slice(0,3),
+      providerStatusCodes:(body.items||[]).map(i=>i.sstatus?.statusCode).slice(0,3),
+      fields,hasItems:Boolean(body.items?.length)}));
+  }
+  return valid?"valid":dry.status>=500?"unavailable":"rejected";
  }catch{return "unavailable"}
 }
