@@ -178,9 +178,19 @@ export class PaypalClient{
       throw new PaypalError("PAYPAL_CLIENT_TOKEN_INVALID");
     return payload.access_token;
   }
-  /** Read 3DS outcome from PayPal itself, not from untrusted browser claims. */
+  /** Read both the canonical order (status/captures) and expanded card funding.
+   * PayPal's fields=payment_source projection can OMIT status/purchase_units.
+   * Never infer capture completion from a projection-only response. READ ONLY. */
   async getOrderWithPaymentSource(id:string):Promise<unknown>{
-    return this.api("GET","/v2/checkout/orders/"+checkId(id,60)+"?fields=payment_source");
+    const safeId=checkId(id,60),path="/v2/checkout/orders/"+safeId;
+    const [full,detail]=await Promise.all([
+      this.api("GET",path),
+      this.api("GET",path+"?fields=payment_source")
+    ]);
+    if(!isObject(full)||full.id!==safeId||!isObject(detail)||
+       typeof detail.id==="string"&&detail.id!==safeId)
+      throw new PaypalError("PAYPAL_ORDER_PROJECTION_MISMATCH");
+    return {...full,payment_source:isObject(detail.payment_source)?detail.payment_source:full.payment_source};
   }
   /** One explicit merchant-admin-only non-shippable QA purchase (always EUR 1.00).
    * This does not capture, fulfill, or mark the payment paid. */
