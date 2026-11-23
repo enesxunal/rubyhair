@@ -38,7 +38,8 @@ export default function CustomerPaymentSubmit({method,lines,gifts=[],address,car
  };
  return <div className="rh-payment-action-area" aria-live="polite">
   <p>{lines.length?"DHL-Versand innerhalb Deutschlands.":"Digitaler Gutschein: kein DHL-Versand."} Die Zahlung startet erst nach deiner ausdrücklichen Bestätigung.</p>
-  {!address&&<p>Bitte zuerst oben deine {lines.length?"Liefer- und Rechnungsadresse":"Rechnungsadresse"} bestätigen.</p>}
+  {!address&&<p className="rh-checkout-unavailable-note" role="status">Bitte zuerst oben deine {lines.length?"Liefer- und Rechnungsadresse":"Rechnungsadresse"} bestätigen.</p>}
+  {address&&!cartReady&&<p className="rh-checkout-unavailable-note" role="alert">Die Preis- oder Bestandsprüfung ist noch nicht abgeschlossen oder meldet ein Problem. Prüfe die Bestellübersicht und entferne gegebenenfalls einen ungültigen Rabattcode im Warenkorb.</p>}
   <label style={{display:"flex",alignItems:"flex-start",gap:10,marginBottom:16,fontSize:12,lineHeight:1.7}}>
    <input type="checkbox" checked={agreed} onChange={e=>setAgreed(e.target.checked)} required/>
    <span style={{minWidth:0,overflowWrap:"anywhere"}}>Ich habe die <a href="/rechtliches/agb/" target="_blank" rel="noopener noreferrer">AGB</a> und die

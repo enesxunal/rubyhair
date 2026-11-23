@@ -129,7 +129,8 @@ export default function PayPalCardFieldsCheckout({lines,address,cartReady,totalC
     <label style={{fontSize:13}}>Sicherheitscode<div ref={cvvRef} style={fieldStyle}/></label>
    </div>
   </div>
-  {!address&&<p>Bitte zuerst die Liefer- und Rechnungsadresse bestätigen.</p>}
+  {!address&&<p className="rh-checkout-unavailable-note" role="status">Bitte zuerst oben die Liefer- und Rechnungsadresse bestätigen.</p>}
+  {address&&!cartReady&&<p className="rh-checkout-unavailable-note" role="alert">Der Warenkorb ist noch nicht zur Zahlung freigegeben. Prüfe bitte die Preis- und Bestandsmeldung in deiner Bestellübersicht. Bei einem ungültigen Rabattcode diesen im Warenkorb entfernen.</p>}
   <label style={{display:"flex",alignItems:"flex-start",gap:10,fontSize:12,lineHeight:1.7,margin:"14px 0"}}>
    <input type="checkbox" checked={agreed} onChange={e=>setAgreed(e.target.checked)}/>
    <span>Ich akzeptiere die <a href="/rechtliches/agb/" target="_blank" rel="noreferrer">AGB</a> und die <a href="/rechtliches/widerruf/" target="_blank" rel="noreferrer">Widerrufsbelehrung</a> und bestelle zahlungspflichtig.</span>

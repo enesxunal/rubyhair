@@ -27,7 +27,7 @@ type GooglePayConfig={
 type GooglePayPaymentData={paymentMethodData:unknown};
 type GooglePayClient={
  isReadyToPay:(options:{allowedPaymentMethods:unknown[];apiVersion:number;apiVersionMinor:number})=>Promise<{result:boolean}>;
- createButton:(options:{onClick:()=>void})=>HTMLElement;
+ createButton:(options:{onClick:()=>void;buttonSizeMode?:"fill";buttonColor?:"black";buttonType?:"buy"})=>HTMLElement;
  loadPaymentData:(options:GooglePayConfig&{transactionInfo:{countryCode:string;currencyCode:string;totalPriceStatus:string;totalPrice:string};callbackIntents:string[]})=>Promise<unknown>;
 };
 type GooglePayAPI={payments:{api:{PaymentsClient:new(options:{environment:"PRODUCTION";paymentDataCallbacks:{
@@ -153,7 +153,7 @@ export default function PayPalWalletCheckout({lines,address,cartReady,totalCents
        apiVersion:config.apiVersion,apiVersionMinor:config.apiVersionMinor});
       if(!canceled&&result&&googleHost.current){
        paymentMethod.current=client;
-       const button=client.createButton({onClick:()=>{
+       const button=client.createButton({buttonSizeMode:"fill",buttonColor:"black",buttonType:"buy",onClick:()=>{
         if(!canStart()){setError("Bitte Lieferadresse und AGB bestätigen.");return}
         setError("");
         // Must be called directly inside a genuine click for browser popup permission.
@@ -225,8 +225,8 @@ export default function PayPalWalletCheckout({lines,address,cartReady,totalCents
     die <a href="/rechtliches/widerruf/" target="_blank" rel="noreferrer">Widerrufsbelehrung</a> gelesen
     und bestelle zahlungspflichtig.</span>
   </label>}
-  <div ref={appleHost} style={{display:appleReady?"block":"none",marginBottom:10}}/>
-  <div ref={googleHost} style={{display:googleReady?"block":"none"}}/>
+  <div ref={appleHost} className="rh-wallet-button-host" style={{display:appleReady?"block":"none",marginBottom:10}}/>
+  <div ref={googleHost} className="rh-wallet-button-host" style={{display:googleReady?"block":"none"}}/>
   {processing&&<p role="status">Deine Wallet-Zahlung wird geprüft …</p>}
   {error&&<p role="alert" style={{color:"#a13c50"}}>{error}</p>}
  </section>;

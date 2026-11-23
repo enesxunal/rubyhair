@@ -658,7 +658,7 @@ button.rh-editorial-cta{cursor:pointer}
 .rh-checkout-payment-preview{border:1px solid #e0d3d2;background:#f8f2ef;padding:22px;margin:18px 0 25px}
 .rh-checkout-payment-preview h3{font-size:14px;margin:0 0 7px;letter-spacing:.5px;color:var(--wine)}
 .rh-checkout-payment-preview p{font-size:12px;color:#826d75;line-height:1.65}
-.rh-checkout-payment-preview button{width:100%;min-height:45px;border:1px solid #d5bdc4;background:#ded5d5;color:#695960;cursor:not-allowed}
+/* Legacy mock-payment button styling removed: real PSP buttons own their appearance. */
 @media(max-width:600px){.rh-checkout-address{padding:17px}.rh-checkout-field-grid{grid-template-columns:1fr}.rh-checkout-field-full{grid-column:auto}}
 
 /* Consent-first 1st-party analytics: no data is collected before explicit opt-in. */
@@ -691,6 +691,12 @@ button.rh-editorial-cta{cursor:pointer}
 .rh-payment-action-area{padding:18px;border:1px solid #e0d1d5;background:#fff9f7;color:#604d54;margin-top:8px}
 .rh-payment-action-area p{margin:0 0 14px;line-height:1.7;font-size:12px}
 .rh-payment-primary-link{display:inline-block;background:#593746;color:#fff!important;padding:14px 18px;text-decoration:none;font-size:12px;font-weight:700;text-align:center}
+.rh-payment-action-area button.rh-payment-primary-link{width:100%;min-height:49px;border:0;background:#593746;color:#fff;cursor:pointer;font-size:14px;transition:background .18s,opacity .18s}
+.rh-payment-action-area button.rh-payment-primary-link:hover:not(:disabled){background:#472b3b}
+.rh-payment-action-area button.rh-payment-primary-link:disabled{background:#e8e0e2;color:#877781!important;cursor:not-allowed;opacity:1!important}
+.rh-payment-action-area .rh-wallet-button-host{width:100%;max-width:100%;min-width:0;overflow:hidden}
+.rh-payment-action-area .rh-wallet-button-host>button{max-width:100%;box-sizing:border-box}
+.rh-checkout-unavailable-note{font-size:12px;line-height:1.6;color:#8c495e;padding:10px 12px;background:#fff0f2;border-left:3px solid #bd6d82;margin:12px 0}
 .rh-payment-secondary-link{border:1px solid #745064;background:transparent;color:#694454;display:inline-block;font-size:12px;padding:12px 14px;text-decoration:none;cursor:pointer}
 @media(max-width:600px){.rh-payment-select{grid-template-columns:1fr}.rh-payment-choice{padding:13px}.rh-payment-choice.is-selected{padding:12px}}
 /* Ruby Hair granular opt-in controls: statistics and advertising independently. */

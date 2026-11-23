@@ -27,6 +27,14 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
   const physicalCents=quote?.subtotalCents||0;
   const grossCents=physicalCents+giftSoldCents+shipping;
   const canPay=Boolean(hasItems&&!error&&!loading&&(!lines.length||quote&&!quote.needsReview));
+  const paymentBlocker=!loaded?"Warenkorb wird geladen. Bitte kurz warten.":
+    !hasItems?"Der Warenkorb ist leer.":
+    error?"Die Preisprüfung ist nicht erreichbar. Bitte die Seite neu laden.":
+    loading?"Die Preise und der Lagerbestand werden geprüft.":
+    quote?.couponError?"Der Rabattcode ist ungültig. Bitte im Warenkorb entfernen.":
+    quote?.lines.some(line=>line.status==="out-of-stock")?"Ein Artikel ist nicht in der gewünschten Menge verfügbar. Bitte Warenkorb prüfen.":
+    quote?.lines.some(line=>line.status==="unknown-variation")?"Ein Artikel ist nicht mehr verfügbar. Bitte Warenkorb prüfen.":
+    quote?.needsReview?"Ein Artikel muss vor der Zahlung geprüft werden. Bitte Warenkorb prüfen.":null;
   const [paymentMethod,setPaymentMethod]=useState<"paypal"|"klarna"|"paypal_card">(checkoutMode==="klarna_public"?"klarna":"paypal");
   const [validatedAddress,setValidatedAddress]=useState<CheckoutAddressData|null>(null);
   const [giftInput,setGiftInput]=useState("");
@@ -83,6 +91,7 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
         <section className="rh-checkout-payment-preview" aria-label="Zahlungsart auswählen">
           <h3>03 / ZAHLUNG</h3>
           <p className="rh-payment-preview-heading">{gifts.length?"Gemeinsame Zahlung für Waren und Gutscheine mit PayPal":"Wähle deine Zahlungsart"}</p>
+          {!canPay&&paymentBlocker&&<p className="rh-checkout-unavailable-note" role={loading?"status":"alert"}>{paymentBlocker}</p>}
           {appliedGift&&<p className="rh-gift-only-paypal-note">Bei Gutscheinzahlung steht PayPal für einen möglichen Restbetrag zur Verfügung. Ist alles gedeckt, erfolgt keine weitere Zahlung.</p>}
           <div className="rh-payment-select" role="radiogroup" aria-label="Zahlungsart">
             {(checkoutMode!=="klarna_public"||gifts.length>0)&&<label className={"rh-payment-choice"+(activePaymentMethod==="paypal"?" is-selected":"")}>
@@ -101,7 +110,7 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
               <span><strong>Klarna</strong><small>{checkoutMode!=="disabled"?"Zahlung bei Versand":"Noch nicht freigeschaltet"}</small></span>
             </label>
           </div>
-          {(applePayEnabled||googlePayEnabled)&&checkoutMode!=="disabled"&&checkoutMode!=="klarna_public"&&
+          {activePaymentMethod==="paypal"&&(applePayEnabled||googlePayEnabled)&&checkoutMode!=="disabled"&&checkoutMode!=="klarna_public"&&
            !liveTest&&!oneEuroCart&&lines.length>0&&!gifts.length&&!appliedGift&&
            <PayPalWalletCheckout lines={lines} address={validatedAddress} cartReady={canPay}
             totalCents={remainingCents} couponCode={couponCode||undefined}
