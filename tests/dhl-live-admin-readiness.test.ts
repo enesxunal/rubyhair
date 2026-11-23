@@ -63,6 +63,8 @@ test("DHL fulfillment defaults to 500g but never purchases old orders or books w
  assert.match(label,/url="https:\/\/api-eu\.dhl\.com\/parcel\/de\/shipping\/v2\/orders\?validate=true"/);
  assert.match(label,/RUBY_DHL_SENDER_APPROVED/);
  assert.match(worker,/RUBY_DHL_AUTOMATION_START_AT/);
+ assert.match(worker,/const validation=await validateDhlLiveTemplateOnly\(\)/);
+ assert.match(worker,/if\(validation!=="valid"\)return/);
  assert.match(worker,/order.createdAt.getTime\(\)<Date.parse\(startAt\)/);
  assert.match(worker,/status:"waiting_credentials",trackingNumber:null/);
  assert.match(dhlAction,/validateDhlLiveTemplateOnly\(\)/);

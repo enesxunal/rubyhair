@@ -1,7 +1,7 @@
 import "server-only";
 import {getPrisma} from "@/lib/prisma";
 import {getDhlIntegrationReadiness} from "@/lib/dhl-api";
-import {createDhlShipmentLabel,type ShippingAddress} from "@/lib/dhl-labels";
+import {createDhlShipmentLabel,validateDhlLiveTemplateOnly,type ShippingAddress} from "@/lib/dhl-labels";
 import {sendStoreOrderMail} from "@/lib/store-mail-transport";
 import {loadStoreMailSettings,adminOrderNotificationRecipients} from "@/lib/store-mail-settings";
 import {orderMailStages,type OrderMailStage} from "@/lib/order-mail-templates";
@@ -95,6 +95,11 @@ export async function createQueuedDhlLabels(limit=5){
    !Number.isFinite(Date.parse(startAt)))return {created:0,skipped:"DHL_START_DATE_NOT_SET"};
  const ready=await getDhlIntegrationReadiness("live");
  if(!ready.credentialsComplete)return {created:0,skipped:"DHL_CREDENTIALS_INCOMPLETE"};
+ // A newly issued DHL API key may authenticate before the shipping subscription
+ // activates. Do not claim jobs or attempt a billable POST until validate=true
+ // accepts the current contract and sender template.
+ const validation=await validateDhlLiveTemplateOnly();
+ if(validation!=="valid")return {created:0,skipped:"DHL_VALIDATION_"+validation.toUpperCase()};
  const rows=await db().shippingJob.findMany({where:{status:"waiting_credentials"},orderBy:{createdAt:"asc"},take:Math.max(1,Math.min(limit,10))});
  let created=0;
  for(const job of rows){
