@@ -4,7 +4,7 @@ import {redirect} from "next/navigation";
 import {isAdmin} from "@/lib/admin-auth";
 import {getPrisma} from "@/lib/prisma";
 import {databaseConfigured} from "@/lib/prisma";
-import {paymentVaultConfigured} from "@/lib/payment-secrets";
+import {paymentVaultConfigured,loadPaymentValue} from "@/lib/payment-secrets";
 import {paymentSettingsSpec,paymentProviders,paymentEnvironments} from "@/lib/payment-settings-spec";
 import {savePaymentSettingsAction} from "../payment-actions";
 import {publicCheckoutMode} from "@/lib/customer-checkout";
@@ -19,6 +19,19 @@ export default async function PaymentsReadiness({
   const params=await searchParams;
   const ready=databaseConfigured()&&paymentVaultConfigured();
   const publicPayments=["public","payments_public","klarna_public"].includes(publicCheckoutMode());
+  // Read-only comparison within the authenticated server. Never render the
+  // stored Merchant ID or expose the vault key to the browser or logs.
+  const portalMerchantId="K6701613";
+  let merchantIdMatch:"match"|"mismatch"|"unavailable"="unavailable";
+  try{
+    const storedMerchantId=await loadPaymentValue("klarna","live","merchantId");
+    if(storedMerchantId?.trim()){
+      merchantIdMatch=storedMerchantId.trim().toUpperCase()===portalMerchantId?"match":"mismatch";
+    }
+  }catch{
+    // No diagnostic exception details or decrypted secrets are returned.
+  }
+
   const saved=await getPrisma().paymentIntegrationSetting.findMany({
     where:{provider:{in:paymentProviders}},
     select:{provider:true,environment:true,field:true,updatedAt:true}
@@ -45,6 +58,16 @@ export default async function PaymentsReadiness({
     </p>}
     {status&&<p role="status" className="rh-admin-success">{status}</p>}
     <p className="rh-admin-warning">Wichtig: PayPal und Klarna werden bereits im aktuellen Checkout angeboten. Die gespeicherten DHL-Daten ersetzen keine DHL-API-Freigabe. Bis alle sechs DHL-Live-Felder, das Paketgewicht und die Versandfreigabe geprüft wurden, bleibt die automatische Etikettenerstellung deaktiviert.</p>
+    <section className="rh-admin-panel-card" id="klarna-merchant-match" aria-label="Klarna Merchant ID Kontovergleich" style={{margin:"20px 0"}}>
+      <div className="rh-admin-card-title"><div><span>KLARNA / LIVE-KONTOABGLEICH</span><h2>Ist dieses Klarna-Konto mit Ruby Hair verknüpft?</h2></div><ShieldCheck size={22}/></div>
+      <p className="rh-admin-muted">Klarna Merchant Portal: <strong>{portalMerchantId}</strong>. Vergleich mit dem verschlüsselt gespeicherten Merchant ID dieses Shops. Der gespeicherte Wert und alle API-Zugangsdaten bleiben verborgen.</p>
+      <p data-merchant-match={merchantIdMatch} role="status" style={{fontSize:16,fontWeight:650,marginTop:12,color:merchantIdMatch==="match"?"#246c44":"#8e485e"}}>
+        {merchantIdMatch==="match"?"BESTÄTIGT: dieselbe Klarna Merchant ID.":
+         merchantIdMatch==="mismatch"?"ABWEICHUNG: Das gespeicherte Konto hat eine andere Merchant ID.":
+         "NICHT BESTÄTIGT: Merchant ID konnte serverseitig nicht geprüft werden."}
+      </p>
+      <small>Dieser reine Lesevergleich ändert weder Klarna-Anmeldedaten noch Shop-Bestellungen, Zahlungen oder Einstellungen.</small>
+    </section>
     <div className="rh-admin-payment-sections">
       {paymentProviders.map(provider=>{
         const definition=paymentSettingsSpec[provider];
