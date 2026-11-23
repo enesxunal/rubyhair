@@ -94,7 +94,7 @@ export default async function TestPurchasePage({searchParams}:{searchParams:Prom
     </div>
    </div>
    <p className="rh-admin-warning" style={{marginTop:20}}><AlertTriangle size={17}/> Der interne 1-€-PayPal-Test ist vom öffentlichen Shop getrennt. Automatische E-Mails, DHL und die allgemeine Rechnungs- und Checkoutstrecke bleiben bis zur vollständigen Verifikation gesperrt.</p>
-   <p style={{display:"flex",flexWrap:"wrap",gap:18,marginTop:18}}><Link href="/admin/zahlungen">Zahlungszugänge konfigurieren</Link><Link href="/admin/benachrichtigungen">E-Mail & SMTP testen</Link><Link href="/admin/bestellungen">Bestellungen ansehen</Link></p>
+   <p style={{display:"flex",flexWrap:"wrap",gap:18,marginTop:18}}><Link href="/admin/zahlungen">Zahlungszugänge konfigurieren</Link><Link href="/admin/klarna-kart-durum">Klarna Kartenverfügbarkeit prüfen</Link><Link href="/admin/benachrichtigungen">E-Mail & SMTP testen</Link><Link href="/admin/bestellungen">Bestellungen ansehen</Link></p>
   </section>
  </AdminShell>;
 }

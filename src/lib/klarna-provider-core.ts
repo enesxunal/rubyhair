@@ -22,6 +22,25 @@ export class KlarnaClient{
   if(r.status===204)return {} as T;
   return await r.json() as T;
  }
+ /** Admin-only, no customer/order/capture: a short-lived Klarna Payments session to
+  * inspect the market/merchant payment category list. This does not prove a
+  * specific PAY_BY_CARD method is available within pay_now. */
+ async createCardMethodProbeSession(){
+  const data=await this.request<{session_id:string;payment_method_categories?:KlarnaPaymentCategory[]}>(
+   "POST","/payments/v1/sessions",{
+    purchase_country:"DE",purchase_currency:"EUR",locale:"de-DE",
+    order_amount:10000,order_tax_amount:1597,
+    order_lines:[{type:"physical",reference:"RH-ADMIN-CARD-METHOD-PROBE",
+     name:"Ruby Hair interne Methodenprüfung (keine Bestellung)",quantity:1,
+     unit_price:10000,tax_rate:1900,total_amount:10000,total_tax_amount:1597}]
+   }
+  );
+  requireKlarnaUuid(data.session_id);
+  const categories=Array.isArray(data.payment_method_categories)
+   ?data.payment_method_categories.map(c=>String(c.identifier||"").trim().toLowerCase()).filter(x=>/^[a-z_]{2,45}$/.test(x)).slice(0,12)
+   :[];
+  return {categories}; // Never return Klarna tokens or a payment URL to the UI.
+ }
  async createPaymentSession(orderNumber:string){
   const result=await this.request<{session_id:string;payment_method_categories?:KlarnaPaymentCategory[]}>("POST","/payments/v1/sessions",{
    purchase_country:"DE",purchase_currency:"EUR",locale:"de-DE",order_amount:100,order_tax_amount:16,
