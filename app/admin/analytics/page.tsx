@@ -72,6 +72,7 @@ export default async function AdminAnalytics({searchParams}:{searchParams:Promis
  const report=await loadAnalyticsReport(range);
  const commerce=await loadCommerceReportSafely(range);
  const {current,previous}=report;
+ const storyDailyMax=Math.max(1,...report.daily.map(day=>day.storyViews));
  const exportQuery=new URLSearchParams({zeitraum:range.mode});
  if(range.mode==="frei"){exportQuery.set("von",isoDay(range.start));exportQuery.set("bis",isoDay(range.end));}
  const presets=[
@@ -104,7 +105,7 @@ export default async function AdminAnalytics({searchParams}:{searchParams:Promis
   <section className="rh-adv-hero" aria-label="Kennzahlen-Übersicht">
    <div><span>RUBY HAIR · PERFORMANCE STUDIO</span><h2>Alle Zahlen. Ein klarer Überblick.</h2>
     <p>Black Friday 2026 · Anzeigen, Kundeninteresse und bezahlte Bestellungen auf einen Blick.</p>
-    <div className="rh-adv-hero-tags"><span>Europe/Berlin</span><span>{enabled?"Statistik mit Einwilligung aktiv":"Besucherstatistik deaktiviert"}</span><span>Bezahlte Bestellungen aus verifizierten Zahlungen</span></div>
+    <div className="rh-adv-hero-tags"><span>Europe/Berlin</span><span>{enabled?"Statistik mit Einwilligung aktiv":"Besucherstatistik deaktiviert"}</span><span>Bezahlte Bestellungen aus verifizierten Zahlungen</span><a href="#story-analytics">Story-Statistiken</a></div>
    </div>
    <Link className="rh-adv-refresh" href={"/admin/analytics?"+exportQuery.toString()} prefetch={false}><RefreshCw size={17}/> Aktualisieren</Link>
   </section>
@@ -119,6 +120,50 @@ export default async function AdminAnalytics({searchParams}:{searchParams:Promis
     note={"Kassenbesuche, keine Käufe · zuvor "+(enabled?number(previous.checkouts):"—")}/>
   </section>
   <AdminCommercePanel data={commerce}/>
+  <section className="rh-adv-story-dashboard" id="story-analytics" aria-labelledby="rh-adv-story-title">
+   <div className="rh-adv-section-title"><div><span>04 / COMMUNITY PERFORMANCE</span><h2 id="rh-adv-story-title">Story-Statistiken</h2>
+    <p>Wiedergaben, täglicher Verlauf und Leistung jeder einzelnen Ruby Hair Community-Story – direkt sichtbar, ohne Untermenü.</p></div>
+    <a href="/" target="_blank" rel="noopener noreferrer" className="rh-adv-story-shop-link">Community ansehen</a>
+   </div>
+   <div className="rh-adv-story-period"><span>Ausgewählter Zeitraum: <strong>{range.label}</strong></span><span>Vorheriger Zeitraum: <strong>{enabledValue(enabled,report.previousEngagement.storyViews)} Aufrufe</strong></span></div>
+  <div className="rh-ops-community-kpis">
+   <OverviewCard label="Story-Aufrufe" value={enabledValue(enabled,report.engagement.storyViews)} icon={<Eye size={17}/>}
+    note="Nur Wiedergaben nach Statistik-Einwilligung" highlight/>
+   <OverviewCard label="KI gestartet" value={enabledValue(enabled,report.engagement.aiStarts)} icon={<Sparkles size={17}/>}
+    note="Begonnene Versuche"/>
+   <OverviewCard label="KI-Ergebnisse" value={enabledValue(enabled,report.engagement.aiTryons)} icon={<Sparkles size={17}/>}
+    note="Erfolgreich erstellt"/>
+   <OverviewCard label="KI → Warenkorb" value={enabledValue(enabled,report.engagement.aiAdds)} icon={<ShoppingBag size={17}/>}
+    note="Aus dem Ergebnis zum Warenkorb"/>
+  </div>
+  <section className="rh-admin-panel-card rh-adv-story-trend" aria-labelledby="rh-adv-story-trend-title">
+   <div className="rh-ops-section-head"><div><span>STORY PERFORMANCE / TÄGLICH</span><h2 id="rh-adv-story-trend-title">Story-Aufrufe im Zeitverlauf</h2>
+    <p>Die Werte zählen abgespielte Storys, nicht eindeutige Besucher.</p></div></div>
+   <div className="rh-adv-story-chart-scroll">
+    <div className="rh-adv-story-chart" style={{minWidth:Math.max(350,report.daily.length*17)}} role="img" aria-label={`Tägliche Story-Aufrufe im Zeitraum ${range.label}: ${enabledValue(enabled,report.engagement.storyViews)} insgesamt`}>
+     {report.daily.map((day,i)=>{
+      const fraction=enabled?day.storyViews/storyDailyMax:0;
+      return <div className="rh-adv-story-chart-column" key={day.day} title={`${day.day}: ${enabledValue(enabled,day.storyViews)} Story-Aufrufe`}>
+       <div className="rh-adv-story-chart-bartrack"><span style={{height:`${fraction*100}%`}}/></div>
+       <small>{i===0||i===report.daily.length-1||i%Math.max(1,Math.ceil(report.daily.length/7))===0?day.label:""}</small>
+      </div>;
+     })}
+    </div>
+   </div>
+   <p className="rh-ops-muted">Story-Events werden nur nach Einwilligung gezählt. Ein Story-Wechsel kann ein weiteres Ereignis auslösen.</p>
+  </section>
+  <section className="rh-admin-panel-card rh-ops-stories" aria-labelledby="rh-ops-stories-title">
+   <div className="rh-ops-section-head"><div><span>COMMUNITY-STORYS</span><h2 id="rh-ops-stories-title">Welche Story wird angesehen?</h2></div></div>
+   <div className="rh-ops-story-grid">
+    {report.stories.map((story,i)=><div className="rh-ops-story-item" key={story.path}>
+     <img src={story.image} width="54" height="68" alt="" loading="lazy"/>
+     <div><strong>{story.name}</strong><small>Story {String(i+1).padStart(2,"0")}</small></div>
+     <div className="rh-ops-story-count"><strong>{enabledValue(enabled,story.views)}</strong><small>Aufrufe</small><span className="rh-adv-story-share">{enabled&&report.engagement.storyViews>0?pct(100*story.views/report.engagement.storyViews):"—"}</span></div>
+    </div>)}
+   </div>
+   <p className="rh-ops-muted">Die Storys sind nach Aufrufen sortiert. Prozente beziehen sich auf alle im Zeitraum erfassten Story-Wiedergaben – keine eindeutigen Nutzer.</p>
+  </section>
+  </section>
   <section className="rh-ops-paid-overview" aria-label="Meta Black Friday Werbeanzeigen">
    <div className="rh-ops-section-head"><div><span>BLACK FRIDAY / META ADS</span><h2>Werbe-Traffic nach Herkunft</h2>
     <p>Nur Seitenansichten nach Zustimmung zur internen Statistik. Keine eindeutigen Besucher und nicht mit den Meta-Klicks gleichzusetzen.</p></div></div>
@@ -141,32 +186,6 @@ export default async function AdminAnalytics({searchParams}:{searchParams:Promis
    </section>
    <EventFunnel report={report} enabled={enabled}/>
   </div>
-  <details className="rh-adv-community">
-   <summary><span>05 / COMMUNITY & KI</span><strong>Storys & Haaranprobe im Detail</strong><small>{enabled?number(report.engagement.storyViews):"—"} Story-Aufrufe · {enabled?number(report.engagement.aiStarts):"—"} KI-Versuche</small></summary>
-  <div className="rh-ops-community-head"><span>03 / COMMUNITY</span><h2>Storys & KI-Haaranprobe</h2>
-   <p>Sieh auf einen Blick, welche Storys angeschaut und wie oft Haarfarben getestet werden.</p></div>
-  <div className="rh-ops-community-kpis">
-   <OverviewCard label="Story-Aufrufe" value={enabledValue(enabled,report.engagement.storyViews)} icon={<Eye size={17}/>}
-    note="Alle Story-Wiedergaben"/>
-   <OverviewCard label="KI gestartet" value={enabledValue(enabled,report.engagement.aiStarts)} icon={<Sparkles size={17}/>}
-    note="Begonnene Versuche"/>
-   <OverviewCard label="KI-Ergebnisse" value={enabledValue(enabled,report.engagement.aiTryons)} icon={<Sparkles size={17}/>}
-    note="Erfolgreich erstellt"/>
-   <OverviewCard label="KI → Warenkorb" value={enabledValue(enabled,report.engagement.aiAdds)} icon={<ShoppingBag size={17}/>}
-    note="Aus dem Ergebnis zum Warenkorb"/>
-  </div>
-  <section className="rh-admin-panel-card rh-ops-stories" aria-labelledby="rh-ops-stories-title">
-   <div className="rh-ops-section-head"><div><span>COMMUNITY-STORYS</span><h2 id="rh-ops-stories-title">Welche Story wird angesehen?</h2></div></div>
-   <div className="rh-ops-story-grid">
-    {report.stories.map((story,i)=><div className="rh-ops-story-item" key={story.path}>
-     <img src={story.image} width="54" height="68" alt="" loading="lazy"/>
-     <div><strong>{story.name}</strong><small>Story {String(i+1).padStart(2,"0")}</small></div>
-     <div className="rh-ops-story-count"><strong>{enabledValue(enabled,story.views)}</strong><small>Aufrufe</small></div>
-    </div>)}
-   </div>
-   <p className="rh-ops-muted">Die Werte zählen Wiedergaben nach Einwilligung; keine eindeutigen Nutzer oder einzelnen Personen.</p>
-  </section>
-  </details>
   <AdminAnalyticsChannels report={report} enabled={enabled}/>
   <section className="rh-adv-audit" aria-label="Datenqualität und Messmethode">
    <h2>Messqualität & Daten-Grenzen</h2>
