@@ -67,11 +67,22 @@ export async function providerForCheckout(provider:"paypal"|"klarna"):Promise<{p
  return {provider,api:new KlarnaClient(username,password)} as const;
 }
 
+export type WalletCheckoutMethod="apple_pay"|"google_pay";
+export function walletCheckoutSignature(orderId:string,method:WalletCheckoutMethod){
+ return createHmac("sha256",secret()).update(`customer-wallet:v1:${method}:${orderId}`).digest("hex");
+}
+export function verifyWalletCheckoutSignature(orderId:string,method:WalletCheckoutMethod,signature:string){
+ if(!/^[\da-f]{64}$/.test(signature))return false;
+ const a=Buffer.from(walletCheckoutSignature(orderId,method),"hex"),b=Buffer.from(signature,"hex");
+ return a.length===b.length&&timingSafeEqual(a,b);
+}
 export const giftOnlySignature=(id:string)=>createHmac("sha256",secret()).update("rubyhair-gift-only-order-v1:"+id).digest("hex");
 export async function createCustomerCheckout(input:CustomerCheckoutInput){
  const useCard=input.paymentExperience==="card";
- if(useCard&&(input.provider!=="paypal"||input.gifts.length>0||Boolean(input.giftCode)))throw new CustomerCheckoutError("CARD_FLOW_NOT_SUPPORTED_FOR_CART",400);
+ const walletMethod=input.paymentExperience==="apple_pay"||input.paymentExperience==="google_pay"?input.paymentExperience:null;
+ if((useCard||walletMethod)&&(input.provider!=="paypal"||input.gifts.length>0||Boolean(input.giftCode)))throw new CustomerCheckoutError("CARD_FLOW_NOT_SUPPORTED_FOR_CART",400);
  if(useCard&&process.env.RUBY_PAYPAL_CARD_FIELDS_ENABLED!=="true")throw new CustomerCheckoutError("CARD_FIELDS_NOT_ENABLED",403);
+ if(walletMethod&&process.env[walletMethod==="apple_pay"?"RUBY_PAYPAL_APPLE_PAY_ENABLED":"RUBY_PAYPAL_GOOGLE_PAY_ENABLED"]!=="true")throw new CustomerCheckoutError("WALLET_NOT_ENABLED",403);
  if(input.gifts.length&&process.env.RUBY_GIFT_CARDS_LIVE_ENABLED!=="true")throw new CustomerCheckoutError("GIFT_SALES_UNAVAILABLE",503);
  if(input.giftCode&&(!giftCodeLooksValid(input.giftCode)||input.provider!=="paypal"))throw new CustomerCheckoutError("GIFT_CODE_INVALID_OR_PROVIDER_UNSUPPORTED",400);
  const db=getPrisma();
@@ -185,9 +196,9 @@ export async function createCustomerCheckout(input:CustomerCheckoutInput){
       postalCode:input.shipping.postalCode,city:input.shipping.city,country:"DE" as const},
     returnUrl:base,cancelUrl:base+"&cancel=1"
    };
-   if(useCard){
-    const card=await verifiedGateway.api.createCardOrder(details);
-    reference=card.id;url="";
+   if(useCard||walletMethod){
+    const wallet=walletMethod?await verifiedGateway.api.createWalletOrder(details):await verifiedGateway.api.createCardOrder(details);
+    reference=wallet.id;url="";
    }else{
     const a=giftItems.length&&!items.length
      ?await verifiedGateway.api.createGiftOrder({purchaseId:order.id,amountCents:cashDue,returnUrl:base,cancelUrl:base+"&cancel=1"})
@@ -204,6 +215,7 @@ export async function createCustomerCheckout(input:CustomerCheckoutInput){
   const changed=await db.order.updateMany({where:{id:order.id,status:"pending_payment",paymentReference:null},data:{paymentReference:reference}});
   if(changed.count!==1)throw new CustomerCheckoutError("PROVIDER_ORDER_REQUIRES_REVIEW",503);
   if(useCard)return {paymentExperience:"card" as const,orderId:order.id,paypalOrderId:reference,cardState:checkoutSignature(order.id,"paypal"),amountCents:cashDue};
+  if(walletMethod)return {paymentExperience:walletMethod,orderId:order.id,paypalOrderId:reference,walletState:walletCheckoutSignature(order.id,walletMethod),amountCents:cashDue};
   return {redirectUrl:url,orderId:order.id,amountCents:cashDue};
  }catch(error){
   // A deterministic 4xx before a Klarna session exists cannot have authorized a

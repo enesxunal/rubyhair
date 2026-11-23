@@ -1,6 +1,6 @@
 import type {Metadata} from "next";
 import {after} from "next/server";
-import {verifyCheckoutSignature} from "@/lib/customer-checkout";
+import {verifyCheckoutSignature,verifyWalletCheckoutSignature,type WalletCheckoutMethod} from "@/lib/customer-checkout";
 import {finalizePayPalCheckout} from "@/lib/customer-order-finalize";
 import {runCustomerJobs} from "@/lib/customer-automation";
 import {deliverGiftEmails} from "@/lib/gift-cards/mail";
@@ -10,10 +10,13 @@ import {giftViewUrl} from "@/lib/gift-cards/rules";
 export const metadata:Metadata={title:"PayPal Zahlung | Ruby Hair",robots:{index:false,follow:false}};
 export const dynamic="force-dynamic";
 export const maxDuration=60;
-export default async function CustomerPayPalReturn({searchParams}:{searchParams:Promise<{orderId?:string;state?:string;token?:string;cancel?:string}>}){
+export default async function CustomerPayPalReturn({searchParams}:{searchParams:Promise<{orderId?:string;state?:string;token?:string;cancel?:string;wallet?:string}>}){
  const p=await searchParams;
- const valid=typeof p.orderId==="string"&&/^[0-9a-f-]{36}$/i.test(p.orderId)&&
-   typeof p.state==="string"&&verifyCheckoutSignature(p.orderId,"paypal",p.state);
+ const walletMethod=p.wallet==="apple_pay"||p.wallet==="google_pay"?p.wallet as WalletCheckoutMethod:null;
+ const walletValid=Boolean(walletMethod&&typeof p.orderId==="string"&&/^[0-9a-f-]{36}$/i.test(p.orderId)&&
+  typeof p.state==="string"&&verifyWalletCheckoutSignature(p.orderId!,walletMethod!,p.state));
+ const valid=typeof p.orderId==="string"&&/^[0-9a-f-]{36}$/i.test(p.orderId)&&typeof p.state==="string"&&
+  (walletValid||(!p.wallet&&verifyCheckoutSignature(p.orderId,"paypal",p.state)));
  let title="Zahlung wird geprüft",message="Bitte starte keine weitere Zahlung, während wir den Status überprüfen.";
  let paid=false;
  if(!valid){title="Ungültiger Zahlungslink";message="Bitte kontaktiere Ruby Hair mit deiner Bestellnummer.";}
@@ -22,7 +25,14 @@ export default async function CustomerPayPalReturn({searchParams}:{searchParams:
   title="PayPal Rückmeldung unvollständig";message="Deine Bestellung wird geprüft; bitte nicht erneut bezahlen.";
  }else{
   try{
-   const done=await finalizePayPalCheckout(p.orderId!,true,p.token);
+   // Wallet purchases are captured by the signed, server-verified API before redirect.
+   // Never run a second capture from a browser navigation.
+   const done=walletValid?await (async()=>{
+    const order=await getPrisma().order.findUnique({where:{id:p.orderId!},
+      select:{status:true,paymentReference:true,invoice:{select:{invoiceNumber:true}}}});
+    return {paid:order?.status==="payment_confirmed"&&order.paymentReference===p.token&&Boolean(order.invoice),
+      invoiceNumber:order?.invoice?.invoiceNumber||null};
+   })():await finalizePayPalCheckout(p.orderId!,true,p.token);
    if(done.paid){paid=true;title="Zahlung bestätigt";message=`Deine Rechnung ${done.invoiceNumber} wurde erstellt. Die Bestellbestätigung wird automatisch per E-Mail verschickt.`;
     after(async()=>{try{await Promise.all([runCustomerJobs(2),deliverGiftEmails(5)])}catch{}});
    }

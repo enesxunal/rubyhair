@@ -4,6 +4,9 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   async headers() {
     return [{
+      source: "/.well-known/apple-developer-merchantid-domain-association",
+      headers: [{key:"Content-Type",value:"application/octet-stream"},{key:"Cache-Control",value:"public, max-age=300"}]
+    },{
       source: "/(.*)",
       headers: [
         { key: "X-Content-Type-Options", value: "nosniff" },

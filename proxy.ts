@@ -5,7 +5,8 @@ const holdingHosts=new Set(["rubyhair.de","www.rubyhair.de"]);
 const allowedAssets=new Set([
  "/media/RubyHair-WebHeader-Logo-Hell-818376d91.png",
  "/assets/hero-brunette.webp",
- "/favicon.ico"
+ "/favicon.ico",
+ "/.well-known/apple-developer-merchantid-domain-association"
 ]);
 const adminLoginPaths=new Set(["/admin/login","/api/admin/login"]);
 const ADMIN_COOKIE="rubyhair_admin";
@@ -15,8 +16,8 @@ const storefrontPublic=()=>process.env.VERCEL_ENV==="production" &&
   process.env.RUBY_SHOP_PUBLIC==="APPROVED_PRODUCTION" &&
   process.env.RUBY_CANONICAL_SITE_URL==="https://rubyhair.de";
 // Only known public endpoints may be accessed without an administrator session.
-const publicGetApis=new Set(["/api/catalog","/api/tryon/generate","/api/payments/paypal/card-token"]);
-const publicPostApis=new Set(["/api/cart/quote","/api/analytics/event","/api/tryon/generate","/api/checkout","/api/widerruf","/api/konto/login","/api/konto/verify","/api/konto/password","/api/konto/profile","/api/konto/adressen","/api/konto/logout","/api/gutschein/kaufen","/api/gutschein/guthaben","/api/payments/paypal/card-capture"]);
+const publicGetApis=new Set(["/api/catalog","/api/tryon/generate","/api/payments/paypal/card-token","/api/payments/paypal/wallet-token"]);
+const publicPostApis=new Set(["/api/cart/quote","/api/analytics/event","/api/tryon/generate","/api/checkout","/api/widerruf","/api/konto/login","/api/konto/verify","/api/konto/password","/api/konto/profile","/api/konto/adressen","/api/konto/logout","/api/gutschein/kaufen","/api/gutschein/guthaben","/api/payments/paypal/card-capture","/api/payments/paypal/wallet-capture"]);
 
 /** Admin JWT uses the same signed, eight-hour token as src/lib/admin-auth.ts.
  * Only a verified session may bypass the Coming Soon wall on customer domains.

@@ -36,5 +36,5 @@ export default async function Checkout({searchParams}:{searchParams:Promise<Quer
  }
  const mode=publicCheckoutMode();
  const active=mode==="public"||mode==="klarna_public"||mode==="payments_public"||mode==="admin_test"&&admin?mode:"disabled";
- return <ShopLayout><CheckoutPreview liveTest={test} checkoutMode={active} shippingCents={shippingDeCents()} cardFieldsEnabled={process.env.RUBY_PAYPAL_CARD_FIELDS_ENABLED==="true"&&active!=="disabled"&&active!=="klarna_public"}/></ShopLayout>;
+ return <ShopLayout><CheckoutPreview liveTest={test} checkoutMode={active} shippingCents={shippingDeCents()} cardFieldsEnabled={process.env.RUBY_PAYPAL_CARD_FIELDS_ENABLED==="true"&&active!=="disabled"&&active!=="klarna_public"} applePayEnabled={process.env.RUBY_PAYPAL_APPLE_PAY_ENABLED==="true"&&active!=="disabled"&&active!=="klarna_public"} googlePayEnabled={process.env.RUBY_PAYPAL_GOOGLE_PAY_ENABLED==="true"&&active!=="disabled"&&active!=="klarna_public"}/></ShopLayout>;
 }

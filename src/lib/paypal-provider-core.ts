@@ -139,6 +139,30 @@ export class PaypalClient{
     if(!isObject(data)||typeof data.id!=="string")throw new PaypalError("PAYPAL_ORDER_INVALID");
     return {id:checkId(data.id,60)};
   }
+  /** Orders v2 wallet session: payer authorization is attached ONLY by PayPal's wallet SDK. */
+  async createWalletOrder(input:PaypalCreateInput):Promise<{id:string}>{
+    const orderId=checkId(input.orderId,60),invoiceId=checkId(input.invoiceId,50,3);
+    checkId(input.requestId);httpsUrl(input.returnUrl);httpsUrl(input.cancelUrl);
+    const total=centsToEuro(input.totalCents),shipping=centsToEuro(input.shippingCents);
+    const address=input.shipping;
+    if(!address||address.country!=="DE"||!/^[0-9]{5}$/.test(address.postalCode)||
+      ![address.fullName,address.street,address.city].every(v=>typeof v==="string"&&v.trim().length>=2&&v.length<=120))
+      throw new PaypalError("INVALID_SHIPPING_ADDRESS");
+    if(input.totalCents<=0||input.shippingCents>input.totalCents)throw new PaypalError("INVALID_AMOUNT");
+    const data=await this.api("POST","/v2/checkout/orders",{
+      intent:"CAPTURE",
+      purchase_units:[{reference_id:orderId,custom_id:orderId,invoice_id:invoiceId,
+        shipping:{name:{full_name:address.fullName.trim()},address:{
+          address_line_1:address.street.trim(),admin_area_2:address.city.trim(),
+          postal_code:address.postalCode,country_code:"DE"}},
+        amount:{currency_code:"EUR",value:total,breakdown:{
+          item_total:{currency_code:"EUR",value:centsToEuro(input.totalCents-input.shippingCents)},
+          shipping:{currency_code:"EUR",value:shipping}
+        }}}]
+    },input.requestId);
+    if(!isObject(data)||typeof data.id!=="string")throw new PaypalError("PAYPAL_ORDER_INVALID");
+    return {id:checkId(data.id,60)};
+  }
   /** SDK v6 browser-safe client token, short-lived and never logged or cached. */
   async browserClientToken():Promise<string>{
     const basic=Buffer.from(this.creds.clientId+":"+this.creds.clientSecret).toString("base64");

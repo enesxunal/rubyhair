@@ -5,6 +5,7 @@ import {giftCartTotal} from "@/lib/gift-cards/cart-schema";
 import type {CheckoutAddressData} from "./checkout-address-preview";
 import CustomerPaymentSubmit from "./customer-payment-submit";
 import PayPalCardFieldsCheckout from "./paypal-card-fields-checkout";
+import PayPalWalletCheckout from "./paypal-wallet-checkout";
 import {Check,Truck,Wallet,ArrowUpRight,ShoppingBag,Gift} from "lucide-react";
 import {useCart} from "@/components/cart-context";
 import {useCartQuote} from "@/hooks/use-cart-quote";
@@ -17,7 +18,7 @@ const process=[
   {no:"02",label:"Lieferung / Rechnung",description:"Liefer- und Rechnungsadresse prüfen",icon:Truck},
   {no:"03",label:"Zahlung",description:"Zahlungsart und Bestellübersicht",icon:Wallet}
 ];
-export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippingCents=499,cardFieldsEnabled=false}:{liveTest?:LiveVariantTestView|null;checkoutMode?:"disabled"|"admin_test"|"public"|"klarna_public"|"payments_public";shippingCents?:number;cardFieldsEnabled?:boolean}){
+export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippingCents=499,cardFieldsEnabled=false,applePayEnabled=false,googlePayEnabled=false}:{liveTest?:LiveVariantTestView|null;checkoutMode?:"disabled"|"admin_test"|"public"|"klarna_public"|"payments_public";shippingCents?:number;cardFieldsEnabled?:boolean;applePayEnabled?:boolean;googlePayEnabled?:boolean}){
   const {lines,gifts,loaded,couponCode}=useCart();
   const {quote,error,loading}=useCartQuote(lines,couponCode);
   const digitalOnly=!lines.length&&gifts.length>0,hasItems=lines.length>0||gifts.length>0;
@@ -100,6 +101,11 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
               <span><strong>Klarna</strong><small>{checkoutMode!=="disabled"?"Zahlung bei Versand":"Noch nicht freigeschaltet"}</small></span>
             </label>
           </div>
+          {(applePayEnabled||googlePayEnabled)&&checkoutMode!=="disabled"&&checkoutMode!=="klarna_public"&&
+           !liveTest&&!oneEuroCart&&lines.length>0&&!gifts.length&&!appliedGift&&
+           <PayPalWalletCheckout lines={lines} address={validatedAddress} cartReady={canPay}
+            totalCents={remainingCents} couponCode={couponCode||undefined}
+            appleEnabled={applePayEnabled} googleEnabled={googlePayEnabled}/>}
           {activePaymentMethod==="paypal_card"&&cardFieldsEnabled&&checkoutMode!=="disabled"&&!liveTest&&
            <PayPalCardFieldsCheckout lines={lines} address={validatedAddress} cartReady={canPay}
             totalCents={remainingCents} couponCode={lines.length?couponCode||undefined:undefined}/>}
