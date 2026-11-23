@@ -108,6 +108,52 @@ export class PaypalClient{
     if(this.env==="live"&&u.hostname!=="www.paypal.com")throw new PaypalError("PAYPAL_WRONG_ENVIRONMENT");
     return {id:checkId(data.id,60),approvalUrl:u.toString()};
   }
+  /** Create an unapproved PayPal order for PayPal-hosted Card Fields v6.
+   * Card data is never sent to Ruby Hair; the browser SDK handles PCI and 3DS. */
+  async createCardOrder(input:PaypalCreateInput):Promise<{id:string}>{
+    const orderId=checkId(input.orderId,60),invoiceId=checkId(input.invoiceId,50,3);
+    checkId(input.requestId);
+    const total=centsToEuro(input.totalCents),shipping=centsToEuro(input.shippingCents);
+    const address=input.shipping;
+    if(!address||address.country!=="DE"||!/^[0-9]{5}$/.test(address.postalCode)||
+      ![address.fullName,address.street,address.city].every(v=>typeof v==="string"&&v.trim().length>=2&&v.length<=120))
+      throw new PaypalError("INVALID_SHIPPING_ADDRESS");
+    if(input.totalCents<=0||input.shippingCents>input.totalCents)throw new PaypalError("INVALID_AMOUNT");
+    const data=await this.api("POST","/v2/checkout/orders",{
+      intent:"CAPTURE",
+      purchase_units:[{reference_id:orderId,custom_id:orderId,invoice_id:invoiceId,
+        shipping:{name:{full_name:address.fullName.trim()},address:{
+          address_line_1:address.street.trim(),admin_area_2:address.city.trim(),
+          postal_code:address.postalCode,country_code:"DE"
+        }},
+        amount:{currency_code:"EUR",value:total,breakdown:{
+          item_total:{currency_code:"EUR",value:centsToEuro(input.totalCents-input.shippingCents)},
+          shipping:{currency_code:"EUR",value:shipping}
+        }}}
+      ]
+    },input.requestId);
+    if(!isObject(data)||typeof data.id!=="string")throw new PaypalError("PAYPAL_ORDER_INVALID");
+    return {id:checkId(data.id,60)};
+  }
+  /** SDK v6 browser-safe client token, short-lived and never logged or cached. */
+  async browserClientToken():Promise<string>{
+    const basic=Buffer.from(this.creds.clientId+":"+this.creds.clientSecret).toString("base64");
+    let response:Response;
+    try{response=await this.transport(hosts[this.env]+"/v1/oauth2/token",{
+      method:"POST",headers:{Authorization:"Basic "+basic,"Content-Type":"application/x-www-form-urlencoded"},
+      body:"grant_type=client_credentials&response_type=client_token&intent=sdk_init",
+      redirect:"error",signal:AbortSignal.timeout(10000)
+    });}catch{throw new PaypalError("PAYPAL_CLIENT_TOKEN_UNAVAILABLE");}
+    if(!response.ok)throw new PaypalError("PAYPAL_CLIENT_TOKEN_REJECTED");
+    const payload=await safeJson(response);
+    if(!isObject(payload)||typeof payload.access_token!=="string"||payload.access_token.length<12)
+      throw new PaypalError("PAYPAL_CLIENT_TOKEN_INVALID");
+    return payload.access_token;
+  }
+  /** Read 3DS outcome from PayPal itself, not from untrusted browser claims. */
+  async getOrderWithPaymentSource(id:string):Promise<unknown>{
+    return this.api("GET","/v2/checkout/orders/"+checkId(id,60)+"?fields=payment_source");
+  }
   /** One explicit merchant-admin-only non-shippable QA purchase (always EUR 1.00).
    * This does not capture, fulfill, or mark the payment paid. */
   async createOneEuroQaOrder(input:{orderId:string;invoiceId:string;requestId:string;returnUrl:string;cancelUrl:string}):Promise<PaypalOrderResult>{
