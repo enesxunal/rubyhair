@@ -62,15 +62,23 @@ export default function PayPalCardFieldsCheckout({lines,address,cartReady,totalC
   if(!ready||!address||!sessionRef.current)return;
   setBusy(true);setLocked(true);setError("");
   keyRef.current||=crypto.randomUUID();
+  let cardStep:"create"|"submit"|"3ds"|"capture"="create";
+  let reference:""|string="";
   try{
    const created=await fetch("/api/checkout",{method:"POST",credentials:"same-origin",cache:"no-store",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({key:keyRef.current,provider:"paypal",paymentExperience:"card",lines,gifts:[],shipping:address.shipping,billing:address.billing,email:address.email,couponCode,consent:true})});
    const order=await created.json() as {orderId?:string;paypalOrderId?:string;cardState?:string;amountCents?:number;paymentExperience?:string};
    if(!created.ok||order.paymentExperience!=="card"||!order.orderId||!order.paypalOrderId||!order.cardState||order.amountCents!==totalCents)throw Error("ORDER_UNVERIFIED");
+   reference=order.orderId;
+   cardStep="submit";
    const result=await sessionRef.current.submit(order.paypalOrderId,{billingAddress:{postalCode:(address.billing||address.shipping).postalCode,
     streetAddress:(address.billing||address.shipping).street,city:(address.billing||address.shipping).city,countryCode:"DE"}});
+   if(result.state==="canceled")throw Error("CARD_AUTH_CANCELLED");
+   if(result.state==="failed")throw Error("CARD_AUTH_FAILED");
    if(result.state!=="succeeded"||result.data?.orderId!==order.paypalOrderId)throw Error("CARD_NOT_APPROVED");
+   cardStep="3ds";
    if(result.data.liabilityShift!=="POSSIBLE")throw Error("CARD_3DS_NOT_VERIFIED");
+   cardStep="capture";
    const response=await fetch("/api/payments/paypal/card-capture",{method:"POST",credentials:"same-origin",cache:"no-store",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({orderId:order.orderId,paypalOrderId:order.paypalOrderId,cardState:order.cardState})});
    const receipt=await response.json() as {paid?:boolean};
@@ -78,7 +86,17 @@ export default function PayPalCardFieldsCheckout({lines,address,cartReady,totalC
    try{sessionStorage.setItem("rubyhair-checkout-purchased:"+order.orderId,JSON.stringify({lines,giftIds:[]}))}catch{}
    const query=new URLSearchParams({orderId:order.orderId,state:order.cardState,token:order.paypalOrderId});
    window.location.assign("/kasse/paypal/return?"+query.toString());
-  }catch{setError("Die Bestellung muss geprüft werden. Bitte nicht erneut bezahlen und Ruby Hair kontaktieren.")}
+  }catch(error){
+   const reason=error instanceof Error?error.message:"UNKNOWN";
+   const referenceMessage=reference?` Referenz: ${reference.slice(0,8)}.`:"";
+   if(cardStep==="submit"||cardStep==="3ds"){
+    const canceled=reason==="CARD_AUTH_CANCELLED";
+    setError((canceled?"Die Kartenbestätigung wurde abgebrochen. ":"Die Kartenzahlung konnte nicht bestätigt werden. ")+
+     "Es wurde keine abgeschlossene PayPal-Zahlung verifiziert. Falls deine Bank eine Buchung zeigt, kann es eine Vormerkung sein. Bitte NICHT erneut bezahlen und Ruby Hair kontaktieren."+referenceMessage);
+   }else{
+    setError("Der Zahlungsstatus muss geprüft werden. Bitte NICHT erneut bezahlen und Ruby Hair kontaktieren."+referenceMessage);
+   }
+  }
   finally{setBusy(false)}
  }
  const fieldStyle={height:48,border:"1px solid #c5b4bd",borderRadius:6,background:"#fff",marginBottom:12};
