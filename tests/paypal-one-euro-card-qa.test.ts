@@ -115,3 +115,23 @@ test("PayPal capture rejection log is sanitized; never store card details",()=>{
  assert.match(ui,/PayPal Bestellbetrag:/);
  assert.match(ui,/PayPal 3DS:/);
 });
+
+test("captured QA reconciliation uses only provider GET, verified receipt and DB transaction",()=>{
+ const source=readFileSync("src/lib/qa-card-one-euro.ts","utf8");
+ const part=source.split("export async function reconcileCardQaCapturedOrder(orderId:string){")[1]?.split("export async function cardQaStatus(orderId:string){")[0];
+ assert.ok(part);
+ assert.match(part,/api\.getOrderWithPaymentSource/);
+ assert.match(part,/paypal\.status!=="COMPLETED"/);
+ assert.match(part,/api\.requireCompletedCapture\(paypal,order\.id,100,order\.paymentReference\)/);
+ assert.match(part,/card\.authentication_result/);
+ assert.match(part,/payment_confirmed/);
+ assert.match(part,/tx\.invoice\.create/);
+ assert.match(part,/tx\.paymentEvent\.create/);
+ assert.match(part,/alreadyReconciled:true/);
+ assert.doesNotMatch(part,/api\.captureOrder|confirmOneEuroQaPayment|createOneEuroQaCardOrder|refund/);
+ const route=readFileSync("app/api/admin/paypal-card-qa/reconcile/route.ts","utf8");
+ assert.match(route,/qaAuthorized\(req,true\)/);
+ assert.match(route,/qaRequestJson/);
+ assert.match(route,/reconcileCardQaCapturedOrder/);
+ assert.doesNotMatch(route,/captureOrder|refund|createOrder/);
+});

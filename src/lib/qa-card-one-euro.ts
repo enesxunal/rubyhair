@@ -4,7 +4,8 @@ import {Prisma} from "@prisma/client";
 import {getPrisma} from "@/lib/prisma";
 import {providerForCheckout} from "@/lib/customer-checkout";
 import {confirmOneEuroQaPayment,QA_EMAIL_REGEX} from "@/lib/qa-live-paypal";
-import {qaInvoiceNumber,QA_INVOICE_TAX_CENTS,QA_INVOICE_TAX_RATE} from "@/lib/qa-invoice";
+import {qaInvoiceNumber,QA_INVOICE_TAX_CENTS,QA_INVOICE_TAX_RATE,RUBY_TEST_SELLER,buildOneEuroInvoicePdf} from "@/lib/qa-invoice";
+import {requireOrderTransition} from "@/lib/order-lifecycle";
 import {assessOneEuroCardCapture} from "@/lib/qa-card-capture-policy";
 
 export const CARD_QA_SLUG="rubyhair-intern-cardfields-qa-1-eur";
@@ -80,6 +81,54 @@ export async function captureCardQaOrder(orderId:string,paypalOrderId:string,sdk
   return {paid:true,invoiceNumber:invoice.invoiceNumber,alreadyCaptured:result.alreadyCaptured};
  }catch(e){console.error("RUBY_CARD_QA_CAPTURE_REVIEW",{orderId,type:e instanceof Error?e.name:"other"});throw new CardQaError("CAPTURE_STATUS_REQUIRES_REVIEW",503)}
 }
+/** Read-only PayPal verification followed by database-only accounting repair.
+ * NEVER captures, authorizes, refunds or creates another PayPal order. */
+export async function reconcileCardQaCapturedOrder(orderId:string){
+ if(!uuid.test(orderId))throw new CardQaError("INVALID_ORDER",400);
+ const db=getPrisma();
+ const order=await db.order.findFirst({where:{id:orderId,...qaWhere},include:{lines:true,invoice:true,payments:true}});
+ if(!order||!order.testOnly||order.totalCents!==100||order.shippingCents!==0||order.taxCents!==16||order.currency!=="EUR"||order.lines.length!==1||!order.paymentReference)
+  throw new CardQaError("QA_RECONCILE_ORDER_MISMATCH");
+ if(order.status==="payment_confirmed"&&order.invoice){return {paid:true,invoiceNumber:order.invoice.invoiceNumber,alreadyReconciled:true}}
+ if(order.status!=="pending_payment"||order.invoice)throw new CardQaError("QA_RECONCILE_STATE_MISMATCH");
+ const billing=order.billingAddress;
+ if(!obj(billing)||billing.confirmedSeller!==true||billing.confirmedTaxRate!==QA_INVOICE_TAX_RATE||typeof billing.buyerName!=="string"||!order.customerEmail)
+  throw new CardQaError("QA_RECONCILE_INVOICE_DETAILS_MISSING");
+ const {api}=await providerForCheckout("paypal");
+ const paypal=await api.getOrderWithPaymentSource(order.paymentReference);
+ if(!obj(paypal)||paypal.status!=="COMPLETED"||paypal.id!==order.paymentReference)
+  throw new CardQaError("PAYPAL_CAPTURE_NOT_VERIFIED");
+ const source=obj(paypal.payment_source)?paypal.payment_source:null;
+ const card=source&&obj(source.card)?source.card:null;
+ const auth=card&&obj(card.authentication_result)?card.authentication_result:null;
+ if(!card||auth?.liability_shift!=="POSSIBLE")throw new CardQaError("PAYPAL_CARD_3DS_NOT_VERIFIED");
+ let captured;
+ try{captured=api.requireCompletedCapture(paypal,order.id,100,order.paymentReference)}
+ catch{throw new CardQaError("PAYPAL_EXACT_CAPTURE_MISMATCH")}
+ const issuedAt=new Date();const invoiceNumber=qaInvoiceNumber(order.orderNumber,issuedAt);
+ const buyerName=billing.buyerName.trim();
+ const pdf=buildOneEuroInvoicePdf({invoiceNumber,issuedAt,orderNumber:order.orderNumber,buyerName,buyerEmail:order.customerEmail,captureId:captured.captureId});
+ try{
+  return await db.$transaction(async tx=>{
+   const updated=await tx.order.updateMany({where:{id:order.id,testOnly:true,status:"pending_payment",paymentReference:order.paymentReference,totalCents:100},
+    data:{status:"payment_confirmed",reservationExpiresAt:null}});
+   if(updated.count!==1)throw new CardQaError("QA_RECONCILE_CONCURRENT_UPDATE");
+   requireOrderTransition("pending_payment","payment_confirmed","payment_provider");
+   await tx.paymentEvent.create({data:{orderId:order.id,provider:"paypal",providerEventId:captured.captureId,eventType:"PAYMENT.CAPTURE.COMPLETED"}});
+   await tx.orderStatusEvent.create({data:{orderId:order.id,fromStatus:"pending_payment",toStatus:"payment_confirmed",reason:"paypal_live_cardqa_capture_reconciled_no_charge"}});
+   await tx.invoice.create({data:{orderId:order.id,invoiceNumber,issuedAt,seller:RUBY_TEST_SELLER,
+    buyer:{name:buyerName,email:order.customerEmail},lines:[{description:"Interner PayPal-Kartentest (keine Warenlieferung)",qty:1,totalCents:100}],
+    taxRate:QA_INVOICE_TAX_RATE,taxCents:QA_INVOICE_TAX_CENTS,totalCents:100,pdf:new Uint8Array(pdf)}});
+   return {paid:true,invoiceNumber,alreadyReconciled:false};
+  },{isolationLevel:Prisma.TransactionIsolationLevel.Serializable,timeout:10000});
+ }catch(e){
+  const current=await db.order.findUnique({where:{id:order.id},include:{invoice:true}});
+  if(current?.status==="payment_confirmed"&&current.invoice)return {paid:true,invoiceNumber:current.invoice.invoiceNumber,alreadyReconciled:true};
+  console.error("RUBY_CARD_QA_RECONCILE_REVIEW",{orderId:order.id,reason:e instanceof Error?e.name:"unknown"});
+  throw new CardQaError("QA_ACCOUNTING_RECONCILE_FAILED",503);
+ }
+}
+
 export async function cardQaStatus(orderId:string){
  if(!uuid.test(orderId))throw new CardQaError("INVALID_ID",400);
  const order=await getPrisma().order.findFirst({where:{id:orderId,...qaWhere},select:{id:true,status:true,totalCents:true,paymentReference:true,invoice:{select:{invoiceNumber:true}}}});
