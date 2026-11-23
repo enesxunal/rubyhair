@@ -5,6 +5,7 @@ import {isAdmin} from "@/lib/admin-auth";
 import {getPrisma} from "@/lib/prisma";
 import {PaypalClient,PaypalError} from "@/lib/paypal-provider-core";
 import {loadPaymentValue} from "@/lib/payment-secrets";
+import PayPalCardEligibilityCheck from "@/components/paypal-card-eligibility-check";
 
 export const metadata:Metadata={title:"PayPal 1 EUR Status – Ruby Hair",robots:{index:false,follow:false}};
 export const dynamic="force-dynamic";
@@ -15,6 +16,7 @@ const safe=(e:unknown)=>e instanceof PaypalError?e.code:"PROVIDER_READ_UNAVAILAB
 
 export default async function PayPalStatusPage(){
  if(!await isAdmin())redirect("/admin/login");
+ const livePublicClientId=await loadPaymentValue("paypal","live","clientId").catch(()=>null);
  const db=getPrisma();
  const variant=await db.variant.findUnique({where:{legacyId:886},select:{id:true,priceCents:true,stockQuantity:true}});
  const order=variant?await db.order.findFirst({
@@ -75,6 +77,7 @@ export default async function PayPalStatusPage(){
     Bereits bezahlte 1-€-Bestellung abgleichen und Rechnung erstellen
    </button>
   </form>}
+  <PayPalCardEligibilityCheck clientId={livePublicClientId}/>
   <p><a href="/kasse?liveTest=1">Zurück zur Kasse</a></p>
  </main>;
 }
