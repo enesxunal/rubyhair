@@ -35,20 +35,30 @@ export async function savePaymentSettingsAction(formData:FormData){
     else if(deletion)changes.push({field:field.name,value:null});
   }
   if(changes.length){
-    await getPrisma().$transaction(async tx=>{
-      for(const change of changes){
-        const where={provider_environment_field:{provider,environment,field:change.field}};
-        if(change.value===null){
-          await tx.paymentIntegrationSetting.deleteMany({where:{provider,environment,field:change.field}});
-        }else{
-          const encrypted=encryptPaymentValue(provider,environment,change.field,change.value);
-          await tx.paymentIntegrationSetting.upsert({
-            where,create:{provider,environment,field:change.field,...encrypted},
-            update:encrypted
-          });
-        }
+    const db=getPrisma();
+    // Batch transactions avoid Prisma's 2s interactive-transaction start deadline.
+    // With the single-connection serverless pool, the former callback transaction
+    // often failed before acquiring a connection, losing the submitted DHL fields.
+    // All changes remain atomic; never log their plaintext values.
+    const persist=()=>db.$transaction(changes.map(change=>{
+      if(change.value===null){
+        return db.paymentIntegrationSetting.deleteMany({where:{provider,environment,field:change.field}});
       }
-    });
+      const encrypted=encryptPaymentValue(provider,environment,change.field,change.value);
+      return db.paymentIntegrationSetting.upsert({
+        where:{provider_environment_field:{provider,environment,field:change.field}},
+        create:{provider,environment,field:change.field,...encrypted},
+        update:encrypted
+      });
+    }));
+    for(let attempt=0;attempt<3;attempt++){
+      try{await persist();break;}catch(error){
+        // Upsert/deleteMany are idempotent, and the batch is all-or-nothing.
+        const code=(error as {code?:string}).code;
+        if(attempt===2||!code||!["P1001","P2024","P2028"].includes(code))throw error;
+        await new Promise<void>(resolve=>setTimeout(resolve,300*(attempt+1)));
+      }
+    }
   }
   revalidatePath("/admin/zahlungen");
   redirect("/admin/zahlungen?status="+(changes.length?"saved":"unchanged")+"&provider="+provider+"&mode="+environment);

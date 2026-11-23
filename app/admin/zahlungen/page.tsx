@@ -39,11 +39,15 @@ export default async function PaymentsReadiness({
     // Never return decrypted values or log secrets, even in failure.
   }
 
+  // A temporarily exhausted DB pool must not turn a successful save redirect
+  // into a generic error page or mislabel stored secrets as missing.
   const saved=await getPrisma().paymentIntegrationSetting.findMany({
     where:{provider:{in:paymentProviders}},
     select:{provider:true,environment:true,field:true,updatedAt:true}
-  });
-  const savedKeys=new Set(saved.map(v=>[v.provider,v.environment,v.field].join(":")));
+  }).catch(()=>null);
+  const settingsLoaded=saved!==null;
+  const formsReady=ready&&settingsLoaded;
+  const savedKeys=new Set((saved??[]).map(v=>[v.provider,v.environment,v.field].join(":")));
   const status=params.status==="saved"?"Einstellungen verschlüsselt gespeichert. Gespeicherte API-Felder müssen separat getestet werden.":
     params.status==="unchanged"?"Keine Änderungen vorgenommen.":null;
   return <AdminShell current="payments" title="Zahlungen & Integrationen."
@@ -56,7 +60,7 @@ export default async function PaymentsReadiness({
     </section>
     <div className="rh-studio-payment-steps">
       <div><span><CheckCircle2 size={17}/> 01 / DATENBANK</span><strong>{ready?"Verschlüsselter Speicher bereit":"Verschlüsselter Speicher fehlt"}</strong><small>Serverseitig, keine Klartext-Anzeige</small></div>
-      <div><span><AlertCircle size={17}/> 02 / PROVIDER-DATEN</span><strong>{saved.length} Felder gespeichert</strong><small>Kein Live-Status oder Zahlungsnachweis</small></div>
+      <div><span><AlertCircle size={17}/> 02 / PROVIDER-DATEN</span><strong>{saved===null?"Status vorübergehend nicht verfügbar":`${saved.length} Felder gespeichert`}</strong><small>Kein Live-Status oder Zahlungsnachweis</small></div>
       <div><span><LockKeyhole size={17}/> 03 / TRANSAKTIONEN</span><strong>{publicPayments?"Kundencheckout aktiviert":"Checkout nicht öffentlich"}</strong><small>DHL-Versandlabel bleibt bis zur Freigabe deaktiviert</small></div>
     </div>
     {!ready&&<p role="alert" className="rh-admin-warning">
@@ -64,6 +68,7 @@ export default async function PaymentsReadiness({
       (32 Byte, base64url) gesetzt und die Datenbankmigration eingespielt werden. Speichern ist bis dahin gesperrt.
     </p>}
     {status&&<p role="status" className="rh-admin-success">{status}</p>}
+    {!settingsLoaded&&<p role="alert" className="rh-admin-warning">Die Datenbank antwortet derzeit nicht. Gespeicherte Zugangsdaten können nicht angezeigt oder bearbeitet werden. Bitte die Seite erneut laden. Es wurde kein DHL-Label erstellt.</p>}
     <p className="rh-admin-warning">Wichtig: PayPal und Klarna werden bereits im aktuellen Checkout angeboten. Die gespeicherten DHL-Daten ersetzen keine DHL-API-Freigabe. Bis alle sechs DHL-Live-Felder, das Paketgewicht und die Versandfreigabe geprüft wurden, bleibt die automatische Etikettenerstellung deaktiviert.</p>
     <section className="rh-admin-panel-card" id="klarna-merchant-match" aria-label="Klarna Merchant ID Kontovergleich" style={{margin:"20px 0"}}>
       <div className="rh-admin-card-title"><div><span>KLARNA / LIVE-KONTOABGLEICH</span><h2>Ist dieses Klarna-Konto mit Ruby Hair verknüpft?</h2></div><ShieldCheck size={22}/></div>
@@ -91,7 +96,7 @@ export default async function PaymentsReadiness({
           </div>
           <p className="rh-admin-muted">{definition.explanation}</p>
           <div className="rh-studio-provider-note">
-           <span>{saved.filter(v=>v.provider===provider).length} gespeicherte Einstellungen</span>
+           <span>{saved===null?"Status unbekannt":`${saved.filter(v=>v.provider===provider).length} gespeicherte Einstellungen`}</span>
            <span>{provider==="dhl"?"DHL-Labels: nicht freigegeben":publicPayments?"Kundenzahlungen im Shop aktiv":"Provider-Zugang prüfen"} <ArrowRight size={13}/></span>
           </div>
           {(provider==="bank"?["live"] as const:paymentEnvironments).map(environment=>
@@ -107,7 +112,7 @@ export default async function PaymentsReadiness({
                   const hasValue=savedKeys.has([provider,environment,field.name].join(":"));
                   return <div className="rh-admin-credential-item" key={field.name}>
                     <label htmlFor={provider+"-"+environment+"-"+field.name}>
-                      <span>{field.label}</span><small>{hasValue?"Gespeichert":"Noch nicht gespeichert"}</small>
+                      <span>{field.label}</span><small>{!settingsLoaded?"Status nicht verfügbar":hasValue?"Gespeichert":"Noch nicht gespeichert"}</small>
                     </label>
                     <input
                       type={field.secret?"password":"text"}
@@ -115,17 +120,17 @@ export default async function PaymentsReadiness({
                       name={"setting:"+field.name}
                       maxLength={2048} autoComplete="off" spellCheck={false}
                       placeholder={hasValue?"Neuen Wert eingeben, um zu ersetzen":"Zugangswert eingeben"}
-                      disabled={!ready}
+                      disabled={!formsReady}
                     />
                     {hasValue&&<label className="rh-admin-credential-delete">
-                      <input type="checkbox" name={"delete:"+field.name} disabled={!ready}/> Gespeicherten Wert entfernen
+                      <input type="checkbox" name={"delete:"+field.name} disabled={!formsReady}/> Gespeicherten Wert entfernen
                     </label>}
                   </div>;
                 })}
               </div>
               <div className="rh-admin-credentials-footer">
                 <span>{provider==="dhl"?"Nur intern · DHL-Labels weiterhin deaktiviert":"Nur intern · keine neuen Zahlungen durch Speichern"}</span>
-                <button type="submit" disabled={!ready}>Einstellungen speichern</button>
+                <button type="submit" disabled={!formsReady}>Einstellungen speichern</button>
               </div>
             </form>)}
         </section>;

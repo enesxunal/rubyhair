@@ -460,11 +460,16 @@ test("payment provider settings are admin-only and encrypted at rest",()=>{
   assert.ok(page.includes("if(!await isAdmin())redirect"));
   assert.ok(page.includes('type={field.secret?"password":"text"}'));
   assert.ok(!page.includes("value={record.ciphertext}"));
-  assert.ok(page.includes("disabled={!ready}"));
+  assert.ok(page.includes("disabled={!formsReady}"));
+  assert.ok(page.includes("const formsReady=ready&&settingsLoaded"));
+  assert.ok(page.includes(".catch(()=>null)"));
+  assert.ok(page.includes("Status nicht verfügbar"));
   assert.ok(action.includes("if(!await isAdmin())redirect"));
   assert.ok(action.includes("encryptPaymentValue"));
   assert.ok(action.includes("paymentVaultConfigured()"));
-  assert.ok(action.includes("getPrisma().$transaction"));
+  assert.ok(action.includes("db.$transaction(changes.map"),"batch preserves atomic save without a 2s interactive transaction deadline");
+  assert.ok(action.includes('"P1001","P2024","P2028"'),"transient connection errors are retried safely");
+  assert.ok(!action.includes("$transaction(async tx=>"),"avoid interactive transaction under the one-connection pool");
   assert.ok(vault.includes("aes-256-gcm"));
   assert.ok(vault.includes("setAAD("));
   assert.ok(vault.includes("RUBY_PAYMENT_SETTINGS_KEY"));
