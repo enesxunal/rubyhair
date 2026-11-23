@@ -192,6 +192,21 @@ export class PaypalClient{
       throw new PaypalError("PAYPAL_ORDER_PROJECTION_MISMATCH");
     return {...full,payment_source:isObject(detail.payment_source)?detail.payment_source:full.payment_source};
   }
+  /** Strict merchant-only EUR 1 card-fields order. No delivery and no public product. */
+  async createOneEuroQaCardOrder(input:{orderId:string;invoiceId:string;requestId:string;returnUrl:string;cancelUrl:string}):Promise<{id:string}>{
+    const orderId=checkId(input.orderId,60),invoiceId=checkId(input.invoiceId,50,3);
+    checkId(input.requestId);
+    const data=await this.api("POST","/v2/checkout/orders",{
+      intent:"CAPTURE",
+      purchase_units:[{reference_id:orderId,custom_id:orderId,invoice_id:invoiceId,
+        description:"Ruby Hair interner Kartentest - keine Lieferung",amount:{currency_code:"EUR",value:"1.00"}}],
+      payment_source:{card:{attributes:{verification:{method:"SCA_ALWAYS"}},experience_context:{
+        shipping_preference:"NO_SHIPPING",return_url:httpsUrl(input.returnUrl),cancel_url:httpsUrl(input.cancelUrl)
+      }}}
+    },input.requestId);
+    if(!isObject(data)||typeof data.id!=="string")throw new PaypalError("QA_CARD_ORDER_INVALID");
+    return {id:checkId(data.id,60)};
+  }
   /** One explicit merchant-admin-only non-shippable QA purchase (always EUR 1.00).
    * This does not capture, fulfill, or mark the payment paid. */
   async createOneEuroQaOrder(input:{orderId:string;invoiceId:string;requestId:string;returnUrl:string;cancelUrl:string}):Promise<PaypalOrderResult>{
