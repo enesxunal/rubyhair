@@ -8,6 +8,10 @@ import {deliverGiftEmails} from "@/lib/gift-cards/mail";
 export const runtime="nodejs",dynamic="force-dynamic";
 export const maxDuration=60;
 export async function POST(req:NextRequest){
+ // Reject unsigned requests before any vault/DB/network access.
+ for(const header of ["paypal-transmission-id","paypal-transmission-time","paypal-transmission-sig","paypal-cert-url","paypal-auth-algo"]){
+  if(!req.headers.get(header))return NextResponse.json({error:"INVALID_SIGNATURE"},{status:401});
+ }
  if(Number(req.headers.get("content-length")||0)>65536)return NextResponse.json({error:"TOO_LARGE"},{status:413});
  try{
   const text=await req.text();if(text.length>65536)return NextResponse.json({error:"TOO_LARGE"},{status:413});

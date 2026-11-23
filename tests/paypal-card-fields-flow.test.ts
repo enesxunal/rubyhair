@@ -46,6 +46,13 @@ test("Card schema accepts physical checkout but rejects card gift purchases and 
  assert.equal(checkoutInput.safeParse({...base,giftCode:"RH-EXAMPLE-CODE-12345"}).success,false);
 });
 
+test("Unsigned PayPal webhook requests fail before accessing merchant secrets",()=>{
+ const route=readFileSync("app/api/payments/paypal/webhook/route.ts","utf8");
+ assert.ok(route.indexOf("paypal-transmission-sig")>0);
+ assert.ok(route.indexOf("paypal-transmission-sig")<route.indexOf('providerForCheckout("paypal")'));
+ assert.match(route,/INVALID_SIGNATURE/);
+});
+
 test("Production proxy permits only GET token and POST capture with independent route guards",()=>{
  const proxy=readFileSync("proxy.ts","utf8");
  const token=readFileSync("app/api/payments/paypal/card-token/route.ts","utf8");
