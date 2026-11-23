@@ -79,12 +79,13 @@ export async function createDhlShipmentLabel(input:{orderNumber:string;recipient
 /** Validate the known Ruby Hair sender and 500g template without booking postage.
  * The validate=true DHL endpoint is distinct from the chargeable POST /orders.
  */
-export async function validateDhlLiveTemplateOnly(send:typeof fetch=fetch):Promise<"valid"|"rejected"|"unavailable">{
+export async function validateDhlLiveTemplateOnly(send:typeof fetch=fetch):Promise<"valid"|"unauthorized"|"rejected"|"unavailable">{
  if(process.env.RUBY_DHL_WEIGHT_G!=="500")return "unavailable";
  try{
   const creds=await credentials();
   const auth=buildDhlTokenRequest("live",creds);
   const response=await send(auth.url,{...auth.init,signal:AbortSignal.timeout(11000),redirect:"error"});
+  if(response.status===401||response.status===403)return "unauthorized";
   if(!response.ok)return "unavailable";
   const result=await response.json() as {access_token?:string};
   if(!result.access_token)return "unavailable";
@@ -111,6 +112,6 @@ export async function validateDhlLiveTemplateOnly(send:typeof fetch=fetch):Promi
       providerStatusCodes:(body.items||[]).map(i=>i.sstatus?.statusCode).slice(0,3),
       fields,hasItems:Boolean(body.items?.length)}));
   }
-  return valid?"valid":dry.status>=500?"unavailable":"rejected";
+  return valid?"valid":dry.status===401||dry.status===403?"unauthorized":dry.status>=500?"unavailable":"rejected";
  }catch{return "unavailable"}
 }

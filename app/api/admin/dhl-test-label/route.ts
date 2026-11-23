@@ -17,7 +17,7 @@ export async function POST(request:Request){
   const phase=error instanceof DhlSandboxTestError?error.phase:"UNAVAILABLE";
   const status=error instanceof DhlSandboxTestError?error.status:502;
   console.warn("DHL_SANDBOX_LABEL_TEST",phase,status);
-  return Response.json({result:"sandbox_test_failed",phase,httpStatus:status,noRealShipment:true,noCharge:true},
-   {status:status>=400&&status<=599?status:502,headers:{"Cache-Control":"no-store"}});
+  const result=(status===401||status===403)?"unauthorized":phase==="CREDENTIALS_MISSING"?"missing":"failed";
+  return Response.redirect(new URL("/admin/dhl?sandbox="+result,request.url),303);
  }
 }

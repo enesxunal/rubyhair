@@ -15,7 +15,7 @@ test("DHL auth check is protected and does not create any label",()=>{
  assert.doesNotMatch(action,/createDhlShipmentLabel\(/);
  assert.match(page,/credentialsComplete/);
  assert.match(page,/disabled={!readiness.credentialsComplete}/);
- assert.match(page,/14-stellige Abrechnungsnummer/);
+ assert.match(page,/Abrechnungsnummer/);
 });
 
 test("DHL live bookings are gated on explicit sender approval and weight",()=>{
@@ -85,5 +85,22 @@ test("DHL sandbox manual test can never create a live shipment or touch a real o
  assert.doesNotMatch(route,/order\.(?:update|create|delete)/);
  assert.match(route,/await isAdmin\(\)/);
  assert.match(route,/CROSS_SITE_DENIED/);
- assert.match(page,/Sandbox-Testetikett als PDF erstellen/);
+ assert.match(page,/Test-PDF erstellen/);
+});
+
+
+test("DHL dashboard has one visible main action and groups diagnostic tests safely",()=>{
+ const page=read("app/admin/dhl/page.tsx");
+ const route=read("app/api/admin/dhl-test-label/route.ts");
+ const labels=read("src/lib/dhl-labels.ts");
+ assert.match(page,/rh-dhl-primary-btn/);
+ assert.equal((page.match(/className="rh-dhl-primary-btn"/g)||[]).length,1);
+ assert.match(page,/<details className="rh-admin-panel-card rh-dhl-advanced">/);
+ assert.match(page,/Erweiterte Tests und technische Details/);
+ assert.match(page,/DHL-Versand prüfen/);
+ assert.match(page,/Noch nicht bestätigt/);
+ assert.match(page,/DHL erlaubt derzeit keinen Zugriff auf die Versand-API/);
+ assert.match(route,/Response.redirect\(new URL\("\/admin\/dhl\?sandbox="/);
+ assert.match(labels,/dry.status===401\|\|dry.status===403\?"unauthorized"/);
+ assert.match(route,/CROSS_SITE_DENIED/);
 });
