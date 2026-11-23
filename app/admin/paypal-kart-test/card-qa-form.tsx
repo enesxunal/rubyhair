@@ -3,14 +3,14 @@ import {useEffect,useRef,useState} from "react";
 
 type CardSession={
  createCardFieldsComponent:(options:{type:"number"|"expiry"|"cvv";placeholder:string;style?:Record<string,Record<string,string>>})=>HTMLElement;
- submit:(orderId:string,options:{name:string;billingAddress:{postalCode:string;countryCode:"DE"}})=>Promise<{state:"succeeded"|"failed"|"canceled";data?:{orderId?:string;liabilityShift?:string;message?:string}}>;
+ submit:(orderId:string,options:{billingAddress:{postalCode:string;countryCode:"DE"}})=>Promise<{state:"succeeded"|"failed"|"canceled";data?:{orderId?:string;liabilityShift?:string;message?:string}}>;
 };
 type PayPalV6={createInstance:(o:{clientToken:string;components:string[];locale:string;pageType:string})=>Promise<{
  findEligibleMethods:(o:{countryCode:string;currencyCode:string;amount:string})=>Promise<{isEligible:(method:string)=>boolean}>;
  createCardFieldsOneTimePaymentSession:()=>CardSession;
 }>};
 type TestOrder={orderId:string;paypalOrderId:string;amountCents:number};
-type TestStatus={orderStatus?:string;paypalStatus?:string;invoiceNumber?:string|null;error?:string};
+type TestStatus={orderStatus?:string;paypalStatus?:string;canRetry?:boolean;invoiceNumber?:string|null;error?:string};
 const sdkUrl="https://www.paypal.com/web-sdk/v6/core";
 const inputStyle={width:"100%",border:"1px solid #d8c6cf",borderRadius:7,padding:"13px 14px",fontSize:15,background:"white"} as const;
 const fieldStyle={height:49,border:"1px solid #d8c6cf",borderRadius:7,background:"white",marginTop:6} as const;
@@ -19,7 +19,7 @@ async function responseJson(response:Response):Promise<Record<string,unknown>>{
  try{return await response.json() as Record<string,unknown>}catch{return {error:"NETWORK_RESPONSE_INVALID"}}
 }
 function requestError(payload:Record<string,unknown>,fallback:string){return typeof payload.error==="string"?payload.error:fallback}
-export default function CardQaForm({existingOrderId}:{existingOrderId?:string}){
+export default function CardQaForm({existingOrderId,existingPaypalOrderId}:{existingOrderId?:string;existingPaypalOrderId?:string}){
  const number=useRef<HTMLDivElement>(null),expiry=useRef<HTMLDivElement>(null),cvv=useRef<HTMLDivElement>(null);
  const card=useRef<CardSession|null>(null),submitted=useRef(false);
  const [sdk,setSdk]=useState<"loading"|"ready"|"unavailable">("loading");
@@ -29,7 +29,6 @@ export default function CardQaForm({existingOrderId}:{existingOrderId?:string}){
  const [order,setOrder]=useState<TestOrder|null>(null),[orderId,setOrderId]=useState(existingOrderId||"");
  const [status,setStatus]=useState<TestStatus|null>(null),[invoice,setInvoice]=useState("");
  useEffect(()=>{
-  if(existingOrderId){setSdk("unavailable");setStage("Eine interne Testbestellung existiert bereits. Nur Statuspruefung moeglich.");return}
   let canceled=false;
   async function init(){
    try{
@@ -59,7 +58,7 @@ export default function CardQaForm({existingOrderId}:{existingOrderId?:string}){
   }
   void init();
   return()=>{canceled=true;card.current=null;number.current?.replaceChildren();expiry.current?.replaceChildren();cvv.current?.replaceChildren()};
- },[existingOrderId]);
+ },[]);
  useEffect(()=>{
   if(!orderId)return;
   let canceled=false;
@@ -71,28 +70,36 @@ export default function CardQaForm({existingOrderId}:{existingOrderId?:string}){
   void refresh();const timer=setInterval(()=>void refresh(),8000);
   return()=>{canceled=true;clearInterval(timer)};
  },[orderId]);
- const ready=sdk==="ready"&&buyerName.trim().length>=2&&buyerEmail.includes("@")&&/^[0-9]{5}$/.test(postalCode)&&seller&&tax&&charge&&!busy&&!submitted.current;
+ const safeExisting=Boolean(existingOrderId&&existingPaypalOrderId&&status?.canRetry===true);
+ const ready=sdk==="ready"&&buyerName.trim().length>=2&&buyerEmail.includes("@")&&/^[0-9]{5}$/.test(postalCode)&&seller&&tax&&charge&&!busy&&!submitted.current&&(!existingOrderId||safeExisting);
  async function submit(){
   if(!ready||!card.current)return;
   submitted.current=true;setBusy(true);setError("");
   let current:TestOrder|null=null;
   try{
-   setStage("Erstelle genau eine interne 1,00-EUR-Bestellung ...");
-   const start=await fetch("/api/admin/paypal-card-qa/start",{method:"POST",credentials:"same-origin",cache:"no-store",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-    name:buyerName,email:buyerEmail,postalCode,confirmSeller:seller,confirmTax:tax,confirmCharge:charge
-   })});
-   const body=await responseJson(start);
-   if(!start.ok||typeof body.orderId!=="string"||typeof body.paypalOrderId!=="string"||body.amountCents!==100)
-    throw Error(requestError(body,"QA_ORDER_CREATION_REQUIRES_REVIEW"));
-   current=body as unknown as TestOrder;
+   if(existingOrderId&&existingPaypalOrderId){
+    if(!safeExisting)throw Error("EXISTING_TEST_STATUS_NOT_SAFE_FOR_RETRY");
+    current={orderId:existingOrderId,paypalOrderId:existingPaypalOrderId,amountCents:100};
+    setStage("Verwende die bestehende 1,00-EUR-Testbestellung. Kein neuer Auftrag.");
+   }else{
+    setStage("Erstelle genau eine interne 1,00-EUR-Bestellung ...");
+    const start=await fetch("/api/admin/paypal-card-qa/start",{method:"POST",credentials:"same-origin",cache:"no-store",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+     name:buyerName,email:buyerEmail,postalCode,confirmSeller:seller,confirmTax:tax,confirmCharge:charge
+    })});
+    const body=await responseJson(start);
+    if(!start.ok||typeof body.orderId!=="string"||typeof body.paypalOrderId!=="string"||body.amountCents!==100)
+     throw Error(requestError(body,"QA_ORDER_CREATION_REQUIRES_REVIEW"));
+    current=body as unknown as TestOrder;
+   }
    setOrder(current);setOrderId(current.orderId);
    setStage("PayPal-Verifizierung / 3D Secure. Zahlung noch nicht als abgeschlossen markieren.");
-   const result=await card.current.submit(current.paypalOrderId,{name:buyerName.trim(),billingAddress:{postalCode,countryCode:"DE"}});
+   const result=await card.current.submit(current.paypalOrderId,{billingAddress:{postalCode,countryCode:"DE"}});
    if(result.state!=="succeeded"||result.data?.orderId!==current.paypalOrderId)
     throw Error(result.state==="canceled"?"3DS_CANCELED":result.data?.message?.slice(0,120)||"CARD_SUBMISSION_FAILED");
+   if(result.data?.liabilityShift!=="POSSIBLE")throw Error("CARD_3DS_REQUIRES_REVIEW");
    setStage("Kartendaten akzeptiert. Pruefe PayPal-Finanzierungsquelle und 3DS vor der Abbuchung ...");
    const capture=await fetch("/api/admin/paypal-card-qa/capture",{method:"POST",credentials:"same-origin",cache:"no-store",
-    headers:{"Content-Type":"application/json"},body:JSON.stringify({orderId:current.orderId,paypalOrderId:current.paypalOrderId})});
+    headers:{"Content-Type":"application/json"},body:JSON.stringify({orderId:current.orderId,paypalOrderId:current.paypalOrderId,sdkLiabilityShift:result.data.liabilityShift})});
    const receipt=await responseJson(capture);
    if(!capture.ok||receipt.paid!==true||typeof receipt.invoiceNumber!=="string")throw Error(requestError(receipt,"CAPTURE_RECONCILIATION_REQUIRED"));
    setInvoice(receipt.invoiceNumber);setStage("BESTAETIGT: PayPal 1,00 EUR Zahlung und Rechnung erfolgreich erfasst.");
@@ -102,7 +109,7 @@ export default function CardQaForm({existingOrderId}:{existingOrderId?:string}){
   }finally{setBusy(false)}
  }
  return <section style={{marginTop:23}} aria-label="PayPal Live Kartentest">
-  {!existingOrderId&&<>
+  {(!existingOrderId||safeExisting)&&<>
    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(215px,1fr))",gap:15}}>
     <label style={{fontSize:12}}>Name fuer Testrechnung<input value={buyerName} autoComplete="name" onChange={e=>setBuyerName(e.target.value)} style={{...inputStyle,marginTop:7}} required/></label>
     <label style={{fontSize:12}}>E-Mail fuer Testrechnung<input value={buyerEmail} type="email" autoComplete="email" onChange={e=>setBuyerEmail(e.target.value)} style={{...inputStyle,marginTop:7}} required/></label>
@@ -125,7 +132,7 @@ export default function CardQaForm({existingOrderId}:{existingOrderId?:string}){
    <strong>Status:</strong> {stage}
    {error&&<p role="alert" style={{color:"#a33b53",fontWeight:700,marginTop:10}}>{error}</p>}
    {orderId&&<p style={{marginTop:10}}>Test-ID: {orderId}</p>}
-   {status&&<p style={{marginTop:6}}>Ruby Hair: <strong>{status.orderStatus}</strong> | PayPal: <strong>{status.paypalStatus}</strong></p>}
+   {status&&<p style={{marginTop:6}}>Ruby Hair: <strong>{status.orderStatus}</strong> | PayPal: <strong>{status.paypalStatus}</strong>{existingOrderId&&status.canRetry===true?" | Gleiche Testbestellung erneut bestaetigen moeglich":""}</p>}
    {invoice&&<p style={{marginTop:7}}>Rechnung: <strong>{invoice}</strong> | <a href={"/api/admin/qa-invoice?orderId="+orderId} target="_blank" rel="noreferrer">PDF ansehen</a></p>}
    {order&&<p style={{marginTop:10}}>Ein Testauftrag wurde gespeichert. Der Status wird alle 8 Sekunden nur lesend geprueft.</p>}
   </div>

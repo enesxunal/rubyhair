@@ -2,6 +2,7 @@ import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {PaypalClient} from "../src/lib/paypal-provider-core";
+import {assessOneEuroCardCapture} from "../src/lib/qa-card-capture-policy";
 
 const requests:{url:string;method:string;body:string;idempotency?:string}[]=[];
 const transport=(async(url:RequestInfo|URL,init?:RequestInit)=>{
@@ -38,7 +39,7 @@ test("one 1 EUR card QA is admin-only, one-time, idempotent and separate from re
  assert.match(helper,/totalCents:100/);
  assert.match(helper,/shippingCents:0/);
  assert.match(helper,/confirmOneEuroQaPayment/);
- assert.match(helper,/CARD_3DS_REQUIRES_REVIEW/);
+ assert.match(readFileSync("src/lib/qa-card-capture-policy.ts","utf8"),/CARD_3DS_REQUIRES_REVIEW/);
  assert.match(helper,/order.paymentReference!==paypalOrderId/);
  assert.ok(!helper.includes("finalizePayPalCheckout"));
  const routes=["token","start","capture","status"];
@@ -67,4 +68,31 @@ test("QA secure card iframe fields, read-only status and single-action capture",
  assert.match(ui,/setInterval\(\(\)=>void refresh\(\),8000\)/);
  assert.ok(!ui.includes("cardNumber"));
  assert.ok(!ui.includes("cardCvv"));
+});
+
+
+test("one-EUR admin card capture allows CREATED only with card source, exact amount and SDK liability shift",()=>{
+ const orderId="f972c25b-8aba-4598-8ce6-5c591dc85a76",paypalOrderId="9LP59976LK416793E";
+ const remote={id:paypalOrderId,status:"CREATED",purchase_units:[{custom_id:orderId,amount:{currency_code:"EUR",value:"1.00"}}],
+  payment_source:{card:{authentication_result:{liability_shift:"POSSIBLE"}}}};
+ assert.deepEqual(assessOneEuroCardCapture(remote,orderId,paypalOrderId,"POSSIBLE"),{ok:true,providerStatus:"CREATED"});
+ assert.deepEqual(assessOneEuroCardCapture({...remote,status:"APPROVED"},orderId,paypalOrderId,"POSSIBLE"),{ok:true,providerStatus:"APPROVED"});
+ assert.equal(assessOneEuroCardCapture(remote,orderId,paypalOrderId,"NO").ok,false);
+ assert.equal(assessOneEuroCardCapture({...remote,purchase_units:[{custom_id:orderId,amount:{currency_code:"EUR",value:"10.00"}}]},orderId,paypalOrderId,"POSSIBLE").ok,false);
+ assert.equal(assessOneEuroCardCapture({...remote,payment_source:{}},orderId,paypalOrderId,"POSSIBLE").ok,false);
+ assert.equal(assessOneEuroCardCapture({...remote,purchase_units:[{custom_id:orderId,amount:{currency_code:"EUR",value:"1.00"},payments:{captures:[{status:"COMPLETED"}]}}]},orderId,paypalOrderId,"POSSIBLE").ok,false);
+ assert.equal(assessOneEuroCardCapture({...remote,status:"COMPLETED"},orderId,paypalOrderId,"POSSIBLE").ok,false);
+});
+
+test("previous 1-EUR order is reusable without opening a second order or automatic capture",()=>{
+ const ui=readFileSync("app/admin/paypal-kart-test/card-qa-form.tsx","utf8");
+ const code=readFileSync("src/lib/qa-card-one-euro.ts","utf8");
+ const page=readFileSync("app/admin/paypal-kart-test/page.tsx","utf8");
+ assert.match(ui,/if\(existingOrderId&&existingPaypalOrderId\)/);
+ assert.match(ui,/if\(!safeExisting\)/);
+ assert.match(ui,/result\.data\?\.liabilityShift!=="POSSIBLE"/);
+ assert.match(ui,/sdkLiabilityShift:result\.data\.liabilityShift/);
+ assert.match(page,/existingPaypalOrderId=\{existing\?\.paymentReference/);
+ assert.match(code,/canRetry=order\.status==="pending_payment"&&!hasCapture/);
+ assert.match(code,/assessOneEuroCardCapture/);
 });

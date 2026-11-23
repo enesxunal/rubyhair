@@ -5,6 +5,7 @@ import {getPrisma} from "@/lib/prisma";
 import {providerForCheckout} from "@/lib/customer-checkout";
 import {confirmOneEuroQaPayment,QA_EMAIL_REGEX} from "@/lib/qa-live-paypal";
 import {qaInvoiceNumber,QA_INVOICE_TAX_CENTS,QA_INVOICE_TAX_RATE} from "@/lib/qa-invoice";
+import {assessOneEuroCardCapture} from "@/lib/qa-card-capture-policy";
 
 export const CARD_QA_SLUG="rubyhair-intern-cardfields-qa-1-eur";
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -48,7 +49,7 @@ export async function beginCardQaOrder(input:CardQaBuyer){
  }catch(e){console.error("RUBY_CARD_QA_CREATE_REVIEW",{orderId:order.id,type:e instanceof Error?e.name:"other"});throw new CardQaError("TEST_ORDER_NEEDS_REVIEW",503)}
 }
 const obj=(v:unknown):v is Record<string,unknown>=>!!v&&typeof v==="object"&&!Array.isArray(v);
-export async function captureCardQaOrder(orderId:string,paypalOrderId:string){
+export async function captureCardQaOrder(orderId:string,paypalOrderId:string,sdkLiabilityShift:unknown){
  if(!uuid.test(orderId)||!paypalId.test(paypalOrderId))throw new CardQaError("INVALID_ID",400);
  const db=getPrisma();const order=await db.order.findFirst({where:{id:orderId,...qaWhere},include:{invoice:true,lines:true}});
  if(!order||order.paymentReference!==paypalOrderId||order.totalCents!==100||order.currency!=="EUR"||order.shippingCents!==0||order.taxCents!==16||order.lines.length!==1)
@@ -58,16 +59,9 @@ export async function captureCardQaOrder(orderId:string,paypalOrderId:string){
  const {api}=await providerForCheckout("paypal");
  const remote=await api.getOrderWithPaymentSource(paypalOrderId);
  if(!obj(remote)||remote.id!==paypalOrderId||typeof remote.status!=="string")throw new CardQaError("PROVIDER_STATUS_UNKNOWN");
- const source=obj(remote.payment_source)?remote.payment_source:null;
- const card=source&&obj(source.card)?source.card:null;
- if(!card)throw new CardQaError("CARD_FUNDING_NOT_VERIFIED");
- if(remote.status==="APPROVED"){
-  const auth=obj(card.authentication_result)?card.authentication_result:null;
-  if(!auth||auth.liability_shift!=="POSSIBLE"){
-   console.warn("RUBY_CARD_QA_3DS_REVIEW",{orderId,liabilityShift:typeof auth?.liability_shift==="string"?auth.liability_shift:"missing"});
-   throw new CardQaError("CARD_3DS_REQUIRES_REVIEW");
-  }
- }else if(remote.status!=="COMPLETED")throw new CardQaError("PAYPAL_NOT_APPROVED");
+ const checked=assessOneEuroCardCapture(remote,orderId,paypalOrderId,sdkLiabilityShift);
+ if(!checked.ok){console.warn("RUBY_CARD_QA_CAPTURE_HELD",{orderId,reason:checked.reason,remoteStatus:remote.status});throw new CardQaError(checked.reason)}
+ console.info("RUBY_CARD_QA_PAYMENT_SOURCE_VERIFIED",{orderId,remoteStatus:checked.providerStatus,amountCents:100});
  console.info("RUBY_CARD_QA_CAPTURE_REQUEST",{orderId,amountCents:100});
  try{
   const result=await confirmOneEuroQaPayment(paypalOrderId);
@@ -81,10 +75,13 @@ export async function cardQaStatus(orderId:string){
  if(!uuid.test(orderId))throw new CardQaError("INVALID_ID",400);
  const order=await getPrisma().order.findFirst({where:{id:orderId,...qaWhere},select:{id:true,status:true,totalCents:true,paymentReference:true,invoice:{select:{invoiceNumber:true}}}});
  if(!order)return null;
- let paypalStatus="NOT_CREATED";
+ let paypalStatus="NOT_CREATED",canRetry=false;
  if(order.paymentReference)try{
   const {api}=await providerForCheckout("paypal");const p=await api.getOrder(order.paymentReference);
   paypalStatus=obj(p)&&typeof p.status==="string"?p.status:"UNKNOWN";
+  const units=obj(p)&&Array.isArray(p.purchase_units)?p.purchase_units:[];
+  const hasCapture=units.some((u:unknown)=>obj(u)&&obj(u.payments)&&Array.isArray(u.payments.captures)&&u.payments.captures.length>0);
+  canRetry=order.status==="pending_payment"&&!hasCapture&&(paypalStatus==="CREATED"||paypalStatus==="PAYER_ACTION_REQUIRED");
  }catch{paypalStatus="TEMPORARILY_UNAVAILABLE"}
- return {orderId:order.id,orderStatus:order.status,amountCents:order.totalCents,paypalStatus,invoiceNumber:order.invoice?.invoiceNumber||null};
+ return {orderId:order.id,orderStatus:order.status,amountCents:order.totalCents,paypalStatus,canRetry,invoiceNumber:order.invoice?.invoiceNumber||null};
 }
