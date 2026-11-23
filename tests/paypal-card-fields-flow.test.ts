@@ -46,6 +46,19 @@ test("Card schema accepts physical checkout but rejects card gift purchases and 
  assert.equal(checkoutInput.safeParse({...base,giftCode:"RH-EXAMPLE-CODE-12345"}).success,false);
 });
 
+test("Production proxy permits only GET token and POST capture with independent route guards",()=>{
+ const proxy=readFileSync("proxy.ts","utf8");
+ const token=readFileSync("app/api/payments/paypal/card-token/route.ts","utf8");
+ const capture=readFileSync("app/api/payments/paypal/card-capture/route.ts","utf8");
+ assert.match(proxy,/publicGetApis=new Set\(\[[^\]]*"\/api\/payments\/paypal\/card-token"/);
+ assert.match(proxy,/publicPostApis=new Set\(\[[^\]]*"\/api\/payments\/paypal\/card-capture"/);
+ assert.match(proxy,/path==="\/api\/payments\/paypal\/webhook"&&request.method==="POST"/);
+ assert.match(token,/RUBY_PAYPAL_CARD_FIELDS_ENABLED/);
+ assert.match(capture,/RUBY_PAYPAL_CARD_FIELDS_ENABLED/);
+ assert.match(capture,/verifyCheckoutSignature/);
+ assert.match(capture,/Origin_NOT_ALLOWED|ORIGIN_NOT_ALLOWED/);
+});
+
 test("Card checkout is feature flagged across all route and UI boundaries",()=>{
  const read=(p:string)=>readFileSync(p,"utf8");
  for(const p of ["src/lib/customer-checkout.ts","app/api/payments/paypal/card-token/route.ts","app/api/payments/paypal/card-capture/route.ts","app/kasse/page.tsx"])
