@@ -31,18 +31,32 @@ export async function createSandboxDhlTestLabel(send:typeof fetch=fetch):Promise
   consignee:{name1:"DHL Sandbox Musterempfaenger",addressStreet:"Straesschensweg",addressHouse:"2",postalCode:"53113",city:"Bonn",country:"DEU"},
   details:{weight:{uom:"kg",value:0.5}}
  }]};
- const headers={Authorization:`Bearer ${tokenData.access_token}`,"dhl-api-key":clientId,
-  "Content-Type":"application/json",Accept:"application/json"};
+ const commonHeaders={"Content-Type":"application/json",Accept:"application/json"};
+ const bearerHeaders={...commonHeaders,Authorization:`Bearer ${tokenData.access_token}`};
+ const variants=[
+  {name:"bearer_with_key",headers:{...bearerHeaders,"dhl-api-key":clientId}},
+  {name:"bearer_only",headers:bearerHeaders},
+  {name:"basic_with_key",headers:{...commonHeaders,Authorization:"Basic "+Buffer.from("user-valid:SandboxPasswort2023!").toString("base64"),"dhl-api-key":clientId}}
+ ];
  const endpoint=`${BASE}/shipping/v2/orders`;
- const validate=await send(`${endpoint}?validate=true`,{method:"POST",headers,body:JSON.stringify(payload),
-  signal:AbortSignal.timeout(15000),redirect:"error",cache:"no-store"});
+ let active=variants[0],validate:Response|undefined;
+ const results:string[]=[];
+ for(const variant of variants){
+  active=variant;
+  validate=await send(`${endpoint}?validate=true`,{method:"POST",headers:variant.headers,body:JSON.stringify(payload),
+   signal:AbortSignal.timeout(15000),redirect:"error",cache:"no-store"});
+  results.push(variant.name+":"+validate.status);
+  if(validate.status!==401)break;
+ }
+ console.info("DHL_SANDBOX_AUTH_VARIANTS",results.join(","));
+ if(!validate)throw new DhlSandboxTestError("VALIDATE_NOT_STARTED",503);
  if(!validate.ok)throw new DhlSandboxTestError("VALIDATE",validate.status);
  const checked=await validate.json() as {items?:{sstatus?:{status?:number};validationMessages?:{validationState?:string}[]}[]};
  if(checked.items?.length!==1||checked.items[0].sstatus?.status!==200||
   checked.items[0].validationMessages?.some(v=>v.validationState==="Error"))
   throw new DhlSandboxTestError("VALIDATE_ITEM",422);
  const labelResponse=await send(`${endpoint}?docFormat=PDF&includeDocs=include`,{
-  method:"POST",headers,body:JSON.stringify(payload),signal:AbortSignal.timeout(15000),redirect:"error",cache:"no-store"
+  method:"POST",headers:active.headers,body:JSON.stringify(payload),signal:AbortSignal.timeout(15000),redirect:"error",cache:"no-store"
  });
  if(!labelResponse.ok)throw new DhlSandboxTestError("LABEL",labelResponse.status);
  const output=await labelResponse.json() as {items?:{label?:{b64?:string};sstatus?:{status?:number}}[]};
