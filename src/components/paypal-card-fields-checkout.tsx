@@ -64,12 +64,14 @@ export default function PayPalCardFieldsCheckout({lines,address,cartReady,totalC
   keyRef.current||=crypto.randomUUID();
   let cardStep:"create"|"submit"|"3ds"|"capture"="create";
   let reference:""|string="";
+  let checkoutRef:{orderId:string;paypalOrderId:string;cardState:string}|null=null;
   try{
    const created=await fetch("/api/checkout",{method:"POST",credentials:"same-origin",cache:"no-store",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({key:keyRef.current,provider:"paypal",paymentExperience:"card",lines,gifts:[],shipping:address.shipping,billing:address.billing,email:address.email,couponCode,consent:true})});
    const order=await created.json() as {orderId?:string;paypalOrderId?:string;cardState?:string;amountCents?:number;paymentExperience?:string};
    if(!created.ok||order.paymentExperience!=="card"||!order.orderId||!order.paypalOrderId||!order.cardState||order.amountCents!==totalCents)throw Error("ORDER_UNVERIFIED");
    reference=order.orderId;
+   checkoutRef={orderId:order.orderId,paypalOrderId:order.paypalOrderId,cardState:order.cardState};
    cardStep="submit";
    const result=await sessionRef.current.submit(order.paypalOrderId,{billingAddress:{postalCode:(address.billing||address.shipping).postalCode,
     streetAddress:(address.billing||address.shipping).street,city:(address.billing||address.shipping).city,countryCode:"DE"}});
@@ -87,6 +89,22 @@ export default function PayPalCardFieldsCheckout({lines,address,cartReady,totalC
    const query=new URLSearchParams({orderId:order.orderId,state:order.cardState,token:order.paypalOrderId});
    window.location.assign("/kasse/paypal/return?"+query.toString());
   }catch(error){
+   // Reconcile an already completed charge without attempting a second capture.
+   if(checkoutRef){
+    for(let attempt=0;attempt<3;attempt++){
+     try{
+      const res=await fetch("/api/payments/paypal/card-status",{method:"POST",credentials:"same-origin",cache:"no-store",headers:{"Content-Type":"application/json"},body:JSON.stringify(checkoutRef)});
+      const status=await res.json() as {paid?:boolean};
+      if(res.ok&&status.paid){
+       try{sessionStorage.setItem("rubyhair-checkout-purchased:"+checkoutRef.orderId,JSON.stringify({lines,giftIds:[]}))}catch{}
+       const query=new URLSearchParams({orderId:checkoutRef.orderId,state:checkoutRef.cardState,token:checkoutRef.paypalOrderId});
+       window.location.assign("/kasse/paypal/return?"+query.toString());
+       return;
+      }
+     }catch{}
+     if(attempt<2)await new Promise(resolve=>setTimeout(resolve,1200));
+    }
+   }
    const reason=error instanceof Error?error.message:"UNKNOWN";
    const referenceMessage=reference?` Referenz: ${reference.slice(0,8)}.`:"";
    if(cardStep==="submit"||cardStep==="3ds"){
