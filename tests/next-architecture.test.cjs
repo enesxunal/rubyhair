@@ -641,6 +641,8 @@ test("Ruby Hair community uses actual recent posts, not profile highlight covers
  assert.ok(!source.includes("assets/influencers/"),"highlight covers must not be used");
  for(const shortcode of ["DeRBodOSBLJ","DdWuECGjPhu"])assert.ok(source.includes("https://www.instagram.com/p/"+shortcode+"/"));
  assert.ok(home.includes("<InfluencerStories/>"));
+ assert.match(home, /<\/Link>\s*<InfluencerStories\/>\s*<section id="collections"/, "Story rail must stay immediately after the homepage hero and before collections");
+ assert.equal((home.match(/<InfluencerStories\/>/g)||[]).length,1);
  assert.ok(story.includes('target="_blank"'));
  assert.ok(story.includes("Galerie schließen"));
  assert.ok(story.includes("Nächstes Foto"));

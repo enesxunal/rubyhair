@@ -208,6 +208,7 @@ export default function HomeFrontend({products,instagramPosts=[]}:{products:Prod
           <div className="hero-links"><span className="solid-button">TAPE-IN ANSEHEN <ArrowUpRight size={18} aria-hidden="true"/></span></div>
         </div>
       </Link>
+      <InfluencerStories/>
       <section id="collections" className="collections rh-length-collection section-pad" aria-labelledby="rh-home-lengths">
         <div className="container">
           <div className="section-heading"><h2 id="rh-home-lengths">Entdecke deine <i>Extensions.</i></h2></div>
@@ -252,7 +253,6 @@ export default function HomeFrontend({products,instagramPosts=[]}:{products:Prod
           </div>
         </div>
       </section>
-      <InfluencerStories/>
       <ShadeSelector product={products.find(p=>p.slug==="tape-in-extensions")}/>
       <section className="rh-tape-originals" aria-labelledby="rh-tape-originals-title">
        <div className="container">
