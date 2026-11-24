@@ -126,6 +126,8 @@ export default async function AdminAnalytics({searchParams}:{searchParams:Promis
     <a href="/" target="_blank" rel="noopener noreferrer" className="rh-adv-story-shop-link">Community ansehen</a>
    </div>
    <div className="rh-adv-story-period"><span>Ausgewählter Zeitraum: <strong>{range.label}</strong></span><span>Vorheriger Zeitraum: <strong>{enabledValue(enabled,report.previousEngagement.storyViews)} Aufrufe</strong></span></div>
+  {report.end>=new Date("2026-11-24T00:00:00Z")&&
+   <p className="rh-ops-muted" style={{marginBottom:14}}>Story-Bereich tatsächlich im Sichtfeld (mindestens 50 % für 1 Sekunde, mit Statistik-Einwilligung): <strong>{enabledValue(enabled,report.engagement.storySectionSeen)}</strong>. Diese Messung beginnt am 24.11.2026 und zählt keine Story-Wiedergaben.</p>}
   <div className="rh-ops-community-kpis">
    <OverviewCard label="Story-Aufrufe" value={enabledValue(enabled,report.engagement.storyViews)} icon={<Eye size={17}/>}
     note="Nur Wiedergaben nach Statistik-Einwilligung" highlight/>

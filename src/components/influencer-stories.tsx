@@ -4,7 +4,7 @@ import {useCallback,useEffect,useRef,useState} from "react";
 import {ArrowLeft,ArrowRight,ArrowUpRight,X} from "lucide-react";
 import {influencerStories} from "@/data/influencer-stories";
 import {storyAnalyticsPath} from "@/data/story-analytics";
-import {trackRubyEvent} from "@/lib/storefront-analytics";
+import {analyticsConsent,trackRubyEvent} from "@/lib/storefront-analytics";
 
 const STORY_DURATION=7000;
 
@@ -14,6 +14,8 @@ export default function InfluencerStories(){
   const lastTrigger=useRef<HTMLButtonElement|null>(null);
   const closeRef=useRef<HTMLButtonElement|null>(null);
   const carouselRef=useRef<HTMLDivElement|null>(null);
+  const sectionRef=useRef<HTMLElement|null>(null);
+  const sectionTracked=useRef(false);
   const [canScrollLeft,setCanScrollLeft]=useState(false);
   const [canScrollRight,setCanScrollRight]=useState(false);
   const touchStart=useRef<{x:number;y:number}|null>(null);
@@ -32,6 +34,33 @@ export default function InfluencerStories(){
     const observer=typeof ResizeObserver!=="undefined"?new ResizeObserver(update):null;
     observer?.observe(rail);
     return ()=>{rail.removeEventListener("scroll",update);window.removeEventListener("resize",update);observer?.disconnect();};
+  },[]);
+
+  // Count consented exposure to the rail separately from deliberate Story opens.
+  // At least 50% must remain visible for one second; never infer a Story play.
+  useEffect(()=>{
+    const section=sectionRef.current;
+    if(!section||typeof IntersectionObserver==="undefined")return;
+    let visibilityTimer:ReturnType<typeof setTimeout>|null=null;
+    let visible=false;
+    const countIfAllowed=()=>{
+      if(!visible||document.visibilityState!=="visible"||sectionTracked.current||!analyticsConsent())return;
+      sectionTracked.current=true;
+      trackRubyEvent("story_section_seen","/");
+    };
+    const begin=()=>{
+      if(visibilityTimer!==null)clearTimeout(visibilityTimer);
+      visibilityTimer=setTimeout(()=>{visibilityTimer=null;countIfAllowed();},1000);
+    };
+    const observer=new IntersectionObserver(entries=>{
+      visible=entries[0]?.isIntersecting===true&&entries[0].intersectionRatio>=.5;
+      if(visible&&!sectionTracked.current)begin();
+      else if(visibilityTimer!==null){clearTimeout(visibilityTimer);visibilityTimer=null;}
+    },{threshold:[0,.5,1]});
+    observer.observe(section);
+    const onConsentSaved=()=>{if(visible&&!sectionTracked.current)begin();};
+    window.addEventListener("ruby-analytics-consent-saved",onConsentSaved);
+    return ()=>{observer.disconnect();if(visibilityTimer!==null)clearTimeout(visibilityTimer);window.removeEventListener("ruby-analytics-consent-saved",onConsentSaved);};
   },[]);
 
   const scrollCarousel=(direction:-1|1)=>{
@@ -89,7 +118,7 @@ export default function InfluencerStories(){
   if(!total)return null;
   const story=active===null?null:influencerStories[active];
   return <>
-    <section className="rh-influencer-section" aria-label="Ruby Hair Community">
+    <section ref={sectionRef} className="rh-influencer-section" aria-label="Ruby Hair Community">
       <div className="container">
         <div className="rh-influencer-headrow">
           <div className="rh-influencer-heading">RUBY HAIR <span>COMMUNITY</span></div>

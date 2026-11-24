@@ -24,7 +24,7 @@ test("Analytics reports count story views and successful AI renders separately",
  ],7,day);
  assert.equal(report.current.views,7);
  assert.equal(report.current.added,1);
- assert.deepEqual(report.engagement,{storyViews:6,aiStarts:5,aiTryons:3,aiAdds:1});
+ assert.deepEqual(report.engagement,{storyViews:6,storySectionSeen:0,aiStarts:5,aiTryons:3,aiAdds:1});
  assert.equal(report.stories[0].path,first.path);
  assert.equal(report.stories[0].views,4);
  assert.equal(report.stories[1].views,2);
@@ -76,4 +76,32 @@ test("Analytics collection is resilient but still strictly opt-in and does not f
  assert.match(server,/RUBY_ANALYTICS_WRITE_UNAVAILABLE/);
  assert.match(admin,/0 erfasste Aufrufe sind kein Nachweis/);
  assert.match(admin,/report\.funnel\.aiViews>0/);
+});
+
+
+test("Story rail exposure is separate from actual Story plays and stays consent gated",()=>{
+ const first=storyAnalyticsEntries[0];
+ const day=new Date("2026-11-23T00:00:00.000Z");
+ const report=createAnalyticsReport([
+  {day,event:"story_section_seen",path:"/",count:7,source:"direct",device:"mobile"},
+  {day,event:"story_view",path:first.path,count:1,source:"direct",device:"mobile"}
+ ],7,day);
+ assert.equal(report.engagement.storySectionSeen,7);
+ assert.equal(report.engagement.storyViews,1);
+ assert.equal(report.stories.find(s=>s.path===first.path)?.views,1);
+ const route=read("app/api/analytics/event/route.ts");
+ const client=read("src/lib/storefront-analytics.ts");
+ const stories=read("src/components/influencer-stories.tsx");
+ const consent=read("src/components/analytics-consent.tsx");
+ assert.match(route,/data\.event==="story_section_seen"\?data\.path==="\/"/);
+ assert.match(client,/else if\(event==="story_section_seen"\)\{if\(path!=="\/"\)return;\}/);
+ assert.match(client,/if\(!analyticsConsent\(\)\)return;/);
+ assert.match(stories,/IntersectionObserver/);
+ assert.match(stories,/intersectionRatio>=\.5/);
+ assert.match(stories,/trackRubyEvent\("story_section_seen","\/"\)/);
+ assert.match(stories,/sectionTracked\.current=true/);
+ assert.match(consent,/ruby-analytics-consent-saved/);
+ const admin=read("app/admin/analytics/page.tsx");
+ assert.match(admin,/report\.engagement\.storySectionSeen/);
+ assert.match(admin,/zählt keine Story-Wiedergaben/);
 });

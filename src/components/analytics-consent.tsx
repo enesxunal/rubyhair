@@ -91,6 +91,7 @@ export default function AnalyticsConsent(){
    }
   }catch{return}
   setStatistics(stats);setMarketing(ads);setGoogleChoice(ga);setOpen(false);
+  if(stats==="allow")window.dispatchEvent(new Event("ruby-analytics-consent-saved"));
   if((oldMarketing==="allow"&&ads==="deny")||(oldGA==="allow"&&ga==="deny"))window.location.reload();
  };
  if(path.startsWith("/admin")||path.startsWith("/api")||path.startsWith("/konto")||path.startsWith("/coming-soon"))return null;

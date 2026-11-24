@@ -11,13 +11,14 @@ const cache={"Cache-Control":"private, no-store"};
 let lastRetentionCleanup=0;
 const publicPaths=new Set(["/","/kollektionen","/kollektionen/tape-in-extensions","/produkt/tape-in-extensions","/produkt/keratin-bondings","/ratgeber","/kontakt","/versand-zahlung","/warenkorb","/kasse","/haar-anprobe","/suche","/geschenkgutschein"]);
 const schema=z.object({
-  event:z.enum(["page_view","add_to_cart","begin_checkout","story_view","ai_tryon_start","ai_tryon_success","ai_to_cart"]),
+  event:z.enum(["page_view","add_to_cart","begin_checkout","story_view","story_section_seen","ai_tryon_start","ai_tryon_success","ai_to_cart"]),
   path:z.string().min(1).max(80),
   source:z.enum(["direct","search","social","referral","internal","meta_paid","meta_post","meta_reels"]),
   device:z.enum(["mobile","desktop"]),
   consent:z.literal(true)
 }).strict().superRefine((data,ctx)=>{
  const allowed=data.event==="story_view"?storyAnalyticsPaths.has(data.path):
+  data.event==="story_section_seen"?data.path==="/":
   data.event==="ai_tryon_start"||data.event==="ai_tryon_success"||data.event==="ai_to_cart"?data.path==="/haar-anprobe":
   publicPaths.has(data.path);
  if(!allowed)ctx.addIssue({code:"custom",path:["path"],message:"Event path not allowed"});

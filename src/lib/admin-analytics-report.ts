@@ -8,7 +8,7 @@ export const analyticsPeriods=[7,28,90] as const;
 export type AnalyticsPeriod=typeof analyticsPeriods[number];
 import {storyAnalyticsEntries} from "@/data/story-analytics";
 import {berlinDateKey} from "@/lib/analytics-calendar";
-export type AnalyticsEvent="page_view"|"add_to_cart"|"begin_checkout"|"story_view"|"ai_tryon_start"|"ai_tryon_success"|"ai_to_cart";
+export type AnalyticsEvent="page_view"|"add_to_cart"|"begin_checkout"|"story_view"|"story_section_seen"|"ai_tryon_start"|"ai_tryon_success"|"ai_to_cart";
 export type AnalyticsRow={
   day:Date;event:string;path:string;source:string;device:string;count:number
 };
@@ -97,9 +97,10 @@ export function createAnalyticsReport(rows:AnalyticsRow[],selection:AnalyticsPer
  }
  const storyCounts=new Map<string,number>();
  const funnel={productViews:0,cartViews:0,giftViews:0,aiViews:0};
- const engagement={storyViews:0,aiStarts:0,aiTryons:0,aiAdds:0},previousEngagement={storyViews:0,aiStarts:0,aiTryons:0,aiAdds:0};
+ const engagement={storyViews:0,storySectionSeen:0,aiStarts:0,aiTryons:0,aiAdds:0},previousEngagement={storyViews:0,storySectionSeen:0,aiStarts:0,aiTryons:0,aiAdds:0};
  const addEngagement=(target:typeof engagement,event:string,count:number)=>{
   if(event==="story_view")target.storyViews+=count;
+  else if(event==="story_section_seen")target.storySectionSeen+=count;
   else if(event==="ai_tryon_start")target.aiStarts+=count;
   else if(event==="ai_tryon_success")target.aiTryons+=count;
   else if(event==="ai_to_cart")target.aiAdds+=count;

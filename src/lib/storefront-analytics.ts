@@ -1,7 +1,7 @@
 "use client";
 import {storyAnalyticsPaths} from "@/data/story-analytics";
 import {classifyRubyTraffic,type RubyTrafficSource} from "@/lib/analytics-attribution";
-export type RubyEvent="page_view"|"add_to_cart"|"begin_checkout"|"story_view"|"ai_tryon_start"|"ai_tryon_success"|"ai_to_cart";
+export type RubyEvent="page_view"|"add_to_cart"|"begin_checkout"|"story_view"|"story_section_seen"|"ai_tryon_start"|"ai_tryon_success"|"ai_to_cart";
 const enabled=process.env.NEXT_PUBLIC_RUBY_ANALYTICS_ENABLED==="APPROVED";
 export const analyticsEnabled=()=>enabled;
 const allowed=new Set(["/","/kollektionen","/kollektionen/tape-in-extensions","/produkt/tape-in-extensions","/produkt/keratin-bondings","/ratgeber","/kontakt","/versand-zahlung","/warenkorb","/kasse","/haar-anprobe","/suche","/geschenkgutschein"]);
@@ -23,6 +23,7 @@ export function trackRubyEvent(event:RubyEvent,pathOverride?:string){
  if(!analyticsConsent())return;
  const path=pathOverride||location.pathname.replace(/\/$/,"")||"/";
  if(event==="story_view"){if(!storyAnalyticsPaths.has(path))return;}
+ else if(event==="story_section_seen"){if(path!=="/")return;}
  else if(event==="ai_tryon_start"||event==="ai_tryon_success"||event==="ai_to_cart"){if(path!=="/haar-anprobe")return;}
  else {if(!isTrackableRubyPath(path))return;}
  // Only whitelisted categorical metadata, never URL query strings, personal fields or photo data.
