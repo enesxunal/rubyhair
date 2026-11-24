@@ -28,6 +28,7 @@ export function buildDhlShipmentBody(input:{billingNumber:string;orderNumber:str
   consignee:{name1:(input.recipient.firstName+" "+input.recipient.lastName).slice(0,50),
    ...recipientStreet,postalCode:input.recipient.postalCode,
    city:input.recipient.city.slice(0,40),country:"DEU"},
+  services:{goGreenPlus:false},
   details:{weight:{uom:"kg",value:input.weightG/1000}}
  }]};
 }
