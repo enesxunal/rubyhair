@@ -104,3 +104,22 @@ test("DHL dashboard has one visible main action and groups diagnostic tests safe
  assert.match(labels,/dry.status===401\|\|dry.status===403\?"unauthorized"/);
  assert.match(route,/CROSS_SITE_DENIED/);
 });
+
+
+test("Manual DHL purchase and cancellation require admin approval and isolate ambiguous outcomes",()=>{
+ const action=read("app/admin/dhl-order-actions.ts");
+ const view=read("app/admin/bestellungen/page.tsx");
+ const labels=read("src/lib/dhl-labels.ts");
+ assert.equal((action.match(/if\(!await isAdmin\(\)\)/g)||[]).length,2);
+ assert.equal((action.match(/form.get\("confirmed"\)!=="on"/g)||[]).length,2);
+ assert.match(action,/PAYMENT\.CAPTURE\.COMPLETED/);
+ assert.match(action,/status:"submitting"/);
+ assert.match(action,/status:"canceling"/);
+ assert.match(action,/status:"needs_review"/);
+ assert.match(action,/status:"canceled",trackingNumber:null,labelPdf:null/);
+ assert.match(labels,/method:"DELETE"/);
+ assert.match(labels,/body.items\[0\].shipmentNo!==tracking/);
+ assert.match(view,/Versandetikett erstellen/);
+ assert.match(view,/Versandetikett stornieren/);
+ assert.doesNotMatch(action,/captureAuthorizedKlarna|deliverQueuedOrderEmails/);
+});

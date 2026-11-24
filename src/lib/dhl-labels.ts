@@ -40,8 +40,8 @@ async function credentials():Promise<DhlCredentials>{
  return Object.fromEntries(fields.map((f,i)=>[f,parts[i]])) as DhlCredentials;
 }
 
-export async function createDhlShipmentLabel(input:{orderNumber:string;recipient:ShippingAddress},send:typeof fetch=fetch){
- if(process.env.RUBY_DHL_LIVE_LABELS_ENABLED!=="true")throw new DhlShipmentError("DHL_LABEL_CREATION_DISABLED");
+export async function createDhlShipmentLabel(input:{orderNumber:string;recipient:ShippingAddress},send:typeof fetch=fetch,manual=false){
+ if(!manual&&process.env.RUBY_DHL_LIVE_LABELS_ENABLED!=="true")throw new DhlShipmentError("DHL_LABEL_CREATION_DISABLED");
  if(process.env.RUBY_DHL_SENDER_APPROVED!=="true")throw new DhlShipmentError("DHL_SENDER_NOT_APPROVED");
  const raw=process.env.RUBY_DHL_WEIGHT_G||"";
  if(!/^[1-9]\d{0,4}$/.test(raw))throw new DhlShipmentError("DHL_WEIGHT_NOT_CONFIGURED");
@@ -111,8 +111,22 @@ export async function validateDhlLiveTemplateOnly(send:typeof fetch=fetch):Promi
     console.warn("RUBY_DHL_VALIDATE_ONLY_REJECTED",JSON.stringify({http:dry.status,
       itemStatuses:(body.items||[]).map(i=>i.sstatus?.status).slice(0,3),
       providerStatusCodes:(body.items||[]).map(i=>i.sstatus?.statusCode).slice(0,3),
-      fields,goGreenDetails:(body.items||[]).flatMap(i=>i.validationMessages||[]).filter(m=>m.property==="services.goGreenPlus").map(m=>(m.validationMessage||"").replace(/\d{4,}/g,"[redacted]").slice(0,220)).slice(0,3),hasItems:Boolean(body.items?.length)}));
+      fields,hasItems:Boolean(body.items?.length)}));
   }
   return valid?"valid":dry.status===401||dry.status===403?"unauthorized":dry.status>=500?"unavailable":"rejected";
  }catch{return "unavailable"}
+}
+
+/** Cancel one known shipment before DHL day-end closing. Never retry an ambiguous result. */
+export async function cancelDhlShipment(tracking:string,send:typeof fetch=fetch){
+ if(!/^\d{12,36}$/.test(tracking))throw new DhlShipmentError("DHL_TRACKING_INVALID");
+ const creds=await credentials(),auth=buildDhlTokenRequest("live",creds);
+ const response=await send(auth.url,{...auth.init,redirect:"error",signal:AbortSignal.timeout(11000)});
+ if(!response.ok)throw new DhlShipmentError("DHL_CANCEL_AUTH_FAILED");
+ const token=await response.json() as {access_token?:string};
+ if(!token.access_token)throw new DhlShipmentError("DHL_CANCEL_AUTH_FAILED");
+ const query=new URLSearchParams({profile:"STANDARD_GRUPPENPROFIL",shipment:tracking});
+ const result=await send("https://api-eu.dhl.com/parcel/de/shipping/v2/orders?"+query,{method:"DELETE",headers:{Authorization:"Bearer "+token.access_token,Accept:"application/json"},redirect:"error",signal:AbortSignal.timeout(15000)});
+ const body=await result.json() as {items?:{shipmentNo?:string;sstatus?:{status?:number}}[]};
+ if(!result.ok||body.items?.length!==1||body.items[0].shipmentNo!==tracking||body.items[0].sstatus?.status!==200)throw new DhlShipmentError("DHL_CANCEL_REQUIRES_REVIEW");
 }

@@ -9,6 +9,7 @@ import {publicCheckoutMode} from "@/lib/customer-checkout";
 import AdminShell from "../admin-shell";
 import {updateFulfillmentAction} from "../actions";
 import {confirmManualKlarnaHandoverAction} from "../klarna-manual-actions";
+import {createOrderDhlLabelAction,cancelOrderDhlLabelAction} from "../dhl-order-actions";
 
 export const metadata:Metadata={title:"Bestellungen | Ruby Hair Verwaltung",robots:{index:false,follow:false}};
 export const dynamic="force-dynamic";
@@ -23,7 +24,7 @@ const addressText=(value:unknown)=>{
    .map(key=>typeof a[key]==="string"?a[key]:"").filter(Boolean).join(", ")||null;
 };
 
-export default async function AdminOrders({searchParams}:{searchParams:Promise<{filter?:string;seite?:string;manualKlarna?:string}>}){
+export default async function AdminOrders({searchParams}:{searchParams:Promise<{filter?:string;seite?:string;manualKlarna?:string;dhl?:string}>}){
  if(!await isAdmin())redirect("/admin/login");
  const params=await searchParams;
  const filter=filters.find(f=>f===params.filter)||"ohne-testkennzeichen";
@@ -55,6 +56,7 @@ export default async function AdminOrders({searchParams}:{searchParams:Promise<{
    <Link href="/admin/dhl">DHL-Verbindung einrichten</Link>
    <Link href="/admin/erstattungen">Erstattungsstatus prüfen (nur lesen)</Link>
   </nav></details>
+  {params.dhl&&<div className="rh-admin-warning">{params.dhl==="created"?"DHL-Versandetikett erstellt. PDF in der Bestellung herunterladen.":params.dhl==="canceled"?"DHL-Versandetikett storniert.": "DHL-Vorgang nicht abgeschlossen. Bitte Status prüfen; nicht erneut buchen, solange das Ergebnis unklar ist."}</div>}
   <div className="rh-admin-pill-row">
    <span className="rh-admin-stat-pill">{realCount} Kundenbestellungen</span>
    <span className="rh-admin-stat-pill">{testCount} Testdatensätze</span>
@@ -98,6 +100,13 @@ export default async function AdminOrders({searchParams}:{searchParams:Promise<{
         {order.shippingJob?.labelPdf&&<p><a href={`/api/admin/customer-document?orderId=${order.id}&type=label`} target="_blank" rel="noopener noreferrer">DHL Paketlabel PDF herunterladen</a></p>}
         {order.notifications.length>0&&<p><strong>Automatische E-Mails:</strong> {order.notifications.map(n=>n.stage+": "+n.status).join(" · ")}</p>}
         {order.fulfillmentNote&&<p><strong>Interne Notiz:</strong> {order.fulfillmentNote}</p>}</div>
+       {!order.testOnly&&order.lines.length>0&&["payment_confirmed","preparing"].includes(order.status)&&order.paymentReference&&order.payments.some(p=>p.eventType==="PAYMENT.CAPTURE.COMPLETED"&&p.provider!=="manual"&&p.providerEventId.length>0)&&!order.trackingNumber&&["waiting_credentials","canceled"].includes(order.shippingJob?.status||"")&&<form action={createOrderDhlLabelAction} className="rh-admin-fulfillment-form">
+        <h3>DHL Versandetikett erstellen</h3><p>500 g, GoGreen Plus gemäß DHL-Vertrag. Kostenpflichtige Buchung; noch keine Versandbestätigung.</p>
+        <input type="hidden" name="id" value={order.id}/><label><input type="checkbox" name="confirmed" required/> Kostenpflichtiges DHL-Etikett erstellen</label><button type="submit">Versandetikett erstellen</button>
+       </form>}
+       {!order.testOnly&&["payment_confirmed","preparing"].includes(order.status)&&["label_created","awaiting_handover"].includes(order.shippingJob?.status||"")&&order.shippingJob?.trackingNumber&&<form action={cancelOrderDhlLabelAction} className="rh-admin-fulfillment-form">
+        <h3>DHL Versandetikett stornieren</h3><p>Nur vor Tagesabschluss und tatsächlicher Paketübergabe. Stornierung wird bei DHL geprüft.</p><input type="hidden" name="id" value={order.id}/><label><input type="checkbox" name="confirmed" required/> Dieses Etikett stornieren</label><button type="submit">Versandetikett stornieren</button>
+       </form>}
        {!order.testOnly&&order.status==="payment_authorized"&&order.paymentReference?.startsWith("KLARNA-HPP:")&&
          <form action={confirmManualKlarnaHandoverAction} className="rh-admin-fulfillment-form">
           <h3>{["label_created","awaiting_handover"].includes(order.shippingJob?.status||"")?"DHL-Label vorhanden – reale Paketübergabe bestätigen":"Klarna: DHL-Versand manuell abschließen"}</h3>
@@ -126,7 +135,7 @@ export default async function AdminOrders({searchParams}:{searchParams:Promise<{
        {(()=>{
         const paid= !order.testOnly&&Boolean(order.paymentReference)&&order.payments.some(p=>p.eventType==="PAYMENT.CAPTURE.COMPLETED"&&p.provider!=="manual"&&p.providerEventId.length>0);
         const next=order.status==="payment_confirmed"&&(!order.shippingJob||order.shippingJob.status!=="label_created")?"preparing":order.status==="preparing"?"shipped":order.status==="shipped"?"delivered":null;
-        return paid&&next&&order.lines.length>0?<form action={updateFulfillmentAction} className="rh-admin-fulfillment-form">
+        return paid&&next&&order.lines.length>0&&!["submitting","canceling","needs_review"].includes(order.shippingJob?.status||"")?<form action={updateFulfillmentAction} className="rh-admin-fulfillment-form">
           <h3>Versandstatus bearbeiten</h3><p>Nur nach verifiziertem Zahlungseingang. Statusänderungen werden protokolliert.</p>
           <input type="hidden" name="id" value={order.id}/>
           <input type="hidden" name="next" value={next}/>

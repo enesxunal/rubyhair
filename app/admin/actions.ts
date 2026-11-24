@@ -209,12 +209,13 @@ export async function updateFulfillmentAction(formData:FormData){
     }});
     if(data.next==="shipped"){
       const shipping=await tx.shippingJob.findUnique({where:{orderId:order.id}});
+      if(shipping&&["submitting","canceling","needs_review"].includes(shipping.status))throw new Error("DHL_SHIPMENT_REQUIRES_REVIEW");
       const hasLabel=shipping?.status==="awaiting_handover"||shipping?.status==="label_created";
       if(hasLabel&&(shipping?.trackingNumber!==data.tracking||data.carrier.toLowerCase()!=="dhl"))throw new Error("DHL_LABEL_TRACKING_MISMATCH");
-      if(shipping?.status==="waiting_credentials")await tx.shippingJob.update({
-        where:{orderId:order.id},data:{status:"manual_shipped",trackingNumber:data.tracking,lastError:null}
-      });
-      else if(hasLabel)await tx.shippingJob.update({where:{orderId:order.id},data:{status:"shipped",lastError:null}});
+      if(shipping){
+        const claimed=await tx.shippingJob.updateMany({where:{id:shipping.id,status:shipping.status},data:hasLabel?{status:"shipped",lastError:null}:{status:"manual_shipped",trackingNumber:data.tracking,lastError:null}});
+        if(claimed.count!==1)throw new Error("DHL_SHIPMENT_CONCURRENT_CHANGE");
+      }
       await tx.orderNotification.upsert({where:{orderId_stage:{orderId:order.id,stage:"shipped"}},create:{orderId:order.id,stage:"shipped"},update:{}});
     }
     if(data.next==="delivered")await tx.orderNotification.upsert({where:{orderId_stage:{orderId:order.id,stage:"delivered"}},create:{orderId:order.id,stage:"delivered"},update:{}});
