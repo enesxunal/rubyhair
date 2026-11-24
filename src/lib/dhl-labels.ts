@@ -21,14 +21,14 @@ export function buildDhlShipmentBody(input:{billingNumber:string;orderNumber:str
  const shipperStreet=splitGermanStreetAddress(RUBY_TEST_SELLER.street);
  const recipientStreet=splitGermanStreetAddress(input.recipient.street);
  return {profile:"STANDARD_GRUPPENPROFIL",shipments:[{
-  product:"V01PAK",billingNumber:input.billingNumber,refNo:"RH-"+input.orderNumber,
+  product:"V01PAK",billingNumber:input.billingNumber,refNo:("RH-"+input.orderNumber).padStart(8,"0").slice(0,35),
   shipDate:input.shipDate,
   shipper:{name1:RUBY_TEST_SELLER.name.slice(0,50),...shipperStreet,
    postalCode:RUBY_TEST_SELLER.postalCode,city:RUBY_TEST_SELLER.city,country:"DEU",email:RUBY_TEST_SELLER.email},
   consignee:{name1:(input.recipient.firstName+" "+input.recipient.lastName).slice(0,50),
    ...recipientStreet,postalCode:input.recipient.postalCode,
    city:input.recipient.city.slice(0,40),country:"DEU"},
-  services:{goGreenPlus:false},
+  services:{goGreenPlus:true},
   details:{weight:{uom:"kg",value:input.weightG/1000}}
  }]};
 }
@@ -102,7 +102,7 @@ export async function validateDhlLiveTemplateOnly(send:typeof fetch=fetch):Promi
   // Log only protocol status and validated field names, never body values,
   // shipment addresses, credentials, tokens or arbitrary provider messages.
   const body=await dry.json() as {items?:{sstatus?:{status?:number;statusCode?:number};
-    validationMessages?:{property?:string;validationState?:string}[]}[];title?:string;status?:number};
+    validationMessages?:{property?:string;validationState?:string;validationMessage?:string}[]}[];title?:string;status?:number};
   const valid=dry.ok&&body.items?.length===1&&body.items[0].sstatus?.status===200&&
     !body.items[0].validationMessages?.some(m=>m.validationState==="Error");
   if(!valid){
@@ -111,7 +111,7 @@ export async function validateDhlLiveTemplateOnly(send:typeof fetch=fetch):Promi
     console.warn("RUBY_DHL_VALIDATE_ONLY_REJECTED",JSON.stringify({http:dry.status,
       itemStatuses:(body.items||[]).map(i=>i.sstatus?.status).slice(0,3),
       providerStatusCodes:(body.items||[]).map(i=>i.sstatus?.statusCode).slice(0,3),
-      fields,hasItems:Boolean(body.items?.length)}));
+      fields,goGreenDetails:(body.items||[]).flatMap(i=>i.validationMessages||[]).filter(m=>m.property==="services.goGreenPlus").map(m=>(m.validationMessage||"").replace(/\d{4,}/g,"[redacted]").slice(0,220)).slice(0,3),hasItems:Boolean(body.items?.length)}));
   }
   return valid?"valid":dry.status===401||dry.status===403?"unauthorized":dry.status>=500?"unavailable":"rejected";
  }catch{return "unavailable"}
