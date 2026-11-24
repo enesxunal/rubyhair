@@ -27,3 +27,28 @@ test("catalog marketing pages use short-lived shared read cache without changing
  assert.match(checkout,/stockQuantity!==null/);
  assert.match(storefrontError,/Seite erneut laden/);
 });
+
+import {singleFlight} from "../src/lib/single-flight";
+test("concurrent catalog reads share one pending operation and retry cleanly after failure",async()=>{
+ let calls=0;
+ let fail=false;
+ const read=singleFlight(async()=>{calls++;await Promise.resolve();if(fail)throw Error("read failed");return calls;});
+ assert.deepEqual(await Promise.all([read(),read(),read()]),[1,1,1]);
+ assert.equal(calls,1);
+ fail=true;
+ const results=await Promise.allSettled([read(),read()]);
+ assert.ok(results.every(r=>r.status==="rejected"));
+ assert.equal(calls,2);
+ fail=false;
+ assert.equal(await read(),3);
+});
+test("search shows a local loading or retry state without treating database errors as empty stock",()=>{
+ const page=read("app/suche/page.tsx");
+ const component=read("src/components/search-catalog.tsx");
+ assert.ok(!page.includes("getStoreCatalog"));
+ assert.ok(page.includes("<SearchCatalog"));
+ assert.match(component,/data.source!=="postgresql"/);
+ assert.match(component,/role="alert"/);
+ assert.match(component,/role="status"/);
+ assert.ok(component.includes("Erneut laden"));
+});

@@ -97,11 +97,32 @@ function HomeNavigation(){
   </>;
 }
 
-function ShadeSelector({product}:{product?:Product}){
+function ShadeSelector(){
   const [index,setIndex]=useState(0);
+  const section=useRef<HTMLElement>(null);
+  const [product,setProduct]=useState<Product|undefined>();
+  const [verified,setVerified]=useState(false);
+  useEffect(()=>{
+    const controller=new AbortController();
+    let started=false;
+    const load=async()=>{
+      if(started)return;started=true;
+      try{
+        const response=await fetch("/api/catalog",{signal:controller.signal,cache:"no-store"});
+        if(!response.ok)return;
+        const data=await response.json() as {source:string;products:Product[]};
+        if(data.source!=="postgresql"||!Array.isArray(data.products)||controller.signal.aborted)return;
+        setProduct(data.products.find(p=>p.slug==="tape-in-extensions"));setVerified(true);
+      }catch{/* The product page remains available for a fresh stock check. */}
+    };
+    if(!section.current||typeof IntersectionObserver==="undefined"){void load();return ()=>controller.abort();}
+    const observer=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting)){observer.disconnect();void load();}},{rootMargin:"240px"});
+    observer.observe(section.current);
+    return ()=>{observer.disconnect();controller.abort();};
+  },[]);
   const active=shades[index];
   const canBuy=Boolean(product?.variations.some(v=>v.color===active.color&&v.available&&v.purchasable));
-  return <section id="shade" className="shade section-pad">
+  return <section ref={section} id="shade" className="shade section-pad">
     <div className="container shade-grid">
       <div className="shade-visual rh-shade-gallery">
         <div className="rh-shade-gallery-main">
@@ -129,7 +150,7 @@ function ShadeSelector({product}:{product?:Product}){
         <p className="shade-disclaimer">Farbdarstellung kann je nach Bildschirm abweichen. Die Auswahl dient als Inspiration.</p>
         {canBuy?<Link className="solid-button shade-button" href={"/produkt/"+active.slug+"/?farbe="+active.color}>
           FARBE ANSEHEN <ArrowUpRight size={17}/>
-        </Link>:<span className="solid-button shade-button" aria-disabled="true" style={{opacity:.65,cursor:"not-allowed"}}>AUSVERKAUFT</span>}
+        </Link>:verified?<span className="solid-button shade-button" aria-disabled="true" style={{opacity:.65,cursor:"not-allowed"}}>AUSVERKAUFT</span>:<Link className="solid-button shade-button" href={"/produkt/"+active.slug+"/?farbe="+active.color}>VERFÜGBARKEIT PRÜFEN <ArrowUpRight size={17}/></Link>}
       </div>
     </div>
   </section>;
@@ -193,7 +214,7 @@ function HomeFooter(){
     </footer>
   </>;
 }
-export default function HomeFrontend({products,instagramPosts=[]}:{products:Product[];instagramPosts?:InstagramFeedPost[]}){
+export default function HomeFrontend({instagramPosts=[]}:{instagramPosts?:InstagramFeedPost[]}){
   return <>
     <HomeNavigation/>
     <main id="main">
@@ -253,7 +274,7 @@ export default function HomeFrontend({products,instagramPosts=[]}:{products:Prod
           </div>
         </div>
       </section>
-      <ShadeSelector product={products.find(p=>p.slug==="tape-in-extensions")}/>
+      <ShadeSelector/>
       <section className="rh-tape-originals" aria-labelledby="rh-tape-originals-title">
        <div className="container">
         <div className="rh-tape-originals-heading">

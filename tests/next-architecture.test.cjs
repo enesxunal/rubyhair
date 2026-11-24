@@ -92,11 +92,14 @@ test("admin product content editing is authenticated and rejects unknown media f
   assert.ok(actions.includes("productInput.safeParse"));
 });
 
-test("native homepage uses React and current server catalog, not injected HTML bridge",()=>{
+test("native homepage renders independently of the catalog and defers availability checks",()=>{
   const home=fs.readFileSync(path.join(base,"app/page.tsx"),"utf8");
   const frontend=fs.readFileSync(path.join(base,"src/components/home-frontend.tsx"),"utf8");
-  assert.ok(home.includes("getStoreCatalog()"));
-  assert.ok(home.includes("<HomeFrontend products={products} instagramPosts={instagramPosts}/>"));
+  assert.ok(!home.includes("getStoreCatalog()"));
+  assert.ok(home.includes("<HomeFrontend instagramPosts={instagramPosts}/>"));
+  assert.ok(frontend.includes('fetch("/api/catalog"'));
+  assert.ok(frontend.includes("IntersectionObserver"));
+  assert.ok(frontend.includes("VERFÜGBARKEIT PRÜFEN"));
   assert.ok(frontend.includes('className="hero rh-hero-product"'));
   assert.ok(frontend.includes("tapeInLengths.map("));
   assert.ok(!frontend.includes('className="rh-keratin-feature"'));
@@ -580,7 +583,7 @@ test("Ruby Hair blonde and brunette editorial photography keeps the approved hom
  assert.ok(frontend.includes('WARM BRUNETTE'));
  assert.ok(!frontend.includes('src="/assets/ruby-hair-platinum-detail.webp"'));
  assert.ok(frontend.includes('<TapeInAtelier/>'));
- assert.ok(frontend.includes('<ShadeSelector product={products.find(p=>p.slug==="tape-in-extensions")}/>'));
+ assert.ok(frontend.includes("<ShadeSelector/>"));
  assert.ok(frontend.indexOf('<TapeInAtelier/>')>frontend.indexOf('<ShadeSelector/>'));
  assert.ok(frontend.indexOf('<TapeInAtelier/>')<frontend.indexOf('className="brand-story'));
  const homePage=fs.readFileSync(path.join(base,"app/page.tsx"),"utf8");
@@ -610,7 +613,7 @@ test("Tape-in lengths have measured labels everywhere, with no Kurz or Lang cate
  const index=fs.readFileSync(path.join(base,"app/page.tsx"),"utf8");
  assert.ok(home.includes("<InstagramHome posts={instagramPosts}/>"));
  assert.ok(index.includes("getRubyInstagramPosts()"));
- assert.ok(index.includes("Promise.all("));
+ assert.ok(!index.includes("getStoreCatalog()"));
 });
 
 test("length collection cards use contrasting real hair photos, not stale editorial copies",()=>{

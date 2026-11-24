@@ -1,5 +1,7 @@
 import "server-only";
 import {unstable_cache} from "next/cache";
+import {cache} from "react";
+import {singleFlight} from "@/lib/single-flight";
 import { databaseConfigured, getPrisma } from "@/lib/prisma";
 import { products as importedProducts, type Product, type Variation } from "@/lib/catalog";
 import {customerTapeMainImage} from "@/lib/customer-tape-images";
@@ -11,7 +13,7 @@ import {blackFridayCatalog} from "@/lib/black-friday";
 // Customer cart quotations and checkout still validate real stock and prices.
 // Checkout, reservations and payments NEVER use this read cache.
 // Administrator writes invalidate the tag immediately.
-const liveProducts=unstable_cache(async ():Promise<Product[]>=>{
+const readLiveProducts=singleFlight(async ():Promise<Product[]>=>{
   const dbProducts=await getPrisma().product.findMany({
     where:{active:true},include:{variants:{orderBy:{legacyId:"asc"}}},orderBy:{name:"asc"}
   });
@@ -38,12 +40,13 @@ const liveProducts=unstable_cache(async ():Promise<Product[]>=>{
     };
   });
   return products;
-},["rubyhair-live-store-catalog"],{revalidate:60,tags:["rubyhair-live-catalog"]});
-export async function getStoreCatalog():Promise<{source:"postgresql"|"imported-preview";products:Product[]}>{
+});
+const liveProducts=unstable_cache(async()=>readLiveProducts(),["rubyhair-live-store-catalog-v2"],{revalidate:60,tags:["rubyhair-live-catalog"]});
+export const getStoreCatalog=cache(async ():Promise<{source:"postgresql"|"imported-preview";products:Product[]}>=>{
   if(!databaseConfigured())return {source:"imported-preview",products:blackFridayCatalog(importedProducts)};
   // A failed database read still fails closed; never display fabricated stock.
   return {source:"postgresql",products:blackFridayCatalog(await liveProducts())};
-}
+});
 export async function getStoreProduct(slug:string){
   const catalog=await getStoreCatalog();
   return catalog.products.find(p=>p.slug===slug);
