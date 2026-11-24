@@ -1,5 +1,5 @@
 import "server-only";
-import {loadPaymentValue, paymentVaultConfigured} from "@/lib/payment-secrets";
+import {loadPaymentValues, paymentVaultConfigured} from "@/lib/payment-secrets";
 import {databaseConfigured} from "@/lib/prisma";
 import {
   buildDhlTokenRequest, dhlMissingFields, dhlRequiredFields,
@@ -12,9 +12,8 @@ import {
  */
 async function dhlCredentials(environment:DhlEnvironment):Promise<Partial<DhlCredentials>> {
   if (!databaseConfigured() || !paymentVaultConfigured()) return {};
-  const items = await Promise.all(dhlRequiredFields.map(async field =>
-    [field, await loadPaymentValue("dhl", environment, field)] as const));
-  return Object.fromEntries(items.map(([key,value])=>[key,value||""]));
+  const values=await loadPaymentValues("dhl",environment,dhlRequiredFields);
+  return Object.fromEntries(dhlRequiredFields.map((key,index)=>[key,values[index]||""]));
 }
 
 export async function getDhlIntegrationReadiness(environment:DhlEnvironment) {

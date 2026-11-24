@@ -33,20 +33,23 @@ export default async function AdminOrders({searchParams}:{searchParams:Promise<{
  const where=filter==="tests"?{testOnly:true}:filter==="ohne-testkennzeichen"?{testOnly:false}:
     filter==="offen"?{testOnly:true,status:"test_reserved"}:{};
  const db=getPrisma();
- const [count,orders,realCount,testCount]=await Promise.all([
-  db.order.count({where}),
-  db.order.findMany({where,orderBy:[{createdAt:"desc"},{id:"asc"}],skip:(page-1)*20,take:20,include:{
+ // One grouped count and sequential reads keep the single-connection pool free.
+ const groups=await db.order.groupBy({by:["testOnly","status"],_count:{_all:true}});
+ const realCount=groups.filter(g=>!g.testOnly).reduce((n,g)=>n+g._count._all,0);
+ const testCount=groups.filter(g=>g.testOnly).reduce((n,g)=>n+g._count._all,0);
+ const count=filter==="alle"?realCount+testCount:filter==="tests"?testCount:filter==="offen"?groups.filter(g=>g.testOnly&&g.status==="test_reserved").reduce((n,g)=>n+g._count._all,0):realCount;
+ const orders=await db.order.findMany({where,orderBy:[{createdAt:"desc"},{id:"asc"}],skip:(page-1)*20,take:20,include:{
    lines:{select:{quantity:true,unitPriceCents:true,lineTotalCents:true,variant:{select:{colorLabel:true,lengthLabel:true,product:{select:{name:true}}}}}},
    giftPurchases:{select:{id:true,amountCents:true,recipientName:true,delivery:true,recipientEmail:true,status:true,buyerMailStatus:true,recipientMailStatus:true}},
    payments:{select:{eventType:true,provider:true,providerEventId:true}},
    invoice:{select:{invoiceNumber:true}},
-   shippingJob:{select:{status:true,trackingNumber:true,labelPdf:true}},
+   shippingJob:{select:{status:true,trackingNumber:true}},
    notifications:{select:{stage:true,status:true}},
    statusEvents:{orderBy:{createdAt:"asc"},select:{createdAt:true,fromStatus:true,toStatus:true,reason:true}}
-  }}),
-  db.order.count({where:{testOnly:false}}),
-  db.order.count({where:{testOnly:true}})
- ]);
+  }});
+ // PDF bytes are fetched only by the protected download endpoint.
+ const labels=orders.length?await db.shippingJob.findMany({where:{orderId:{in:orders.map(o=>o.id)},labelPdf:{not:null}},select:{orderId:true}}):[];
+ const labelOrderIds=new Set(labels.map(l=>l.orderId));
  const totalPages=Math.max(1,Math.ceil(count/20));
  const link=(p:number)=>"/admin/bestellungen?filter="+filter+"&seite="+p;
  return <AdminShell current="orders" title="Bestellübersicht." description="Bestellungen, Sendungsnummern und Statusverlauf. Klarna-Einzug bei manuellem DHL-Versand nur nach bestätigter physischer Paketübergabe.">
@@ -97,7 +100,7 @@ export default async function AdminOrders({searchParams}:{searchParams:Promise<{
         <p><strong>Versand:</strong> {order.lines.length?`${order.trackingCarrier||"Noch nicht versendet"} ${order.trackingNumber||""}`:"Rein digital – kein DHL-Paket"}</p>
         {order.invoice&&<p><a href={`/api/admin/customer-document?orderId=${order.id}&type=invoice`} target="_blank" rel="noopener noreferrer">Rechnung {order.invoice.invoiceNumber} herunterladen</a></p>}
         {order.shippingJob&&<p><strong>DHL Automatik:</strong> {order.shippingJob.status} {order.shippingJob.trackingNumber||""}</p>}
-        {order.shippingJob?.labelPdf&&<p><a href={`/api/admin/customer-document?orderId=${order.id}&type=label`} target="_blank" rel="noopener noreferrer">DHL Paketlabel PDF herunterladen</a></p>}
+        {labelOrderIds.has(order.id)&&<p><a href={`/api/admin/customer-document?orderId=${order.id}&type=label`} target="_blank" rel="noopener noreferrer">DHL Paketlabel PDF herunterladen</a></p>}
         {order.notifications.length>0&&<p><strong>Automatische E-Mails:</strong> {order.notifications.map(n=>n.stage+": "+n.status).join(" · ")}</p>}
         {order.fulfillmentNote&&<p><strong>Interne Notiz:</strong> {order.fulfillmentNote}</p>}</div>
        {!order.testOnly&&order.lines.length>0&&["payment_confirmed","preparing"].includes(order.status)&&order.paymentReference&&order.payments.some(p=>p.eventType==="PAYMENT.CAPTURE.COMPLETED"&&p.provider!=="manual"&&p.providerEventId.length>0)&&!order.trackingNumber&&["waiting_credentials","canceled"].includes(order.shippingJob?.status||"")&&<form action={createOrderDhlLabelAction} className="rh-admin-fulfillment-form">

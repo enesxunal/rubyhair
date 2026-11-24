@@ -1,5 +1,5 @@
 import "server-only";
-import {loadPaymentValue} from "@/lib/payment-secrets";
+import {loadPaymentValues} from "@/lib/payment-secrets";
 import {buildDhlTokenRequest,type DhlCredentials} from "@/lib/dhl-auth-contract";
 import {RUBY_TEST_SELLER} from "@/lib/qa-invoice";
 
@@ -35,7 +35,7 @@ export function buildDhlShipmentBody(input:{billingNumber:string;orderNumber:str
 
 async function credentials():Promise<DhlCredentials>{
  const fields=["clientId","clientSecret","username","password","accountNumber","billingNumber"] as const;
- const parts=await Promise.all(fields.map(f=>loadPaymentValue("dhl","live",f)));
+ const parts=await loadPaymentValues("dhl","live",fields);
  if(parts.some(x=>!x))throw new DhlShipmentError("DHL_CREDENTIALS_MISSING");
  return Object.fromEntries(fields.map((f,i)=>[f,parts[i]])) as DhlCredentials;
 }

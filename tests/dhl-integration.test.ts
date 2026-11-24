@@ -36,7 +36,7 @@ test("DHL server integration cannot auto-enable live shipping or expose credenti
  assert.ok(adapter.includes('RUBY_DHL_AUTH_PROBE_ENABLED'));
  assert.ok(adapter.includes('RUBY_DHL_LIVE_AUTH_PROBE_ENABLED'));
  assert.ok(adapter.includes('liveEnabled:false'));
- assert.ok(adapter.includes('loadPaymentValue("dhl"'));
+ assert.ok(adapter.includes('loadPaymentValues("dhl"'));
  assert.ok(fields.includes('label:"DHL Paket / Versand"'));
  assert.ok(checkout.includes("CHECKOUT_NOT_CONFIGURED"));
 });

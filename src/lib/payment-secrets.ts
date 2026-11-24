@@ -38,3 +38,13 @@ export async function loadPaymentValue(provider:VaultProvider,env:PaymentEnviron
   });
   return row?decryptPaymentValue(provider,env,field,row):null;
 }
+
+/** One database read for a provider's credential set; no decrypted cache. */
+export async function loadPaymentValues(provider:VaultProvider,env:PaymentEnvironment,fields:readonly string[]){
+ const rows=await getPrisma().paymentIntegrationSetting.findMany({
+  where:{provider,environment:env,field:{in:[...fields]}},
+  select:{field:true,ciphertext:true,nonce:true,authTag:true}
+ });
+ const byField=new Map(rows.map(row=>[row.field,row]));
+ return fields.map(field=>{const row=byField.get(field);return row?decryptPaymentValue(provider,env,field,row):null;});
+}

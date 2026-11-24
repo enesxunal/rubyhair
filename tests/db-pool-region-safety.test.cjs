@@ -28,3 +28,18 @@ test('Prisma uses one pooled connection per Vercel function and respects explici
   assert.equal(execute(testUrl,false),testUrl,'local development URL stays unchanged');
   assert.doesNotMatch(source,/\$disconnect\(\)/);
 });
+
+
+test('DHL credential loading is batched and order lists do not load PDF bytes',()=>{
+ const orders=readFileSync('app/admin/bestellungen/page.tsx','utf8');
+ const vault=readFileSync('src/lib/payment-secrets.ts','utf8');
+ const dhl=readFileSync('src/lib/dhl-api.ts','utf8');
+ const labels=readFileSync('src/lib/dhl-labels.ts','utf8');
+ assert.doesNotMatch(orders,/Promise\.all\(/);
+ assert.match(orders,/order\.groupBy\(/);
+ assert.doesNotMatch(orders,/labelPdf:true/);
+ assert.match(orders,/labelPdf:\{not:null\}/);
+ assert.match(vault,/paymentIntegrationSetting\.findMany\(/);
+ assert.match(dhl,/loadPaymentValues\("dhl",environment,dhlRequiredFields\)/);
+ assert.match(labels,/loadPaymentValues\("dhl","live",fields\)/);
+});

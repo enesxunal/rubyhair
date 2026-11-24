@@ -16,11 +16,9 @@ export default async function AdminHome(){
  if(!await isAdmin())redirect("/admin/login");
  const db=getPrisma();
  // Never mix hidden QA products or technical test orders into merchant KPIs.
- const [products,recentOrders,realOrders]=await Promise.all([
-  db.product.findMany({where:{active:true},select:{id:true,name:true,variants:{select:{stockQuantity:true,active:true}}}}),
-  db.order.findMany({where:{testOnly:false},select:{id:true,orderNumber:true,status:true,createdAt:true},orderBy:{createdAt:"desc"},take:5}),
-  db.order.count({where:{testOnly:false}})
- ]);
+ const products=await db.product.findMany({where:{active:true},select:{id:true,name:true,variants:{select:{stockQuantity:true,active:true}}}});
+ const recentOrders=await db.order.findMany({where:{testOnly:false},select:{id:true,orderNumber:true,status:true,createdAt:true},orderBy:{createdAt:"desc"},take:5});
+ const realOrders=await db.order.count({where:{testOnly:false}});
  const variants=products.flatMap(product=>product.variants);
  const unknown=variants.filter(v=>v.stockQuantity===null).length;
  const soldOut=variants.filter(v=>v.stockQuantity===0).length;
@@ -38,7 +36,7 @@ export default async function AdminHome(){
    <div className="rh-studio-hero-copy">
     <span className="rh-studio-eyebrow"><CheckCircle2 size={14}/> SHOP STATUS</span>
     <h2>Ruby Hair ist live.</h2>
-    <p>PayPal und Klarna sind für Kunden verfügbar. DHL-Sendungen werden bis zur API-Freigabe manuell bearbeitet.</p>
+    <p>PayPal und Klarna sind für Kunden verfügbar. DHL-Versandetiketten werden direkt in den Bestellungen verwaltet.</p>
     <Link href="/admin/bestellungen">Bestellungen öffnen <ArrowUpRight size={17}/></Link>
    </div>
    <div className="rh-studio-live-summary" aria-label={realOrders+" Kundenbestellungen"}>
