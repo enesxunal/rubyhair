@@ -53,7 +53,7 @@ export async function createDhlShipmentLabel(input:{orderNumber:string;recipient
  const token=await authResponse.json() as {access_token?:string};
  if(!token.access_token||token.access_token.length<10)throw new DhlShipmentError("DHL_AUTH_INVALID");
  const root="https://api-eu.dhl.com/parcel/de/shipping/v2/orders";
- const headers={Authorization:"Bearer "+token.access_token,"dhl-api-key":creds.clientId,
+ const headers={Authorization:"Bearer "+token.access_token,
   "Content-Type":"application/json",Accept:"application/json"};
  const dry=await send(root+"?validate=true",{method:"POST",headers,body:JSON.stringify(payload),redirect:"error",signal:AbortSignal.timeout(13000)});
  if(!dry.ok)throw new DhlShipmentError("DHL_DRY_RUN_REJECTED_"+dry.status);
@@ -96,7 +96,7 @@ export async function validateDhlLiveTemplateOnly(send:typeof fetch=fetch):Promi
     weightG:500,shipDate:day});
   const url="https://api-eu.dhl.com/parcel/de/shipping/v2/orders?validate=true";
   const dry=await send(url,{method:"POST",headers:{Authorization:"Bearer "+result.access_token,
-    "dhl-api-key":creds.clientId,"Content-Type":"application/json",Accept:"application/json"},
+    "Content-Type":"application/json",Accept:"application/json"},
     body:JSON.stringify(payload),redirect:"error",signal:AbortSignal.timeout(13000)});
   // Log only protocol status and validated field names, never body values,
   // shipment addresses, credentials, tokens or arbitrary provider messages.
