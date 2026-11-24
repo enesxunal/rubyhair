@@ -1,4 +1,5 @@
 import "server-only";
+import {unstable_cache} from "next/cache";
 import {getPrisma} from "@/lib/prisma";
 import {commerceRangeUTC,createCommerceReport,type CapturedOrder,type StockSnapshot} from "@/lib/admin-commerce-report";
 import type {AnalyticsRange} from "@/lib/admin-analytics-report";
@@ -12,18 +13,13 @@ export async function loadCommerceReport(range:AnalyticsRange){
   lines:{select:{quantity:true,lineTotalCents:true,variant:{select:{product:{select:{name:true}}}}}}
  }}} as const;
  // Include a sentinel to avoid silently presenting a truncated period as complete.
- // Vercel uses a two-connection Prisma pool. Keep at most two simultaneous reads
- // here; the previous four-way burst could intermittently starve a range report.
- const [captures,previous]=await Promise.all([
-  db.paymentEvent.findMany({where:{eventType:{in:captureEvents},receivedAt:{gte:bounds.start,lt:bounds.endExclusive},order:{testOnly:false}},
-   select:eventSelect,orderBy:{receivedAt:"desc"},take:1501}),
-  db.paymentEvent.findMany({where:{eventType:{in:captureEvents},receivedAt:{gte:bounds.previousStart,lt:bounds.start},order:{testOnly:false}},
-   select:eventSelect,orderBy:{receivedAt:"desc"},take:1501})
- ]);
- const [cohorts,variants]=await Promise.all([
-  db.order.groupBy({by:["status"],where:{testOnly:false,createdAt:{gte:bounds.start,lt:bounds.endExclusive}},_count:{_all:true}}),
-  db.variant.findMany({where:{active:true,product:{active:true}},select:{stockQuantity:true}})
- ]);
+ // Serialize reads for the single-connection production pool.
+ const captures=await db.paymentEvent.findMany({where:{eventType:{in:captureEvents},receivedAt:{gte:bounds.start,lt:bounds.endExclusive},order:{testOnly:false}},
+   select:eventSelect,orderBy:{receivedAt:"desc"},take:1501});
+ const previous=await db.paymentEvent.findMany({where:{eventType:{in:captureEvents},receivedAt:{gte:bounds.previousStart,lt:bounds.start},order:{testOnly:false}},
+   select:eventSelect,orderBy:{receivedAt:"desc"},take:1501});
+ const cohorts=await db.order.groupBy({by:["status"],where:{testOnly:false,createdAt:{gte:bounds.start,lt:bounds.endExclusive}},_count:{_all:true}});
+ const variants=await db.variant.findMany({where:{active:true,product:{active:true}},select:{stockQuantity:true}});
  const mapEvents=(events:typeof captures):CapturedOrder[]=>{
   const distinct=new Set<string>();const rows:CapturedOrder[]=[];
   for(const e of events){
@@ -47,16 +43,22 @@ export async function loadCommerceReport(range:AnalyticsRange){
   truncated:captures.length>1500||previous.length>1500},range);
 }
 
+// Only the derived aggregate report is cached, never orders or credentials.
+const cachedCommerce=unstable_cache(async(start:string,end:string,days:number)=>{
+ const report=await loadCommerceReport({start:new Date(start),end:new Date(end),days,mode:"frei",label:""});
+ return {...report,loadedAt:new Date().toISOString()};
+},["rubyhair-commerce-summary-v1"],{revalidate:30});
+
 /** Do not turn transient pool errors into false zero revenue. Retry once, then
  * show an explicit unavailable state. Logs contain only Prisma error codes.
  * Call only after admin authentication, never from a public route. */
 export async function loadCommerceReportSafely(range:AnalyticsRange){
- try{return await loadCommerceReport(range)}catch(error){
+ try{return await cachedCommerce(range.start.toISOString(),range.end.toISOString(),range.days)}catch(error){
   const code=error&&typeof error==="object"&&"code" in error&&typeof error.code==="string"
    ?error.code:"UNKNOWN";
   console.error("RUBY_ANALYTICS_COMMERCE_READ_FAILED",{code,attempt:1});
   if(!new Set(["P2024","P1001","P1002","P1008","P1017"]).has(code))return null;
-  try{return await loadCommerceReport(range)}catch(retryError){
+  try{return await cachedCommerce(range.start.toISOString(),range.end.toISOString(),range.days)}catch(retryError){
    const retryCode=retryError&&typeof retryError==="object"&&"code" in retryError&&typeof retryError.code==="string"
     ?retryError.code:"UNKNOWN";
    console.error("RUBY_ANALYTICS_COMMERCE_READ_FAILED",{code:retryCode,attempt:2});

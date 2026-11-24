@@ -17,8 +17,8 @@ const cachedAggregateRows=unstable_cache(async(startISO:string,endISO:string)=>{
   where:{day:{gte:new Date(startISO),lte:new Date(endISO)}},
   select:{day:true,event:true,path:true,source:true,device:true,count:true}
  });
- return rows.map(row=>({...row,day:row.day.toISOString()}));
-},["rubyhair-analytics-daily"],{revalidate:30});
+ return {rows:rows.map(row=>({...row,day:row.day.toISOString()})),loadedAt:new Date().toISOString()};
+},["rubyhair-analytics-daily-v2"],{revalidate:30});
 
 /** Only anonymous aggregate counts. Never pull user identifiers or session-level events. */
 export async function loadAnalyticsReport(selection:AnalyticsPeriod|AnalyticsRange,now:Date=new Date()){
@@ -26,7 +26,7 @@ export async function loadAnalyticsReport(selection:AnalyticsPeriod|AnalyticsRan
  const days=typeof selection==="number"?selection:selection.days;
  const start=typeof selection==="number"?addUtcDays(end,1-days):selection.start;
  const previousStart=addUtcDays(start,-days);
- const rows=await cachedAggregateRows(previousStart.toISOString(),end.toISOString());
- const decoded:AnalyticsRow[]=rows.map(row=>({...row,day:new Date(row.day)}));
- return createAnalyticsReport(decoded,selection,now);
+ const snapshot=await cachedAggregateRows(previousStart.toISOString(),end.toISOString());
+ const decoded:AnalyticsRow[]=snapshot.rows.map(row=>({...row,day:new Date(row.day)}));
+ return {...createAnalyticsReport(decoded,selection,now),loadedAt:snapshot.loadedAt};
 }

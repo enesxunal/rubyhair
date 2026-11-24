@@ -74,3 +74,16 @@ test('Advanced page uses admin authentication, safe independent verified payment
  assert.ok(exportCSV.includes('Bestaetigte_Bestellungen;Eingegangene_EUR'));
  for(const style of ['rh-adv-commerce-kpis','rh-adv-hero','rh-adv-inventory','rh-adv-two-col','rh-analytics-trend-toolbar','@media(max-width:720px)'])assert.ok(styles.includes(style),style);
 });
+
+
+test('Analytics refresh retains current view and reports actual cached snapshot timestamps',()=>{
+ const page=readFileSync('app/admin/analytics/page.tsx','utf8');
+ const refresh=readFileSync('src/components/admin-analytics-refresh.tsx','utf8');
+ const service=readFileSync('src/lib/admin-commerce-server.ts','utf8');
+ assert.match(refresh,/startTransition\(\(\)=>router.refresh\(\)\)/);
+ assert.match(refresh,/disabled=\{pending\}/);
+ assert.match(page,/trafficAt=\{report.loadedAt\}/);
+ assert.match(service,/revalidate:30/);
+ assert.doesNotMatch(service,/Promise\.all\(/);
+ assert.match(service,/loadedAt:new Date\(\).toISOString\(\)/);
+});

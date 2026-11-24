@@ -2,7 +2,7 @@ import type {Metadata} from "next";
 import Link from "next/link";
 import {redirect} from "next/navigation";
 import {
- BarChart3,CalendarDays,Download,Eye,Info,MousePointer2,ShoppingBag,RefreshCw,
+ BarChart3,CalendarDays,Download,Eye,Info,MousePointer2,ShoppingBag,
  ShoppingCart,Sparkles,ShieldCheck,TrendingUp
 } from "lucide-react";
 import {isAdmin} from "@/lib/admin-auth";
@@ -13,6 +13,7 @@ import {
 import {loadAnalyticsReport} from "@/lib/admin-analytics-server";
 import {loadCommerceReportSafely} from "@/lib/admin-commerce-server";
 import AdminCommercePanel from "@/components/admin-commerce-panel";
+import AdminAnalyticsRefresh from "@/components/admin-analytics-refresh";
 import AdminAnalyticsTrend from "@/components/admin-analytics-trend";
 import AdminAnalyticsChannels from "@/components/admin-analytics-channels";
 import {berlinDateKey} from "@/lib/analytics-calendar";
@@ -107,7 +108,7 @@ export default async function AdminAnalytics({searchParams}:{searchParams:Promis
     <p>Black Friday 2026 · Anzeigen, Kundeninteresse und bezahlte Bestellungen auf einen Blick.</p>
     <div className="rh-adv-hero-tags"><span>Europe/Berlin</span><span>{enabled?"Statistik mit Einwilligung aktiv":"Besucherstatistik deaktiviert"}</span><span>Bezahlte Bestellungen aus verifizierten Zahlungen</span><a href="#story-analytics">Story-Statistiken</a></div>
    </div>
-   <Link className="rh-adv-refresh" href={"/admin/analytics?"+exportQuery.toString()} prefetch={false}><RefreshCw size={17}/> Aktualisieren</Link>
+   <AdminAnalyticsRefresh trafficAt={report.loadedAt} commerceAt={commerce?.loadedAt}/>
   </section>
   <section className="rh-ops-kpis" aria-label="Wichtigste Kennzahlen">
    <OverviewCard label="Seitenaufrufe" icon={<Eye size={19}/>} value={enabledValue(enabled,current.views)}
