@@ -16,7 +16,9 @@ const source=():RubyTrafficSource=>{
  return result;
 };
 export const isTrackableRubyPath=(path:string)=>allowed.has(path.replace(/\/$/,"")||"/");
-export const analyticsConsent=()=>enabled&&typeof window!=="undefined"&&localStorage.getItem("ruby_analytics_choice")==="allow";
+export const analyticsConsent=()=>enabled&&typeof window!=="undefined"&&
+ localStorage.getItem("ruby_analytics_choice")==="allow"&&
+ document.cookie.split(";").some(part=>part.trim()==="ruby_analytics=allow");
 export function trackRubyEvent(event:RubyEvent,pathOverride?:string){
  if(!analyticsConsent())return;
  const path=pathOverride||location.pathname.replace(/\/$/,"")||"/";
@@ -25,5 +27,17 @@ export function trackRubyEvent(event:RubyEvent,pathOverride?:string){
  else {if(!isTrackableRubyPath(path))return;}
  // Only whitelisted categorical metadata, never URL query strings, personal fields or photo data.
  const payload=JSON.stringify({event,path,source:source(),device:innerWidth<=767?"mobile":"desktop",consent:true});
- fetch("/api/analytics/event",{method:"POST",headers:{"Content-Type":"application/json"},body:payload,credentials:"same-origin",keepalive:true,cache:"no-store"}).catch(()=>{});
+ // A temporary 503 should not permanently lose a consented Story/AI click.
+ // Never retry validation/consent rejections (400/403), and retry at most once.
+ const send=(attempt:number)=>{
+  fetch("/api/analytics/event",{method:"POST",headers:{"Content-Type":"application/json"},body:payload,credentials:"same-origin",keepalive:true,cache:"no-store"})
+   .then(response=>{
+    if(response.status===503&&attempt===0&&document.visibilityState==="visible")
+     window.setTimeout(()=>send(1),850);
+   })
+   .catch(()=>{
+    if(attempt===0&&document.visibilityState==="visible")window.setTimeout(()=>send(1),850);
+   });
+ };
+ send(0);
 }

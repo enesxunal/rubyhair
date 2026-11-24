@@ -136,6 +136,10 @@ export default async function AdminAnalytics({searchParams}:{searchParams:Promis
    <OverviewCard label="KI → Warenkorb" value={enabledValue(enabled,report.engagement.aiAdds)} icon={<ShoppingBag size={17}/>}
     note="Aus dem Ergebnis zum Warenkorb"/>
   </div>
+  {enabled&&report.engagement.storyViews===0&&current.views>0&&
+   <p className="rh-ops-muted" role="status">{number(current.views)} erfasste Seitenaufrufe, aber keine Story-Wiedergabe mit Statistik-Einwilligung in diesem Zeitraum. 0 erfasste Aufrufe sind kein Nachweis für 0 tatsächliche Zuschauer.</p>}
+  {enabled&&report.engagement.aiStarts===0&&report.funnel.aiViews>0&&
+   <p className="rh-ops-muted" role="status">Die KI-Anprobe-Seite wurde {number(report.funnel.aiViews)}-mal mit Einwilligung geöffnet, aber kein KI-Versuch gestartet. Ein Seitenaufruf ist noch kein KI-Start.</p>}
   <section className="rh-admin-panel-card rh-adv-story-trend" aria-labelledby="rh-adv-story-trend-title">
    <div className="rh-ops-section-head"><div><span>STORY PERFORMANCE / TÄGLICH</span><h2 id="rh-adv-story-trend-title">Story-Aufrufe im Zeitverlauf</h2>
     <p>Die Werte zählen abgespielte Storys, nicht eindeutige Besucher.</p></div></div>

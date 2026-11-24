@@ -13,6 +13,15 @@ const gaKey="ruby_ga4_choice";
 const readChoice=(name:string):Choice=>{
  try{const v=localStorage.getItem(name);return v==="allow"||v==="deny"?v:null}catch{return null}
 };
+/** Never infer renewed tracking consent from localStorage if the server-facing
+ * consent cookie was deleted. Ask the visitor to confirm again instead. */
+const readAnalyticsCookie=():Choice=>{
+ try{
+  const part=document.cookie.split(";").map(value=>value.trim()).find(value=>value.startsWith("ruby_analytics="));
+  const value=part?.slice("ruby_analytics=".length);
+  return value==="allow"||value==="deny"?value:null;
+ }catch{return null}
+};
 
 export default function AnalyticsConsent(){
  const path=usePathname();
@@ -29,7 +38,8 @@ export default function AnalyticsConsent(){
  const trackable=isTrackableRubyPath(path)||path.startsWith("/ratgeber/");
  useEffect(()=>{
   if(!trackable)return;
-  const stats=readChoice(statsKey),ads=readChoice(marketingKey),ga=readChoice(gaKey);
+  const storedStats=readChoice(statsKey),ads=readChoice(marketingKey),ga=readChoice(gaKey);
+  const stats=storedStats===readAnalyticsCookie()?storedStats:null;
   setStatistics(stats);setMarketing(ads);setGoogleChoice(ga);
   setDraftStatistics(stats==="allow");setDraftMarketing(ads==="allow");setDraftGoogle(ga==="allow");
   setInitialized(true);

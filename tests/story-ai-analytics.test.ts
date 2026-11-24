@@ -59,3 +59,21 @@ test("AI result displays exact selected variant and adds it to the established s
  const stories=read("src/components/influencer-stories.tsx");
  assert.ok(stories.includes('trackRubyEvent("story_view",path)'));
 });
+
+test("Analytics collection is resilient but still strictly opt-in and does not fabricate views",()=>{
+ const source=read("src/lib/storefront-analytics.ts");
+ const consent=read("src/components/analytics-consent.tsx");
+ const server=read("app/api/analytics/event/route.ts");
+ const admin=read("app/admin/analytics/page.tsx");
+ assert.match(source,/document\.cookie\.split\(";"\)\.some\(part=>part\.trim\(\)===\"ruby_analytics=allow\"\)/);
+ assert.match(source,/response\.status===503&&attempt===0/);
+ assert.match(source,/send\(1\),850/);
+ assert.match(consent,/storedStats===readAnalyticsCookie\(\)\?storedStats:null/);
+ assert.match(consent,/if\(\(statsAvailable&&stats===null\)\|\|ads===null\|\|ga===null\)setOpen\(true\)/);
+ assert.match(server,/await db\.analyticsAggregate\.upsert/);
+ assert.ok(server.indexOf("await db.analyticsAggregate.upsert")<server.indexOf("await db.analyticsAggregate.deleteMany"));
+ assert.match(server,/24\*60\*60\*1000/);
+ assert.match(server,/RUBY_ANALYTICS_WRITE_UNAVAILABLE/);
+ assert.match(admin,/0 erfasste Aufrufe sind kein Nachweis/);
+ assert.match(admin,/report\.funnel\.aiViews>0/);
+});

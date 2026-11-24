@@ -6,6 +6,9 @@ import {berlinDateKey} from "@/lib/analytics-calendar";
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
 const cache={"Cache-Control":"private, no-store"};
+// Keep the 180-day retention policy without running a second database write
+// before every visitor event (the production serverless pool is limited).
+let lastRetentionCleanup=0;
 const publicPaths=new Set(["/","/kollektionen","/kollektionen/tape-in-extensions","/produkt/tape-in-extensions","/produkt/keratin-bondings","/ratgeber","/kontakt","/versand-zahlung","/warenkorb","/kasse","/haar-anprobe","/suche","/geschenkgutschein"]);
 const schema=z.object({
   event:z.enum(["page_view","add_to_cart","begin_checkout","story_view","ai_tryon_start","ai_tryon_success","ai_to_cart"]),
@@ -49,13 +52,27 @@ export async function POST(request:NextRequest){
  const now=new Date();const day=berlinDateKey(now);
  try{
   const db=getPrisma();
-  // The database contains only aggregates. Delete rows older than 180 days.
-  const cutoff=new Date(day);cutoff.setUTCDate(cutoff.getUTCDate()-180);
-  await db.analyticsAggregate.deleteMany({where:{day:{lt:cutoff}}});
+  // A single atomic upsert is the primary action. Expensive retention cleanup
+  // must never prevent a consented event from being recorded.
   await db.analyticsAggregate.upsert({
    where:{day_path_event_source_device:{day,path,event,source,device}},
    create:{day,path,event,source,device,count:1},update:{count:{increment:1}}
   });
+  const nowMs=Date.now();
+  if(nowMs-lastRetentionCleanup>24*60*60*1000){
+   lastRetentionCleanup=nowMs;
+   const cutoff=new Date(day);cutoff.setUTCDate(cutoff.getUTCDate()-180);
+   try{await db.analyticsAggregate.deleteMany({where:{day:{lt:cutoff}}});}
+   catch(error){
+    const code=typeof error==="object"&&error!==null&&"code" in error?String(error.code):"UNAVAILABLE";
+    console.warn("RUBY_ANALYTICS_RETENTION_RETRY_LATER",code.slice(0,20));
+    // A successful upsert must still return 204; never trigger a client retry.
+   }
+  }
   return new NextResponse(null,{status:204,headers:cache});
- }catch{return NextResponse.json({error:"unavailable"},{status:503,headers:cache});}
+ }catch(error){
+  const code=typeof error==="object"&&error!==null&&"code" in error?String(error.code):"UNAVAILABLE";
+  console.warn("RUBY_ANALYTICS_WRITE_UNAVAILABLE",code.slice(0,20));
+  return NextResponse.json({error:"unavailable"},{status:503,headers:cache});
+ }
 }
