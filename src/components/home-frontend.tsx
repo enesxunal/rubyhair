@@ -18,7 +18,7 @@ const darkLogo="/media/RubyHair-WebHeader-Logo-Dunkel-70efc2b6a.png";
 const lightLogo="/media/RubyHair-WebHeader-Logo-Hell-818376d91.png";
 const nav=storefrontNav;
 const shades=[
-  {key:"brown",title:"Brown",background:"#5e483a",image:"/assets/ruby-hair-shade-brown-full-20261118.webp",color:"6",slug:"tape-in-extensions"},
+  {key:"brown",title:"Brown",background:"#5e483a",image:"/assets/ruby-tape-bronde-alt.webp",color:"6",slug:"tape-in-extensions"},
   {key:"bronde",title:"Bronde",background:"#a28765",image:"/assets/ruby-tape-bronde-main.webp",color:"bronde",slug:"tape-in-extensions"},
   {key:"blonde",title:"Blonde",background:"#d7c2a1",image:"/media/60-3-scaled-e99a55c0d.jpg",color:"60",slug:"tape-in-extensions"},
   {key:"ash",title:"Ash",background:"#b4ada5",image:"/media/silber-1-scaled-7627ffcff.jpg",color:"silver",slug:"tape-in-extensions"}
