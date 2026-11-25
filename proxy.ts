@@ -43,8 +43,14 @@ function restrictedResponse(){
 }
 export async function proxy(request:NextRequest){
  const hostname=(request.headers.get("host")||"").trim().toLowerCase().split(":")[0].replace(/\.$/,"");
- if(!holdingHosts.has(hostname))return NextResponse.next();
  const path=request.nextUrl.pathname;
+ // Freeze all mutations, callbacks and scheduled jobs during the final copy.
+ // A noncanonical self-hosted deployment can be probed without accepting writes.
+ if(process.env.RUBY_DB_MAINTENANCE==="1"||(process.env.RUBY_SELFHOST_DB&&!holdingHosts.has(hostname))){
+  if(path==="/api/catalog"&&request.method==="GET")return NextResponse.next();
+  return new NextResponse("Ruby Hair ist kurzzeitig wegen Wartungsarbeiten nicht erreichbar. Bitte versuchen Sie es erneut.",{status:503,headers:{"Content-Type":"text/plain; charset=utf-8","Cache-Control":"private, no-store","Retry-After":"60","X-Robots-Tag":"noindex, nofollow"}});
+ }
+ if(!holdingHosts.has(hostname))return NextResponse.next();
  if(allowedAssets.has(path)||path==="/coming-soon")return NextResponse.next();
  // The login form and its rate-limited POST must remain accessible before login.
  if(adminLoginPaths.has(path))return NextResponse.next();

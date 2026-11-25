@@ -41,7 +41,7 @@ const readLiveProducts=singleFlight(async ():Promise<Product[]>=>{
   });
   return products;
 });
-const liveProducts=unstable_cache(async()=>readLiveProducts(),["rubyhair-live-store-catalog-v2"],{revalidate:60,tags:["rubyhair-live-catalog"]});
+const liveProducts=unstable_cache(async()=>readLiveProducts(),["rubyhair-live-store-catalog-v3",process.env.RUBY_SELFHOST_DB?"selfhost":"managed"],{revalidate:60,tags:["rubyhair-live-catalog"]});
 export const getStoreCatalog=cache(async ():Promise<{source:"postgresql"|"imported-preview";products:Product[]}>=>{
   if(!databaseConfigured())return {source:"imported-preview",products:blackFridayCatalog(importedProducts)};
   // A failed database read still fails closed; never display fabricated stock.
