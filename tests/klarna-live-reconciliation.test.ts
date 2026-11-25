@@ -7,7 +7,7 @@ test("Merchant can read live Klarna capture with the existing encrypted server-s
  const api=read("src/lib/klarna-live-reconciliation.ts");
  const provider=read("src/lib/customer-checkout.ts");
  assert.match(api,/providerForCheckout\("klarna"\)/);
- assert.match(provider,/loadPaymentValue\("klarna","live"/);
+ assert.match(provider,/loadPaymentValues\("klarna","live",\["username","password","merchantId"\]\)/);
  assert.match(api,/gateway\.api\.readOrder\(match\[1\]\)/);
  assert.match(api,/gateway\.api\.readCaptures\(match\[1\]\)/);
  assert.match(api,/remote\.order_amount===order\.totalCents/);

@@ -45,7 +45,7 @@ export function ShadeGrid({product,selectedLength}:{product:Product;selectedLeng
      </span></div>
     </>;
     if(card.status==="listed"){
-     return <Link className="rh-shade-card" key={card.color}
+     return <Link prefetch={false} className="rh-shade-card" key={card.color}
       href={"/produkt/"+product.slug+"/?farbe="+encodeURIComponent(card.color)+(selectedLength?"&laenge="+encodeURIComponent(selectedLength):"")}
       aria-label={product.name+" Farbe "+label+" ansehen"}>
       {item}
@@ -58,7 +58,7 @@ export function ShadeGrid({product,selectedLength}:{product:Product;selectedLeng
        card.status==="unavailable"?"Diese Variante ist ausverkauft und derzeit nicht bestellbar.":
        labelLength?"In "+labelLength+" derzeit nicht als Tape-in-Variante gelistet.":"Noch nicht als Tape-in-Variante gelistet."}
      </p>
-     {card.status!=="unavailable"&&<Link href="/kontakt/" className="rh-shade-request-link" aria-label={"Farbe "+label+" bei Ruby Hair anfragen"}>
+     {card.status!=="unavailable"&&<Link prefetch={false} href="/kontakt/" className="rh-shade-request-link" aria-label={"Farbe "+label+" bei Ruby Hair anfragen"}>
       FARBE ANFRAGEN <span aria-hidden="true">↗</span>
      </Link>}
     </article>;

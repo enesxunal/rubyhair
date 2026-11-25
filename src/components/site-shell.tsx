@@ -28,17 +28,17 @@ export function SiteHeader(){
     <div className="rh-top">RUBY HAIR · PREMIUM ECHTHAAR EXTENSIONS</div>
     <header className="rh-header">
       <div className="rh-header-inner">
-        <Link className="rh-logo" href="/" aria-label="Ruby Hair Startseite">
+        <Link prefetch={false} className="rh-logo" href="/" aria-label="Ruby Hair Startseite">
           <img src="/media/RubyHair-WebHeader-Logo-Dunkel-70efc2b6a.png" data-fallback="/assets/hero-brunette.webp" alt="Ruby Hair"/>
         </Link>
         <nav className="rh-desktop-nav" aria-label="Shop Navigation">
-          {categories.map(item=><Link key={item.href} href={item.href}>{item.label}</Link>)}
-          <Link href="/ratgeber/">Hair Guide</Link>
+          {categories.map(item=><Link prefetch={false} key={item.href} href={item.href}>{item.label}</Link>)}
+          <Link prefetch={false} href="/ratgeber/">Hair Guide</Link>
         </nav>
         <div className="rh-actions">
-          <Link href="/suche/" className="rh-search" aria-label="Produkte und Haarfarben suchen"><Search size={22}/></Link>
-          <Link href="/konto/" className="rh-cart" aria-label="Mein Kundenkonto" title="Mein Konto"><UserRound size={22}/></Link>
-          <Link href="/warenkorb/" className="rh-cart" aria-label={"Warenkorb, "+count+" Artikel"}>
+          <Link prefetch={false} href="/suche/" className="rh-search" aria-label="Produkte und Haarfarben suchen"><Search size={22}/></Link>
+          <Link prefetch={false} href="/konto/" className="rh-cart" aria-label="Mein Kundenkonto" title="Mein Konto"><UserRound size={22}/></Link>
+          <Link prefetch={false} href="/warenkorb/" className="rh-cart" aria-label={"Warenkorb, "+count+" Artikel"}>
             <ShoppingBag size={22}/>{count>0&&<span className="rh-cart-count">{count}</span>}
           </Link>
           <button ref={toggle} className="rh-menu-toggle" type="button" aria-controls="rh-mobile-nav"
@@ -48,11 +48,11 @@ export function SiteHeader(){
         </div>
       </div>
       {open&&<nav className="rh-mobile-nav" id="rh-mobile-nav" aria-label="Mobile Shop Navigation">
-        <Link href="/" onClick={()=>setOpen(false)}>Startseite</Link>
-        {categories.map(item=><Link key={item.href} href={item.href} onClick={()=>setOpen(false)}>{item.label}</Link>)}
-        <Link href="/ratgeber/" onClick={()=>setOpen(false)}>Hair Guide</Link>
-        <Link href="/haar-anprobe/" onClick={()=>setOpen(false)}>KI-Haarvorschau</Link>
-        <Link href="/konto/" onClick={()=>setOpen(false)}>Mein Konto</Link>
+        <Link prefetch={false} href="/" onClick={()=>setOpen(false)}>Startseite</Link>
+        {categories.map(item=><Link prefetch={false} key={item.href} href={item.href} onClick={()=>setOpen(false)}>{item.label}</Link>)}
+        <Link prefetch={false} href="/ratgeber/" onClick={()=>setOpen(false)}>Hair Guide</Link>
+        <Link prefetch={false} href="/haar-anprobe/" onClick={()=>setOpen(false)}>KI-Haarvorschau</Link>
+        <Link prefetch={false} href="/konto/" onClick={()=>setOpen(false)}>Mein Konto</Link>
       </nav>}
     </header>
     {open&&<button type="button" className="rh-mobile-backdrop" aria-label="Menü schließen" onClick={()=>setOpen(false)}/>}
@@ -61,12 +61,12 @@ export function SiteHeader(){
 export function SiteFooter(){
   return <><footer className="rh-footer">
     <div className="rh-footer-inner">
-      <div><Link href="/" className="rh-footer-mark">RUBY HAIR</Link><p>Premium Echthaar Extensions – für deinen ganz persönlichen Look.</p><a className="rh-footer-contact" href="mailto:info@rubyhair.de">info@rubyhair.de</a><p>Essen · Deutschland</p></div>
-      <div><strong>SHOP</strong>{storefrontShopLinks.map(item=><Link href={item.href} key={item.href}>{item.label}</Link>)}</div>
-      <div><strong>INFORMATIONEN</strong>{storefrontInfoLinks.map(item=><Link href={item.href} key={item.href} style={item.href==="/widerruf/"?{fontWeight:700,textDecoration:"underline",textUnderlineOffset:4}:undefined}>{item.label}</Link>)}</div>
+      <div><Link prefetch={false} href="/" className="rh-footer-mark">RUBY HAIR</Link><p>Premium Echthaar Extensions – für deinen ganz persönlichen Look.</p><a className="rh-footer-contact" href="mailto:info@rubyhair.de">info@rubyhair.de</a><p>Essen · Deutschland</p></div>
+      <div><strong>SHOP</strong>{storefrontShopLinks.map(item=><Link prefetch={false} href={item.href} key={item.href}>{item.label}</Link>)}</div>
+      <div><strong>INFORMATIONEN</strong>{storefrontInfoLinks.map(item=><Link prefetch={false} href={item.href} key={item.href} style={item.href==="/widerruf/"?{fontWeight:700,textDecoration:"underline",textUnderlineOffset:4}:undefined}>{item.label}</Link>)}</div>
     </div>
     <div className="rh-footer-bottom"><span>© 2026 RUBY HAIR</span><div>
-      <Link href="/konto/">Mein Konto</Link><Link href="/rechtliches/impressum/">Impressum</Link><Link href="/rechtliches/datenschutz/">Datenschutz</Link><CookieSettingsLink/>
+      <Link prefetch={false} href="/konto/">Mein Konto</Link><Link prefetch={false} href="/rechtliches/impressum/">Impressum</Link><Link prefetch={false} href="/rechtliches/datenschutz/">Datenschutz</Link><CookieSettingsLink/>
     </div></div>
   </footer></>;
 }

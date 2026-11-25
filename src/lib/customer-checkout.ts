@@ -2,7 +2,7 @@ import "server-only";
 import {createHmac,createHash,timingSafeEqual,randomUUID} from "node:crypto";
 import {Prisma} from "@prisma/client";
 import {getPrisma} from "@/lib/prisma";
-import {loadPaymentValue} from "@/lib/payment-secrets";
+import {loadPaymentValues} from "@/lib/payment-secrets";
 import {PaypalClient} from "@/lib/paypal-provider-core";
 import {KlarnaClient,KlarnaProviderError} from "@/lib/klarna-provider-core";
 import {legacyStore} from "@/lib/legacy-store-facts";
@@ -54,15 +54,11 @@ export function providerForCheckout(provider:"klarna"):Promise<{provider:"klarna
 export function providerForCheckout(provider:"paypal"|"klarna"):Promise<{provider:"paypal";api:PaypalClient}|{provider:"klarna";api:KlarnaClient}>;
 export async function providerForCheckout(provider:"paypal"|"klarna"):Promise<{provider:"paypal";api:PaypalClient}|{provider:"klarna";api:KlarnaClient}>{
  if(provider==="paypal"){
-  const [clientId,clientSecret,webhookId]=await Promise.all([
-   loadPaymentValue("paypal","live","clientId"),loadPaymentValue("paypal","live","clientSecret"),loadPaymentValue("paypal","live","webhookId")
-  ]);
+  const [clientId,clientSecret,webhookId]=await loadPaymentValues("paypal","live",["clientId","clientSecret","webhookId"]);
   if(!clientId||!clientSecret||!webhookId)throw new CustomerCheckoutError("PAYPAL_NOT_CONFIGURED",503);
   return {provider,api:new PaypalClient("live",{clientId,clientSecret,webhookId})} as const;
  }
- const [username,password,merchantId]=await Promise.all([
-  loadPaymentValue("klarna","live","username"),loadPaymentValue("klarna","live","password"),loadPaymentValue("klarna","live","merchantId")
- ]);
+ const [username,password,merchantId]=await loadPaymentValues("klarna","live",["username","password","merchantId"]);
  if(!username||!password||!merchantId)throw new CustomerCheckoutError("KLARNA_NOT_CONFIGURED",503);
  return {provider,api:new KlarnaClient(username,password)} as const;
 }

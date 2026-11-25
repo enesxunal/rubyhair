@@ -21,7 +21,7 @@ export function ProductSearch({initialQuery="",products}:{initialQuery?:string;p
     <div className="rh-search-toolbar"><span aria-live="polite">{filtered.length} Ergebnisse</span>
       <span className="rh-catalog-status">Ruby Hair Produktkatalog · aktuelle Farben und Verfügbarkeit</span></div>
     <div className="rh-shade-grid">{filtered.map(x=>
-      <Link key={x.product.slug+"-"+x.color} className="rh-shade-card"
+      <Link prefetch={false} key={x.product.slug+"-"+x.color} className="rh-shade-card"
         href={"/produkt/"+x.product.slug+"/?farbe="+encodeURIComponent(x.color)}>
         <div className="rh-shade-image"><img src={x.sample.image} alt={x.product.name+" Farbe "+x.sample.color_label} loading="lazy"/>
          <BlackFridayBadge/></div>

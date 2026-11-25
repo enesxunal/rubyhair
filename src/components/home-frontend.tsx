@@ -56,7 +56,7 @@ function HomeNavigation(){
       <span>THE RUBY HAIR EXPERIENCE</span>
       <span className="top-star"><Sparkles size={13}/></span>
       <span>PREMIUM ECHTHAAR EXTENSIONS</span>
-      <Link href="/kontakt/">ENTDECKE UNS IN ESSEN <ArrowUpRight size={14}/></Link>
+      <Link prefetch={false} href="/kontakt/">ENTDECKE UNS IN ESSEN <ArrowUpRight size={14}/></Link>
     </div>
     <header className="site-header" id="top">
       <div className="head-main container-wide">
@@ -64,34 +64,34 @@ function HomeNavigation(){
           <button ref={menuTrigger} className="icon-button menu-trigger" type="button"
             aria-label="Menü öffnen" aria-controls="mobile-menu" aria-expanded={menuOpen}
             onClick={()=>setMenuOpen(true)}><Menu size={23}/></button>
-          <Link className="head-search" href="/suche/" aria-label="Produktsuche öffnen">
+          <Link prefetch={false} className="head-search" href="/suche/" aria-label="Produktsuche öffnen">
             <Search size={20}/><span>Wonach suchst du?</span>
           </Link>
         </div>
-        <Link className="brand-logo" href="/" aria-label="Ruby Hair – Startseite">
+        <Link prefetch={false} className="brand-logo" href="/" aria-label="Ruby Hair – Startseite">
           <img src={darkLogo} alt="RUBY HAIR EXTENSIONS"/>
         </Link>
         <div className="head-right">
-          <Link href="/kontakt/" className="head-consult">
+          <Link prefetch={false} href="/kontakt/" className="head-consult">
             <span className="small">HAST DU FRAGEN?</span>
             <strong>Wir beraten dich <ArrowUpRight size={15}/></strong>
           </Link>
-          <Link href="/suche/" className="icon-button search-mobile" aria-label="Produktsuche öffnen"><Search size={22}/></Link>
-          <Link className="icon-button" href="/warenkorb/" aria-label={"Warenkorb öffnen, "+count+" Artikel"}>
+          <Link prefetch={false} href="/suche/" className="icon-button search-mobile" aria-label="Produktsuche öffnen"><Search size={22}/></Link>
+          <Link prefetch={false} className="icon-button" href="/warenkorb/" aria-label={"Warenkorb öffnen, "+count+" Artikel"}>
             <ShoppingBag size={23}/>{count>0&&<span className="cart-count">{count}</span>}
           </Link>
         </div>
       </div>
       <nav className="desktop-nav" aria-label="Hauptnavigation">
-        {nav.map(item=><Link key={item.href} href={item.href}>{item.homeLabel}</Link>)}
+        {nav.map(item=><Link prefetch={false} key={item.href} href={item.href}>{item.homeLabel}</Link>)}
       </nav>
     </header>
     <div className="mobile-shade" hidden={!menuOpen} onClick={()=>setMenuOpen(false)}/>
     <aside ref={menuPanel} className={"mobile-menu"+(menuOpen?" open":"")} id="mobile-menu" role="dialog" aria-modal={menuOpen} aria-label="Mobiles Menü" aria-hidden={!menuOpen} inert={!menuOpen}>
       <div className="mobile-menu-head"><img src={darkLogo} alt="Ruby Hair"/><button ref={menuClose} type="button" onClick={()=>setMenuOpen(false)} aria-label="Menü schließen"><X size={24}/></button></div>
       <span className="eyebrow">RUBY HAIR</span>
-      {nav.map(item=><Link key={item.href} href={item.href} onClick={()=>setMenuOpen(false)}>{item.homeLabel} <ArrowRight size={17}/></Link>)}
-      <Link href="/warenkorb/" onClick={()=>setMenuOpen(false)}>WARENKORB ({count}) <ArrowRight size={17}/></Link>
+      {nav.map(item=><Link prefetch={false} key={item.href} href={item.href} onClick={()=>setMenuOpen(false)}>{item.homeLabel} <ArrowRight size={17}/></Link>)}
+      <Link prefetch={false} href="/warenkorb/" onClick={()=>setMenuOpen(false)}>WARENKORB ({count}) <ArrowRight size={17}/></Link>
       <div className="mobile-menu-foot">YOUR HAIR. YOUR SIGNATURE.</div>
     </aside>
   </>;
@@ -148,9 +148,9 @@ function ShadeSelector(){
           </button>)}
         </div>
         <p className="shade-disclaimer">Farbdarstellung kann je nach Bildschirm abweichen. Die Auswahl dient als Inspiration.</p>
-        {canBuy?<Link className="solid-button shade-button" href={"/produkt/"+active.slug+"/?farbe="+active.color}>
+        {canBuy?<Link prefetch={false} className="solid-button shade-button" href={"/produkt/"+active.slug+"/?farbe="+active.color}>
           FARBE ANSEHEN <ArrowUpRight size={17}/>
-        </Link>:verified?<span className="solid-button shade-button" aria-disabled="true" style={{opacity:.65,cursor:"not-allowed"}}>AUSVERKAUFT</span>:<Link className="solid-button shade-button" href={"/produkt/"+active.slug+"/?farbe="+active.color}>VERFÜGBARKEIT PRÜFEN <ArrowUpRight size={17}/></Link>}
+        </Link>:verified?<span className="solid-button shade-button" aria-disabled="true" style={{opacity:.65,cursor:"not-allowed"}}>AUSVERKAUFT</span>:<Link prefetch={false} className="solid-button shade-button" href={"/produkt/"+active.slug+"/?farbe="+active.color}>VERFÜGBARKEIT PRÜFEN <ArrowUpRight size={17}/></Link>}
       </div>
     </div>
   </section>;
@@ -163,7 +163,7 @@ function TapeInAtelier(){
         <h2 id="rh-atelier-heading">Schönheit liegt<br/>im <i>Detail.</i></h2>
         <p>Seidige Texturen. Facettenreiche Nuancen. Ein unvergleichlich natürlicher Fall.</p>
         <p>Unsere Premium Tape-in Extensions vereinen hochwertige Echthaarqualität mit nahezu unsichtbaren Verbindungen – für einen Look, der sich wie dein eigenes Haar anfühlt.</p>
-        <Link href="/kollektionen/tape-in-extensions/" className="rh-tape-atelier-link">
+        <Link prefetch={false} href="/kollektionen/tape-in-extensions/" className="rh-tape-atelier-link">
           KOLLEKTION ENTDECKEN <ArrowUpRight size={17} aria-hidden="true"/>
         </Link>
         <span className="rh-tape-atelier-note">RUBY HAIR · STUDIO EDITORIAL</span>
@@ -195,20 +195,20 @@ function HomeFooter(){
             aria-label="Ruby Hair Instagram" className="social-icon"><Instagram size={20}/></a>
         </div>
         <div className="footer-col"><h3>SHOP</h3>
-          {storefrontShopLinks.map(item=><Link href={item.href} key={item.href}>{item.label}</Link>)}
+          {storefrontShopLinks.map(item=><Link prefetch={false} href={item.href} key={item.href}>{item.label}</Link>)}
         </div>
         <div className="footer-col"><h3>INFORMATIONEN</h3>
-          {storefrontInfoLinks.map(item=><Link href={item.href} key={item.href}>{item.label}</Link>)}
+          {storefrontInfoLinks.map(item=><Link prefetch={false} href={item.href} key={item.href}>{item.label}</Link>)}
         </div>
         <div className="footer-col"><h3>RUBY HAIR</h3>
-          <Link href="/#about">Unsere Story</Link>
-          <Link href="/kontakt/">Studio in Essen</Link>
-          <Link href="/kontakt/">Kontakt</Link>
+          <Link prefetch={false} href="/#about">Unsere Story</Link>
+          <Link prefetch={false} href="/kontakt/">Studio in Essen</Link>
+          <Link prefetch={false} href="/kontakt/">Kontakt</Link>
           <a href="https://www.instagram.com/rubyhair.de/" target="_blank" rel="noopener noreferrer">Instagram <ArrowUpRight size={15}/></a>
         </div>
       </div>
       <div className="container footer-bottom"><span>© 2026 RUBY HAIR</span>
-        <div><Link href="/rechtliches/impressum/">IMPRESSUM</Link><Link href="/rechtliches/datenschutz/">DATENSCHUTZ</Link><Link href="/rechtliches/agb/">AGB</Link><CookieSettingsLink/></div>
+        <div><Link prefetch={false} href="/rechtliches/impressum/">IMPRESSUM</Link><Link prefetch={false} href="/rechtliches/datenschutz/">DATENSCHUTZ</Link><Link prefetch={false} href="/rechtliches/agb/">AGB</Link><CookieSettingsLink/></div>
         <span>MADE FOR BEAUTIFUL HAIR.</span>
       </div>
     </footer>
@@ -218,7 +218,7 @@ export default function HomeFrontend({instagramPosts=[]}:{instagramPosts?:Instag
   return <>
     <HomeNavigation/>
     <main id="main">
-      <Link className="hero rh-hero-product" id="home" href="/produkt/tape-in-extensions/?farbe=6&laenge=55-60-cm" aria-label="Tape-in Extensions entdecken, zum Produkt">
+      <Link prefetch={false} className="hero rh-hero-product" id="home" href="/produkt/tape-in-extensions/?farbe=6&laenge=55-60-cm" aria-label="Tape-in Extensions entdecken, zum Produkt">
         <BlackFridayBadge hero/>
         <div className="hero-photo">
           <img className="hero-primary" src="/assets/hero-brunette.webp" alt="Model mit langen braunen Haaren" width={1672} height={941} fetchPriority="high"/>
@@ -234,7 +234,7 @@ export default function HomeFrontend({instagramPosts=[]}:{instagramPosts?:Instag
         <div className="container">
           <div className="section-heading"><h2 id="rh-home-lengths">Entdecke deine <i>Extensions.</i></h2></div>
           <div className="collection-grid rh-collection-trio">
-            {tapeInLengths.map((choice,index)=><Link href={tapeInLengthHref(choice.key)} className={"rh-collection-card rh-collection-card-tape rh-collection-card-"+(index+1)} key={choice.key}>
+            {tapeInLengths.map((choice,index)=><Link prefetch={false} href={tapeInLengthHref(choice.key)} className={"rh-collection-card rh-collection-card-tape rh-collection-card-"+(index+1)} key={choice.key}>
               <div className="collection-media"><img src={choice.image} alt={choice.alt} loading="lazy" decoding="async"/>
                 <span className="rh-length-tag">{choice.label}</span>
                 <BlackFridayBadge/>
@@ -246,7 +246,7 @@ export default function HomeFrontend({instagramPosts=[]}:{instagramPosts?:Instag
                 <span className="round-arrow" aria-hidden="true"><ArrowUpRight size={20}/></span>
               </div>
             </Link>)}
-            <Link className="rh-collection-card rh-collection-card-keratin" href="/kollektionen/keratin-bondings/">
+            <Link prefetch={false} className="rh-collection-card rh-collection-card-keratin" href="/kollektionen/keratin-bondings/">
               <div className="collection-media"><img src="/assets/ruby-home-keratin-hq.webp" width={1300} height={1950} alt="Ruby Hair Keratin Bondings aus Echthaar – echte dunkelbraune Produktfotografie" loading="lazy" decoding="async"/>
                 <span className="rh-length-tag">KERATIN</span>
                 <BlackFridayBadge/>
@@ -265,7 +265,7 @@ export default function HomeFrontend({instagramPosts=[]}:{instagramPosts?:Instag
         <div className="container">
           <div className="rh-keratin-editorial-heading">
             <div><span>RUBY HAIR / ORIGINAL PRODUKTFOTOGRAFIE</span><h2 id="rh-keratin-editorial-title">Keratin in <i>echten Nuancen.</i></h2></div>
-            <Link href="/kollektionen/keratin-bondings/">Keratin entdecken <ArrowUpRight size={17}/></Link>
+            <Link prefetch={false} href="/kollektionen/keratin-bondings/">Keratin entdecken <ArrowUpRight size={17}/></Link>
           </div>
           <div className="rh-keratin-editorial-photos">
             <figure><img src="/assets/ruby-customer-keratin-4.webp" loading="lazy" width={1400} height={1950} alt="Ruby Hair Keratin Bondings, dunkler Braunton, echtes Produktfoto"/><figcaption>BRUNETTE / KERATIN BONDINGS</figcaption></figure>
@@ -282,7 +282,7 @@ export default function HomeFrontend({instagramPosts=[]}:{instagramPosts?:Instag
          <p>Entdecke fünf echte Tape-in Farbtöne aus unserer Kollektion. Jedes Foto zeigt genau den bezeichneten Farbton.</p>
         </div>
         <div className="rh-tape-originals-grid">
-         {customerTapePhotos.map(item=><Link key={item.code} href={"/produkt/tape-in-extensions/?farbe="+encodeURIComponent(item.code)}>
+         {customerTapePhotos.map(item=><Link prefetch={false} key={item.code} href={"/produkt/tape-in-extensions/?farbe="+encodeURIComponent(item.code)}>
           <img src={item.image} alt={"Originale Ruby Hair Tape-in Extensions – Farbton "+item.name} width={1433} height={2150} loading="lazy" decoding="async"/>
           <span>FARBTON {item.name.toUpperCase()} <ArrowUpRight size={16}/></span>
          </Link>)}
@@ -298,7 +298,7 @@ export default function HomeFrontend({instagramPosts=[]}:{instagramPosts?:Instag
           <p>Schönes Haar verändert nicht nur deinen Look. Es verändert, wie du dich fühlst.</p>
           <p>Ruby Hair steht für erstklassige Echthaar-Extensions, natürliche Ergebnisse und kompromisslose Qualität.</p>
           <p>Entdecke deine perfekte Haarverlängerung – online oder bei einer persönlichen Beratung in unserem Studio in Essen.</p>
-          <Link href="/kontakt/" className="under-button">PERSÖNLICHE BERATUNG <ArrowUpRight size={16}/></Link>
+          <Link prefetch={false} href="/kontakt/" className="under-button">PERSÖNLICHE BERATUNG <ArrowUpRight size={16}/></Link>
           <div className="brand-signature">RUBY HAIR<br/><span>EXTENSIONS · ESSEN</span></div>
         </div>
         <div className="brand-portrait">
@@ -306,7 +306,7 @@ export default function HomeFrontend({instagramPosts=[]}:{instagramPosts?:Instag
           <div className="brand-photo-caption"><span>THE BEAUTY OF INDIVIDUALITY</span><span>RUBY HAIR · EDITORIAL 02</span></div>
         </div>
       </div></section>
-      <section className="rh-home-gift-promo"><div className="rh-home-gift-promo-inner"><div><span>RUBY HAIR · GESCHENKGUTSCHEIN</span><h2>Beauty, die man <em>verschenken</em> kann.</h2><p>Ein Geschenk, das sich ganz persönlich anfühlt. Mit deinem Wunschbetrag, liebevollen Worten und einem Design, das bleibt.</p><Link href="/geschenkgutschein/">Geschenk gestalten <ArrowRight size={18}/></Link></div><div className="rh-home-gift-mini-card"><img src="/media/RubyHair-WebHeader-Logo-Hell-818376d91.png" width={478} height={121} alt="Ruby Hair Extensions"/><strong>Geschenkgutschein</strong><small>50 € · 100 € · 200 € · Wunschbetrag</small></div></div></section>
+      <section className="rh-home-gift-promo"><div className="rh-home-gift-promo-inner"><div><span>RUBY HAIR · GESCHENKGUTSCHEIN</span><h2>Beauty, die man <em>verschenken</em> kann.</h2><p>Ein Geschenk, das sich ganz persönlich anfühlt. Mit deinem Wunschbetrag, liebevollen Worten und einem Design, das bleibt.</p><Link prefetch={false} href="/geschenkgutschein/">Geschenk gestalten <ArrowRight size={18}/></Link></div><div className="rh-home-gift-mini-card"><img src="/media/RubyHair-WebHeader-Logo-Hell-818376d91.png" width={478} height={121} alt="Ruby Hair Extensions"/><strong>Geschenkgutschein</strong><small>50 € · 100 € · 200 € · Wunschbetrag</small></div></div></section>
     </main>
     <HomeFooter/>
   </>;
