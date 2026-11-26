@@ -6,6 +6,8 @@ import {isAdmin} from "@/lib/admin-auth";
 import {getPrisma} from "@/lib/prisma";
 import {isKnownOrderState,orderStates} from "@/lib/order-lifecycle";
 import {publicCheckoutMode} from "@/lib/customer-checkout";
+import {loadPurchaseAttributions} from "@/lib/admin-purchase-attribution";
+import AdminPurchaseSource from "@/components/admin-purchase-source";
 import AdminShell from "../admin-shell";
 import {updateFulfillmentAction} from "../actions";
 import {confirmManualKlarnaHandoverAction} from "../klarna-manual-actions";
@@ -49,6 +51,7 @@ export default async function AdminOrders({searchParams}:{searchParams:Promise<{
   }});
  // PDF bytes are fetched only by the protected download endpoint.
  const labels=orders.length?await db.shippingJob.findMany({where:{orderId:{in:orders.map(o=>o.id)},labelPdf:{not:null}},select:{orderId:true}}):[];
+ const attribution=await loadPurchaseAttributions("order",orders.map(o=>o.id)).catch(()=>null);
  const labelOrderIds=new Set(labels.map(l=>l.orderId));
  const totalPages=Math.max(1,Math.ceil(count/20));
  const link=(p:number)=>"/admin/bestellungen?filter="+filter+"&seite="+p;
@@ -87,11 +90,12 @@ export default async function AdminOrders({searchParams}:{searchParams:Promise<{
      {orders.map(order=><details key={order.id} className="rh-admin-order-item">
       <summary><span className="rh-admin-order-number">#{order.orderNumber.toString()} <small>{order.testOnly?"TESTDATENSATZ":order.payments.some(p=>p.eventType==="PAYMENT.CAPTURE.COMPLETED")?"BEZAHLT":order.status==="payment_authorized"?"AUTORISIERT":"OFFEN"}</small></span>
        <span className="rh-admin-order-status">{isKnownOrderState(order.status)?orderStates[order.status]:order.status}</span>
-       <span>{date(order.createdAt)}</span>
+       <span>{date(order.createdAt)}<small style={{display:"block"}}>{attribution?.get(order.id)?.last.source?<AdminPurchaseSource value={attribution.get(order.id)}/>:attribution?"Quelle: unbekannt":"Quelle: nicht verfügbar"}</small></span>
        <strong>{euro(order.totalCents)}</strong>
       </summary>
       <div className="rh-admin-order-expanded">
        <div className="rh-admin-order-meta"><p><strong>Datensatz-ID:</strong> {order.id}</p>
+        <p><strong>Bestellherkunft:</strong> <AdminPurchaseSource value={attribution?.get(order.id)} unavailable={attribution===null}/></p>
         <p><strong>Reservierung bis:</strong> {order.reservationExpiresAt?date(order.reservationExpiresAt):"Keine"}</p>
         <p><strong>Artikelwert:</strong> {euro(order.subtotalCents)} · <strong>Erfasster Versand:</strong> {euro(order.shippingCents)}</p>
         <p><strong>Kunde:</strong> {order.customerEmail||"Nicht erfasst"}</p>

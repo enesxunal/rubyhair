@@ -1,4 +1,5 @@
-import {NextRequest,NextResponse} from "next/server";
+import {recordPurchaseAttribution} from "@/lib/purchase-attribution";
+import {NextRequest,NextResponse,after} from "next/server";
 import {giftInput} from "@/lib/gift-cards/rules";
 import {GiftError,startGiftPurchase} from "@/lib/gift-cards/server";
 export const runtime="nodejs",dynamic="force-dynamic";
@@ -12,6 +13,6 @@ export async function POST(req:NextRequest){
  let json:unknown;try{json=JSON.parse(text)}catch{return NextResponse.json({error:"INVALID_JSON"},{status:400,headers:noCache})}
  const parsed=giftInput.safeParse(json);if(!parsed.success)return NextResponse.json({error:"INVALID_GIFT"},{status:400,headers:noCache});
  const ip=(req.headers.get("x-real-ip")||req.headers.get("x-forwarded-for")?.split(",")[0]||"unknown").trim().slice(0,120);
- try{return NextResponse.json(await startGiftPurchase(parsed.data,ip),{status:201,headers:noCache})}
+ try{const result=await startGiftPurchase(parsed.data,ip);after(async()=>{try{await recordPurchaseAttribution(req,"gift",result.purchaseId)}catch{console.warn("RUBY_ATTRIBUTION_WRITE_UNAVAILABLE")}});return NextResponse.json(result,{status:201,headers:noCache})}
  catch(e){return NextResponse.json({error:e instanceof GiftError?e.code:"TEMPORARILY_UNAVAILABLE"},{status:e instanceof GiftError?e.http:503,headers:noCache})}
 }

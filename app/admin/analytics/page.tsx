@@ -12,6 +12,7 @@ import {
 } from "@/lib/admin-analytics-report";
 import {loadAnalyticsReport} from "@/lib/admin-analytics-server";
 import {loadCommerceReportSafely} from "@/lib/admin-commerce-server";
+import {loadAttributionReport} from "@/lib/admin-purchase-attribution";
 import AdminCommercePanel from "@/components/admin-commerce-panel";
 import AdminAnalyticsRefresh from "@/components/admin-analytics-refresh";
 import AdminAnalyticsTrend from "@/components/admin-analytics-trend";
@@ -72,6 +73,7 @@ export default async function AdminAnalytics({searchParams}:{searchParams:Promis
  // Finish the analytics query before commerce to avoid exhausting the Vercel pool.
  const report=await loadAnalyticsReport(range);
  const commerce=await loadCommerceReportSafely(range);
+ const attributed=await loadAttributionReport(range);
  const {current,previous}=report;
  const storyDailyMax=Math.max(1,...report.daily.map(day=>day.storyViews));
  const exportQuery=new URLSearchParams({zeitraum:range.mode});
@@ -121,6 +123,11 @@ export default async function AdminAnalytics({searchParams}:{searchParams:Promis
     note={"Kassenbesuche, keine Käufe · zuvor "+(enabled?number(previous.checkouts):"—")}/>
   </section>
   <AdminCommercePanel data={commerce}/>
+  <section className="rh-admin-panel-card" style={{marginTop:22}}>
+   <div className="rh-admin-card-title"><div><span>BESTELLHERKUNFT / LETZTE ERKENNBARE QUELLE</span><h2>Bezahlte Bestellungen nach Herkunft</h2></div></div>
+   <p className="rh-admin-muted">Nur verifizierte Zahlungen; Gutscheinkäufe im Warenkorb werden nicht doppelt gezählt. Gezahlter Betrag nach Gutschein-Einlösung. Keine geschätzte Attribution. Unbekannt umfasst ältere, nicht zuordenbare und nicht consentierte Käufe; vollständige URLs werden nicht gespeichert.</p>
+   {attributed===null?<p>Auswertung derzeit nicht verfügbar.</p>:attributed.length===0?<p>Keine passenden bestätigten Zahlungen im Zeitraum.</p>:<div className="rh-admin-table-wrap"><table><thead><tr><th>Herkunft</th><th>Käufe</th><th>Gezahlter Betrag</th></tr></thead><tbody>{attributed.map(r=><tr key={r.source}><td>{r.label}</td><td>{number(r.count)}</td><td>{new Intl.NumberFormat("de-DE",{style:"currency",currency:"EUR"}).format(r.cents/100)}</td></tr>)}</tbody></table></div>}
+  </section>
   <section className="rh-adv-story-dashboard" id="story-analytics" aria-labelledby="rh-adv-story-title">
    <div className="rh-adv-section-title"><div><span>04 / COMMUNITY PERFORMANCE</span><h2 id="rh-adv-story-title">Story-Statistiken</h2>
     <p>Wiedergaben, täglicher Verlauf und Leistung jeder einzelnen Ruby Hair Community-Story – direkt sichtbar, ohne Untermenü.</p></div>

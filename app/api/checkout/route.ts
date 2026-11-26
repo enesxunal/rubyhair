@@ -1,3 +1,4 @@
+import {recordPurchaseAttribution} from "@/lib/purchase-attribution";
 import {rememberMetaCheckout} from "@/lib/meta-conversions";
 import {recordCheckoutDiagnostic} from "@/lib/checkout-diagnostics";
 import type {DiagnosticMethod} from "@/lib/checkout-diagnostic-policy";
@@ -53,6 +54,7 @@ export async function POST(req:NextRequest){
   console.info("RUBY_CHECKOUT_ATTEMPT",{provider:input.data.provider,experience:input.data.paymentExperience||"redirect"});
   const result=await createCustomerCheckout(input.data);
   if("orderId" in result&&typeof result.orderId==="string")after(async()=>{try{await rememberMetaCheckout(req,result.orderId)}catch{/* Measurement cannot affect payment. */}});
+  if("orderId" in result&&typeof result.orderId==="string")after(async()=>{try{await recordPurchaseAttribution(req,"order",result.orderId)}catch{console.warn("RUBY_ATTRIBUTION_WRITE_UNAVAILABLE")}});
   console.info("RUBY_CHECKOUT_CREATED",{provider:input.data.provider,experience:input.data.paymentExperience||"redirect"});
   if("giftOnly" in result&&result.giftOnly)after(async()=>{try{await runCustomerJobs(2)}catch{}});
   return NextResponse.json(result,{status:201,headers});

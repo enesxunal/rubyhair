@@ -433,3 +433,27 @@ model CartRecovery {
   @@index([expiresAt])
   @@map("cart_recoveries")
 }
+
+// Optional first-party purchase attribution. No full URLs, click IDs or contact data.
+model AttributionConsent {
+  id String @id @db.Char(64)
+  first Json
+  last Json
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  purchases PurchaseAttribution[]
+  @@index([expiresAt])
+  @@map("attribution_consents")
+}
+model PurchaseAttribution {
+  kind String
+  purchaseId String @db.Uuid
+  consentId String @db.Char(64)
+  consent AttributionConsent @relation(fields:[consentId],references:[id],onDelete:Cascade)
+  first Json
+  last Json
+  createdAt DateTime @default(now())
+  @@id([kind,purchaseId])
+  @@index([consentId])
+  @@map("purchase_attributions")
+}
