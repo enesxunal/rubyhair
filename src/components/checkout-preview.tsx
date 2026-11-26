@@ -94,21 +94,21 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
           <p className="rh-payment-preview-heading">{gifts.length?"Gemeinsame Zahlung für Waren und Gutscheine mit PayPal":"Wähle deine Zahlungsart"}</p>
           {!canPay&&paymentBlocker&&<p className="rh-checkout-unavailable-note" role={loading?"status":"alert"}>{paymentBlocker}</p>}
           {appliedGift&&<p className="rh-gift-only-paypal-note">Bei Gutscheinzahlung steht PayPal für einen möglichen Restbetrag zur Verfügung. Ist alles gedeckt, erfolgt keine weitere Zahlung.</p>}
-          <div className="rh-payment-select" role="radiogroup" aria-label="Zahlungsart">
+          <div className="rh-payment-select rh-compact-payment-select" role="radiogroup" aria-label="Zahlungsart">
             {(checkoutMode!=="klarna_public"||gifts.length>0)&&<label className={"rh-payment-choice"+(activePaymentMethod==="paypal"?" is-selected":"")}>
               <input type="radio" name="checkout-payment-method" value="paypal"
                 checked={activePaymentMethod==="paypal"} onChange={()=>setPaymentMethod("paypal")}/>
-              <span><strong>PayPal</strong><small>Mit deinem PayPal-Konto</small></span><img className="rh-payment-choice-logo" src="/assets/payment-brands/paypal-mark.jpg" alt=""/>
+              <span className="rh-compact-payment-brand"><img src="/assets/payment-brands/paypal-wordmark.svg" alt="PayPal"/></span>
             </label>}
             {cardFieldsEnabled&&checkoutMode!=="disabled"&&checkoutMode!=="klarna_public"&&!liveTest&&!oneEuroCart&&<label className={"rh-payment-choice"+(activePaymentMethod==="paypal_card"?" is-selected":"")+(appliedGift||gifts.length?" rh-gift-method-disabled":"")}>
               <input type="radio" name="checkout-payment-method" value="paypal_card" checked={activePaymentMethod==="paypal_card"}
                 disabled={Boolean(appliedGift||gifts.length)} onChange={()=>setPaymentMethod("paypal_card")}/>
-              <span><strong>Kredit- / Debitkarte</strong><small>Visa oder Mastercard</small></span><span className="rh-payment-choice-logos" aria-hidden="true"><img className="rh-payment-choice-logo" src="/assets/payment-brands/visa.svg" alt=""/><i className="rh-payment-mastercard"><b/><b/></i></span>
+              <span className="rh-compact-payment-brand"><span className="rh-compact-card-logos"><img src="/assets/payment-brands/visa.svg" alt="Visa"/><i className="rh-payment-mastercard" aria-label="Mastercard"><b/><b/></i></span><small>Kredit-/Debitkarte</small></span>
             </label>}
             <label className={"rh-payment-choice"+(activePaymentMethod==="klarna"?" is-selected":"")+(appliedGift||gifts.length?" rh-gift-method-disabled":"")}>
               <input type="radio" name="checkout-payment-method" value="klarna"
                 checked={activePaymentMethod==="klarna"} disabled={!!appliedGift||gifts.length>0} onChange={()=>setPaymentMethod("klarna")}/>
-              <span><strong>Klarna</strong><small>{checkoutMode!=="disabled"?"Zahlung bei Versand":"Noch nicht freigeschaltet"}</small></span><img className="rh-payment-choice-logo" src="/assets/payment-brands/klarna.svg" alt=""/>
+              <span className="rh-compact-payment-brand rh-compact-klarna"><strong>Klarna</strong><small>{checkoutMode!=="disabled"?"Zahlung bei Versand":"Nicht verfügbar"}</small></span>
             </label>
           </div>
           {checkoutMode!=="disabled"&&!liveTest&&<div className="rh-unified-payment-consent">
@@ -117,7 +117,7 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
               <span>Ich habe die <a href="/rechtliches/agb/" target="_blank" rel="noopener noreferrer">AGB</a> und die <a href="/rechtliches/widerruf/" target="_blank" rel="noopener noreferrer">Widerrufsbelehrung</a> gelesen und bestätige den kostenpflichtigen Kauf.</span>
             </label>
           </div>}
-          <div className="rh-unified-payment-actions">
+          <div className={"rh-unified-payment-actions rh-compact-payment-actions"+(activePaymentMethod==="paypal"?" rh-compact-paypal-active":"")}>
           {activePaymentMethod==="paypal_card"&&cardFieldsEnabled&&checkoutMode!=="disabled"&&!liveTest&&
            <PayPalCardFieldsCheckout agreed={paymentConsent} lines={lines} address={validatedAddress} cartReady={canPay}
             totalCents={remainingCents} couponCode={lines.length?couponCode||undefined:undefined}/>}

@@ -40,7 +40,7 @@ export default function CustomerPaymentSubmit({agreed,method,lines,gifts=[],addr
   {error&&<p role="alert" style={{color:"#a13c50"}}>Bestellung konnte nicht gestartet werden ({error}). Bitte nicht erneut versuchen, bis der Vorgang geprüft ist.</p>}
   <button type="button" className={"rh-payment-primary-link"+(method==="paypal"&&totalCents>0?" rh-paypal-branded-button":"")} disabled={!ready} onClick={start}
    style={{border:0,cursor:ready?"pointer":"not-allowed",opacity:ready?1:.48,width:"100%",fontSize:14}}>
-   {loading?"Zahlung wird sicher vorbereitet …":totalCents===0?"Mit Geschenkgutschein bezahlen – 0,00 € Restbetrag":method==="paypal"?<><img src="/assets/payment-brands/paypal-mark.jpg" alt="" width={38} height={24}/><span>{`${(totalCents/100).toFixed(2).replace(".",",")} € zahlungspflichtig mit PayPal bestellen`}</span></>:`${(totalCents/100).toFixed(2).replace(".",",")} € zahlungspflichtig mit Klarna bestellen`}
+   {loading?"Zahlung wird sicher vorbereitet …":totalCents===0?"Mit Geschenkgutschein bezahlen – 0,00 € Restbetrag":method==="paypal"?<><img className="rh-paypal-button-wordmark" src="/assets/payment-brands/paypal-wordmark.svg" alt="PayPal"/><span>{`${(totalCents/100).toFixed(2).replace(".",",")} € zahlungspflichtig bestellen`}</span></>:`${(totalCents/100).toFixed(2).replace(".",",")} € zahlungspflichtig mit Klarna bestellen`}
   </button>
  </div>;
 }

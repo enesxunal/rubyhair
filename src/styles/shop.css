@@ -1040,3 +1040,26 @@ button.rh-editorial-cta{cursor:pointer}
 .rh-unified-payment-actions .rh-payment-primary-link{border-radius:5px}
 .rh-unified-payment-actions .rh-payment-action-area button.rh-paypal-branded-button:disabled{background:#000;color:#fff!important;opacity:.48!important}
 @media(max-width:380px){.rh-checkout-payment-preview .rh-payment-choice-logo{width:33px}.rh-payment-choice-logos{gap:4px}}
+
+/* Compact branded checkout choices, with one card form and native wallet actions. */
+.rh-checkout-payment-preview .rh-compact-payment-select{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0 16px}
+.rh-checkout-payment-preview .rh-compact-payment-select .rh-payment-choice{position:relative;justify-content:center;min-height:66px;padding:9px 8px;gap:0;text-align:center;border-radius:7px}
+.rh-checkout-payment-preview .rh-compact-payment-select .rh-payment-choice.is-selected{padding:8px 7px;box-shadow:0 0 0 1px #653d4e}
+.rh-compact-payment-select .rh-payment-choice input{position:absolute;inset:0;opacity:0;width:100%;height:100%;margin:0}
+.rh-checkout-payment-preview .rh-compact-payment-select .rh-compact-payment-brand{display:flex;align-items:center;justify-content:center;gap:3px;min-width:0;flex:1}
+.rh-compact-payment-brand>img{width:92px;max-width:100%;height:25px;object-fit:contain}
+.rh-compact-payment-brand small{font-size:10px;line-height:1.2;overflow-wrap:anywhere}
+.rh-compact-card-logos{display:flex!important;flex-direction:row!important;align-items:center;justify-content:center;gap:9px!important}
+.rh-compact-card-logos img{width:35px;height:20px;object-fit:contain}
+.rh-compact-klarna strong{background:#ffb3d0;border-radius:5px;padding:4px 10px;color:#131313;font-size:16px;line-height:1.2}
+.rh-compact-payment-actions{display:flex;flex-direction:column;gap:8px;min-width:0}
+.rh-compact-payment-actions .rh-payment-action-area{margin:0;min-width:0}
+.rh-compact-payment-actions .rh-wallet-actions:not([hidden]){display:flex;gap:8px;flex-wrap:wrap}
+.rh-compact-payment-actions .rh-wallet-button-host{flex:1 1 155px;min-width:0;max-width:100%;margin-bottom:0!important}
+.rh-compact-payment-actions .rh-wallet-actions>p{flex-basis:100%}
+.rh-compact-payment-actions .rh-payment-action-area button.rh-paypal-branded-button{background:#000;color:#fff!important;min-height:48px;flex-direction:column;gap:3px;padding:8px 10px}
+.rh-compact-payment-actions .rh-payment-action-area button.rh-paypal-branded-button .rh-paypal-button-wordmark{width:88px;height:21px;border-radius:0;filter:brightness(0) invert(1)}
+.rh-compact-payment-actions .rh-payment-action-area button.rh-paypal-branded-button span{font-size:10px;font-weight:500}
+.rh-compact-payment-actions .rh-payment-action-area button.rh-paypal-branded-button:disabled{background:#242424;opacity:.7!important}
+@media(min-width:720px){.rh-compact-paypal-active{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}.rh-compact-paypal-active:has(.rh-wallet-actions[hidden]){grid-template-columns:1fr}.rh-compact-paypal-active:not(:has(.rh-wallet-actions)){grid-template-columns:1fr}}
+@media(max-width:380px){.rh-compact-payment-brand>img{width:70px}.rh-compact-card-logos{gap:5px!important}.rh-compact-card-logos img{width:28px}.rh-compact-klarna strong{font-size:14px;padding:4px 6px}}
