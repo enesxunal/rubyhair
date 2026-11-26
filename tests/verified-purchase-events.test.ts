@@ -51,3 +51,20 @@ test("confirmed payment gates browser purchase tracking, not cancelled/authoriza
  assert.ok(giftOnly.includes("paid&&<CheckoutSuccessClear"));
  assert.ok(!klarna.includes("VerifiedGiftPurchase")&&!klarna.includes("CheckoutSuccessClear")&&!klarna.includes("purchase"));
 });
+
+test("verified cash value is sent only with refreshed consent and an opaque event ID",()=>{
+ const h=harness(false,true);const storage=globalThis.localStorage;
+ const original=storage.getItem.bind(storage);
+ storage.getItem=(key)=>key==="ruby_meta_purchase_consent"?"2026-11-26-v2":original(key);
+ try{
+  assert.equal(trackVerifiedPurchaseOnce(order,{value:123.99,currency:"EUR",eventId:"a".repeat(64)}),true);
+  assert.deepEqual(h.seen,[{provider:"meta",args:["track","Purchase",{value:123.99,currency:"EUR"},{eventID:"a".repeat(64)}]}]);
+ }finally{h.restore()}
+});
+test("old marketing consent does not authorize value or event identifier",()=>{
+ const h=harness(false,true);
+ try{
+  assert.equal(trackVerifiedPurchaseOnce(order,{value:123.99,currency:"EUR",eventId:"a".repeat(64)}),true);
+  assert.deepEqual(h.seen,[{provider:"meta",args:["track","Purchase"]}]);
+ }finally{h.restore()}
+});

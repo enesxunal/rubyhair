@@ -1,3 +1,5 @@
+import {createHmac} from "node:crypto";
+import type {MetaPurchaseData} from "@/lib/meta-pixel";
 import {recordCheckoutDiagnostic} from "@/lib/checkout-diagnostics";
 import type {Metadata} from "next";
 import {after} from "next/server";
@@ -39,11 +41,19 @@ export default async function CustomerPayPalReturn({searchParams}:{searchParams:
    }
   }catch{after(()=>recordCheckoutDiagnostic(walletMethod||"paypal","return","RETURN_REVIEW","server",p.orderId));title="Zahlung wird geprüft";message="Der Zahlungsanbieter oder die Bestellbestätigung ist noch nicht synchronisiert. Bitte kein zweites Mal bezahlen.";}
  }
+ // Read only a recent, genuinely captured order. No historic conversions are replayed.
+ let purchase:MetaPurchaseData|undefined;
+ if(paid&&valid&&process.env.SESSION_SECRET){
+  try{
+   const row=await getPrisma().order.findFirst({where:{id:p.orderId!,testOnly:false,status:"payment_confirmed",currency:"EUR",invoice:{isNot:null},payments:{some:{eventType:"PAYMENT.CAPTURE.COMPLETED",provider:"paypal",receivedAt:{gte:new Date(Math.max(Date.parse("2026-11-26T17:10:00Z"),Date.now()-30*60000))}}}},select:{id:true,totalCents:true,giftAppliedCents:true}});
+   if(row&&row.totalCents>row.giftAppliedCents)purchase={value:(row.totalCents-row.giftAppliedCents)/100,currency:"EUR",eventId:createHmac("sha256",process.env.SESSION_SECRET).update("ruby-meta-purchase:"+row.id).digest("hex")};
+  }catch{/* Analytics may never prevent the paid confirmation. */}
+ }
  const purchasedGifts=paid&&valid?await getPrisma().giftPurchase.findMany({
   where:{cartOrderId:p.orderId!,status:"captured",card:{isNot:null}},select:{id:true,recipientName:true},orderBy:{createdAt:"asc"}
  }):[];
  return <main className="rh-shell" style={{padding:"90px 20px",maxWidth:780,margin:"auto"}}>
-  <h1>{title}</h1><p>{message}</p>{valid&&paid&&<CheckoutSuccessClear orderId={p.orderId!}/>}
+  <h1>{title}</h1><p>{message}</p>{valid&&paid&&<CheckoutSuccessClear orderId={p.orderId!} purchase={purchase}/>}
   {purchasedGifts.length>0&&<section className="rh-gift-paid-links"><h2>Deine Geschenkkarten</h2>
    <p>Deine digitalen Geschenke sind bezahlt. Du kannst jede Karte jetzt ansehen und als Bild speichern. Die E-Mail-Zustellung wird automatisch bearbeitet.</p>
    {purchasedGifts.map(g=><a className="rh-gift-primary" key={g.id} href={giftViewUrl(g.id)}>Geschenkgutschein für {g.recipientName} ansehen ↗</a>)}

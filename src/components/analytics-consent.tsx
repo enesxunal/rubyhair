@@ -3,7 +3,7 @@ import {useEffect,useState} from "react";
 import {usePathname} from "next/navigation";
 import Link from "next/link";
 import {analyticsEnabled,isTrackableRubyPath,trackRubyEvent} from "@/lib/storefront-analytics";
-import {trackRubyMetaEvent} from "@/lib/meta-pixel";
+import {trackRubyMetaEvent,META_PURCHASE_CONSENT_VERSION} from "@/lib/meta-pixel";
 import {trackRubyGA4Event} from "@/lib/google-analytics";
 
 type Choice="allow"|"deny"|null;
@@ -44,6 +44,7 @@ export default function AnalyticsConsent(){
   setDraftStatistics(stats==="allow");setDraftMarketing(ads==="allow");setDraftGoogle(ga==="allow");
   setInitialized(true);
   if((statsAvailable&&stats===null)||ads===null||ga===null)setOpen(true);
+  try{if(ads==="allow"&&localStorage.getItem("ruby_meta_purchase_consent")!==META_PURCHASE_CONSENT_VERSION)setOpen(true)}catch{}
  },[trackable,statsAvailable]);
  useEffect(()=>{
   const showSettings=()=>{setDetailsOpen(true);setOpen(true)};
@@ -76,6 +77,7 @@ export default function AnalyticsConsent(){
   try{
    localStorage.setItem(statsKey,stats);
    localStorage.setItem(marketingKey,ads);
+   if(ads==="allow")localStorage.setItem("ruby_meta_purchase_consent",META_PURCHASE_CONSENT_VERSION);else localStorage.removeItem("ruby_meta_purchase_consent");
    localStorage.setItem(gaKey,ga);
    document.cookie="ruby_analytics="+stats+"; Path=/; Max-Age=31536000; SameSite=Lax"+(location.protocol==="https:"?"; Secure":"");
    if(stats==="deny")try{sessionStorage.removeItem("ruby_analytics_source_tab")}catch{}
@@ -97,12 +99,12 @@ export default function AnalyticsConsent(){
  if(path.startsWith("/admin")||path.startsWith("/api")||path.startsWith("/konto")||path.startsWith("/coming-soon"))return null;
  return <>{open&&<aside className="rh-consent-panel rh-consent-simplified" role="dialog" aria-modal="false" aria-label="Datenschutz- und Cookie-Einstellungen">
     <header className="rh-consent-head"><span>RUBY HAIR / DATENSCHUTZ</span><strong>Deine Privatsphäre.</strong></header>
-    <p>Wir verwenden notwendige Cookies, damit der Shop funktioniert. Statistik und Marketing sind freiwillig und bleiben ohne Zustimmung aus.</p>
+    <p>Wir verwenden notwendige Cookies, damit der Shop funktioniert. Statistik und Marketing sind freiwillig und bleiben ohne Zustimmung aus. Bei Marketing-Einwilligung kann Meta auch bestätigte Kaufbeträge messen.</p>
     {detailsOpen&&<div className="rh-consent-preferences" role="group" aria-label="Optionale Cookie-Einstellungen">
      <div className="rh-consent-necessary"><b>Notwendig</b><span>Immer aktiv · Warenkorb und sicherer Checkout</span></div>
      {statsAvailable&&<label className="rh-consent-option"><input type="checkbox" checked={draftStatistics} onChange={e=>setDraftStatistics(e.target.checked)}/><span><b>Interne Statistik</b><small>Anonyme Seiten-, Story- und KI-Nutzungszahlen, keine Fotos und keine Personenprofile.</small></span></label>}
      <label className="rh-consent-option"><input type="checkbox" checked={draftGoogle} onChange={e=>setDraftGoogle(e.target.checked)}/><span><b>Google Analytics 4 (Statistik)</b><small>Freiwillige Shop-Nutzungsmessung durch Google, nur bei eigener Zustimmung.</small></span></label>
-     <label className="rh-consent-option"><input type="checkbox" checked={draftMarketing} onChange={e=>setDraftMarketing(e.target.checked)}/><span><b>Marketing (Meta Pixel)</b><small>Freiwillige Werbungsmessung durch Meta, ohne persönliche Fotos.</small></span></label>
+     <label className="rh-consent-option"><input type="checkbox" checked={draftMarketing} onChange={e=>setDraftMarketing(e.target.checked)}/><span><b>Marketing (Meta Pixel)</b><small>Freiwillige Werbungsmessung durch Meta; bei bestätigter Zahlung auch Betrag, Währung und pseudonyme Ereignis-ID, keine persönlichen Fotos.</small></span></label>
     </div>}
     <div className="rh-consent-actions">
      <button type="button" className="rh-consent-reject" onClick={()=>save("deny","deny","deny")}>Alle ablehnen</button>
