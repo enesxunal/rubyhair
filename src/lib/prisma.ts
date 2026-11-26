@@ -36,7 +36,9 @@ function selfhostDatabaseUrl(){
     url.searchParams.set("sslcert",ca);
     url.searchParams.set("sslidentity",identity);
     url.searchParams.set("sslpassword",config.identityPassword);
-    url.searchParams.set("connection_limit","1");
+    // Self-hosted PostgreSQL has a dedicated 45-connection relay; two
+    // slots avoid head-of-line blocking of concurrent serverless reads.
+    url.searchParams.set("connection_limit","2");
     url.searchParams.set("pool_timeout","20");
     url.searchParams.set("connect_timeout","10");
     selfhostUrl=url.toString();

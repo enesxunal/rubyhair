@@ -43,3 +43,13 @@ test('DHL credential loading is batched and order lists do not load PDF bytes',(
  assert.match(dhl,/loadPaymentValues\("dhl",environment,dhlRequiredFields\)/);
  assert.match(labels,/loadPaymentValues\("dhl","live",fields\)/);
 });
+
+
+test("Dedicated self-host database permits two concurrent Prisma connections while managed pool remains bounded",()=>{
+ const src=readFileSync("src/lib/prisma.ts","utf8");
+ const selfhost=src.slice(src.indexOf("function selfhostDatabaseUrl()"));
+ assert.match(selfhost,/connection_limit","2"/);
+ assert.match(selfhost,/pool_timeout","20"/);
+ assert.match(selfhost,/sslaccept","strict"/);
+ assert.match(selfhost,/sslmode","require"/);
+});
