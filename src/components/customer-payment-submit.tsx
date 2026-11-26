@@ -4,10 +4,9 @@ import type {CartLine} from "@/components/cart-context";
 import type {GiftCartItem} from "@/lib/gift-cards/cart-schema";
 import type {CheckoutAddressData} from "./checkout-address-preview";
 
-type Props={method:"paypal"|"klarna";lines:CartLine[];gifts?:GiftCartItem[];address:CheckoutAddressData|null;cartReady:boolean;totalCents:number;giftCode?:string;couponCode?:string};
-export default function CustomerPaymentSubmit({method,lines,gifts=[],address,cartReady,totalCents,giftCode,couponCode}:Props){
+type Props={agreed:boolean;method:"paypal"|"klarna";lines:CartLine[];gifts?:GiftCartItem[];address:CheckoutAddressData|null;cartReady:boolean;totalCents:number;giftCode?:string;couponCode?:string};
+export default function CustomerPaymentSubmit({agreed,method,lines,gifts=[],address,cartReady,totalCents,giftCode,couponCode}:Props){
  const [loading,setLoading]=useState(false),[error,setError]=useState("");
- const [agreed,setAgreed]=useState(false);
  const key=useRef<string|null>(null);
  const ready=Boolean(address&&cartReady&&(lines.length||gifts.length)&&totalCents>=0&&!loading&&agreed&&(method==="paypal"||!giftCode)&&(!gifts.length||method==="paypal"));
  const start=async()=>{
@@ -37,14 +36,7 @@ export default function CustomerPaymentSubmit({method,lines,gifts=[],address,car
   }
  };
  return <div className="rh-payment-action-area" aria-live="polite">
-  <p>{lines.length?"DHL-Versand innerhalb Deutschlands.":"Digitaler Gutschein: kein DHL-Versand."} Die Zahlung startet erst nach deiner ausdrücklichen Bestätigung.</p>
-  {!address&&<p className="rh-checkout-unavailable-note" role="status">Bitte zuerst oben deine {lines.length?"Liefer- und Rechnungsadresse":"Rechnungsadresse"} bestätigen.</p>}
   {address&&!cartReady&&<p className="rh-checkout-unavailable-note" role="alert">Die Preis- oder Bestandsprüfung ist noch nicht abgeschlossen oder meldet ein Problem. Prüfe die Bestellübersicht und entferne gegebenenfalls einen ungültigen Rabattcode im Warenkorb.</p>}
-  <label style={{display:"flex",alignItems:"flex-start",gap:10,marginBottom:16,fontSize:12,lineHeight:1.7}}>
-   <input type="checkbox" checked={agreed} onChange={e=>setAgreed(e.target.checked)} required/>
-   <span style={{minWidth:0,overflowWrap:"anywhere"}}>Ich habe die <a href="/rechtliches/agb/" target="_blank" rel="noopener noreferrer">AGB</a> und die
-   <a href="/rechtliches/widerruf/" target="_blank" rel="noopener noreferrer"> Widerrufsbelehrung</a> gelesen und bestätige den kostenpflichtigen Kauf.</span>
-  </label>
   {error&&<p role="alert" style={{color:"#a13c50"}}>Bestellung konnte nicht gestartet werden ({error}). Bitte nicht erneut versuchen, bis der Vorgang geprüft ist.</p>}
   <button type="button" className={"rh-payment-primary-link"+(method==="paypal"&&totalCents>0?" rh-paypal-branded-button":"")} disabled={!ready} onClick={start}
    style={{border:0,cursor:ready?"pointer":"not-allowed",opacity:ready?1:.48,width:"100%",fontSize:14}}>

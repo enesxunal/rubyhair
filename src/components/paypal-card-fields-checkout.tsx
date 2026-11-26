@@ -11,7 +11,7 @@ type PaypalSDK={createInstance:(o:{clientToken:string;components:string[];locale
  findEligibleMethods:(o:{countryCode:string;currencyCode:string;amount:string})=>Promise<{isEligible:(s:string)=>boolean}>;
  createCardFieldsOneTimePaymentSession:()=>CardSession;
 }>};
-type Props={lines:CartLine[];address:CheckoutAddressData|null;cartReady:boolean;totalCents:number;couponCode?:string};
+type Props={agreed:boolean;lines:CartLine[];address:CheckoutAddressData|null;cartReady:boolean;totalCents:number;couponCode?:string};
 
 const scriptUrl="https://www.paypal.com/web-sdk/v6/core";
 async function loadPaypal():Promise<PaypalSDK>{
@@ -28,11 +28,11 @@ async function loadPaypal():Promise<PaypalSDK>{
 }
 
 /** Only PayPal-hosted frames handle PAN, expiry and CVV. */
-export default function PayPalCardFieldsCheckout({lines,address,cartReady,totalCents,couponCode}:Props){
+export default function PayPalCardFieldsCheckout({agreed,lines,address,cartReady,totalCents,couponCode}:Props){
  const numberRef=useRef<HTMLDivElement>(null),expiryRef=useRef<HTMLDivElement>(null),cvvRef=useRef<HTMLDivElement>(null);
  const sessionRef=useRef<CardSession|null>(null),keyRef=useRef<string|null>(null);
  const [phase,setPhase]=useState<"loading"|"ready"|"unavailable">("loading");
- const [agreed,setAgreed]=useState(false),[busy,setBusy]=useState(false),[locked,setLocked]=useState(false),[error,setError]=useState("");
+ const [busy,setBusy]=useState(false),[locked,setLocked]=useState(false),[error,setError]=useState("");
  useEffect(()=>{
   let canceled=false;
   async function init(){
@@ -129,12 +129,7 @@ export default function PayPalCardFieldsCheckout({lines,address,cartReady,totalC
     <label style={{fontSize:13}}>Sicherheitscode<div ref={cvvRef} style={fieldStyle}/></label>
    </div>
   </div>
-  {!address&&<p className="rh-checkout-unavailable-note" role="status">Bitte zuerst oben die Liefer- und Rechnungsadresse bestätigen.</p>}
   {address&&!cartReady&&<p className="rh-checkout-unavailable-note" role="alert">Der Warenkorb ist noch nicht zur Zahlung freigegeben. Prüfe bitte die Preis- und Bestandsmeldung in deiner Bestellübersicht. Bei einem ungültigen Rabattcode diesen im Warenkorb entfernen.</p>}
-  <label style={{display:"flex",alignItems:"flex-start",gap:10,fontSize:12,lineHeight:1.7,margin:"14px 0"}}>
-   <input type="checkbox" checked={agreed} onChange={e=>setAgreed(e.target.checked)}/>
-   <span>Ich akzeptiere die <a href="/rechtliches/agb/" target="_blank" rel="noreferrer">AGB</a> und die <a href="/rechtliches/widerruf/" target="_blank" rel="noreferrer">Widerrufsbelehrung</a> und bestelle zahlungspflichtig.</span>
-  </label>
   {error&&<p role="alert" style={{color:"#a13c50"}}>{error}</p>}
   <button type="button" className="rh-payment-primary-link" disabled={!ready} onClick={pay} style={{width:"100%",border:0,opacity:ready?1:.5}}>
    {busy?"Kartenzahlung wird überprüft …":`${(totalCents/100).toFixed(2).replace(".",",")} € zahlungspflichtig mit Karte bestellen`}

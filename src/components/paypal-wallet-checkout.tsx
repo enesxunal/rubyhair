@@ -49,7 +49,7 @@ type AppleNativeConstructor={
 type WalletWindow=Window&{paypal?:PayPalSDK;google?:GooglePayAPI;ApplePaySession?:AppleNativeConstructor};
 type Props={
  lines:CartLine[];address:CheckoutAddressData|null;cartReady:boolean;totalCents:number;couponCode?:string;
- appleEnabled:boolean;googleEnabled:boolean;
+ appleEnabled:boolean;googleEnabled:boolean;accepted:boolean;
 };
 const PAYPAL_URL="https://www.paypal.com/web-sdk/v6/core";
 const GOOGLE_URL="https://pay.google.com/gp/p/js/pay.js";
@@ -69,19 +69,19 @@ function loadScript(url:string,ready:()=>boolean):Promise<void>{
 function asError(e:unknown):string{return e instanceof Error?e.message:"UNKNOWN_WALLET_ERROR"}
 const money=(cents:number)=>(cents/100).toFixed(2);
 
-export default function PayPalWalletCheckout({lines,address,cartReady,totalCents,couponCode,appleEnabled,googleEnabled}:Props){
+export default function PayPalWalletCheckout({lines,address,cartReady,totalCents,couponCode,appleEnabled,googleEnabled,accepted}:Props){
  const appleHost=useRef<HTMLDivElement>(null),googleHost=useRef<HTMLDivElement>(null);
  const paymentMethod=useRef<GooglePayClient|null>(null);
  const [appleReady,setAppleReady]=useState(false),[googleReady,setGoogleReady]=useState(false);
- const [accepted,setAccepted]=useState(false),[processing,setProcessing]=useState(false),[error,setError]=useState("");
+ const [processing,setProcessing]=useState(false),[error,setError]=useState("");
  const lock=useRef(false),orderKeys=useRef<Record<Method,string|null>>({apple_pay:null,google_pay:null});
- const snapshot=useRef({lines,address,cartReady,totalCents,couponCode});
- snapshot.current={lines,address,cartReady,totalCents,couponCode};
+ const snapshot=useRef({lines,address,cartReady,totalCents,couponCode,accepted});
+ snapshot.current={lines,address,cartReady,totalCents,couponCode,accepted};
  const canStart=()=>Boolean(snapshot.current.address&&snapshot.current.cartReady&&snapshot.current.lines.length>0&&
-  snapshot.current.totalCents>0&&accepted&&!lock.current);
+  snapshot.current.totalCents>0&&snapshot.current.accepted&&!lock.current);
  const createOrder=async(method:Method):Promise<Required<CheckoutOrder>>=>{
   const current=snapshot.current;
-  if(!current.address||!current.cartReady||!current.lines.length||current.totalCents<=0||!accepted)throw Error("WALLET_CHECKOUT_NOT_READY");
+  if(!current.address||!current.cartReady||!current.lines.length||current.totalCents<=0||!current.accepted)throw Error("WALLET_CHECKOUT_NOT_READY");
   orderKeys.current[method]||=crypto.randomUUID();
   const response=await fetch("/api/checkout",{method:"POST",credentials:"same-origin",cache:"no-store",
    headers:{"Content-Type":"application/json"},body:JSON.stringify({
@@ -217,15 +217,8 @@ export default function PayPalWalletCheckout({lines,address,cartReady,totalCents
   return()=>{canceled=true;appleHost.current?.replaceChildren();googleHost.current?.replaceChildren();paymentMethod.current=null};
  },[totalCents,appleEnabled,googleEnabled]);
  if(!appleEnabled&&!googleEnabled)return null;
- return <section className="rh-payment-action-area" aria-label="Digitale Wallets">
-  <p>Weitere Zahlungsmethoden – verfügbare Wallets auf deinem Gerät.</p>
-  {(appleReady||googleReady)&&<label style={{display:"flex",alignItems:"flex-start",gap:10,margin:"14px 0",fontSize:12}}>
-   <input type="checkbox" checked={accepted} onChange={e=>setAccepted(e.target.checked)}/>
-   <span>Ich habe die <a href="/rechtliches/agb/" target="_blank" rel="noreferrer">AGB</a> und
-    die <a href="/rechtliches/widerruf/" target="_blank" rel="noreferrer">Widerrufsbelehrung</a> gelesen
-    und bestelle zahlungspflichtig.</span>
-  </label>}
-  <div ref={appleHost} className="rh-wallet-button-host" style={{display:appleReady?"block":"none",marginBottom:10}}/>
+ return <section className="rh-payment-action-area rh-wallet-actions" aria-label="Digitale Wallets" hidden={!appleReady&&!googleReady&&!error&&!processing}>
+  <div ref={appleHost} className="rh-wallet-button-host" style={{display:appleReady?"block":"none",marginBottom:googleReady?10:0}}/>
   <div ref={googleHost} className="rh-wallet-button-host" style={{display:googleReady?"block":"none"}}/>
   {processing&&<p role="status">Deine Wallet-Zahlung wird geprüft …</p>}
   {error&&<p role="alert" style={{color:"#a13c50"}}>{error}</p>}

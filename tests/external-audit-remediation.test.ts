@@ -63,7 +63,19 @@ test("mobile checkout grid shrinks without horizontal scrolling",()=>{
 });
 
 test("checkout legal consent text stays in one shrinkable mobile flex item",()=>{
- const jsx=read("src/components/customer-payment-submit.tsx");
- assert.match(jsx,/<span style=\{\{minWidth:0,overflowWrap:"anywhere"\}\}>Ich habe die/);
+ const jsx=read("src/components/checkout-preview.tsx"),css=read("src/styles/shop.css");
+ assert.match(jsx,/<span>Ich habe die/);
  assert.match(jsx,/Widerrufsbelehrung<\/a> gelesen und best[a-zA-Z\u00e4]*tige den kostenpflichtigen Kauf\.<\/span>/);
+ assert.match(css,/\.rh-unified-payment-consent span\{min-width:0;overflow-wrap:anywhere\}/);
+ assert.equal((jsx.match(/checked=\{paymentConsent\}/g)||[]).length,1);
+ assert.match(jsx,/<CustomerPaymentSubmit agreed=\{paymentConsent\}/);
+ assert.match(jsx,/<PayPalCardFieldsCheckout agreed=\{paymentConsent\}/);
+ assert.match(jsx,/<PayPalWalletCheckout accepted=\{paymentConsent\}/);
+ for(const component of ["customer-payment-submit","paypal-card-fields-checkout","paypal-wallet-checkout"]){
+  const source=read(`src/components/${component}.tsx`);
+  assert.doesNotMatch(source,/type="checkbox"/);
+ }
+ const wallet=read("src/components/paypal-wallet-checkout.tsx");
+ assert.match(wallet,/snapshot\.current\.accepted/);
+ assert.match(wallet,/!current\.accepted/);
 });

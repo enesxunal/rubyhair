@@ -1019,3 +1019,24 @@ button.rh-editorial-cta{cursor:pointer}
 .rh-consent-simplified .rh-consent-option small{line-height:1.55;font-size:10px}
 .rh-consent-simplified button:focus-visible,.rh-consent-simplified input:focus-visible{outline:2px solid #9b617a;outline-offset:2px}
 @media(max-width:550px){.rh-consent-panel.rh-consent-simplified{left:10px;right:10px;bottom:10px;padding:18px 16px 13px;max-height:85dvh}.rh-consent-simplified .rh-consent-head strong{font-size:25px}.rh-consent-simplified>p{font-size:11px;margin:10px 0 13px}.rh-consent-simplified .rh-consent-foot span,.rh-consent-simplified .rh-consent-foot a{font-size:9px}}
+
+/* One compact payment area, shared legal confirmation, native wallet buttons. */
+.rh-checkout-payment-preview .rh-payment-select{grid-template-columns:1fr;gap:8px;margin:12px 0 16px}
+.rh-checkout-payment-preview .rh-payment-choice{align-items:center;min-height:64px;padding:12px 14px;border-radius:6px;background:#fff}
+.rh-checkout-payment-preview .rh-payment-choice.is-selected{padding:11px 13px;background:#fff}
+.rh-checkout-payment-preview .rh-payment-choice input{margin:0}
+.rh-checkout-payment-preview .rh-payment-choice>span{flex:1;gap:3px}
+.rh-checkout-payment-preview .rh-payment-choice-logo{width:42px;max-height:26px;object-fit:contain;flex-shrink:0}
+.rh-checkout-payment-preview .rh-payment-choice>span.rh-payment-choice-logos{display:flex;flex:0 0 auto;flex-direction:row;align-items:center;gap:7px}
+.rh-payment-mastercard{display:inline-flex;align-items:center;isolation:isolate}
+.rh-payment-mastercard b{width:17px;height:17px;background:#eb001b;border-radius:50%}
+.rh-payment-mastercard b+b{margin-left:-6px;background:#f79e1b;mix-blend-mode:multiply}
+.rh-unified-payment-consent{margin:0 0 16px}
+.rh-unified-payment-consent label{display:flex;align-items:flex-start;gap:10px;font-size:12px;line-height:1.65;color:#604d54}
+.rh-unified-payment-consent input{flex-shrink:0;width:17px;height:17px;margin-top:2px;accent-color:#653d4e}
+.rh-unified-payment-consent span{min-width:0;overflow-wrap:anywhere}
+.rh-unified-payment-actions .rh-payment-action-area{background:transparent;border:0;padding:0;margin:0 0 10px}
+.rh-unified-payment-actions .rh-wallet-actions[hidden]{display:none}
+.rh-unified-payment-actions .rh-payment-primary-link{border-radius:5px}
+.rh-unified-payment-actions .rh-payment-action-area button.rh-paypal-branded-button:disabled{background:#000;color:#fff!important;opacity:.48!important}
+@media(max-width:380px){.rh-checkout-payment-preview .rh-payment-choice-logo{width:33px}.rh-payment-choice-logos{gap:4px}}
