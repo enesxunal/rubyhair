@@ -39,9 +39,9 @@ export default function CustomerPaymentSubmit({agreed,claimPayment,method,lines,
  return <div className="rh-payment-action-area rh-direct-payment-action" aria-live="polite">
   {address&&!cartReady&&<p className="rh-checkout-unavailable-note" role="alert">Die Preis- oder Bestandsprüfung ist noch nicht abgeschlossen oder meldet ein Problem. Prüfe die Bestellübersicht und entferne gegebenenfalls einen ungültigen Rabattcode im Warenkorb.</p>}
   {error&&<p role="alert" style={{color:"#a13c50"}}>Bestellung konnte nicht gestartet werden ({error}). Bitte nicht erneut versuchen, bis der Vorgang geprüft ist.</p>}
-  <button type="button" className={"rh-payment-primary-link"+(totalCents>0?(method==="paypal"?" rh-paypal-branded-button":" rh-klarna-branded-button"):"")} disabled={!ready} onClick={start}
+  <button type="button" className={"rh-payment-primary-link"+(totalCents>0?(method==="paypal"?" rh-paypal-branded-button":" rh-klarna-branded-button"):"")} disabled={!ready} aria-label={totalCents===0?"Gutschein einlösen":`${(totalCents/100).toFixed(2)} EUR zahlungspflichtig mit ${method==="paypal"?"PayPal":"Klarna"} bestellen`} onClick={start}
    style={{border:0,cursor:ready?"pointer":"not-allowed",opacity:ready?1:.48,width:"100%",fontSize:14}}>
-   {loading?"Zahlung wird sicher vorbereitet …":totalCents===0?"Mit Geschenkgutschein bezahlen – 0,00 € Restbetrag":method==="paypal"?<><img className="rh-paypal-button-wordmark" src="/assets/payment-brands/paypal-wordmark.svg" alt="PayPal"/><span>{`${(totalCents/100).toFixed(2).replace(".",",")} € zahlungspflichtig bestellen`}</span></>:<><strong className="rh-klarna-wordmark">Klarna.</strong><span>{`${(totalCents/100).toFixed(2).replace(".",",")} € zahlungspflichtig bestellen`}</span></>}
+   {loading?"…":totalCents===0?"Gutschein einlösen":method==="paypal"?<img className="rh-paypal-button-wordmark" src="/assets/payment-brands/paypal-wordmark.svg" alt="PayPal"/>:<strong className="rh-klarna-wordmark">Klarna</strong>}
   </button>
  </div>;
 }

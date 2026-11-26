@@ -73,6 +73,7 @@ export default function PayPalWalletCheckout({lines,address,cartReady,totalCents
  const appleHost=useRef<HTMLDivElement>(null),googleHost=useRef<HTMLDivElement>(null);
  const paymentMethod=useRef<GooglePayClient|null>(null);
  const [appleReady,setAppleReady]=useState(false),[googleReady,setGoogleReady]=useState(false);
+ const [chosenWallet,setChosenWallet]=useState<Method|null>(null);
  const [processing,setProcessing]=useState(false),[error,setError]=useState("");
  const lock=useRef(false),orderKeys=useRef<Record<Method,string|null>>({apple_pay:null,google_pay:null});
  const snapshot=useRef({lines,address,cartReady,totalCents,couponCode,accepted});
@@ -219,8 +220,10 @@ export default function PayPalWalletCheckout({lines,address,cartReady,totalCents
  },[totalCents,appleEnabled,googleEnabled]);
  if(!appleEnabled&&!googleEnabled)return null;
  return <section className="rh-payment-action-area rh-wallet-actions" aria-label="Digitale Wallets" hidden={!appleReady&&!googleReady&&!error&&!processing}>
-  <div ref={appleHost} className="rh-wallet-button-host" style={{display:appleReady?"block":"none",marginBottom:googleReady?10:0}}/>
-  <div ref={googleHost} className="rh-wallet-button-host" style={{display:googleReady?"block":"none"}}/>
+  {appleReady&&<button type="button" className="rh-logo-wallet-tile" aria-label="Apple Pay auswählen" aria-expanded={chosenWallet==="apple_pay"} onClick={()=>setChosenWallet(v=>v==="apple_pay"?null:"apple_pay")}><img src="/assets/payment-brands/applepay.svg" alt="Apple Pay"/></button>}
+  {googleReady&&<button type="button" className="rh-logo-wallet-tile" aria-label="Google Pay auswählen" aria-expanded={chosenWallet==="google_pay"} onClick={()=>setChosenWallet(v=>v==="google_pay"?null:"google_pay")}><img src="/assets/payment-brands/googlepay.svg" alt="Google Pay"/></button>}
+  <div ref={appleHost} className="rh-wallet-button-host" style={{display:appleReady&&chosenWallet==="apple_pay"?"block":"none"}}/>
+  <div ref={googleHost} className="rh-wallet-button-host" style={{display:googleReady&&chosenWallet==="google_pay"?"block":"none"}}/>
   {processing&&<p role="status">Deine Wallet-Zahlung wird geprüft …</p>}
   {error&&<p role="alert" style={{color:"#a13c50"}}>{error}</p>}
  </section>;

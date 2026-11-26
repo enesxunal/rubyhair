@@ -105,11 +105,6 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
           {cardAvailable&&<>
             <PayPalCardFieldsCheckout agreed={paymentConsent} claimPayment={claimPayment} lines={lines} address={validatedAddress} cartReady={canPay}
               totalCents={remainingCents} couponCode={couponCode||undefined}/>
-            <div className="rh-static-card-brands" aria-label="Kartenmarken">
-              <span className="rh-card-brand-tile"><img src="/assets/payment-brands/visa.svg" alt="Visa"/></span>
-              <span className="rh-card-brand-tile rh-card-brand-mastercard" role="img" aria-label="Mastercard"><i className="rh-payment-mastercard"><b/><b/></i></span>
-              <span className="rh-card-brand-tile rh-card-brand-amex"><img src="/assets/payment-brands/amex.svg" alt="American Express"/></span>
-            </div>
           </>}
           {liveTest&&<LiveVariantTestSection state={liveTest} cartReady={payableTestCart}/>}
           {!liveTest&&oneEuroCart&&<div className="rh-payment-action-area">
@@ -118,8 +113,14 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
           </div>}
           {checkoutMode==="disabled"&&!liveTest&&!oneEuroCart&&<div className="rh-payment-action-area"><p>Die letzte Freigabe für den regulären Kauf steht noch aus. Bis dahin wird keine Bestellung ausgelöst.</p></div>}
           {regularCheckout&&<>
-            {cardAvailable&&<p className="rh-alternative-payment-heading">Oder bezahle mit</p>}
             <div className="rh-direct-payment-buttons" aria-label="Weitere Zahlungsarten">
+              {cardAvailable&&<>
+
+              <span className="rh-card-brand-tile"><img src="/assets/payment-brands/visa.svg" alt="Visa"/></span>
+              <span className="rh-card-brand-tile rh-card-brand-mastercard" role="img" aria-label="Mastercard"><i className="rh-payment-mastercard"><b/><b/></i></span>
+              <span className="rh-card-brand-tile rh-card-brand-amex"><img src="/assets/payment-brands/amex.svg" alt="American Express"/></span>
+
+              </>}
               {checkoutMode!=="klarna_public"&&<CustomerPaymentSubmit agreed={paymentConsent} claimPayment={claimPayment} method="paypal" lines={lines} gifts={gifts} address={validatedAddress} cartReady={canPay} totalCents={remainingCents} giftCode={gifts.length?undefined:appliedGift?.code} couponCode={lines.length?couponCode||undefined:undefined}/>}
               {!gifts.length&&!appliedGift&&<CustomerPaymentSubmit agreed={paymentConsent} claimPayment={claimPayment} method="klarna" lines={lines} address={validatedAddress} cartReady={canPay} totalCents={remainingCents} couponCode={couponCode||undefined}/>}
               {(applePayEnabled||googlePayEnabled)&&checkoutMode!=="klarna_public"&&lines.length>0&&!gifts.length&&!appliedGift&&remainingCents>0&&<PayPalWalletCheckout accepted={paymentConsent} claimPayment={claimPayment} lines={lines} address={validatedAddress} cartReady={canPay} totalCents={remainingCents} couponCode={couponCode||undefined} appleEnabled={applePayEnabled} googleEnabled={googlePayEnabled}/>}

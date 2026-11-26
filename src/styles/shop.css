@@ -1079,3 +1079,19 @@ button.rh-editorial-cta{cursor:pointer}
 .rh-direct-payment-buttons .rh-payment-action-area button.rh-klarna-branded-button{background:#ffb3d0;color:#171717!important}.rh-direct-payment-buttons .rh-payment-action-area button.rh-klarna-branded-button:disabled{background:#ffb3d0;color:#171717!important;opacity:.6!important}
 .rh-klarna-wordmark{font-size:18px;font-weight:850;letter-spacing:-.6px}.rh-direct-payment-buttons .rh-payment-action-area button.rh-paypal-branded-button:disabled{opacity:.65!important}
 @media(max-width:360px){.rh-direct-payment-buttons{grid-template-columns:1fr}}
+
+/* Uniform compact payment mark strip; provider-native wallet confirmation below. */
+.rh-card-first-payment .rh-direct-payment-buttons{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:12px 0;min-width:0}
+.rh-direct-payment-buttons .rh-direct-payment-action,.rh-direct-payment-buttons .rh-card-brand-tile,.rh-direct-payment-buttons .rh-logo-wallet-tile{flex:0 0 58px;width:58px;min-width:0;height:38px;box-sizing:border-box}
+.rh-direct-payment-buttons .rh-direct-payment-action{display:contents}
+.rh-direct-payment-buttons .rh-direct-payment-action button.rh-payment-primary-link,.rh-direct-payment-buttons .rh-logo-wallet-tile{flex:0 0 58px;width:58px;min-width:0;height:38px;min-height:38px;padding:4px;display:inline-flex;align-items:center;justify-content:center;border:1px solid #d9d9dd;border-radius:6px;box-sizing:border-box;background:#fff;color:#151515!important;cursor:pointer}
+.rh-direct-payment-buttons .rh-direct-payment-action button.rh-paypal-branded-button .rh-paypal-button-wordmark{width:49px;height:23px;filter:none;object-fit:contain}
+.rh-direct-payment-buttons .rh-direct-payment-action button.rh-paypal-branded-button:disabled{background:#fff;opacity:.65!important}
+.rh-direct-payment-buttons .rh-direct-payment-action button.rh-klarna-branded-button,.rh-direct-payment-buttons .rh-direct-payment-action button.rh-klarna-branded-button:disabled{background:#ffb3d0;color:#171717!important;border-color:#e9a0bd}
+.rh-direct-payment-buttons .rh-klarna-wordmark{font-size:13px;letter-spacing:-.6px}
+.rh-direct-payment-buttons .rh-logo-wallet-tile img{width:46px;height:27px;object-fit:contain}
+.rh-direct-payment-buttons .rh-wallet-button-host{flex:1 0 100%;width:100%;margin:0!important;order:10}
+.rh-direct-payment-buttons .rh-wallet-actions>p,.rh-direct-payment-buttons .rh-direct-payment-action>p{flex:1 0 100%;order:11}
+.rh-direct-payment-buttons .rh-logo-wallet-tile[aria-expanded=true]{outline:2px solid #653d4e;outline-offset:1px}
+.rh-direct-payment-buttons .rh-direct-payment-action button.rh-payment-primary-link:not(.rh-paypal-branded-button):not(.rh-klarna-branded-button){width:auto;flex:1 0 100%}
+@media(max-width:480px){.rh-card-first-payment .rh-direct-payment-buttons{gap:5px}}
