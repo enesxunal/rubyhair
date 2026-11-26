@@ -1,6 +1,6 @@
 // Public Tape-in storefront groups. Keratin product records remain intact for legacy URLs.
 export const tapeInLengths = [
-  {key:"45-50-cm", label:"45–50 cm", title:"Tape-in 45–50 cm", image:"/assets/ruby-home-tape-short-hq.webp", alt:"Ruby Hair Tape-in Echthaar Extensions – 45–50 cm"},
-  {key:"55-60-cm", label:"55–60 cm", title:"Tape-in 55–60 cm", image:"/assets/ruby-home-tape-long-hq.webp", alt:"Ruby Hair Tape-in Echthaar Extensions in Braun – 55–60 cm"}
+  {key:"45-50-cm", label:"45–50 cm", title:"Tape-in 45–50 cm", image:"/assets/ruby-home-tape-short-hq.webp", imageSrcSet:"/assets/ruby-home-tape-short-480.webp 480w, /assets/ruby-home-tape-short-768.webp 768w, /assets/ruby-home-tape-short-hq.webp 1433w", alt:"Ruby Hair Tape-in Echthaar Extensions – 45–50 cm"},
+  {key:"55-60-cm", label:"55–60 cm", title:"Tape-in 55–60 cm", image:"/assets/ruby-home-tape-long-hq.webp", imageSrcSet:"/assets/ruby-home-tape-long-480.webp 480w, /assets/ruby-home-tape-long-768.webp 768w, /assets/ruby-home-tape-long-hq.webp 1433w", alt:"Ruby Hair Tape-in Echthaar Extensions in Braun – 55–60 cm"}
 ] as const;
 export const tapeInLengthHref=(length:string)=>"/kollektionen/tape-in-extensions/?laenge="+encodeURIComponent(length);

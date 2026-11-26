@@ -11,12 +11,12 @@ export default function Collections(){
       <p>Tape-in Extensions und Keratin Bondings.</p>
     </div></section>
     <section className="rh-categories rh-shell rh-length-index" aria-label="Tape-in Längen wählen">
-      {tapeInLengths.map((item)=><Link href={tapeInLengthHref(item.key)} className="rh-category-tile" key={item.key}>
-        <div className="rh-category-photo"><img src={item.image} alt={item.alt}/><span className="rh-length-tag">{item.label}</span><BlackFridayBadge/></div>
+      {tapeInLengths.map((item,index)=><Link href={tapeInLengthHref(item.key)} className="rh-category-tile" key={item.key}>
+        <div className="rh-category-photo"><img src={item.image} srcSet={item.imageSrcSet} sizes="(max-width: 600px) 90vw, (max-width: 1024px) 45vw, 420px" fetchPriority={index===0?"high":"auto"} loading={index===0?"eager":"lazy"} decoding="async" alt={item.alt}/><span className="rh-length-tag">{item.label}</span><BlackFridayBadge/></div>
         <div className="rh-category-label"><h2>{item.title}</h2><span className="rh-arrow" aria-hidden="true">↗</span></div>
       </Link>)}
       <Link href="/kollektionen/keratin-bondings/" className="rh-category-tile rh-category-keratin">
-        <div className="rh-category-photo"><img src="/media/1006-300x400-0854ea8f2.jpg" alt="Keratin Bondings Echthaar"/><BlackFridayBadge/></div>
+        <div className="rh-category-photo"><img loading="lazy" decoding="async" src="/media/1006-300x400-0854ea8f2.jpg" alt="Keratin Bondings Echthaar"/><BlackFridayBadge/></div>
         <div className="rh-category-label"><h2>Keratin Bondings</h2><span className="rh-arrow" aria-hidden="true">↗</span></div>
       </Link>
     </section>
