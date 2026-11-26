@@ -92,3 +92,9 @@ test("Apple domain association is official file, binary served without redirect"
  assert.match(config,/apple-developer-merchantid-domain-association/);
  assert.match(proxy,/apple-developer-merchantid-domain-association/);
 });
+
+ test("Wallets are available independently from the selected regular payment method",()=>{
+ const checkout=readFileSync("src/components/checkout-preview.tsx","utf8");
+ assert.doesNotMatch(checkout,/activePaymentMethod==="paypal"&&\(applePayEnabled\|\|googlePayEnabled\)/);
+ assert.match(checkout,/\{\(applePayEnabled\|\|googlePayEnabled\)&&checkoutMode!=="disabled"&&checkoutMode!=="klarna_public"&&\s*!liveTest&&!oneEuroCart&&lines.length>0&&!gifts.length&&!appliedGift&&\s*<PayPalWalletCheckout accepted=\{paymentConsent\}/);
+ });

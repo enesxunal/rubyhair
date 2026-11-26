@@ -130,11 +130,6 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
           </div>}
           {checkoutMode!=="disabled"&&!liveTest&&activePaymentMethod==="paypal"&&
             <CustomerPaymentSubmit agreed={paymentConsent} method={activePaymentMethod} lines={lines} gifts={gifts} address={validatedAddress} cartReady={canPay} totalCents={remainingCents} giftCode={gifts.length?undefined:appliedGift?.code} couponCode={lines.length?couponCode||undefined:undefined}/>}
-          {activePaymentMethod==="paypal"&&(applePayEnabled||googlePayEnabled)&&checkoutMode!=="disabled"&&checkoutMode!=="klarna_public"&&
-           !liveTest&&!oneEuroCart&&lines.length>0&&!gifts.length&&!appliedGift&&
-           <PayPalWalletCheckout accepted={paymentConsent} lines={lines} address={validatedAddress} cartReady={canPay}
-            totalCents={remainingCents} couponCode={couponCode||undefined}
-            appleEnabled={applePayEnabled} googleEnabled={googlePayEnabled}/>}
           {checkoutMode==="disabled"&&activePaymentMethod==="paypal"&&!liveTest&&!oneEuroCart&&<div className="rh-payment-action-area">
             <p>Die letzte Freigabe für den regulären Kauf steht noch aus. Bis dahin wird keine Bestellung ausgelöst.</p>
           </div>}
@@ -144,6 +139,11 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
             <p>Klarna ist für diesen Zahlungstest noch nicht freigegeben.</p>
             <button type="button" className="rh-payment-secondary-link" onClick={()=>setPaymentMethod("paypal")}>Stattdessen PayPal wählen</button>
           </div>}
+          {(applePayEnabled||googlePayEnabled)&&checkoutMode!=="disabled"&&checkoutMode!=="klarna_public"&&
+           !liveTest&&!oneEuroCart&&lines.length>0&&!gifts.length&&!appliedGift&&
+           <PayPalWalletCheckout accepted={paymentConsent} lines={lines} address={validatedAddress} cartReady={canPay}
+            totalCents={remainingCents} couponCode={couponCode||undefined}
+            appleEnabled={applePayEnabled} googleEnabled={googlePayEnabled}/>}
           </div>
         </section>
         <div className="rh-gift-checkout-upsell"><Gift size={22}/><div><strong>Auch einer Freundin eine Freude machen?</strong><p>Verschenke Beauty mit einem persönlichen Ruby Hair Geschenkgutschein.</p><Link href="/geschenkgutschein/">Gutschein gestalten ↗</Link></div></div>
