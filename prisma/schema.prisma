@@ -457,3 +457,13 @@ model PurchaseAttribution {
   @@index([consentId])
   @@map("purchase_attributions")
 }
+
+// Revocable consent state. No customer or contact data.
+model MetaMeasurementConsent {
+  consentHash String @id
+  grantedAt DateTime @default(now())
+  expiresAt DateTime
+  revokedAt DateTime?
+  @@index([expiresAt])
+  @@map("meta_measurement_consents")
+}

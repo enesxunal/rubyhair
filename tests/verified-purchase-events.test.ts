@@ -68,3 +68,10 @@ test("old marketing consent does not authorize value or event identifier",()=>{
   assert.deepEqual(h.seen,[{provider:"meta",args:["track","Purchase"]}]);
  }finally{h.restore()}
 });
+
+test("CAPI opt-in does not emit an unkeyed purchase on an older return",()=>{
+ const h=harness(false,true);const storage=globalThis.localStorage;
+ const original=storage.getItem.bind(storage);
+ storage.getItem=(key)=>key==="ruby_meta_capi_choice"?"allow":original(key);
+ try{trackVerifiedPurchaseOnce(order);assert.deepEqual(h.seen,[])}finally{h.restore()}
+});

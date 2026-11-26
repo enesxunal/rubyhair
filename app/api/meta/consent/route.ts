@@ -1,6 +1,6 @@
 import {NextRequest,NextResponse} from "next/server";
 import {randomUUID} from "node:crypto";
-import {capiEnabled,revokeMetaCheckout} from "@/lib/meta-conversions";
+import {capiEnabled,grantMetaConsent,revokeMetaCheckout,metaConsentActive} from "@/lib/meta-conversions";
 import {META_CAPI_COOKIE,META_CAPI_CONSENT} from "@/lib/meta-conversion-policy";
 export const runtime="nodejs",dynamic="force-dynamic";
 const headers={"Cache-Control":"no-store"};
@@ -16,7 +16,10 @@ export async function POST(req:NextRequest){
   response.cookies.set(META_CAPI_COOKIE,"",{path:"/",maxAge:0,secure:true,httpOnly:true,sameSite:"lax",domain:".rubyhair.de"});
  }else{
   if(!capiEnabled())return new NextResponse(null,{status:503,headers});
-  if(!existing.startsWith(META_CAPI_CONSENT+":"))response.cookies.set(META_CAPI_COOKIE,META_CAPI_CONSENT+":"+randomUUID(),{path:"/",maxAge:180*86400,secure:true,httpOnly:true,sameSite:"lax",domain:".rubyhair.de"});
+  // Replace only an absent, expired or revoked consent. Preserve active consent on re-save.
+  const id=existing.startsWith(META_CAPI_CONSENT+":")?existing.slice(META_CAPI_CONSENT.length+1):"";
+  const active=id&&await metaConsentActive(id);
+  if(!active){const next=randomUUID();if(!await grantMetaConsent(next))return new NextResponse(null,{status:503,headers});response.cookies.set(META_CAPI_COOKIE,META_CAPI_CONSENT+":"+next,{path:"/",maxAge:180*86400,secure:true,httpOnly:true,sameSite:"lax",domain:".rubyhair.de"});}
  }
  return response;
  }catch{return new NextResponse(null,{status:503,headers});}

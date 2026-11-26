@@ -1,7 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "regions": ["fra1"],
+  "regions": [
+    "fra1"
+  ],
   "buildCommand": "npm run build",
   "outputDirectory": null,
   "crons": [
@@ -16,6 +18,10 @@
     {
       "path": "/api/internal/gift-card-jobs",
       "schedule": "15 8 * * *"
+    },
+    {
+      "path": "/api/internal/meta-conversions",
+      "schedule": "30 8 * * *"
     }
   ]
 }

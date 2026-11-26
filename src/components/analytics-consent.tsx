@@ -49,6 +49,8 @@ export default function AnalyticsConsent(){
   setStatistics(stats);setMarketing(ads);setGoogleChoice(ga);
   setDraftStatistics(stats==="allow");setDraftMarketing(ads==="allow");setDraftGoogle(ga==="allow");
   const attr=readChoice(attributionChoiceKey);setDraftAttribution(attr==="allow");if(attr===null)setOpen(true);
+  setDraftCapi(capiAvailable&&readChoice(capiKey)==="allow");
+  if(capiAvailable&&ads==="allow"&&readChoice(capiKey)===null)setOpen(true);
   setInitialized(true);
   if((statsAvailable&&stats===null)||ads===null||ga===null)setOpen(true);
   try{if(ads==="allow"&&localStorage.getItem("ruby_meta_purchase_consent")!==META_PURCHASE_CONSENT_VERSION)setOpen(true)}catch{}
@@ -78,6 +80,10 @@ export default function AnalyticsConsent(){
   if(path==="/kasse")trackRubyMetaEvent("InitiateCheckout");
  },[path,marketing,initialized,trackable]);
  useEffect(()=>{if(!trackable||!initialized)return;const first=attrFirst.current;attrFirst.current=false;void touchAttribution(first).then(ok=>{if(!ok)setOpen(true)});},[path,trackable,initialized]);
+ useEffect(()=>{
+  if(!initialized||!trackable||!capiAvailable||(()=>{try{return localStorage.getItem(capiKey)!=="revoke_pending"}catch{return true}})())return;
+  fetch("/api/meta/consent",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({allow:false}),keepalive:true}).then(r=>{if(r.ok)localStorage.setItem(capiKey,"deny")}).catch(()=>{});
+ },[initialized,trackable,path]);
  const save=async(stats:Choice,ads:Choice,ga:Choice,capi=false,attribution=false)=>{
   if(!stats||!ads||!ga)return;
   const oldMarketing=readChoice(marketingKey);
@@ -89,6 +95,7 @@ export default function AnalyticsConsent(){
    localStorage.setItem(gaKey,ga);
    document.cookie="ruby_analytics="+stats+"; Path=/; Max-Age=31536000; SameSite=Lax"+(location.protocol==="https:"?"; Secure":"");
    if(stats==="deny")try{sessionStorage.removeItem("ruby_analytics_source_tab")}catch{}
+   if(capiAvailable){document.cookie="ruby_meta_capi_browser="+(ads==="allow"&&capi?"allow":"deny")+"; Path=/; Max-Age=15552000; SameSite=Lax; Secure";}
    if(ads==="deny"){
     // Remove the most common browser cookie created by Meta, as far as first party control allows.
     for(const key of ["_fbp","_fbc"])document.cookie=key+"=; Path=/; Max-Age=0; SameSite=Lax";
@@ -105,8 +112,8 @@ export default function AnalyticsConsent(){
    try{
     const response=await fetch("/api/meta/consent",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({allow}),keepalive:true});
     if(response.ok)localStorage.setItem(capiKey,allow?"allow":"deny");
-    else localStorage.removeItem(capiKey);
-   }catch{try{localStorage.removeItem(capiKey)}catch{}}
+    else if(!allow)localStorage.setItem(capiKey,"revoke_pending");else localStorage.removeItem(capiKey);
+   }catch{try{if(!allow)localStorage.setItem(capiKey,"revoke_pending");else localStorage.removeItem(capiKey)}catch{}}
   }
   const attrSaved=await saveAttributionChoice(attribution);
   setStatistics(stats);setMarketing(ads);setGoogleChoice(ga);setOpen(!attrSaved&&attribution);

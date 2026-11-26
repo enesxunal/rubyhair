@@ -1,4 +1,6 @@
 import "server-only";
+import {after} from "next/server";
+import {runMetaConversions} from "@/lib/meta-conversions";
 import {Prisma} from "@prisma/client";
 import {getPrisma} from "@/lib/prisma";
 import {providerForCheckout,CustomerCheckoutError} from "@/lib/customer-checkout";
@@ -16,6 +18,8 @@ const shape=(v:Prisma.JsonValue):{firstName:string;lastName:string;street:string
 };
 const invoiceNo=(n:bigint,date:Date)=>`RH-${date.getUTCFullYear()}-${String(n).padStart(7,"0")}`;
 const validCaptureId=(v:string)=>/^[a-zA-Z0-9_-]{8,90}$/.test(v);
+// Analytics is strictly after the committed payment transaction, never a payment dependency.
+function queueMetaCapture(orderId:string){try{after(async()=>{try{await runMetaConversions(orderId)}catch{/* Retry by scheduled worker. */}})}catch{/* Non-request reconciliation uses the scheduled worker. */}}
 
 export async function finishCapturedCustomerOrder(orderId:string,provider:"paypal"|"klarna",captureId:string,providerOrderReference:string){
  if(!validCaptureId(captureId))throw new CustomerCheckoutError("INVALID_PROVIDER_CAPTURE",503);
@@ -85,10 +89,11 @@ export async function finishCapturedCustomerOrder(orderId:string,provider:"paypa
   },{isolationLevel:Prisma.TransactionIsolationLevel.Serializable,timeout:12000});
  }catch(e){
   const existing=await db.invoice.findUnique({where:{orderId:order.id}});
-  if(existing)return {paid:true,invoiceNumber:existing.invoiceNumber};
+  if(existing){queueMetaCapture(order.id);return {paid:true,invoiceNumber:existing.invoiceNumber};}
   console.error("CUSTOMER_PAID_ORDER_NEEDS_RECONCILIATION",e instanceof Error?e.name:"unknown");
   throw new CustomerCheckoutError("CAPTURED_BUT_ORDER_NEEDS_RECONCILIATION",503);
  }
+ queueMetaCapture(order.id);
  return {paid:true,invoiceNumber:number};
 }
 

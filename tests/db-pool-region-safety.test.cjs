@@ -7,7 +7,7 @@ test('Vercel functions execute in Frankfurt while preserving scheduled backgroun
   const config=JSON.parse(readFileSync('vercel.json','utf8'));
   assert.deepEqual(config.regions,['fra1']);
   assert.deepEqual(config.crons.map(c=>c.path),[
-    '/api/internal/customer-jobs','/api/internal/customer-account-cleanup','/api/internal/gift-card-jobs']);
+    '/api/internal/customer-jobs','/api/internal/customer-account-cleanup','/api/internal/gift-card-jobs','/api/internal/meta-conversions']);
   assert.equal(config.framework,'nextjs');
 });
 

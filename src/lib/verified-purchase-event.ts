@@ -1,6 +1,6 @@
 "use client";
 import {googleStatisticsConsent,trackRubyGA4Event} from "@/lib/google-analytics";
-import {marketingConsent,trackRubyMetaEvent,type MetaPurchaseData} from "@/lib/meta-pixel";
+import {marketingConsent,metaPurchaseConsent,trackRubyMetaEvent,type MetaPurchaseData} from "@/lib/meta-pixel";
 
 /**
  * Only called from a server-confirmed PAID return, never from a client-side
@@ -17,6 +17,9 @@ export function trackVerifiedPurchaseOnce(orderId:string,purchase?:MetaPurchaseD
  // Record before dispatch; do not emit duplicate purchase on a quick refresh.
  try{sessionStorage.setItem(key,"1")}catch{return false;}
  if(ga)trackRubyGA4Event("purchase");
- if(meta)trackRubyMetaEvent("Purchase",purchase);
+ if(meta){
+  let serverOptIn=false;try{serverOptIn=localStorage.getItem("ruby_meta_capi_choice")==="allow"}catch{}
+  if(!serverOptIn||(purchase&&metaPurchaseConsent()))trackRubyMetaEvent("Purchase",purchase);
+ }
  return true;
 }
