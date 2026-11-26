@@ -1107,3 +1107,29 @@ button.rh-editorial-cta{cursor:pointer}
 .rh-card-first-payment .rh-direct-payment-buttons button:disabled{cursor:not-allowed!important}
 .rh-card-first-payment .rh-direct-payment-buttons button.rh-logo-wallet-tile:disabled{opacity:.5!important}
 .rh-card-first-payment .rh-direct-payment-buttons button:not(:disabled):hover{outline:2px solid #653d4e;outline-offset:1px}
+
+/* Compact single-column payment selection; SDK hosts remain mounted. */
+.rh-payment-method-list,.rh-stacked-payment-actions .rh-stacked-wallet-actions{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;margin:0;padding:0;border:0;background:transparent;min-width:0}
+.rh-payment-row{border:1px solid #ded2d5;background:#fffdfa;min-width:0;border-radius:3px;overflow:hidden}
+.rh-payment-row[data-selected=true]{border-color:#653d4e;box-shadow:inset 0 0 0 1px #653d4e}
+.rh-payment-row-select{display:flex;width:100%;min-height:62px;gap:10px;align-items:center;text-align:left;padding:10px 13px;background:transparent;border:0;color:#49343e;cursor:pointer;font:inherit;box-sizing:border-box}
+.rh-payment-row-select:focus-visible{outline:2px solid #653d4e;outline-offset:-3px}
+.rh-payment-row-select:disabled{cursor:not-allowed;opacity:.55}
+.rh-payment-row-radio{width:17px;height:17px;flex:0 0 17px;border:1px solid #a2959b;border-radius:50%;display:grid;place-items:center;background:#fff}
+.rh-payment-row[data-selected=true] .rh-payment-row-radio{border-color:#653d4e}
+.rh-payment-row[data-selected=true] .rh-payment-row-radio:after{content:"";display:block;width:9px;height:9px;border-radius:50%;background:#653d4e}
+.rh-payment-row-copy{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}
+.rh-payment-row-copy strong{font-size:14px;font-weight:650;line-height:1.3}.rh-payment-row-copy small{font-size:11px;line-height:1.3;color:#88747c}
+.rh-payment-row-marks{display:flex;gap:4px;align-items:center;justify-content:flex-end;flex-shrink:0}
+.rh-payment-row-marks img{display:block;width:40px;height:25px;object-fit:contain;background:#fff;border:1px solid #e4dadd;border-radius:4px;box-sizing:border-box}
+.rh-payment-row-panel{padding:10px 13px 13px;border-top:1px solid #eadfe2;box-sizing:border-box;background:#fff9f7;min-width:0}
+.rh-payment-row-panel[hidden]{display:none!important}
+.rh-stacked-payment-actions .rh-payment-row-panel .rh-payment-action-area{margin:0;padding:0;border:0;background:transparent}
+.rh-stacked-payment-actions .rh-payment-row-panel .rh-klarna-branded-button{background:#ffb3d0;color:#171717!important}
+.rh-stacked-payment-actions .rh-payment-row-panel .rh-klarna-branded-button img{width:70px;height:35px;object-fit:contain}
+.rh-stacked-payment-actions .rh-payment-row-panel .rh-paypal-button-wordmark{width:84px!important;height:24px!important;filter:brightness(0) invert(1)}
+@media(max-width:480px){.rh-payment-row-select{min-height:58px;padding:9px 10px;gap:8px}.rh-payment-row-marks img{width:31px;height:21px}.rh-payment-row-copy strong{font-size:13px}.rh-payment-row-copy small{font-size:10px}.rh-payment-row-marks{gap:3px}}
+
+.rh-stacked-payment-actions .rh-payment-row-panel .rh-payment-primary-link{font-weight:650;line-height:1.4;padding:11px 12px;min-height:48px}
+.rh-stacked-payment-actions .rh-payment-row-panel .rh-paypal-branded-button:not(:disabled),.rh-stacked-payment-actions .rh-payment-row-panel .rh-klarna-branded-button:not(:disabled){background:#593746;color:#fff!important}
+.rh-stacked-payment-actions .rh-payment-row-panel .rh-paypal-branded-button:disabled,.rh-stacked-payment-actions .rh-payment-row-panel .rh-klarna-branded-button:disabled{background:#e8e0e2;color:#877781!important;opacity:1!important}

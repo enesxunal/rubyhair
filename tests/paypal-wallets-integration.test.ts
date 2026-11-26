@@ -95,10 +95,11 @@ test("Apple domain association is official file, binary served without redirect"
  assert.match(proxy,/apple-developer-merchantid-domain-association/);
 });
 
-test("Card-first checkout keeps wallet actions independent and guarded",()=>{
+test("Stacked checkout keeps payment SDKs mounted and guarded",()=>{
  const checkout=readFileSync("src/components/checkout-preview.tsx","utf8");
- assert.doesNotMatch(checkout,/activePaymentMethod|checkout-payment-method/);
- assert.match(checkout,/cardAvailable&&<>/);
+ assert.match(checkout,/rh-payment-method-list/);
+ assert.match(checkout,/hidden=\{!selected\}/);
+ assert.match(checkout,/cardAvailable&&<PaymentRow/);
  assert.match(checkout,/regularCheckout=checkoutMode!=="disabled"&&!liveTest&&!oneEuroCart/);
  assert.match(checkout,/\(applePayEnabled\|\|googlePayEnabled\)&&checkoutMode!=="klarna_public"&&lines.length>0&&!gifts.length&&!appliedGift&&remainingCents>0/);
  assert.match(checkout,/<PayPalWalletCheckout accepted=\{paymentConsent\} claimPayment=\{claimPayment\}/);

@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import {useRef,useState} from "react";
+import {useRef,useState,type ReactNode} from "react";
 import {giftCartTotal} from "@/lib/gift-cards/cart-schema";
 import type {CheckoutAddressData} from "./checkout-address-preview";
 import CustomerPaymentSubmit from "./customer-payment-submit";
@@ -18,6 +18,15 @@ const process=[
   {no:"02",label:"Lieferung / Rechnung",description:"Liefer- und Rechnungsadresse prüfen",icon:Truck},
   {no:"03",label:"Zahlung",description:"Zahlungsart und Bestellübersicht",icon:Wallet}
 ];
+type PaymentChoice="paypal"|"card"|"klarna"|"apple_pay"|"google_pay";
+function PaymentRow({name,description,logos,selected,onSelect,children}:{name:string;description:string;logos:{src:string;alt:string}[];selected:boolean;onSelect:()=>void;children:ReactNode}){
+ return <div className="rh-payment-row" data-selected={selected}>
+  <button type="button" className="rh-payment-row-select" aria-expanded={selected} onClick={onSelect}>
+   <span className="rh-payment-row-radio" aria-hidden="true"/><span className="rh-payment-row-copy"><strong>{name}</strong><small>{description}</small></span>
+   <span className="rh-payment-row-marks">{logos.map(logo=><img key={logo.alt} src={logo.src} alt={logo.alt}/>)}</span>
+  </button><div className="rh-payment-row-panel" hidden={!selected}>{children}</div>
+ </div>;
+}
 export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippingCents=499,cardFieldsEnabled=false,applePayEnabled=false,googlePayEnabled=false}:{liveTest?:LiveVariantTestView|null;checkoutMode?:"disabled"|"admin_test"|"public"|"klarna_public"|"payments_public";shippingCents?:number;cardFieldsEnabled?:boolean;applePayEnabled?:boolean;googlePayEnabled?:boolean}){
   const {lines,gifts,loaded,couponCode}=useCart();
   const {quote,error,loading}=useCartQuote(lines,couponCode);
@@ -39,6 +48,7 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
   const claimPayment=()=>{if(paymentAttempt.current)return false;paymentAttempt.current=true;return true};
   const releasePayment=()=>{paymentAttempt.current=false};
   const [paymentConsent,setPaymentConsent]=useState(false);
+  const [paymentChoice,setPaymentChoice]=useState<PaymentChoice>(checkoutMode==="klarna_public"?"klarna":"paypal");
   const [validatedAddress,setValidatedAddress]=useState<CheckoutAddressData|null>(null);
   const [giftInput,setGiftInput]=useState("");
   const [appliedGift,setAppliedGift]=useState<{code:string;balanceCents:number}|null>(null);
@@ -62,6 +72,8 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
   const payableTestCart=Boolean(oneEuroCart&&!error&&!loading&&!quote?.needsReview&&quote?.lines[0]?.status==="available");
   const regularCheckout=checkoutMode!=="disabled"&&!liveTest&&!oneEuroCart;
   const cardAvailable=regularCheckout&&checkoutMode!=="klarna_public"&&cardFieldsEnabled&&lines.length>0&&!gifts.length&&!appliedGift&&remainingCents>0;
+  const walletsAvailable=Boolean((applePayEnabled||googlePayEnabled)&&checkoutMode!=="klarna_public"&&lines.length>0&&!gifts.length&&!appliedGift&&remainingCents>0);
+  const effectiveChoice=(paymentChoice==="card"&&!cardAvailable)||(paymentChoice==="klarna"&&(gifts.length>0||appliedGift))||((paymentChoice==="apple_pay"||paymentChoice==="google_pay")&&!walletsAvailable)?(checkoutMode==="klarna_public"?"klarna":"paypal"):paymentChoice;
   return <div className="rh-checkout-v2 rh-shell">
     <nav className="rh-breadcrumb" aria-label="Breadcrumb">
       <Link href="/">Startseite</Link><span>/</span>
@@ -102,29 +114,25 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
               <span>Ich habe die <a href="/rechtliches/agb/" target="_blank" rel="noopener noreferrer">AGB</a> und die <a href="/rechtliches/widerruf/" target="_blank" rel="noopener noreferrer">Widerrufsbelehrung</a> gelesen und bestätige den kostenpflichtigen Kauf.</span>
             </label>
           </div>}
-          <div className="rh-unified-payment-actions rh-card-first-payment">
-          {cardAvailable&&<>
-            <PayPalCardFieldsCheckout agreed={paymentConsent} claimPayment={claimPayment} releasePayment={releasePayment} lines={lines} address={validatedAddress} cartReady={canPay}
-              totalCents={remainingCents} couponCode={couponCode||undefined}/>
-          </>}
+          <div className="rh-unified-payment-actions rh-stacked-payment-actions">
           {liveTest&&<LiveVariantTestSection state={liveTest} cartReady={payableTestCart}/>}
           {!liveTest&&oneEuroCart&&<div className="rh-payment-action-area">
             <p>Der 1,00-€-Live-Test dieses Artikels ist ausschließlich über den geschützten Administratorzugang möglich.</p>
             <Link className="rh-payment-primary-link" href="/admin/login?next=live-checkout">Mit Admin-Konto anmelden und PayPal testen</Link>
           </div>}
           {checkoutMode==="disabled"&&!liveTest&&!oneEuroCart&&<div className="rh-payment-action-area"><p>Die letzte Freigabe für den regulären Kauf steht noch aus. Bis dahin wird keine Bestellung ausgelöst.</p></div>}
-          {regularCheckout&&<>
-            <div className="rh-direct-payment-buttons" aria-label="Weitere Zahlungsarten">
-              {!gifts.length&&!appliedGift&&<CustomerPaymentSubmit agreed={paymentConsent} claimPayment={claimPayment} releasePayment={releasePayment} method="klarna" lines={lines} address={validatedAddress} cartReady={canPay} totalCents={remainingCents} couponCode={couponCode||undefined}/>}
-              {cardAvailable&&<>
-                <span className="rh-card-brand-tile rh-card-brand-mastercard"><img src="/assets/payment-brands/reference/master.svg" alt="Mastercard"/></span>
-                <span className="rh-card-brand-tile rh-card-brand-visa"><img src="/assets/payment-brands/visa.svg" alt="Visa"/></span>
-                <span className="rh-card-brand-tile rh-card-brand-amex"><img src="/assets/payment-brands/reference/american_express.svg" alt="American Express"/></span>
-              </>}
-              {(applePayEnabled||googlePayEnabled)&&checkoutMode!=="klarna_public"&&lines.length>0&&!gifts.length&&!appliedGift&&remainingCents>0&&<PayPalWalletCheckout accepted={paymentConsent} claimPayment={claimPayment} releasePayment={releasePayment} lines={lines} address={validatedAddress} cartReady={canPay} totalCents={remainingCents} couponCode={couponCode||undefined} appleEnabled={applePayEnabled} googleEnabled={googlePayEnabled}/>}
-              {checkoutMode!=="klarna_public"&&<CustomerPaymentSubmit agreed={paymentConsent} claimPayment={claimPayment} releasePayment={releasePayment} method="paypal" lines={lines} gifts={gifts} address={validatedAddress} cartReady={canPay} totalCents={remainingCents} giftCode={gifts.length?undefined:appliedGift?.code} couponCode={lines.length?couponCode||undefined:undefined}/>}
-            </div>
-          </>}
+          {regularCheckout&&<div className="rh-payment-method-list" aria-label="Zahlungsarten">
+            {checkoutMode!=="klarna_public"&&<PaymentRow name="PayPal" description="Sicher mit PayPal bezahlen" logos={[{src:"/assets/payment-brands/paypal-wordmark.svg",alt:"PayPal"}]} selected={effectiveChoice==="paypal"} onSelect={()=>setPaymentChoice("paypal")}>
+              <CustomerPaymentSubmit agreed={paymentConsent} claimPayment={claimPayment} releasePayment={releasePayment} method="paypal" lines={lines} gifts={gifts} address={validatedAddress} cartReady={canPay} totalCents={remainingCents} giftCode={gifts.length?undefined:appliedGift?.code} couponCode={lines.length?couponCode||undefined:undefined}/>
+            </PaymentRow>}
+            {cardAvailable&&<PaymentRow name="Kredit- / Debitkarte" description="Visa, Mastercard oder American Express" logos={[{src:"/assets/payment-brands/visa.svg",alt:"Visa"},{src:"/assets/payment-brands/reference/master.svg",alt:"Mastercard"},{src:"/assets/payment-brands/reference/american_express.svg",alt:"American Express"}]} selected={effectiveChoice==="card"} onSelect={()=>setPaymentChoice("card")}>
+              <PayPalCardFieldsCheckout agreed={paymentConsent} claimPayment={claimPayment} releasePayment={releasePayment} lines={lines} address={validatedAddress} cartReady={canPay} totalCents={remainingCents} couponCode={couponCode||undefined}/>
+            </PaymentRow>}
+            {!gifts.length&&!appliedGift&&<PaymentRow name="Klarna" description="Zahlung mit Klarna" logos={[{src:"/assets/payment-brands/reference/klarna.svg",alt:"Klarna"}]} selected={effectiveChoice==="klarna"} onSelect={()=>setPaymentChoice("klarna")}>
+              <CustomerPaymentSubmit agreed={paymentConsent} claimPayment={claimPayment} releasePayment={releasePayment} method="klarna" lines={lines} address={validatedAddress} cartReady={canPay} totalCents={remainingCents} couponCode={couponCode||undefined}/>
+            </PaymentRow>}
+            {(applePayEnabled||googlePayEnabled)&&checkoutMode!=="klarna_public"&&lines.length>0&&!gifts.length&&!appliedGift&&remainingCents>0&&<PayPalWalletCheckout accepted={paymentConsent} claimPayment={claimPayment} releasePayment={releasePayment} lines={lines} address={validatedAddress} cartReady={canPay} totalCents={remainingCents} couponCode={couponCode||undefined} appleEnabled={applePayEnabled} googleEnabled={googlePayEnabled} chosenWallet={effectiveChoice==="apple_pay"||effectiveChoice==="google_pay"?effectiveChoice:null} onSelectWallet={setPaymentChoice}/>}
+          </div>}
           </div>
         </section>
         <div className="rh-gift-checkout-upsell"><Gift size={22}/><div><strong>Auch einer Freundin eine Freude machen?</strong><p>Verschenke Beauty mit einem persönlichen Ruby Hair Geschenkgutschein.</p><Link href="/geschenkgutschein/">Gutschein gestalten ↗</Link></div></div>

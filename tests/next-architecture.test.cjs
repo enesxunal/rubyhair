@@ -204,7 +204,7 @@ test("checkout preview reuses authoritative cart quotation and cannot collect pa
   assert.ok(!checkout.includes("CHECKOUT-VORSCHAU"));
   assert.ok(checkout.includes("Wähle deine Zahlungsart"));
   assert.ok(checkout.includes("startLiveVariantTestAction")||checkout.includes("LiveVariantTestSection"));
-  assert.ok(checkout.includes('rh-direct-payment-buttons'));
+  assert.ok(checkout.includes('rh-payment-method-list'));
   assert.ok(!checkout.includes("createOrder"));
 });
 test("cart preserves selected variant color and length for return to product",()=>{
@@ -386,7 +386,7 @@ test("checkout address form is browser-local and cannot initiate payment or cust
  assert.ok(!form.includes('fetch("/api/checkout'));
  assert.ok(!form.includes('localStorage'));
  assert.ok(payment.includes('LiveVariantTestSection'));
- assert.ok(payment.includes('rh-direct-payment-buttons'));
+ assert.ok(payment.includes('rh-payment-method-list'));
  assert.ok(!payment.includes('button type="button" disabled aria-disabled="true"'));
 });
 
