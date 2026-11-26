@@ -395,3 +395,41 @@ model CheckoutDiagnostic {
   @@index([orderId,createdAt])
   @@map("checkout_diagnostics")
 }
+
+// Optional, short-lived, explicitly consented conversion attribution context.
+// No names, addresses, e-mails, payment identifiers or full URLs.
+model MetaConversionContext {
+  orderId     String   @id @db.Uuid
+  consentHash String
+  fbp         String?
+  fbc         String?
+  userAgent   String
+  createdAt   DateTime @default(now())
+  status      String   @default("pending")
+  attempts    Int      @default(0)
+  nextAttempt DateTime @default(now())
+  sentAt      DateTime?
+  @@index([consentHash])
+  @@index([status,nextAttempt])
+  @@map("meta_conversion_contexts")
+}
+
+// Explicitly requested, double-opt-in cart recovery, separate from order processing.
+model CartRecovery {
+  id             String   @id @default(uuid()) @db.Uuid
+  emailHash      String   @unique
+  ciphertext     String
+  nonce          String
+  authTag        String
+  lines          Json
+  consentVersion String
+  requestedAt    DateTime @default(now())
+  confirmedAt    DateTime?
+  expiresAt      DateTime
+  nextReminderAt DateTime?
+  sentCount      Int      @default(0)
+  status         String   @default("unconfirmed")
+  @@index([status,nextReminderAt])
+  @@index([expiresAt])
+  @@map("cart_recoveries")
+}

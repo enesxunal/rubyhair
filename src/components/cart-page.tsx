@@ -1,12 +1,13 @@
 "use client";
 import Link from "next/link";
+import CartRecoveryForm from "@/components/cart-recovery-form";
 import { useEffect, useState } from "react";
 import { useCart } from "@/components/cart-context";
 import {byVariation, euros, type Product} from "@/lib/catalog";
 import {useCartQuote} from "@/hooks/use-cart-quote";
 import {Gift} from "lucide-react";
 import {giftCartTotal} from "@/lib/gift-cards/cart-schema";
-export function CartPage({shippingCents}:{shippingCents:number}){
+export function CartPage({shippingCents,recoveryEnabled=false}:{shippingCents:number;recoveryEnabled?:boolean}){
   const {lines,gifts,update,remove,removeGift,clear,loaded,couponCode,setCouponCode}=useCart();
   const [couponDraft,setCouponDraft]=useState("");
   useEffect(()=>{setCouponDraft(couponCode)},[couponCode]);
@@ -119,6 +120,7 @@ export function CartPage({shippingCents}:{shippingCents:number}){
         <p>Im nächsten Schritt kannst du deine Rechnungsadresse eingeben und {gifts.length?"alle Produkte und Gutscheine gemeinsam sicher mit PayPal bezahlen":"sicher mit PayPal oder Klarna bezahlen"}.</p>
         {canCheckout?<Link className="rh-buy-button" href="/kasse/">ZUR KASSE<span>↗</span></Link>:<span className="rh-buy-button" aria-disabled="true" style={{opacity:.5,cursor:"not-allowed"}}>{quoteLoading?"BESTAND WIRD GEPRÜFT":"NICHT BESTELLBAR"}</span>}
         <Link className="rh-continue-shop" href="/kollektionen/">Weiter einkaufen</Link>
+        {recoveryEnabled&&canCheckout&&lines.length>0&&!gifts.length&&<CartRecoveryForm lines={lines}/>}
       </aside>
     </div>}
   </section>;

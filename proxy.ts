@@ -17,7 +17,7 @@ const storefrontPublic=()=>process.env.VERCEL_ENV==="production" &&
   process.env.RUBY_CANONICAL_SITE_URL==="https://rubyhair.de";
 // Only known public endpoints may be accessed without an administrator session.
 const publicGetApis=new Set(["/api/catalog","/api/tryon/generate","/api/payments/paypal/card-token","/api/payments/paypal/wallet-token"]);
-const publicPostApis=new Set(["/api/cart/quote","/api/checkout/diagnostic","/api/analytics/event","/api/tryon/generate","/api/checkout","/api/widerruf","/api/konto/login","/api/konto/verify","/api/konto/password","/api/konto/profile","/api/konto/adressen","/api/konto/logout","/api/gutschein/kaufen","/api/gutschein/guthaben","/api/payments/paypal/card-capture","/api/payments/paypal/card-status","/api/payments/paypal/wallet-capture"]);
+const publicPostApis=new Set(["/api/cart/quote","/api/cart/recovery","/api/checkout/diagnostic","/api/meta/consent","/api/analytics/event","/api/tryon/generate","/api/checkout","/api/widerruf","/api/konto/login","/api/konto/verify","/api/konto/password","/api/konto/profile","/api/konto/adressen","/api/konto/logout","/api/gutschein/kaufen","/api/gutschein/guthaben","/api/payments/paypal/card-capture","/api/payments/paypal/card-status","/api/payments/paypal/wallet-capture"]);
 
 /** Admin JWT uses the same signed, eight-hour token as src/lib/admin-auth.ts.
  * Only a verified session may bypass the Coming Soon wall on customer domains.
@@ -56,7 +56,7 @@ export async function proxy(request:NextRequest){
  if(adminLoginPaths.has(path))return NextResponse.next();
  // Only these two automated endpoints may cross the public API gate.
  // Their own handlers enforce CRON_SECRET or PayPal signature verification.
- if((path==="/api/internal/stock-reservations"||path==="/api/internal/customer-jobs"||path==="/api/internal/customer-account-cleanup"||path==="/api/internal/gift-card-jobs")&&(request.method==="GET"||request.method==="HEAD")){
+ if((path==="/api/internal/cart-recovery"||path==="/api/internal/meta-conversions"||path==="/api/internal/stock-reservations"||path==="/api/internal/customer-jobs"||path==="/api/internal/customer-account-cleanup"||path==="/api/internal/gift-card-jobs")&&(request.method==="GET"||request.method==="HEAD")){
   const r=NextResponse.next();r.headers.set("Cache-Control","private, no-store");return r;
  }
  if(path==="/api/payments/paypal/webhook"&&request.method==="POST"){
