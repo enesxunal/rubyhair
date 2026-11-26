@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
-import {useRef,useState,type ReactNode} from "react";
+import {reportCheckoutDiagnostic} from "@/lib/checkout-diagnostics-client";
+import {useEffect,useRef,useState,type ReactNode} from "react";
 import {giftCartTotal} from "@/lib/gift-cards/cart-schema";
 import type {CheckoutAddressData} from "./checkout-address-preview";
 import CustomerPaymentSubmit from "./customer-payment-submit";
@@ -74,6 +75,13 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
   const cardAvailable=regularCheckout&&checkoutMode!=="klarna_public"&&cardFieldsEnabled&&lines.length>0&&!gifts.length&&!appliedGift&&remainingCents>0;
   const walletsAvailable=Boolean((applePayEnabled||googlePayEnabled)&&checkoutMode!=="klarna_public"&&lines.length>0&&!gifts.length&&!appliedGift&&remainingCents>0);
   const effectiveChoice=(paymentChoice==="card"&&!cardAvailable)||(paymentChoice==="klarna"&&(gifts.length>0||appliedGift))||((paymentChoice==="apple_pay"||paymentChoice==="google_pay")&&!walletsAvailable)?(checkoutMode==="klarna_public"?"klarna":"paypal"):paymentChoice;
+  useEffect(()=>{
+   if(!regularCheckout||!loaded||!hasItems||loading)return;
+   if(error)reportCheckoutDiagnostic("unknown","cart","CART_PRICE_UNAVAILABLE");
+   else if(quote?.couponError)reportCheckoutDiagnostic("unknown","cart","CART_COUPON_INVALID");
+   else if(quote?.lines.some(l=>l.status==="out-of-stock"))reportCheckoutDiagnostic("unknown","cart","CART_STOCK_UNAVAILABLE");
+   else if(quote?.needsReview)reportCheckoutDiagnostic("unknown","cart","CART_REVIEW_REQUIRED");
+  },[regularCheckout,loaded,hasItems,loading,error,quote]);
   return <div className="rh-checkout-v2 rh-shell">
     <nav className="rh-breadcrumb" aria-label="Breadcrumb">
       <Link href="/">Startseite</Link><span>/</span>

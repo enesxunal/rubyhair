@@ -1,3 +1,4 @@
+import {recordCheckoutDiagnostic} from "@/lib/checkout-diagnostics";
 import {NextRequest,NextResponse,after} from "next/server";
 import {isAdmin} from "@/lib/admin-auth";
 import {publicCheckoutMode,providerForCheckout,verifyWalletCheckoutSignature,type WalletCheckoutMethod,CustomerCheckoutError} from "@/lib/customer-checkout";
@@ -30,28 +31,29 @@ export async function POST(req:NextRequest){
   return NextResponse.json({error:"NOT_AVAILABLE"},{status:404,headers});
  if(!verifyWalletCheckoutSignature(input.orderId,method,input.walletState))
   return NextResponse.json({error:"INVALID_WALLET_SESSION"},{status:403,headers});
+ const reject=(code:string,status:number)=>{after(()=>recordCheckoutDiagnostic(method,"capture",code,"server",input.orderId as string));return NextResponse.json({error:code},{status,headers});};
  try{
   const stored=await getPrisma().order.findUnique({where:{id:input.orderId},select:{id:true,testOnly:true,status:true,paymentReference:true}});
   if(!stored||stored.testOnly||stored.paymentReference!==input.paypalOrderId||!['pending_payment','payment_confirmed'].includes(stored.status))
-   return NextResponse.json({error:"ORDER_REFERENCE_MISMATCH"},{status:409,headers});
+   return reject("ORDER_REFERENCE_MISMATCH",409);
   const {api}=await providerForCheckout("paypal");
   const remote=await api.getOrderWithPaymentSource(input.paypalOrderId);
   if(!obj(remote)||remote.id!==input.paypalOrderId||!['APPROVED','COMPLETED'].includes(String(remote.status)))
-   return NextResponse.json({error:"PAYPAL_WALLET_NOT_APPROVED"},{status:409,headers});
+   return reject("PAYPAL_WALLET_NOT_APPROVED",409);
   const source=obj(remote.payment_source)?remote.payment_source:null;
   const wallet=source&&obj(source[method])?source[method]:null;
-  if(!wallet)return NextResponse.json({error:"WALLET_SOURCE_MISMATCH"},{status:409,headers});
+  if(!wallet)return reject("WALLET_SOURCE_MISMATCH",409);
   // Google Pay may require 3DS; never capture without the required payer action.
   const card=obj(wallet.card)?wallet.card:null;
   const auth=card&&obj(card.authentication_result)?card.authentication_result:null;
   if(auth&&auth.liability_shift!=="POSSIBLE")
-   return NextResponse.json({error:"WALLET_3DS_REQUIRES_REVIEW"},{status:409,headers});
+   return reject("WALLET_3DS_REQUIRES_REVIEW",409);
   const result=await finalizePayPalCheckout(input.orderId,true,input.paypalOrderId);
-  if(!result.paid)return NextResponse.json({error:"WALLET_CAPTURE_REQUIRES_REVIEW"},{status:409,headers});
+  if(!result.paid)return reject("WALLET_CAPTURE_REQUIRES_REVIEW",409);
   after(async()=>{try{await runCustomerJobs(2)}catch{}});
   return NextResponse.json({paid:true,invoiceNumber:result.invoiceNumber},{headers});
  }catch(e){
   const code=e instanceof CustomerCheckoutError?e.reason:"WALLET_CONFIRMATION_REQUIRES_REVIEW";
-  return NextResponse.json({error:code},{status:e instanceof CustomerCheckoutError?e.http:503,headers});
+  return reject(code,e instanceof CustomerCheckoutError?e.http:503);
  }
 }

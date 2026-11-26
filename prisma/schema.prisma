@@ -381,3 +381,17 @@ model GiftRedemption {
   @@index([cardId, state])
   @@map("gift_redemptions")
 }
+
+// Operational checkout errors only: no submitted form values or payment credentials.
+model CheckoutDiagnostic {
+  id        String   @id @default(uuid()) @db.Uuid
+  createdAt DateTime @default(now())
+  method    String
+  stage     String
+  code      String
+  origin    String
+  orderId   String?  @db.Uuid
+  @@index([createdAt])
+  @@index([orderId,createdAt])
+  @@map("checkout_diagnostics")
+}

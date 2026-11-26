@@ -1,4 +1,5 @@
 "use client";
+import {reportCheckoutDiagnostic} from "@/lib/checkout-diagnostics-client";
 import {useEffect,useRef,useState} from "react";
 import type {CartLine} from "@/components/cart-context";
 import type {CheckoutAddressData} from "./checkout-address-preview";
@@ -65,7 +66,7 @@ export default function PayPalCardFieldsCheckout({agreed,claimPayment,releasePay
     await session.on("validitychange",update);
     await session.on("change",update);
     if(!canceled){sessionRef.current=session;setPhase("ready")}
-   }catch{if(!canceled)setPhase("unavailable")}
+   }catch{if(!canceled){setPhase("unavailable");reportCheckoutDiagnostic("card","setup","CARD_SDK_UNAVAILABLE")}}
   }
   void init();
   return ()=>{canceled=true;controller.abort();sessionRef.current=null;[numberRef,expiryRef,cvvRef].forEach(r=>r.current?.replaceChildren())};
@@ -105,6 +106,7 @@ export default function PayPalCardFieldsCheckout({agreed,claimPayment,releasePay
    window.location.assign("/kasse/paypal/return?"+query.toString());
   }catch(error){
    const reason=error instanceof Error?error.message:"UNKNOWN";
+   reportCheckoutDiagnostic("card",cardStep==="create"?"create":cardStep==="capture"?"capture":"authorization",reason==="CARD_AUTH_CANCELLED"?"CARD_AUTH_CANCELLED":reason==="CARD_AUTH_FAILED"?"CARD_AUTH_FAILED":reason==="CARD_NOT_APPROVED"?"CARD_NOT_APPROVED":reason==="CARD_3DS_NOT_VERIFIED"?"CARD_3DS_NOT_VERIFIED":cardStep==="capture"?"CAPTURE_NOT_VERIFIED":"ORDER_UNVERIFIED");
    const explicitlyFailed=cardStep==="submit"&&(reason==="CARD_AUTH_CANCELLED"||reason==="CARD_AUTH_FAILED");
    // Reconcile an already completed charge without attempting a second capture.
    if(checkoutRef){

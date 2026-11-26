@@ -1,3 +1,4 @@
+import {recordCheckoutDiagnostic} from "@/lib/checkout-diagnostics";
 import type {Metadata} from "next";
 import {after} from "next/server";
 import {verifyCheckoutSignature,verifyWalletCheckoutSignature,type WalletCheckoutMethod} from "@/lib/customer-checkout";
@@ -20,9 +21,9 @@ export default async function CustomerPayPalReturn({searchParams}:{searchParams:
  let title="Zahlung wird geprüft",message="Bitte starte keine weitere Zahlung, während wir den Status überprüfen.";
  let paid=false;
  if(!valid){title="Ungültiger Zahlungslink";message="Bitte kontaktiere Ruby Hair mit deiner Bestellnummer.";}
- else if(p.cancel){title="PayPal wurde verlassen";message="Die Bestellung ist noch nicht als bezahlt bestätigt. Bitte prüfe den Status, bevor du einen neuen Kauf startest.";}
+ else if(p.cancel){after(()=>recordCheckoutDiagnostic(walletMethod||"paypal","return","RETURN_CANCELLED","server",p.orderId));title="PayPal wurde verlassen";message="Die Bestellung ist noch nicht als bezahlt bestätigt. Bitte prüfe den Status, bevor du einen neuen Kauf startest.";}
  else if(!p.token||!/^[A-Za-z0-9_-]{8,60}$/.test(p.token)){
-  title="PayPal Rückmeldung unvollständig";message="Deine Bestellung wird geprüft; bitte nicht erneut bezahlen.";
+  after(()=>recordCheckoutDiagnostic(walletMethod||"paypal","return","RETURN_INCOMPLETE","server",p.orderId));title="PayPal Rückmeldung unvollständig";message="Deine Bestellung wird geprüft; bitte nicht erneut bezahlen.";
  }else{
   try{
    // Wallet purchases are captured by the signed, server-verified API before redirect.
@@ -36,7 +37,7 @@ export default async function CustomerPayPalReturn({searchParams}:{searchParams:
    if(done.paid){paid=true;title="Zahlung bestätigt";message=`Deine Rechnung ${done.invoiceNumber} wurde erstellt. Die Bestellbestätigung wird automatisch per E-Mail verschickt.`;
     after(async()=>{try{await Promise.all([runCustomerJobs(2),deliverGiftEmails(5)])}catch{}});
    }
-  }catch{title="Zahlung wird geprüft";message="Der Zahlungsanbieter oder die Bestellbestätigung ist noch nicht synchronisiert. Bitte kein zweites Mal bezahlen.";}
+  }catch{after(()=>recordCheckoutDiagnostic(walletMethod||"paypal","return","RETURN_REVIEW","server",p.orderId));title="Zahlung wird geprüft";message="Der Zahlungsanbieter oder die Bestellbestätigung ist noch nicht synchronisiert. Bitte kein zweites Mal bezahlen.";}
  }
  const purchasedGifts=paid&&valid?await getPrisma().giftPurchase.findMany({
   where:{cartOrderId:p.orderId!,status:"captured",card:{isNot:null}},select:{id:true,recipientName:true},orderBy:{createdAt:"asc"}

@@ -15,16 +15,17 @@ const sections=[
  {href:"/admin/bestellungen",label:"Bestellungen",icon:ClipboardList},
  {href:"/admin/gutscheine",label:"Gutscheine",icon:Gift},
  {href:"/admin/zahlungen",label:"Zahlungen",icon:WalletCards},
+ {href:"/admin/zahlungsfehler",label:"Zahlungsfehler",icon:CircleDot},
  {href:"/admin/benachrichtigungen",label:"E-Mails & Vorlagen",icon:Mail}
 ] as const;
 
-type Area="dashboard"|"products"|"orders"|"analytics"|"payments"|"emails"|"testorder"|"gifts";
+type Area="dashboard"|"products"|"orders"|"analytics"|"payments"|"emails"|"testorder"|"gifts"|"diagnostics";
 const name:Record<Area,string>={
- dashboard:"Übersicht",analytics:"Analytics",products:"Produkte & Bestand",
+ diagnostics:"Zahlungsfehler",dashboard:"Übersicht",analytics:"Analytics",products:"Produkte & Bestand",
  orders:"Bestellungen",gifts:"Gutscheine",payments:"Zahlungen",emails:"E-Mails & Vorlagen",testorder:"1 € Testbestellung"
 };
 const paths:Record<Area,string>={
- dashboard:"/admin",analytics:"/admin/analytics",products:"/admin/produkte",
+ diagnostics:"/admin/zahlungsfehler",dashboard:"/admin",analytics:"/admin/analytics",products:"/admin/produkte",
  orders:"/admin/bestellungen",gifts:"/admin/gutscheine",payments:"/admin/zahlungen",emails:"/admin/benachrichtigungen",testorder:"/admin/testbestellung"
 };
 export default function AdminShell({

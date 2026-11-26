@@ -1,4 +1,5 @@
 "use client";
+import {reportCheckoutDiagnostic} from "@/lib/checkout-diagnostics-client";
 import {useEffect,useRef,useState} from "react";
 import type {CartLine} from "./cart-context";
 import type {CheckoutAddressData} from "./checkout-address-preview";
@@ -134,9 +135,9 @@ export default function PayPalWalletCheckout({lines,address,cartReady,totalCents
    if(!cartReady||(!appleEnabled&&!googleEnabled)||totalCents<=0)return;
    try{
     const token=await fetch("/api/payments/paypal/wallet-token",{cache:"no-store",credentials:"same-origin",signal:controller.signal});
-    if(!token.ok)return;
+    if(!token.ok){if(!canceled){if(appleEnabled)reportCheckoutDiagnostic("apple_pay","setup","WALLET_SDK_UNAVAILABLE");if(googleEnabled)reportCheckoutDiagnostic("google_pay","setup","WALLET_SDK_UNAVAILABLE")}return;}
     const json=await token.json() as {clientToken?:string};
-    if(!json.clientToken)return;
+    if(!json.clientToken){if(!canceled){if(appleEnabled)reportCheckoutDiagnostic("apple_pay","setup","WALLET_SDK_UNAVAILABLE");if(googleEnabled)reportCheckoutDiagnostic("google_pay","setup","WALLET_SDK_UNAVAILABLE")}return;}
     if(canceled)return;
     await loadScript(PAYPAL_URL,()=>Boolean(windowWallet().paypal?.createInstance));
     if(canceled)return;
@@ -167,6 +168,7 @@ export default function PayPalWalletCheckout({lines,address,cartReady,totalCents
          setTimeout(()=>window.location.assign(url),350);
          return {transactionState:"SUCCESS"};
         }catch(e){
+         reportCheckoutDiagnostic("google_pay","authorization",asError(e)==="GOOGLE_PAY_PAYER_ACTION_REQUIRED"?"GOOGLE_PAY_PAYER_ACTION_REQUIRED":"WALLET_CONFIRMATION_FAILED");
          setError(walletOrder?"Zahlungsstatus muss geprüft werden. Bitte nicht erneut bezahlen.":asError(e));
          return {transactionState:"ERROR",error:{intent:"PAYMENT_AUTHORIZATION",message:"Zahlung konnte nicht bestätigt werden."}};
         }finally{setProcessing(false)}
@@ -182,12 +184,12 @@ export default function PayPalWalletCheckout({lines,address,cartReady,totalCents
         // Must be called directly inside a genuine click for browser popup permission.
         void client.loadPaymentData({...config,transactionInfo:{countryCode:"DE",currencyCode:"EUR",
          totalPriceStatus:"FINAL",totalPrice:money(snapshot.current.totalCents)},
-         callbackIntents:["PAYMENT_AUTHORIZATION"]}).catch(()=>{if(!lock.current)setError("Google Pay wurde abgebrochen oder ist nicht verfügbar.")});
+         callbackIntents:["PAYMENT_AUTHORIZATION"]}).catch(()=>{if(!lock.current){reportCheckoutDiagnostic("google_pay","authorization","WALLET_CANCELLED_OR_UNAVAILABLE");setError("Google Pay wurde abgebrochen oder ist nicht verfügbar.")}});
        }});
        googleHost.current.replaceChildren(button);
        setGoogleReady(true);
       }
-     }catch{/* Not eligible on this browser or Google Pay configuration not complete. */}
+     }catch{if(!canceled)reportCheckoutDiagnostic("google_pay","setup","WALLET_SDK_UNAVAILABLE")}
     }
     if(appleEnabled&&eligible.isEligible("applepay")){
      try{
@@ -212,7 +214,7 @@ export default function PayPalWalletCheckout({lines,address,cartReady,totalCents
         native.onvalidatemerchant=e=>{
          void session.validateMerchant({validationUrl:e.validationURL})
           .then(v=>native.completeMerchantValidation(v.merchantSession))
-          .catch(()=>{setError("Apple Pay Domain-Validierung fehlgeschlagen.");lock.current=false;setProcessing(false);native.abort()});
+          .catch(()=>{reportCheckoutDiagnostic("apple_pay","merchant_validation","WALLET_MERCHANT_VALIDATION_FAILED");setError("Apple Pay konnte nicht mit dem Händler verbunden werden. Bitte wähle eine andere Zahlungsart.");lock.current=false;setProcessing(false);native.abort()});
         };
         native.onpaymentauthorized=e=>{void (async()=>{
          let order:Required<CheckoutOrder>|null=null;
@@ -225,19 +227,20 @@ export default function PayPalWalletCheckout({lines,address,cartReady,totalCents
           native.completePayment({status:Apple.STATUS_SUCCESS});
           setTimeout(()=>window.location.assign(url),350);
          }catch{
+          reportCheckoutDiagnostic("apple_pay","authorization","WALLET_CONFIRMATION_FAILED");
           setError(order?"Zahlungsstatus muss geprüft werden. Bitte nicht erneut bezahlen.":"Apple Pay konnte nicht gestartet werden.");
           native.completePayment({status:Apple.STATUS_FAILURE});
          }finally{setProcessing(false)}
         })()};
-        native.oncancel=()=>{if(!orderKeys.current.apple_pay){lock.current=false;setProcessing(false)}};
+        native.oncancel=()=>{reportCheckoutDiagnostic("apple_pay","authorization","WALLET_CANCELLED_OR_UNAVAILABLE");if(!orderKeys.current.apple_pay){lock.current=false;setProcessing(false)}};
         native.begin();
-        }catch{lock.current=false;setProcessing(false);setError("Apple Pay konnte nicht gestartet werden. Bitte versuche es erneut oder wähle eine andere Zahlungsart.")}
+        }catch{reportCheckoutDiagnostic("apple_pay","setup","WALLET_START_FAILED");lock.current=false;setProcessing(false);setError("Apple Pay konnte nicht gestartet werden. Bitte versuche es erneut oder wähle eine andere Zahlungsart.")}
        });
        appleHost.current.replaceChildren(button);setAppleReady(true);
       }
-     }catch{if(!canceled)setError("Apple Pay ist derzeit nicht verfügbar. Bitte wähle eine andere Zahlungsart.")}
+     }catch{if(!canceled){reportCheckoutDiagnostic("apple_pay","setup","WALLET_SDK_UNAVAILABLE");setError("Apple Pay ist derzeit nicht verfügbar. Bitte wähle eine andere Zahlungsart.")}}
     }
-   }catch{/* Never show unsupported wallets. */}
+   }catch{if(!canceled){if(appleEnabled)reportCheckoutDiagnostic("apple_pay","setup","WALLET_SDK_UNAVAILABLE");if(googleEnabled)reportCheckoutDiagnostic("google_pay","setup","WALLET_SDK_UNAVAILABLE")}}
   };
   void run();
   return()=>{canceled=true;controller.abort();appleHost.current?.replaceChildren();googleHost.current?.replaceChildren();paymentMethod.current=null};

@@ -1,4 +1,6 @@
 "use client";
+import {reportCheckoutDiagnostic} from "@/lib/checkout-diagnostics-client";
+import {diagnosticLabels,safeDiagnosticCode} from "@/lib/checkout-diagnostic-policy";
 import {useRef,useState} from "react";
 import type {CartLine} from "@/components/cart-context";
 import type {GiftCartItem} from "@/lib/gift-cards/cart-schema";
@@ -21,7 +23,7 @@ export default function CustomerPaymentSubmit({agreed,claimPayment,releasePaymen
      billing:address.billing,email:address.email,giftCode,couponCode,consent:true
     })});
    const payload=await res.json() as {redirectUrl?:string;orderId?:string;error?:string;retrySafe?:boolean};
-   if(!res.ok&&payload.retrySafe===true){key.current=null;releasePayment();setLoading(false);setError("Bitte Angaben oder Warenkorb prüfen und erneut versuchen.");return}
+   if(!res.ok&&payload.retrySafe===true){key.current=null;releasePayment();setLoading(false);setError((diagnosticLabels[safeDiagnosticCode(payload.error)]||"Bestellangaben prüfen")+". Bitte Angaben oder Warenkorb prüfen und erneut versuchen.");return}
    if(!res.ok||!payload.redirectUrl)throw new Error(payload.error||"CHECKOUT_FAILED");
    const target=new URL(payload.redirectUrl);
    const giftPaid=target.origin===window.location.origin&&target.pathname==="/kasse/gutschein/erfolg"&&totalCents===0;
@@ -33,7 +35,7 @@ export default function CustomerPaymentSubmit({agreed,claimPayment,releasePaymen
    }
    window.location.assign(target.toString());
   }catch(e){
-   setError(e instanceof Error?e.message:"CHECKOUT_FAILED");setLoading(false);
+   reportCheckoutDiagnostic(method,"redirect","CHECKOUT_NETWORK_OR_REDIRECT_FAILED");setError(diagnosticLabels[safeDiagnosticCode(e instanceof Error?e.message:null)]);setLoading(false);
    // Keep the same idempotency key after an ambiguous response: never charge twice.
   }
  };

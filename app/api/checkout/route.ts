@@ -1,3 +1,5 @@
+import {recordCheckoutDiagnostic} from "@/lib/checkout-diagnostics";
+import type {DiagnosticMethod} from "@/lib/checkout-diagnostic-policy";
 import {retrySafeCheckoutRejection} from "@/lib/checkout-rejection-policy";
 import {NextRequest,NextResponse,after} from "next/server";
 import {isAdmin} from "@/lib/admin-auth";
@@ -9,6 +11,8 @@ import {publicRequestAllowed} from "@/lib/public-rate-limit";
 export const runtime="nodejs",dynamic="force-dynamic";
 const headers={"Cache-Control":"no-store","X-Content-Type-Options":"nosniff"};
 export async function POST(req:NextRequest){
+ let diagnosticMethod:DiagnosticMethod="unknown";
+ const reject=(code:string,status:number,retrySafe?:boolean)=>{after(()=>recordCheckoutDiagnostic(diagnosticMethod,"create",code,"server"));return NextResponse.json({error:code,retrySafe},{status,headers});};
  const mode=publicCheckoutMode();
  if(mode==="disabled"||mode==="admin_test"&&!await isAdmin())
   return NextResponse.json({error:"CHECKOUT_NOT_CONFIGURED",retrySafe:true},{status:503,headers});
@@ -22,27 +26,28 @@ export async function POST(req:NextRequest){
   let value:unknown;try{value=JSON.parse(text)}catch{return NextResponse.json({error:"INVALID_JSON",retrySafe:true},{status:400,headers})}
   const input=checkoutInput.safeParse(value);
   if(!input.success)return NextResponse.json({error:"INVALID_CHECKOUT",retrySafe:true},{status:400,headers});
+  diagnosticMethod=input.data.paymentExperience||input.data.provider;
   if(mode==="klarna_public"&&input.data.provider!=="klarna")
-   return NextResponse.json({error:"PAYMENT_METHOD_DISABLED",retrySafe:true},{status:403,headers});
+   return reject("PAYMENT_METHOD_DISABLED",403,true);
   try{
    if(!await publicRequestAllowed(req.headers,"checkout",{ip:30,global:300,windowMs:15*60_000}))
     return NextResponse.json({error:"RATE_LIMITED",retrySafe:true},{status:429,headers:{...headers,"Retry-After":"900"}});
   }catch{
-   return NextResponse.json({error:"RATE_LIMIT_UNAVAILABLE",retrySafe:true},{status:503,headers});
+   return reject("RATE_LIMIT_UNAVAILABLE",503,true);
   }
   // Prevent customers paying when the shop cannot send a receipt or start shipping.
   // admin_test may exercise the backend before external accounts are enabled.
   if(mode==="public"){
    const [mail,dhl]=await Promise.all([loadStoreMailSettings(),getDhlIntegrationReadiness("live")]);
    if(!mail.stored||!dhl.credentialsComplete||(process.env.RUBY_DHL_LIVE_LABELS_ENABLED!=="true"||process.env.RUBY_DHL_SENDER_APPROVED!=="true"||!process.env.RUBY_DHL_WEIGHT_G))
-    return NextResponse.json({error:"FULFILLMENT_NOT_READY",retrySafe:true},{status:503,headers});
+    return reject("FULFILLMENT_NOT_READY",503,true);
   }
   // Manual DHL fulfillment supports the separate Klarna-only and PayPal+Klarna
   // launch modes until automatic carrier label creation is ready.
   if(mode==="klarna_public"||mode==="payments_public"){
    const mail=await loadStoreMailSettings();
    if(!mail.stored||process.env.RUBY_MANUAL_DHL_FULFILLMENT_ENABLED!=="true")
-    return NextResponse.json({error:"FULFILLMENT_NOT_READY",retrySafe:true},{status:503,headers});
+    return reject("FULFILLMENT_NOT_READY",503,true);
   }
   console.info("RUBY_CHECKOUT_ATTEMPT",{provider:input.data.provider,experience:input.data.paymentExperience||"redirect"});
   const result=await createCustomerCheckout(input.data);
@@ -53,6 +58,6 @@ export async function POST(req:NextRequest){
   const code=e instanceof CustomerCheckoutError?e.reason:"CHECKOUT_TEMPORARILY_UNAVAILABLE";
   const status=e instanceof CustomerCheckoutError?e.http:503;
   console.warn("RUBY_CHECKOUT_REJECTED",{code,status});
-  return NextResponse.json({error:code,retrySafe:retrySafeCheckoutRejection(code)},{status,headers});
+  return reject(code,status,retrySafeCheckoutRejection(code));
  }
 }

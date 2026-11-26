@@ -1,4 +1,5 @@
 "use client";
+import {reportCheckoutDiagnostic} from "@/lib/checkout-diagnostics-client";
 import {useCallback,useEffect,useRef,useState,type FormEvent} from "react";
 import type {CustomerCheckoutInput} from "@/lib/customer-checkout";
 import {CheckCircle2,ShieldCheck} from "lucide-react";
@@ -29,11 +30,13 @@ export default function CheckoutAddressPreview({onValidated,digitalOnly=false}:{
   syncAddress();
  };
  const [checked,setChecked]=useState(false);
+ const [fieldError,setFieldError]=useState("");
  const lastAddress=useRef<string|null>(null);
  const syncAddress=useCallback(()=>{
   const form=formRef.current;
   if(!form)return;
   const valid=Array.from(form.querySelectorAll<HTMLInputElement>("input[required]")).every(input=>input.validity.valid&&input.value.trim().length>0&&(input.type==="email"||input.name==="zip"||input.name==="billingZip"||(input.value.trim().length>=2&&input.value.trim().length<=85&&!/[<>\r\n\x00-\x1f]/.test(input.value))));
+  if(valid)setFieldError("");
   if(!valid||(!digitalOnly&&otherBilling&&!form.elements.namedItem("billingFirst"))){
    if(lastAddress.current!==null){lastAddress.current=null;setChecked(false);onValidated?.(null)}
    return;
@@ -58,7 +61,11 @@ export default function CheckoutAddressPreview({onValidated,digitalOnly=false}:{
     {savedAddresses.map(a=><option key={a.id} value={a.id}>{a.label} – {a.street}, {a.postalCode} {a.city}</option>)}
    </select>
   </div>}
-  <form ref={formRef} onSubmit={validate} onInput={syncAddress} onChange={syncAddress} onBlur={syncAddress}>
+  <form ref={formRef} onSubmit={validate} onInput={syncAddress} onChange={syncAddress} onBlur={e=>{syncAddress();const input=e.target;if(!(input instanceof HTMLInputElement)||!input.required||!input.value.trim()||input.validity.valid)return;
+ const email=input.type==="email",postal=input.name==="zip"||input.name==="billingZip";
+ setFieldError(email?"Bitte gib eine gültige E-Mail-Adresse ein.":postal?"Bitte gib eine fünfstellige deutsche Postleitzahl ein.":"Bitte prüfe dieses Adressfeld.");
+ reportCheckoutDiagnostic("unknown","address",email?"INVALID_EMAIL":postal?"INVALID_POSTAL_CODE":"INVALID_ADDRESS_FIELD");
+ }}>
    <div className="rh-checkout-field-grid">
     <label>Vorname <input required autoComplete="given-name" name="givenName" maxLength={80} placeholder="Vorname"/></label>
     <label>Nachname <input required autoComplete="family-name" name="familyName" maxLength={80} placeholder="Nachname"/></label>
@@ -76,6 +83,7 @@ export default function CheckoutAddressPreview({onValidated,digitalOnly=false}:{
      <label>Postleitzahl <input required name="billingZip" pattern="[0-9]{5}" maxLength={5} inputMode="numeric"/></label>
      <label>Ort <input required name="billingCity" maxLength={85}/></label>
    </div></fieldset>}
+   {fieldError&&<p role="alert" style={{color:"#a13c50"}}>{fieldError}</p>}
    {checked&&<p role="status" className="rh-checkout-address-ok"><CheckCircle2 size={17}/> Deine Angaben sind vollständig. Du kannst jetzt bezahlen.</p>}
   </form>
   <p className="rh-checkout-private"><ShieldCheck size={16}/> Deine Adresse bleibt auf diesem Gerät, bis du eine Bestellung ausdrücklich bestätigst.</p>

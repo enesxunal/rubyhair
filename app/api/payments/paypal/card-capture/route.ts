@@ -1,3 +1,4 @@
+import {recordCheckoutDiagnostic} from "@/lib/checkout-diagnostics";
 import {NextRequest,NextResponse,after} from "next/server";
 import {isAdmin} from "@/lib/admin-auth";
 import {publicCheckoutMode,providerForCheckout,verifyCheckoutSignature,CustomerCheckoutError} from "@/lib/customer-checkout";
@@ -27,32 +28,33 @@ export async function POST(req:NextRequest){
   return NextResponse.json({error:"INVALID_REQUEST"},{status:400,headers});
  if(!verifyCheckoutSignature(data.orderId,"paypal",data.cardState))
   return NextResponse.json({error:"INVALID_CARD_SESSION"},{status:403,headers});
+ const reject=(code:string,status:number)=>{after(()=>recordCheckoutDiagnostic("card","capture",code,"server",data.orderId as string));return NextResponse.json({error:code},{status,headers});};
  try{
   const order=await getPrisma().order.findUnique({where:{id:data.orderId},select:{id:true,testOnly:true,status:true,paymentReference:true}});
   if(!order||order.testOnly||order.paymentReference!==data.paypalOrderId)
-   return NextResponse.json({error:"ORDER_REFERENCE_MISMATCH"},{status:409,headers});
+   return reject("ORDER_REFERENCE_MISMATCH",409);
   const {api}=await providerForCheckout("paypal");
   const remote=await api.getOrderWithPaymentSource(data.paypalOrderId);
   if(!isObj(remote)||remote.id!==data.paypalOrderId||typeof remote.status!=="string")
-   return NextResponse.json({error:"PAYPAL_STATUS_UNVERIFIED"},{status:409,headers});
+   return reject("PAYPAL_STATUS_UNVERIFIED",409);
   const source=isObj(remote.payment_source)?remote.payment_source:null;
   const card=source&&isObj(source.card)?source.card:null;
-  if(!card)return NextResponse.json({error:"CARD_PAYMENT_SOURCE_UNVERIFIED"},{status:409,headers});
+  if(!card)return reject("CARD_PAYMENT_SOURCE_UNVERIFIED",409);
   if(remote.status==="APPROVED"||remote.status==="CREATED"){
    const auth=isObj(card.authentication_result)?card.authentication_result:null;
    // Conservative German 3DS policy: never capture NO, UNKNOWN or absent liability shift.
    if(!auth||auth.liability_shift!=="POSSIBLE")
-    return NextResponse.json({error:"CARD_3DS_REQUIRES_REVIEW"},{status:409,headers});
+    return reject("CARD_3DS_REQUIRES_REVIEW",409);
   }else if(remote.status!=="COMPLETED"){
-   return NextResponse.json({error:"CARD_PAYMENT_NOT_APPROVED"},{status:409,headers});
+   return reject("CARD_PAYMENT_NOT_APPROVED",409);
   }
   const done=await finalizePayPalCheckout(data.orderId,true,data.paypalOrderId,true);
-  if(!done.paid)return NextResponse.json({error:"CARD_PAYMENT_REQUIRES_REVIEW"},{status:409,headers});
+  if(!done.paid)return reject("CARD_PAYMENT_REQUIRES_REVIEW",409);
   after(async()=>{try{await runCustomerJobs(2);}catch{}});
   return NextResponse.json({paid:true,invoiceNumber:done.invoiceNumber},{headers});
  }catch(e){
   const code=e instanceof CustomerCheckoutError?e.reason:"CARD_CONFIRMATION_REQUIRES_REVIEW";
   const status=e instanceof CustomerCheckoutError?e.http:503;
-  return NextResponse.json({error:code},{status,headers});
+  return reject(code,status);
  }
 }

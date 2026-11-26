@@ -1,3 +1,4 @@
+import {recordCheckoutDiagnostic} from "@/lib/checkout-diagnostics";
 import type {Metadata} from "next";
 import {after} from "next/server";
 import {runCustomerJobs} from "@/lib/customer-automation";
@@ -16,9 +17,9 @@ export default async function KlarnaReturn({searchParams}:{searchParams:Promise<
    if(out.authorized){title="Klarna-Bestellung bestätigt";message="Deine Zahlung ist autorisiert. Sie wird beim Versand automatisch eingezogen und du erhältst dann deine Rechnung per E-Mail.";
     after(async()=>{try{await runCustomerJobs(2)}catch{}});
    }
-  }catch{message="Die Klarna-Bestellung wird noch mit dem Zahlungsanbieter abgeglichen. Bitte nicht erneut bezahlen.";}
+  }catch{after(()=>recordCheckoutDiagnostic("klarna","return","RETURN_REVIEW","server",p.orderId));message="Die Klarna-Bestellung wird noch mit dem Zahlungsanbieter abgeglichen. Bitte nicht erneut bezahlen.";}
  }else if(["cancel","back","failure","error"].includes(p.result||"")){
-  title="Klarna nicht abgeschlossen";message="Es wurde noch keine bestätigte Zahlung hinterlegt. Bitte kontaktiere uns, bevor du erneut bestellst.";
+  after(()=>recordCheckoutDiagnostic("klarna","return",p.result==="failure"?"KLARNA_RETURN_FAILURE":p.result==="error"?"KLARNA_RETURN_ERROR":p.result==="back"?"KLARNA_RETURN_BACK":"RETURN_CANCELLED","server",p.orderId));title="Klarna nicht abgeschlossen";message="Es wurde noch keine bestätigte Zahlung hinterlegt. Bitte kontaktiere uns, bevor du erneut bestellst.";
  }
  return <main className="rh-shell" style={{padding:"90px 20px",maxWidth:780,margin:"auto"}}><h1>{title}</h1><p>{message}</p><p><a href="/kontakt/">Kontakt</a></p></main>;
 }
