@@ -61,7 +61,7 @@ export async function runCartRecovery(){
   // Stop for any new checkout (including an unconfirmed or active provider session),
   // not merely completed payment. Never send a payment retry instruction.
   const checkout=await db.order.findFirst({where:{testOnly:false,customerEmail:{equals:email,mode:"insensitive"},createdAt:{gte:row.requestedAt}},select:{id:true}});
-  if(checkout){await db.cartRecovery.updateMany({where:{id:row.id,status:"confirmed"},data:{status:"finished",nextReminderAt:null,ciphertext:"",nonce:"",authTag:""}});stopped++;continue;}
+  if(checkout){await db.cartRecovery.updateMany({where:{id:row.id,status:"confirmed"},data:{status:"checkout_started",nextReminderAt:null,ciphertext:"",nonce:"",authTag:"",lines:[]}});stopped++;continue;}
   if(!maySendReminder(row,now,false))continue;
   const claim=await db.cartRecovery.updateMany({where:{id:row.id,status:"confirmed",sentCount:row.sentCount},data:{status:"sending",nextReminderAt:null}});
   if(!claim.count)continue;
@@ -69,9 +69,10 @@ export async function runCartRecovery(){
    // Recheck consent and checkout just before SMTP. Ambiguous deliveries are not retried.
    const latest=await db.cartRecovery.findFirst({where:{id:row.id,status:"sending"},select:{id:true}});
    const fresh=await db.order.findFirst({where:{testOnly:false,customerEmail:{equals:email,mode:"insensitive"},createdAt:{gte:row.requestedAt}},select:{id:true}});
-   if(!latest||fresh){await db.cartRecovery.updateMany({where:{id:row.id,status:"sending"},data:{status:"finished",ciphertext:"",nonce:"",authTag:""}});stopped++;continue;}
+   if(!latest||fresh){await db.cartRecovery.updateMany({where:{id:row.id,status:"sending"},data:{status:"checkout_started",ciphertext:"",nonce:"",authTag:"",lines:[]}});stopped++;continue;}
    await sendRecoveryMail(email,row.id,"reminder",row.sentCount);
-   const count=row.sentCount+1,next=nextReminder(row.confirmedAt!,count);
+   const count=row.sentCount+1,scheduled=nextReminder(row.confirmedAt!,count);
+   const next=scheduled?new Date(Math.max(scheduled.getTime(),Date.now()+12*3600000)):null;
    await db.cartRecovery.updateMany({where:{id:row.id,status:"sending"},data:{sentCount:count,status:next?"confirmed":"finished",nextReminderAt:next,...(!next?{ciphertext:"",nonce:"",authTag:""}:{})}});sent++;
   }catch{await db.cartRecovery.updateMany({where:{id:row.id,status:"sending"},data:{status:"delivery_review",ciphertext:"",nonce:"",authTag:""}});failed++;}
  }
