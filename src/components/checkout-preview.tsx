@@ -37,6 +37,7 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
     quote?.needsReview?"Ein Artikel muss vor der Zahlung geprüft werden. Bitte Warenkorb prüfen.":null;
   const paymentAttempt=useRef(false);
   const claimPayment=()=>{if(paymentAttempt.current)return false;paymentAttempt.current=true;return true};
+  const releasePayment=()=>{paymentAttempt.current=false};
   const [paymentConsent,setPaymentConsent]=useState(false);
   const [validatedAddress,setValidatedAddress]=useState<CheckoutAddressData|null>(null);
   const [giftInput,setGiftInput]=useState("");
@@ -103,7 +104,7 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
           </div>}
           <div className="rh-unified-payment-actions rh-card-first-payment">
           {cardAvailable&&<>
-            <PayPalCardFieldsCheckout agreed={paymentConsent} claimPayment={claimPayment} lines={lines} address={validatedAddress} cartReady={canPay}
+            <PayPalCardFieldsCheckout agreed={paymentConsent} claimPayment={claimPayment} releasePayment={releasePayment} lines={lines} address={validatedAddress} cartReady={canPay}
               totalCents={remainingCents} couponCode={couponCode||undefined}/>
           </>}
           {liveTest&&<LiveVariantTestSection state={liveTest} cartReady={payableTestCart}/>}

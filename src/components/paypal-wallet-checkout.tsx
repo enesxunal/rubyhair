@@ -83,7 +83,7 @@ export default function PayPalWalletCheckout({lines,address,cartReady,totalCents
  const createOrder=async(method:Method):Promise<Required<CheckoutOrder>>=>{
   const current=snapshot.current;
   if(!current.address||!current.cartReady||!current.lines.length||current.totalCents<=0||!current.accepted)throw Error("WALLET_CHECKOUT_NOT_READY");
-  if(!claimPayment())throw Error("ZAHLUNG_BEREITS_GESTARTET");
+  if(!claimPayment()){lock.current=false;throw Error("ZAHLUNG_BEREITS_GESTARTET")}
   orderKeys.current[method]||=crypto.randomUUID();
   const response=await fetch("/api/checkout",{method:"POST",credentials:"same-origin",cache:"no-store",
    headers:{"Content-Type":"application/json"},body:JSON.stringify({

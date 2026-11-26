@@ -104,6 +104,8 @@ export async function finalizePayPalCheckout(orderId:string,allowCapture:boolean
   if(verifiedCaptureReplay(order.status,true,Boolean(captured)))return {paid:paymentReplayOutcome(order.status)==="paid",invoiceNumber:order.invoice.invoiceNumber};
   throw new CustomerCheckoutError("PAYPAL_CAPTURE_REPLAY_INCONSISTENT",409);
  }
+ if(!["pending_payment","payment_authorized"].includes(order.status))throw new CustomerCheckoutError("PAYPAL_ORDER_NOT_PENDING",409);
+ if(allowCapture&&!verifiedCardFlow&&await db.orderStatusEvent.findFirst({where:{orderId:order.id,reason:"customer_card_checkout_reserved"},select:{id:true}}))allowCapture=false;
  const gateway=await providerForCheckout("paypal");
  let raw=await gateway.api.getOrder(order.paymentReference) as {status?:string};
  let captureResponse:unknown=null;

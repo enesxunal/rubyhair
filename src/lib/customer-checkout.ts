@@ -136,7 +136,7 @@ export async function createCustomerCheckout(input:CustomerCheckoutInput){
    customerEmail:input.email.toLowerCase(),billingAddress:{...(input.billing||input.shipping),consentToTermsAt:new Date().toISOString()} as Prisma.InputJsonValue,
    shippingAddress:input.shipping as Prisma.InputJsonValue,reservationKey:input.key,requestDigest:digest,
    reservationExpiresAt:new Date(Date.now()+2*60*60*1000),
-   lines:{create:lines},statusEvents:{create:{fromStatus:null,toStatus:"pending_payment",reason:"customer_checkout_reserved"}}
+   lines:{create:lines},statusEvents:{create:{fromStatus:null,toStatus:"pending_payment",reason:useCard?"customer_card_checkout_reserved":"customer_checkout_reserved"}}
   }});
   // Every digital voucher is a pending line of THIS physical/digital order;
   // no spendable code exists before PayPal verifies a completed capture.
