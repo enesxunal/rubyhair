@@ -49,6 +49,8 @@ test("Wallet token and capture are guarded by separate env flags and origin chec
   proxy=read("proxy.ts"),checkout=read("src/lib/customer-checkout.ts");
  assert.match(token,/RUBY_PAYPAL_APPLE_PAY_ENABLED/);
  assert.match(token,/RUBY_PAYPAL_GOOGLE_PAY_ENABLED/);
+ assert.match(token,/site!=="same-origin"/);
+ assert.match(token,/publicRequestAllowed/);
  assert.match(capture,/verifyWalletCheckoutSignature/);
  assert.match(capture,/ORIGIN_NOT_ALLOWED/);
  assert.match(capture,/WALLET_SOURCE_MISMATCH/);

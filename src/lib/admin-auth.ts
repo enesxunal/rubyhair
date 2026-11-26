@@ -53,28 +53,23 @@ function attemptKey(ip:string){
   return createHmac("sha256",process.env.SESSION_SECRET||"")
     .update("admin-login|"+ip).digest("hex");
 }
-export async function loginAllowed(){
+export async function consumeLoginAttempt(){
   const headersList=await headers();
   const ip=headersList.get("x-real-ip") ||
     headersList.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
   const key=attemptKey(ip);
-  const prisma=getPrisma();
-  const record=await prisma.adminLoginAttempt.findUnique({where:{key}});
-  const fresh=!record || Date.now()-record.windowStart.getTime()>15*60_000;
-  return {key,allowed:fresh || record.count <5,reset:fresh};
+  const cutoff=new Date(Date.now()-15*60_000);
+  const rows=await getPrisma().$queryRaw<{count:number}[]>`
+   INSERT INTO "admin_login_attempts" ("key","count","windowStart")
+   VALUES (${key},1,NOW())
+   ON CONFLICT ("key") DO UPDATE SET
+   "count"=CASE WHEN "admin_login_attempts"."windowStart"<${cutoff} THEN 1 ELSE "admin_login_attempts"."count"+1 END,
+   "windowStart"=CASE WHEN "admin_login_attempts"."windowStart"<${cutoff} THEN NOW() ELSE "admin_login_attempts"."windowStart" END
+   RETURNING "count"`;
+  return {key,allowed:(rows[0]?.count||Number.MAX_SAFE_INTEGER)<=5};
 }
-export async function recordLoginAttempt(key:string,reset:boolean){
-  const prisma=getPrisma();
-  // Reset aged windows; new attempts in an active window increment atomically.
-  if(reset){
-    await prisma.adminLoginAttempt.upsert({
-      where:{key},
-      update:{count:1,windowStart:new Date()},
-      create:{key,count:1}
-    });
-  }else{
-    await prisma.adminLoginAttempt.update({where:{key},data:{count:{increment:1}}});
-  }
+export async function clearLoginAttempts(key:string){
+  await getPrisma().adminLoginAttempt.deleteMany({where:{key}});
 }
 export async function checkAdminCredentials(email:string,password:string){
   const configuredEmail=process.env.ADMIN_EMAIL?.trim().toLowerCase();

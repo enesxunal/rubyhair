@@ -5,6 +5,7 @@ import {checkoutInput,publicCheckoutMode,createCustomerCheckout,CustomerCheckout
 import {loadStoreMailSettings} from "@/lib/store-mail-settings";
 import {getDhlIntegrationReadiness} from "@/lib/dhl-api";
 import {runCustomerJobs} from "@/lib/customer-automation";
+import {publicRequestAllowed} from "@/lib/public-rate-limit";
 export const runtime="nodejs",dynamic="force-dynamic";
 const headers={"Cache-Control":"no-store","X-Content-Type-Options":"nosniff"};
 export async function POST(req:NextRequest){
@@ -14,6 +15,12 @@ export async function POST(req:NextRequest){
  const origin=req.headers.get("origin"),site=req.headers.get("sec-fetch-site");
  if(!origin||![/^https:\/\/rubyhair\.de$/,/^https:\/\/www\.rubyhair\.de$/].some(r=>r.test(origin))||site==="cross-site")
   return NextResponse.json({error:"ORIGIN_NOT_ALLOWED"},{status:403,headers});
+ try{
+  if(!await publicRequestAllowed(req.headers,"checkout",{ip:10,global:240,windowMs:60*60_000}))
+   return NextResponse.json({error:"RATE_LIMITED",retrySafe:true},{status:429,headers:{...headers,"Retry-After":"3600"}});
+ }catch{
+  return NextResponse.json({error:"RATE_LIMIT_UNAVAILABLE",retrySafe:true},{status:503,headers});
+ }
  if(Number(req.headers.get("content-length")||0)>16384)return NextResponse.json({error:"REQUEST_TOO_LARGE",retrySafe:true},{status:413,headers});
  try{
   // Prevent customers paying when the shop cannot send a receipt or start shipping.

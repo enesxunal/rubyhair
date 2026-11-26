@@ -1,7 +1,7 @@
 import {NextRequest,NextResponse} from "next/server";
 import {z} from "zod";
 import {
-  adminConfigured,loginAllowed,recordLoginAttempt,
+  adminConfigured,consumeLoginAttempt,clearLoginAttempts,
   checkAdminCredentials,issueAdminSession
 } from "@/lib/admin-auth";
 
@@ -33,13 +33,13 @@ export async function POST(request:NextRequest){
     const result=schema.safeParse({email:form.get("email"),password:form.get("password")});
     const checkoutReturn=form.get("next")==="live-checkout";
     if(!result.success)return location(request,"/admin/login?error=invalid");
-    const {key,allowed,reset}=await loginAllowed();
+    const {key,allowed}=await consumeLoginAttempt();
     if(!allowed)return location(request,"/admin/login?error=locked");
     const {email,password}=result.data;
     if(!await checkAdminCredentials(email,password)){
-      await recordLoginAttempt(key,reset);
       return location(request,"/admin/login?error=invalid");
     }
+    await clearLoginAttempts(key);
     await issueAdminSession();
     return location(request,checkoutReturn?"/kasse?liveTest=1":"/admin");
   }catch(error){

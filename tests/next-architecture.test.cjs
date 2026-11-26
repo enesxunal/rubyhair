@@ -56,8 +56,25 @@ test("Prisma PostgreSQL models and migrations",()=>{
 });
 test("admin authentication has signed sessions and no default credentials",()=>{
   const auth=fs.readFileSync(path.join(base,"src/lib/admin-auth.ts"),"utf8");
-  for(const name of ["ADMIN_PASSWORD_HASH","SESSION_SECRET","httpOnly:true","jwtVerify","recordLoginAttempt"]){
+  for(const name of ["ADMIN_PASSWORD_HASH","SESSION_SECRET","httpOnly:true","jwtVerify","consumeLoginAttempt"]){
     assert.ok(auth.includes(name),name);
+  }
+  assert.ok(auth.includes('INSERT INTO "admin_login_attempts"'));
+  assert.ok(auth.includes('ON CONFLICT ("key") DO UPDATE'));
+  assert.ok(auth.indexOf('INSERT INTO "admin_login_attempts"')<auth.indexOf('RETURNING "count"'));
+});
+test("public checkout and PayPal token issuance have atomic abuse limits",()=>{
+  const limiter=fs.readFileSync(path.join(base,"src/lib/public-rate-limit.ts"),"utf8");
+  const checkout=fs.readFileSync(path.join(base,"app/api/checkout/route.ts"),"utf8");
+  const card=fs.readFileSync(path.join(base,"app/api/payments/paypal/card-token/route.ts"),"utf8");
+  const wallet=fs.readFileSync(path.join(base,"app/api/payments/paypal/wallet-token/route.ts"),"utf8");
+  assert.ok(limiter.includes('ON CONFLICT ("key") DO UPDATE'));
+  assert.ok(limiter.includes('public-rate|${scope}|${identity}'));
+  assert.ok(checkout.includes('publicRequestAllowed(req.headers,"checkout"'));
+  for(const route of [card,wallet]){
+    assert.ok(route.includes('site!=="same-origin"'));
+    assert.ok(route.includes('publicRequestAllowed(req.headers'));
+    assert.ok(route.indexOf('publicRequestAllowed(req.headers')<route.indexOf('browserClientToken()'));
   }
 });
 test("admin mutations require authentication and validated fields",()=>{
@@ -524,9 +541,9 @@ test("Ruby Hair admin login uses a native POST and explicit redirect/errors",()=
  assert.ok(!page.includes('action={loginAction}'));
  assert.ok(page.includes('error==="unavailable"'));
  assert.ok(route.includes('status:303'));
- assert.ok(route.includes('loginAllowed()'));
+ assert.ok(route.includes('consumeLoginAttempt()'));
  assert.ok(route.includes('checkAdminCredentials(email,password)'));
- assert.ok(route.includes('recordLoginAttempt(key,reset)'));
+ assert.ok(route.includes('clearLoginAttempts(key)'));
  assert.ok(route.includes('await issueAdminSession()'));
  assert.ok(route.includes('origin_mismatch'));
  assert.ok(route.includes('checkoutReturn?"/kasse?liveTest=1":"/admin"'));
