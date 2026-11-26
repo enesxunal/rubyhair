@@ -1,6 +1,7 @@
 import "server-only";
 import {createHmac,createHash,timingSafeEqual,randomUUID} from "node:crypto";
 import {Prisma} from "@prisma/client";
+import {reservationExpiresAt} from "@/lib/stock-reservation-policy";
 import {getPrisma} from "@/lib/prisma";
 import {loadPaymentValues} from "@/lib/payment-secrets";
 import {PaypalClient} from "@/lib/paypal-provider-core";
@@ -135,7 +136,7 @@ export async function createCustomerCheckout(input:CustomerCheckoutInput){
    testOnly:false,status:"pending_payment",currency:"EUR",subtotalCents:subtotal+digitalTotal,shippingCents:shipping,taxCents:tax,totalCents:gross,giftAppliedCents:giftApplied,
    customerEmail:input.email.toLowerCase(),billingAddress:{...(input.billing||input.shipping),consentToTermsAt:new Date().toISOString()} as Prisma.InputJsonValue,
    shippingAddress:input.shipping as Prisma.InputJsonValue,reservationKey:input.key,requestDigest:digest,
-   reservationExpiresAt:new Date(Date.now()+2*60*60*1000),
+   reservationExpiresAt:reservationExpiresAt(),
    lines:{create:lines},statusEvents:{create:{fromStatus:null,toStatus:"pending_payment",reason:useCard?"customer_card_checkout_reserved":"customer_checkout_reserved"}}
   }});
   // Every digital voucher is a pending line of THIS physical/digital order;

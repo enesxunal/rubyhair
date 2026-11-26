@@ -1,5 +1,8 @@
 import "server-only";
 import {getPrisma} from "@/lib/prisma";
+import {Prisma} from "@prisma/client";
+import {revalidateTag} from "next/cache";
+import {paypalReservationReleasable,klarnaReservationReleasable} from "@/lib/stock-reservation-policy";
 import {getDhlIntegrationReadiness} from "@/lib/dhl-api";
 import {createDhlShipmentLabel,validateDhlLiveTemplateOnly,type ShippingAddress} from "@/lib/dhl-labels";
 import {sendStoreOrderMail} from "@/lib/store-mail-transport";
@@ -177,16 +180,18 @@ export async function runCustomerJobs(limit=5){
  return result;
 }
 
-async function cancelUnpaidCustomerOrder(orderId:string){
- const order=await db().order.findUnique({where:{id:orderId},include:{lines:true}});
- if(!order||order.testOnly||order.status!=="pending_payment")return false;
- return db().$transaction(async tx=>{
-  const changed=await tx.order.updateMany({where:{id:orderId,status:"pending_payment",testOnly:false},data:{status:"cancelled",reservationExpiresAt:null}});
+async function cancelUnpaidCustomerOrder(orderId:string,reference:string,cutoff:Date,notify:boolean){
+ const released=await db().$transaction(async tx=>{
+  const order=await tx.order.findUnique({where:{id:orderId},include:{lines:true}});
+  if(!order||order.testOnly||order.status!=="pending_payment"||order.paymentReference!==reference||!order.reservationExpiresAt||order.reservationExpiresAt>cutoff)return false;
+  if(await tx.paymentEvent.count({where:{orderId}})||await tx.invoice.count({where:{orderId}}))return false;
+  const changed=await tx.order.updateMany({where:{id:orderId,status:"pending_payment",testOnly:false,paymentReference:reference,reservationExpiresAt:{lte:cutoff}},data:{status:"cancelled",reservationExpiresAt:null}});
   if(changed.count!==1)return false;
   for(const line of order.lines){
    // Only return units that were actually decremented when the order was placed.
    if(!line.stockReserved)continue;
-   await tx.variant.updateMany({where:{id:line.variantId,stockQuantity:{not:null}},data:{stockQuantity:{increment:line.quantity}}});
+   const restored=await tx.variant.updateMany({where:{id:line.variantId,stockQuantity:{not:null}},data:{stockQuantity:{increment:line.quantity}}});
+   if(restored.count!==1)throw new Error("RESERVED_STOCK_REQUIRES_REVIEW");
   }
   const redemption=await tx.giftRedemption.findUnique({where:{orderId}});
   if(redemption?.state==="reserved"){
@@ -194,17 +199,20 @@ async function cancelUnpaidCustomerOrder(orderId:string){
    if(released.count===1)await tx.giftCard.update({where:{id:redemption.cardId},data:{balanceCents:{increment:redemption.amountCents}}});
   }
   await tx.orderStatusEvent.create({data:{orderId,fromStatus:"pending_payment",toStatus:"cancelled",reason:"verified_unpaid_payment_timeout"}});
-  await tx.orderNotification.upsert({where:{orderId_stage:{orderId,stage:"failed"}},create:{orderId,stage:"failed"},update:{}});
+  if(notify)await tx.orderNotification.upsert({where:{orderId_stage:{orderId,stage:"failed"}},create:{orderId,stage:"failed"},update:{}});
   return true;
- });
+ },{isolationLevel:Prisma.TransactionIsolationLevel.Serializable,timeout:10000});
+ if(released)try{revalidateTag("rubyhair-live-catalog","max")}catch{/* TTL remains the fallback */}
+ return released;
 }
 
 /** Expire only provider-verified UNPAID reservations. Never infer no payment from a
  * timeout, a missing callback, a 500 response, or unavailable provider API. */
-export async function expireCustomerPaymentReservations(limit=10){
- const orders=await db().order.findMany({where:{testOnly:false,status:"pending_payment",reservationExpiresAt:{lt:new Date()}},
+export async function expireCustomerPaymentReservations(limit=10,options:{releaseOnly?:boolean}={}){
+ const cutoff=new Date();
+ const orders=await db().order.findMany({where:{testOnly:false,status:"pending_payment",paymentReference:{not:null},reservationExpiresAt:{lte:cutoff}},
   take:Math.max(1,Math.min(limit,20)),orderBy:{reservationExpiresAt:"asc"}});
- let cancelled=0,reconciled=0;
+ let cancelled=0,reconciled=0,held=0;
  for(const order of orders){
   if(!order.paymentReference)continue;
   try{
@@ -212,25 +220,25 @@ export async function expireCustomerPaymentReservations(limit=10){
     const sessionId=order.paymentReference.slice("KLARNA-HPP:".length);
     const gateway=await providerForCheckout("klarna");
     const hpp=await gateway.api.readHostedPage(sessionId);
-    if(["CANCELLED","FAILED","EXPIRED"].includes(hpp.status)){
-     if(await cancelUnpaidCustomerOrder(order.id))cancelled++;
-    }else if(["COMPLETE","COMPLETED"].includes(hpp.status)&&hpp.order_id){
+    if(klarnaReservationReleasable(hpp,sessionId)){
+     if(await cancelUnpaidCustomerOrder(order.id,order.paymentReference,cutoff,!options.releaseOnly))cancelled++;else held++;
+    }else if(!options.releaseOnly&&["COMPLETE","COMPLETED"].includes(hpp.status)&&hpp.order_id){
      // A buyer may close their browser after approval; reconcile without relying
      // on the return URL. This verifies HPP and the exact provider order amount.
      try{await (await import("@/lib/customer-order-finalize")).confirmKlarnaCheckout(order.id,sessionId,hpp.order_id);reconciled++}
-     catch{/* Preserve reservation if the external result is ambiguous. */}
-    }
+     catch{held++;/* Preserve reservation if the external result is ambiguous. */}
+    }else held++;
     continue;
    }
    const gateway=await providerForCheckout("paypal");
    const status=await gateway.api.getOrder(order.paymentReference) as {status?:string};
-   if(["CREATED","PAYER_ACTION_REQUIRED","SAVED","VOIDED"].includes(status.status||"")){
-    if(await cancelUnpaidCustomerOrder(order.id))cancelled++;
-   }else if(["APPROVED","COMPLETED"].includes(status.status||"")){
+   if(paypalReservationReleasable(status,order.id,order.paymentReference,order.totalCents-order.giftAppliedCents)){
+    if(await cancelUnpaidCustomerOrder(order.id,order.paymentReference,cutoff,!options.releaseOnly))cancelled++;else held++;
+   }else if(!options.releaseOnly&&["APPROVED","COMPLETED"].includes(status.status||"")){
     try{await (await import("@/lib/customer-order-finalize")).finalizePayPalCheckout(order.id,true);reconciled++}
-    catch{/* Hold the reservation; provider may be captured already. */}
-   }
-  }catch{/* External status unknown; never release a possibly paid reservation. */}
+    catch{held++;/* Hold the reservation; provider may be captured already. */}
+   }else held++;
+  }catch{held++;/* External status unknown; never release a possibly paid reservation. */}
  }
- return {cancelled,reconciled};
+ return {cancelled,reconciled,held,checked:orders.length};
 }

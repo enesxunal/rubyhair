@@ -1,0 +1,13 @@
+[Unit]
+Description=Ruby Hair stock reservation review (no payment capture)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/curl --config /etc/rubyhair/stock-reservations.curl --fail --silent --show-error --max-time 65 https://rubyhair.de/api/internal/stock-reservations
+TimeoutStartSec=75
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
