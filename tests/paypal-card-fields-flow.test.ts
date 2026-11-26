@@ -61,7 +61,7 @@ test("Production proxy permits only GET token and POST capture with independent 
  assert.match(proxy,/publicPostApis=new Set\(\[[^\]]*"\/api\/payments\/paypal\/card-capture"/);
  assert.match(proxy,/path==="\/api\/payments\/paypal\/webhook"&&request.method==="POST"/);
  assert.match(token,/RUBY_PAYPAL_CARD_FIELDS_ENABLED/);
- assert.match(token,/site!=="same-origin"/);
+ assert.match(token,/tokenRequestAllowed\(req.headers,req.nextUrl.hostname\)/);
  assert.match(token,/publicRequestAllowed/);
  assert.match(capture,/RUBY_PAYPAL_CARD_FIELDS_ENABLED/);
  assert.match(capture,/verifyCheckoutSignature/);

@@ -72,7 +72,7 @@ test("public checkout and PayPal token issuance have atomic abuse limits",()=>{
   assert.ok(limiter.includes('public-rate|${scope}|${identity}'));
   assert.ok(checkout.includes('publicRequestAllowed(req.headers,"checkout"'));
   for(const route of [card,wallet]){
-    assert.ok(route.includes('site!=="same-origin"'));
+    assert.ok(route.includes('tokenRequestAllowed(req.headers,req.nextUrl.hostname)'));
     assert.ok(route.includes('publicRequestAllowed(req.headers'));
     assert.ok(route.indexOf('publicRequestAllowed(req.headers')<route.indexOf('browserClientToken()'));
   }

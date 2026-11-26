@@ -41,6 +41,9 @@ function selfhostDatabaseUrl(){
     url.searchParams.set("connection_limit","2");
     url.searchParams.set("pool_timeout","20");
     url.searchParams.set("connect_timeout","10");
+    // Retire idle Prisma connections before the database role (240s) and TCP relay (300s).
+    url.searchParams.set("max_idle_connection_lifetime","45");
+    url.searchParams.set("max_connection_lifetime","180");
     selfhostUrl=url.toString();
     return selfhostUrl;
   }catch{

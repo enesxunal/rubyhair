@@ -50,6 +50,8 @@ test("Dedicated self-host database permits two concurrent Prisma connections whi
  const selfhost=src.slice(src.indexOf("function selfhostDatabaseUrl()"));
  assert.match(selfhost,/connection_limit","2"/);
  assert.match(selfhost,/pool_timeout","20"/);
+ assert.match(selfhost,/max_idle_connection_lifetime","45"/);
+ assert.match(selfhost,/max_connection_lifetime","180"/);
  assert.match(selfhost,/sslaccept","strict"/);
  assert.match(selfhost,/sslmode","require"/);
 });
