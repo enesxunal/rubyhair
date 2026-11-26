@@ -1095,3 +1095,15 @@ button.rh-editorial-cta{cursor:pointer}
 .rh-direct-payment-buttons .rh-logo-wallet-tile[aria-expanded=true]{outline:2px solid #653d4e;outline-offset:1px}
 .rh-direct-payment-buttons .rh-direct-payment-action button.rh-payment-primary-link:not(.rh-paypal-branded-button):not(.rh-klarna-branded-button){width:auto;flex:1 0 100%}
 @media(max-width:480px){.rh-card-first-payment .rh-direct-payment-buttons{gap:5px}}
+
+/* Reference payment marks: equal tiles, original brand artwork and colors. */
+.rh-card-first-payment .rh-direct-payment-buttons{gap:7px;align-items:center;margin:12px 0 0}
+.rh-card-first-payment .rh-direct-payment-buttons .rh-card-brand-tile,.rh-card-first-payment .rh-direct-payment-buttons button.rh-logo-wallet-tile,.rh-card-first-payment .rh-direct-payment-buttons .rh-direct-payment-action button.rh-payment-primary-link:is(.rh-paypal-branded-button,.rh-klarna-branded-button){flex:0 0 58px;width:58px!important;height:38px;min-height:38px;max-height:38px;min-width:0;padding:0!important;box-sizing:border-box;overflow:hidden;border-radius:6px;border:1px solid #d7d9de!important;background:#fff;display:inline-flex;align-items:center;justify-content:center;box-shadow:none;opacity:1!important}
+.rh-card-first-payment .rh-direct-payment-buttons .rh-card-brand-tile img,.rh-card-first-payment .rh-direct-payment-buttons .rh-logo-wallet-tile img,.rh-card-first-payment .rh-direct-payment-buttons .rh-klarna-branded-button img{width:100%;height:100%;max-width:none;max-height:none;object-fit:fill;display:block}
+.rh-card-first-payment .rh-direct-payment-buttons .rh-card-brand-mastercard{background:#222;border-color:#222!important}.rh-card-first-payment .rh-direct-payment-buttons .rh-card-brand-amex{background:#0071ce;border-color:#0071ce!important}
+.rh-card-first-payment .rh-direct-payment-buttons .rh-card-brand-visa img{width:41px;height:32px;object-fit:contain}
+.rh-card-first-payment .rh-direct-payment-buttons .rh-direct-payment-action button.rh-klarna-branded-button{background:#ffa8cd;border-color:#e198b9!important}
+.rh-card-first-payment .rh-direct-payment-buttons .rh-direct-payment-action button.rh-paypal-branded-button .rh-paypal-button-wordmark{width:48px;height:25px;filter:none;object-fit:contain}
+.rh-card-first-payment .rh-direct-payment-buttons button:disabled{cursor:not-allowed!important}
+.rh-card-first-payment .rh-direct-payment-buttons button.rh-logo-wallet-tile:disabled{opacity:.5!important}
+.rh-card-first-payment .rh-direct-payment-buttons button:not(:disabled):hover{outline:2px solid #653d4e;outline-offset:1px}

@@ -41,7 +41,7 @@ export default function CustomerPaymentSubmit({agreed,claimPayment,method,lines,
   {error&&<p role="alert" style={{color:"#a13c50"}}>Bestellung konnte nicht gestartet werden ({error}). Bitte nicht erneut versuchen, bis der Vorgang geprüft ist.</p>}
   <button type="button" className={"rh-payment-primary-link"+(totalCents>0?(method==="paypal"?" rh-paypal-branded-button":" rh-klarna-branded-button"):"")} disabled={!ready} aria-label={totalCents===0?"Gutschein einlösen":`${(totalCents/100).toFixed(2)} EUR zahlungspflichtig mit ${method==="paypal"?"PayPal":"Klarna"} bestellen`} onClick={start}
    style={{border:0,cursor:ready?"pointer":"not-allowed",opacity:ready?1:.48,width:"100%",fontSize:14}}>
-   {loading?"…":totalCents===0?"Gutschein einlösen":method==="paypal"?<img className="rh-paypal-button-wordmark" src="/assets/payment-brands/paypal-wordmark.svg" alt="PayPal"/>:<strong className="rh-klarna-wordmark">Klarna</strong>}
+   {loading?"…":totalCents===0?"Gutschein einlösen":method==="paypal"?<img className="rh-paypal-button-wordmark" src="/assets/payment-brands/paypal-wordmark.svg" alt="PayPal"/>:<img className="rh-klarna-reference-mark" src="/assets/payment-brands/reference/klarna.svg" alt="Klarna"/>}
   </button>
  </div>;
 }

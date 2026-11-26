@@ -219,9 +219,9 @@ export default function PayPalWalletCheckout({lines,address,cartReady,totalCents
   return()=>{canceled=true;appleHost.current?.replaceChildren();googleHost.current?.replaceChildren();paymentMethod.current=null};
  },[totalCents,appleEnabled,googleEnabled]);
  if(!appleEnabled&&!googleEnabled)return null;
- return <section className="rh-payment-action-area rh-wallet-actions" aria-label="Digitale Wallets" hidden={!appleReady&&!googleReady&&!error&&!processing}>
-  {appleReady&&<button type="button" className="rh-logo-wallet-tile" aria-label="Apple Pay auswählen" aria-expanded={chosenWallet==="apple_pay"} onClick={()=>setChosenWallet(v=>v==="apple_pay"?null:"apple_pay")}><img src="/assets/payment-brands/applepay.svg" alt="Apple Pay"/></button>}
-  {googleReady&&<button type="button" className="rh-logo-wallet-tile" aria-label="Google Pay auswählen" aria-expanded={chosenWallet==="google_pay"} onClick={()=>setChosenWallet(v=>v==="google_pay"?null:"google_pay")}><img src="/assets/payment-brands/googlepay.svg" alt="Google Pay"/></button>}
+ return <section className="rh-payment-action-area rh-wallet-actions" aria-label="Digitale Wallets" hidden={!appleEnabled&&!googleEnabled&&!error&&!processing}>
+  {appleEnabled&&<button type="button" className="rh-logo-wallet-tile" disabled={!appleReady} title={!appleReady?"Apple Pay ist auf diesem Gerät nicht verfügbar":"Apple Pay auswählen"} aria-label={appleReady?"Apple Pay auswählen":"Apple Pay auf diesem Gerät nicht verfügbar"} aria-expanded={chosenWallet==="apple_pay"} onClick={()=>setChosenWallet(v=>v==="apple_pay"?null:"apple_pay")}><img src="/assets/payment-brands/reference/apple_pay.svg" alt="Apple Pay"/></button>}
+  {googleEnabled&&<button type="button" className="rh-logo-wallet-tile" disabled={!googleReady} title={!googleReady?"Google Pay ist auf diesem Gerät nicht verfügbar":"Google Pay auswählen"} aria-label={googleReady?"Google Pay auswählen":"Google Pay auf diesem Gerät nicht verfügbar"} aria-expanded={chosenWallet==="google_pay"} onClick={()=>setChosenWallet(v=>v==="google_pay"?null:"google_pay")}><img src="/assets/payment-brands/reference/google_pay.svg" alt="Google Pay"/></button>}
   <div ref={appleHost} className="rh-wallet-button-host" style={{display:appleReady&&chosenWallet==="apple_pay"?"block":"none"}}/>
   <div ref={googleHost} className="rh-wallet-button-host" style={{display:googleReady&&chosenWallet==="google_pay"?"block":"none"}}/>
   {processing&&<p role="status">Deine Wallet-Zahlung wird geprüft …</p>}
