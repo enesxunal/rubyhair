@@ -1063,3 +1063,19 @@ button.rh-editorial-cta{cursor:pointer}
 .rh-compact-payment-actions .rh-payment-action-area button.rh-paypal-branded-button:disabled{background:#242424;opacity:.7!important}
 @media(min-width:720px){.rh-compact-paypal-active{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}.rh-compact-paypal-active:has(.rh-wallet-actions[hidden]){grid-template-columns:1fr}.rh-compact-paypal-active:not(:has(.rh-wallet-actions)){grid-template-columns:1fr}}
 @media(max-width:380px){.rh-compact-payment-brand>img{width:70px}.rh-compact-card-logos{gap:5px!important}.rh-compact-card-logos img{width:28px}.rh-compact-klarna strong{font-size:14px;padding:4px 6px}}
+
+/* Card-first checkout: passive card marks, independent provider buttons. */
+.rh-card-first-payment .rh-card-first-form{margin:0 0 12px}
+.rh-static-card-brands{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0 18px}
+.rh-card-brand-tile{display:inline-flex;align-items:center;justify-content:center;width:54px;height:34px;border:1px solid #ded9dc;border-radius:5px;background:#fff;box-sizing:border-box}
+.rh-card-brand-tile img{max-width:38px;max-height:23px;object-fit:contain}
+.rh-card-brand-mastercard{background:#222;border-color:#222}.rh-card-brand-amex{background:#006fcf;border-color:#006fcf}.rh-card-brand-amex img{width:31px;height:27px;max-height:27px}
+.rh-card-first-payment .rh-alternative-payment-heading{font-size:12px;font-weight:600;color:#604d54;text-align:center;margin:5px 0 12px}
+.rh-direct-payment-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;align-items:start}
+.rh-direct-payment-buttons .rh-payment-action-area{margin:0;min-width:0}.rh-direct-payment-buttons .rh-wallet-actions:not([hidden]){display:contents}.rh-direct-payment-buttons .rh-wallet-actions[hidden]{display:none}
+.rh-direct-payment-buttons .rh-wallet-button-host{min-width:0;margin:0!important}.rh-direct-payment-buttons .rh-wallet-actions>p{grid-column:1/-1}
+.rh-direct-payment-buttons .rh-payment-action-area button.rh-payment-primary-link{min-height:48px;border-radius:5px;padding:6px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;line-height:1.2}
+.rh-direct-payment-buttons button.rh-payment-primary-link span{font-size:10px;font-weight:500}.rh-direct-payment-buttons button.rh-paypal-branded-button .rh-paypal-button-wordmark{width:86px;height:20px;filter:brightness(0) invert(1)}
+.rh-direct-payment-buttons .rh-payment-action-area button.rh-klarna-branded-button{background:#ffb3d0;color:#171717!important}.rh-direct-payment-buttons .rh-payment-action-area button.rh-klarna-branded-button:disabled{background:#ffb3d0;color:#171717!important;opacity:.6!important}
+.rh-klarna-wordmark{font-size:18px;font-weight:850;letter-spacing:-.6px}.rh-direct-payment-buttons .rh-payment-action-area button.rh-paypal-branded-button:disabled{opacity:.65!important}
+@media(max-width:360px){.rh-direct-payment-buttons{grid-template-columns:1fr}}

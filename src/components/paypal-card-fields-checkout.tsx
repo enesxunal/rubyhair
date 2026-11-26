@@ -11,7 +11,7 @@ type PaypalSDK={createInstance:(o:{clientToken:string;components:string[];locale
  findEligibleMethods:(o:{countryCode:string;currencyCode:string;amount:string})=>Promise<{isEligible:(s:string)=>boolean}>;
  createCardFieldsOneTimePaymentSession:()=>CardSession;
 }>};
-type Props={agreed:boolean;lines:CartLine[];address:CheckoutAddressData|null;cartReady:boolean;totalCents:number;couponCode?:string};
+type Props={agreed:boolean;claimPayment:()=>boolean;lines:CartLine[];address:CheckoutAddressData|null;cartReady:boolean;totalCents:number;couponCode?:string};
 
 const scriptUrl="https://www.paypal.com/web-sdk/v6/core";
 async function loadPaypal():Promise<PaypalSDK>{
@@ -28,7 +28,7 @@ async function loadPaypal():Promise<PaypalSDK>{
 }
 
 /** Only PayPal-hosted frames handle PAN, expiry and CVV. */
-export default function PayPalCardFieldsCheckout({agreed,lines,address,cartReady,totalCents,couponCode}:Props){
+export default function PayPalCardFieldsCheckout({agreed,claimPayment,lines,address,cartReady,totalCents,couponCode}:Props){
  const numberRef=useRef<HTMLDivElement>(null),expiryRef=useRef<HTMLDivElement>(null),cvvRef=useRef<HTMLDivElement>(null);
  const sessionRef=useRef<CardSession|null>(null),keyRef=useRef<string|null>(null);
  const [phase,setPhase]=useState<"loading"|"ready"|"unavailable">("loading");
@@ -60,6 +60,7 @@ export default function PayPalCardFieldsCheckout({agreed,lines,address,cartReady
  const ready=phase==="ready"&&Boolean(address&&cartReady&&lines.length&&totalCents>0&&agreed&&!busy&&!locked);
  async function pay(){
   if(!ready||!address||!sessionRef.current)return;
+  if(!claimPayment()){setError("Eine Zahlung wurde bereits gestartet. Bitte Zahlungsstatus prüfen.");return}
   setBusy(true);setLocked(true);setError("");
   keyRef.current||=crypto.randomUUID();
   let cardStep:"create"|"submit"|"3ds"|"capture"="create";
@@ -118,8 +119,8 @@ export default function PayPalCardFieldsCheckout({agreed,lines,address,cartReady
   finally{setBusy(false)}
  }
  const fieldStyle={height:48,border:"1px solid #c5b4bd",borderRadius:6,background:"#fff",marginBottom:12};
- return <div className="rh-payment-action-area" aria-live="polite">
-  <p>Direkte Visa- oder Mastercard-Zahlung. Kartendaten werden ausschließlich von PayPal verarbeitet.</p>
+ return <div className="rh-payment-action-area rh-card-first-form" aria-live="polite">
+  <p>Sicher mit Kredit- oder Debitkarte bezahlen. Kartendaten werden ausschließlich von PayPal verarbeitet.</p>
   {phase==="loading"&&<p role="status">Sichere Karteneingabe wird geladen …</p>}
   {phase==="unavailable"&&<p role="alert">Kartenzahlung ist momentan nicht verfügbar. Bitte PayPal oder Klarna wählen.</p>}
   <div style={{display:phase==="ready"?"block":"none"}}>

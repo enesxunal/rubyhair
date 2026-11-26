@@ -12,7 +12,7 @@ test("Klarna-only public checkout does not enable public PayPal",()=>{
  assert.match(api,/RUBY_MANUAL_DHL_FULFILLMENT_ENABLED/);
  assert.match(page,/mode==="klarna_public"/);
  assert.match(ui,/checkoutMode!=="klarna_public"/);
- assert.match(ui,/checkoutMode==="klarna_public"\?"klarna"/);
+ assert.match(ui,/checkoutMode!=="klarna_public"&&<CustomerPaymentSubmit[^>]+method="paypal"/);
 });
 
 test("Both PayPal and Klarna remain selectable in payments_public mode",()=>{
@@ -23,7 +23,8 @@ test("Both PayPal and Klarna remain selectable in payments_public mode",()=>{
  assert.match(core,/RUBY_PUBLIC_CHECKOUT_MODE==="payments_public"/);
  assert.match(page,/mode==="payments_public"/);
  assert.match(ui,/checkoutMode!=="klarna_public"/);
- assert.match(ui,/method={activePaymentMethod}/);
+ assert.match(ui,/<CustomerPaymentSubmit[^>]+method="paypal"/);
+ assert.match(ui,/<CustomerPaymentSubmit[^>]+method="klarna"/);
  assert.match(api,/mode==="klarna_public"\|\|mode==="payments_public"/);
  assert.match(api,/mode==="klarna_public"&&input\.data\.provider!=="klarna"/);
  assert.match(api,/RUBY_MANUAL_DHL_FULFILLMENT_ENABLED/);

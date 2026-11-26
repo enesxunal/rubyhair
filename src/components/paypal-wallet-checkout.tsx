@@ -49,7 +49,7 @@ type AppleNativeConstructor={
 type WalletWindow=Window&{paypal?:PayPalSDK;google?:GooglePayAPI;ApplePaySession?:AppleNativeConstructor};
 type Props={
  lines:CartLine[];address:CheckoutAddressData|null;cartReady:boolean;totalCents:number;couponCode?:string;
- appleEnabled:boolean;googleEnabled:boolean;accepted:boolean;
+ appleEnabled:boolean;googleEnabled:boolean;accepted:boolean;claimPayment:()=>boolean;
 };
 const PAYPAL_URL="https://www.paypal.com/web-sdk/v6/core";
 const GOOGLE_URL="https://pay.google.com/gp/p/js/pay.js";
@@ -69,7 +69,7 @@ function loadScript(url:string,ready:()=>boolean):Promise<void>{
 function asError(e:unknown):string{return e instanceof Error?e.message:"UNKNOWN_WALLET_ERROR"}
 const money=(cents:number)=>(cents/100).toFixed(2);
 
-export default function PayPalWalletCheckout({lines,address,cartReady,totalCents,couponCode,appleEnabled,googleEnabled,accepted}:Props){
+export default function PayPalWalletCheckout({lines,address,cartReady,totalCents,couponCode,appleEnabled,googleEnabled,accepted,claimPayment}:Props){
  const appleHost=useRef<HTMLDivElement>(null),googleHost=useRef<HTMLDivElement>(null);
  const paymentMethod=useRef<GooglePayClient|null>(null);
  const [appleReady,setAppleReady]=useState(false),[googleReady,setGoogleReady]=useState(false);
@@ -82,6 +82,7 @@ export default function PayPalWalletCheckout({lines,address,cartReady,totalCents
  const createOrder=async(method:Method):Promise<Required<CheckoutOrder>>=>{
   const current=snapshot.current;
   if(!current.address||!current.cartReady||!current.lines.length||current.totalCents<=0||!current.accepted)throw Error("WALLET_CHECKOUT_NOT_READY");
+  if(!claimPayment())throw Error("ZAHLUNG_BEREITS_GESTARTET");
   orderKeys.current[method]||=crypto.randomUUID();
   const response=await fetch("/api/checkout",{method:"POST",credentials:"same-origin",cache:"no-store",
    headers:{"Content-Type":"application/json"},body:JSON.stringify({

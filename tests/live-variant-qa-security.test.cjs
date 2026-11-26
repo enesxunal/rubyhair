@@ -65,12 +65,12 @@ test("checkout payment buttons are selectable and admin login can return to 1 EU
  const checkout=read("src/components/checkout-preview.tsx");
  const loginPage=read("app/admin/login/page.tsx");
  const loginRoute=read("app/api/admin/login/route.ts");
- assert.match(checkout,/type="radio" name="checkout-payment-method" value="paypal"/);
- assert.match(checkout,/type="radio" name="checkout-payment-method" value="klarna"/);
- assert.match(checkout,/activePaymentMethod==="paypal"&&liveTest/);
+ assert.match(checkout,/<CustomerPaymentSubmit[^>]+method="paypal"/);
+ assert.match(checkout,/<CustomerPaymentSubmit[^>]+method="klarna"/);
+ assert.match(checkout,/\{liveTest&&<LiveVariantTestSection/);
  assert.match(checkout,/LiveVariantTestSection state=\{liveTest\}/);
  assert.match(checkout,/Mit Admin-Konto anmelden und PayPal testen/);
- assert.match(checkout,/Klarna ist für diesen Zahlungstest noch nicht freigegeben/);
+ assert.match(checkout,/regularCheckout=checkoutMode!=="disabled"&&!liveTest&&!oneEuroCart/);
  assert.doesNotMatch(checkout,/button type="button" disabled aria-disabled="true"/);
  assert.match(loginPage,/checkoutReturn=next==="live-checkout"/);
  assert.match(loginPage,/name="next" value="live-checkout"/);

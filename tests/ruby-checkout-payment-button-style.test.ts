@@ -10,7 +10,7 @@ test('legacy placeholder styles no longer override live checkout and Google Pay 
  assert.match(css,/\.rh-payment-action-area button\.rh-payment-primary-link\s*\{/);
  assert.match(css,/button\.rh-payment-primary-link:disabled/);
  assert.match(css,/\.rh-wallet-button-host/);
- assert.match(checkout,/activePaymentMethod==="paypal"&&\(applePayEnabled\|\|googlePayEnabled\)/);
+ assert.match(checkout,/\(applePayEnabled\|\|googlePayEnabled\)&&checkoutMode!=="klarna_public"/);
  assert.match(wallet,/buttonSizeMode:"fill"/);
  assert.match(wallet,/googleHost\} className="rh-wallet-button-host"/);
 });

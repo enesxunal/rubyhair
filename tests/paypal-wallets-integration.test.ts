@@ -93,8 +93,14 @@ test("Apple domain association is official file, binary served without redirect"
  assert.match(proxy,/apple-developer-merchantid-domain-association/);
 });
 
- test("Wallets are available independently from the selected regular payment method",()=>{
+test("Card-first checkout keeps wallet actions independent and guarded",()=>{
  const checkout=readFileSync("src/components/checkout-preview.tsx","utf8");
- assert.doesNotMatch(checkout,/activePaymentMethod==="paypal"&&\(applePayEnabled\|\|googlePayEnabled\)/);
- assert.match(checkout,/\{\(applePayEnabled\|\|googlePayEnabled\)&&checkoutMode!=="disabled"&&checkoutMode!=="klarna_public"&&\s*!liveTest&&!oneEuroCart&&lines.length>0&&!gifts.length&&!appliedGift&&\s*<PayPalWalletCheckout accepted=\{paymentConsent\}/);
- });
+ assert.doesNotMatch(checkout,/activePaymentMethod|checkout-payment-method/);
+ assert.match(checkout,/cardAvailable&&<>/);
+ assert.match(checkout,/regularCheckout=checkoutMode!=="disabled"&&!liveTest&&!oneEuroCart/);
+ assert.match(checkout,/\(applePayEnabled\|\|googlePayEnabled\)&&checkoutMode!=="klarna_public"&&lines.length>0&&!gifts.length&&!appliedGift&&remainingCents>0/);
+ assert.match(checkout,/<PayPalWalletCheckout accepted=\{paymentConsent\} claimPayment=\{claimPayment\}/);
+ for(const name of ["customer-payment-submit","paypal-card-fields-checkout","paypal-wallet-checkout"]){
+  const source=readFileSync(`src/components/${name}.tsx`,"utf8");assert.match(source,/if\(!claimPayment\(\)\)/);
+ }
+});

@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import {useState} from "react";
+import {useRef,useState} from "react";
 import {giftCartTotal} from "@/lib/gift-cards/cart-schema";
 import type {CheckoutAddressData} from "./checkout-address-preview";
 import CustomerPaymentSubmit from "./customer-payment-submit";
@@ -35,7 +35,8 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
     quote?.lines.some(line=>line.status==="out-of-stock")?"Ein Artikel ist nicht in der gewünschten Menge verfügbar. Bitte Warenkorb prüfen.":
     quote?.lines.some(line=>line.status==="unknown-variation")?"Ein Artikel ist nicht mehr verfügbar. Bitte Warenkorb prüfen.":
     quote?.needsReview?"Ein Artikel muss vor der Zahlung geprüft werden. Bitte Warenkorb prüfen.":null;
-  const [paymentMethod,setPaymentMethod]=useState<"paypal"|"klarna"|"paypal_card">(checkoutMode==="klarna_public"?"klarna":"paypal");
+  const paymentAttempt=useRef(false);
+  const claimPayment=()=>{if(paymentAttempt.current)return false;paymentAttempt.current=true;return true};
   const [paymentConsent,setPaymentConsent]=useState(false);
   const [validatedAddress,setValidatedAddress]=useState<CheckoutAddressData|null>(null);
   const [giftInput,setGiftInput]=useState("");
@@ -50,16 +51,16 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
     const payload=await res.json();
     if(!Number.isInteger(payload.balanceCents)||payload.balanceCents<=0)throw Error("GIFT_EMPTY");
     setAppliedGift({code:giftInput.trim().toUpperCase(),balanceCents:payload.balanceCents});
-    setPaymentMethod("paypal");
    }catch{setGiftError("Der Gutscheincode ist ungültig, aufgebraucht oder derzeit nicht verfügbar.")}
    finally{setGiftLoading(false)}
   };
   const giftUsed=appliedGift&&!gifts.length?Math.min(appliedGift.balanceCents,grossCents):0;
   const remainingCents=Math.max(0,grossCents-giftUsed);
-  const activePaymentMethod=gifts.length||appliedGift?"paypal":paymentMethod;
   const oneEuroCart=Boolean(loaded&&!gifts.length&&lines.length===1&&lines[0].id===886&&lines[0].quantity===1&&
     quote&&quote.subtotalCents===100&&quote.lines.length===1);
   const payableTestCart=Boolean(oneEuroCart&&!error&&!loading&&!quote?.needsReview&&quote?.lines[0]?.status==="available");
+  const regularCheckout=checkoutMode!=="disabled"&&!liveTest&&!oneEuroCart;
+  const cardAvailable=regularCheckout&&checkoutMode!=="klarna_public"&&cardFieldsEnabled&&lines.length>0&&!gifts.length&&!appliedGift&&remainingCents>0;
   return <div className="rh-checkout-v2 rh-shell">
     <nav className="rh-breadcrumb" aria-label="Breadcrumb">
       <Link href="/">Startseite</Link><span>/</span>
@@ -94,56 +95,36 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
           <p className="rh-payment-preview-heading">{gifts.length?"Gemeinsame Zahlung für Waren und Gutscheine mit PayPal":"Wähle deine Zahlungsart"}</p>
           {!canPay&&paymentBlocker&&<p className="rh-checkout-unavailable-note" role={loading?"status":"alert"}>{paymentBlocker}</p>}
           {appliedGift&&<p className="rh-gift-only-paypal-note">Bei Gutscheinzahlung steht PayPal für einen möglichen Restbetrag zur Verfügung. Ist alles gedeckt, erfolgt keine weitere Zahlung.</p>}
-          <div className="rh-payment-select rh-compact-payment-select" role="radiogroup" aria-label="Zahlungsart">
-            {(checkoutMode!=="klarna_public"||gifts.length>0)&&<label className={"rh-payment-choice"+(activePaymentMethod==="paypal"?" is-selected":"")}>
-              <input type="radio" name="checkout-payment-method" value="paypal"
-                checked={activePaymentMethod==="paypal"} onChange={()=>setPaymentMethod("paypal")}/>
-              <span className="rh-compact-payment-brand"><img src="/assets/payment-brands/paypal-wordmark.svg" alt="PayPal"/></span>
-            </label>}
-            {cardFieldsEnabled&&checkoutMode!=="disabled"&&checkoutMode!=="klarna_public"&&!liveTest&&!oneEuroCart&&<label className={"rh-payment-choice"+(activePaymentMethod==="paypal_card"?" is-selected":"")+(appliedGift||gifts.length?" rh-gift-method-disabled":"")}>
-              <input type="radio" name="checkout-payment-method" value="paypal_card" checked={activePaymentMethod==="paypal_card"}
-                disabled={Boolean(appliedGift||gifts.length)} onChange={()=>setPaymentMethod("paypal_card")}/>
-              <span className="rh-compact-payment-brand"><span className="rh-compact-card-logos"><img src="/assets/payment-brands/visa.svg" alt="Visa"/><i className="rh-payment-mastercard" aria-label="Mastercard"><b/><b/></i></span><small>Kredit-/Debitkarte</small></span>
-            </label>}
-            <label className={"rh-payment-choice"+(activePaymentMethod==="klarna"?" is-selected":"")+(appliedGift||gifts.length?" rh-gift-method-disabled":"")}>
-              <input type="radio" name="checkout-payment-method" value="klarna"
-                checked={activePaymentMethod==="klarna"} disabled={!!appliedGift||gifts.length>0} onChange={()=>setPaymentMethod("klarna")}/>
-              <span className="rh-compact-payment-brand rh-compact-klarna"><strong>Klarna</strong><small>{checkoutMode!=="disabled"?"Zahlung bei Versand":"Nicht verfügbar"}</small></span>
-            </label>
-          </div>
           {checkoutMode!=="disabled"&&!liveTest&&<div className="rh-unified-payment-consent">
             {!validatedAddress&&<p className="rh-checkout-unavailable-note" role="status">Bitte zuerst oben deine {digitalOnly?"Rechnungsadresse":"Liefer- und Rechnungsadresse"} bestätigen.</p>}
             <label><input type="checkbox" checked={paymentConsent} onChange={e=>setPaymentConsent(e.target.checked)} required/>
               <span>Ich habe die <a href="/rechtliches/agb/" target="_blank" rel="noopener noreferrer">AGB</a> und die <a href="/rechtliches/widerruf/" target="_blank" rel="noopener noreferrer">Widerrufsbelehrung</a> gelesen und bestätige den kostenpflichtigen Kauf.</span>
             </label>
           </div>}
-          <div className={"rh-unified-payment-actions rh-compact-payment-actions"+(activePaymentMethod==="paypal"?" rh-compact-paypal-active":"")}>
-          {activePaymentMethod==="paypal_card"&&cardFieldsEnabled&&checkoutMode!=="disabled"&&!liveTest&&
-           <PayPalCardFieldsCheckout agreed={paymentConsent} lines={lines} address={validatedAddress} cartReady={canPay}
-            totalCents={remainingCents} couponCode={lines.length?couponCode||undefined:undefined}/>}
-          {activePaymentMethod==="paypal"&&liveTest&&<LiveVariantTestSection state={liveTest} cartReady={payableTestCart}/>}
-          {activePaymentMethod==="paypal"&&!liveTest&&oneEuroCart&&<div className="rh-payment-action-area">
+          <div className="rh-unified-payment-actions rh-card-first-payment">
+          {cardAvailable&&<>
+            <PayPalCardFieldsCheckout agreed={paymentConsent} claimPayment={claimPayment} lines={lines} address={validatedAddress} cartReady={canPay}
+              totalCents={remainingCents} couponCode={couponCode||undefined}/>
+            <div className="rh-static-card-brands" aria-label="Kartenmarken">
+              <span className="rh-card-brand-tile"><img src="/assets/payment-brands/visa.svg" alt="Visa"/></span>
+              <span className="rh-card-brand-tile rh-card-brand-mastercard" role="img" aria-label="Mastercard"><i className="rh-payment-mastercard"><b/><b/></i></span>
+              <span className="rh-card-brand-tile rh-card-brand-amex"><img src="/assets/payment-brands/amex.svg" alt="American Express"/></span>
+            </div>
+          </>}
+          {liveTest&&<LiveVariantTestSection state={liveTest} cartReady={payableTestCart}/>}
+          {!liveTest&&oneEuroCart&&<div className="rh-payment-action-area">
             <p>Der 1,00-€-Live-Test dieses Artikels ist ausschließlich über den geschützten Administratorzugang möglich.</p>
-            <Link className="rh-payment-primary-link" href="/admin/login?next=live-checkout">
-              Mit Admin-Konto anmelden und PayPal testen
-            </Link>
+            <Link className="rh-payment-primary-link" href="/admin/login?next=live-checkout">Mit Admin-Konto anmelden und PayPal testen</Link>
           </div>}
-          {checkoutMode!=="disabled"&&!liveTest&&activePaymentMethod==="paypal"&&
-            <CustomerPaymentSubmit agreed={paymentConsent} method={activePaymentMethod} lines={lines} gifts={gifts} address={validatedAddress} cartReady={canPay} totalCents={remainingCents} giftCode={gifts.length?undefined:appliedGift?.code} couponCode={lines.length?couponCode||undefined:undefined}/>}
-          {checkoutMode==="disabled"&&activePaymentMethod==="paypal"&&!liveTest&&!oneEuroCart&&<div className="rh-payment-action-area">
-            <p>Die letzte Freigabe für den regulären Kauf steht noch aus. Bis dahin wird keine Bestellung ausgelöst.</p>
-          </div>}
-          {activePaymentMethod==="klarna"&&checkoutMode!=="disabled"&&!liveTest&&
-            <CustomerPaymentSubmit agreed={paymentConsent} method={activePaymentMethod} lines={lines} gifts={gifts} address={validatedAddress} cartReady={canPay} totalCents={remainingCents} giftCode={gifts.length?undefined:appliedGift?.code} couponCode={lines.length?couponCode||undefined:undefined}/>}
-          {activePaymentMethod==="klarna"&&(checkoutMode==="disabled"||!!liveTest)&&<div className="rh-payment-action-area" role="status">
-            <p>Klarna ist für diesen Zahlungstest noch nicht freigegeben.</p>
-            <button type="button" className="rh-payment-secondary-link" onClick={()=>setPaymentMethod("paypal")}>Stattdessen PayPal wählen</button>
-          </div>}
-          {(applePayEnabled||googlePayEnabled)&&checkoutMode!=="disabled"&&checkoutMode!=="klarna_public"&&
-           !liveTest&&!oneEuroCart&&lines.length>0&&!gifts.length&&!appliedGift&&
-           <PayPalWalletCheckout accepted={paymentConsent} lines={lines} address={validatedAddress} cartReady={canPay}
-            totalCents={remainingCents} couponCode={couponCode||undefined}
-            appleEnabled={applePayEnabled} googleEnabled={googlePayEnabled}/>}
+          {checkoutMode==="disabled"&&!liveTest&&!oneEuroCart&&<div className="rh-payment-action-area"><p>Die letzte Freigabe für den regulären Kauf steht noch aus. Bis dahin wird keine Bestellung ausgelöst.</p></div>}
+          {regularCheckout&&<>
+            {cardAvailable&&<p className="rh-alternative-payment-heading">Oder bezahle mit</p>}
+            <div className="rh-direct-payment-buttons" aria-label="Weitere Zahlungsarten">
+              {checkoutMode!=="klarna_public"&&<CustomerPaymentSubmit agreed={paymentConsent} claimPayment={claimPayment} method="paypal" lines={lines} gifts={gifts} address={validatedAddress} cartReady={canPay} totalCents={remainingCents} giftCode={gifts.length?undefined:appliedGift?.code} couponCode={lines.length?couponCode||undefined:undefined}/>}
+              {!gifts.length&&!appliedGift&&<CustomerPaymentSubmit agreed={paymentConsent} claimPayment={claimPayment} method="klarna" lines={lines} address={validatedAddress} cartReady={canPay} totalCents={remainingCents} couponCode={couponCode||undefined}/>}
+              {(applePayEnabled||googlePayEnabled)&&checkoutMode!=="klarna_public"&&lines.length>0&&!gifts.length&&!appliedGift&&remainingCents>0&&<PayPalWalletCheckout accepted={paymentConsent} claimPayment={claimPayment} lines={lines} address={validatedAddress} cartReady={canPay} totalCents={remainingCents} couponCode={couponCode||undefined} appleEnabled={applePayEnabled} googleEnabled={googlePayEnabled}/>}
+            </div>
+          </>}
           </div>
         </section>
         <div className="rh-gift-checkout-upsell"><Gift size={22}/><div><strong>Auch einer Freundin eine Freude machen?</strong><p>Verschenke Beauty mit einem persönlichen Ruby Hair Geschenkgutschein.</p><Link href="/geschenkgutschein/">Gutschein gestalten ↗</Link></div></div>

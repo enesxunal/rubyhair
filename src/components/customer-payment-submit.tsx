@@ -4,13 +4,14 @@ import type {CartLine} from "@/components/cart-context";
 import type {GiftCartItem} from "@/lib/gift-cards/cart-schema";
 import type {CheckoutAddressData} from "./checkout-address-preview";
 
-type Props={agreed:boolean;method:"paypal"|"klarna";lines:CartLine[];gifts?:GiftCartItem[];address:CheckoutAddressData|null;cartReady:boolean;totalCents:number;giftCode?:string;couponCode?:string};
-export default function CustomerPaymentSubmit({agreed,method,lines,gifts=[],address,cartReady,totalCents,giftCode,couponCode}:Props){
+type Props={agreed:boolean;claimPayment:()=>boolean;method:"paypal"|"klarna";lines:CartLine[];gifts?:GiftCartItem[];address:CheckoutAddressData|null;cartReady:boolean;totalCents:number;giftCode?:string;couponCode?:string};
+export default function CustomerPaymentSubmit({agreed,claimPayment,method,lines,gifts=[],address,cartReady,totalCents,giftCode,couponCode}:Props){
  const [loading,setLoading]=useState(false),[error,setError]=useState("");
  const key=useRef<string|null>(null);
  const ready=Boolean(address&&cartReady&&(lines.length||gifts.length)&&totalCents>=0&&!loading&&agreed&&(method==="paypal"||!giftCode)&&(!gifts.length||method==="paypal"));
  const start=async()=>{
   if(!ready||!address)return;
+  if(!claimPayment()){setError("ZAHLUNG_BEREITS_GESTARTET");return}
   setLoading(true);setError("");
   if(!key.current)key.current=crypto.randomUUID();
   try{
@@ -35,12 +36,12 @@ export default function CustomerPaymentSubmit({agreed,method,lines,gifts=[],addr
    // Keep the same idempotency key after an ambiguous response: never charge twice.
   }
  };
- return <div className="rh-payment-action-area" aria-live="polite">
+ return <div className="rh-payment-action-area rh-direct-payment-action" aria-live="polite">
   {address&&!cartReady&&<p className="rh-checkout-unavailable-note" role="alert">Die Preis- oder Bestandsprüfung ist noch nicht abgeschlossen oder meldet ein Problem. Prüfe die Bestellübersicht und entferne gegebenenfalls einen ungültigen Rabattcode im Warenkorb.</p>}
   {error&&<p role="alert" style={{color:"#a13c50"}}>Bestellung konnte nicht gestartet werden ({error}). Bitte nicht erneut versuchen, bis der Vorgang geprüft ist.</p>}
-  <button type="button" className={"rh-payment-primary-link"+(method==="paypal"&&totalCents>0?" rh-paypal-branded-button":"")} disabled={!ready} onClick={start}
+  <button type="button" className={"rh-payment-primary-link"+(totalCents>0?(method==="paypal"?" rh-paypal-branded-button":" rh-klarna-branded-button"):"")} disabled={!ready} onClick={start}
    style={{border:0,cursor:ready?"pointer":"not-allowed",opacity:ready?1:.48,width:"100%",fontSize:14}}>
-   {loading?"Zahlung wird sicher vorbereitet …":totalCents===0?"Mit Geschenkgutschein bezahlen – 0,00 € Restbetrag":method==="paypal"?<><img className="rh-paypal-button-wordmark" src="/assets/payment-brands/paypal-wordmark.svg" alt="PayPal"/><span>{`${(totalCents/100).toFixed(2).replace(".",",")} € zahlungspflichtig bestellen`}</span></>:`${(totalCents/100).toFixed(2).replace(".",",")} € zahlungspflichtig mit Klarna bestellen`}
+   {loading?"Zahlung wird sicher vorbereitet …":totalCents===0?"Mit Geschenkgutschein bezahlen – 0,00 € Restbetrag":method==="paypal"?<><img className="rh-paypal-button-wordmark" src="/assets/payment-brands/paypal-wordmark.svg" alt="PayPal"/><span>{`${(totalCents/100).toFixed(2).replace(".",",")} € zahlungspflichtig bestellen`}</span></>:<><strong className="rh-klarna-wordmark">Klarna.</strong><span>{`${(totalCents/100).toFixed(2).replace(".",",")} € zahlungspflichtig bestellen`}</span></>}
   </button>
  </div>;
 }
