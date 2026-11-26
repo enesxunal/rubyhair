@@ -13,5 +13,5 @@ export function paypalReservationReleasable(raw:unknown,orderId:string,reference
  return [payments?.captures,payments?.authorizations].every(v=>v===undefined||(Array.isArray(v)&&v.length===0));
 }
 export function klarnaReservationReleasable(raw:unknown,sessionId:string){
- const o=object(raw);return Boolean(o&&o.session_id===sessionId&&["CANCELLED","FAILED","EXPIRED"].includes(String(o.status))&&!o.order_id);
+ const o=object(raw);return Boolean(o&&o.session_id===sessionId&&["CANCELLED","DISABLED","EXPIRED"].includes(String(o.status))&&!o.order_id&&!o.authorization_token);
 }

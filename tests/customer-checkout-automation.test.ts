@@ -59,7 +59,7 @@ test("public checkout remains explicitly disabled until payment, SMTP and DHL re
  assert.match(core,/RUBY_PUBLIC_CHECKOUT_MODE/);
  assert.match(core,/stockQuantity!==null/);
  assert.match(core,/stockReserved:v.stockQuantity!==null/);
- assert.match(shipping,/if\(!line.stockReserved\)continue/);
+ assert.match(readFileSync(resolve("src/lib/stock-reservation-release.ts"),"utf8"),/if\(!line.stockReserved\)continue/);
  assert.match(shipping,/DHL_CREDENTIALS_INCOMPLETE/);
  const schema=readFileSync(resolve("prisma/schema.prisma"),"utf8");
  assert.match(schema,/model OrderNotification/);

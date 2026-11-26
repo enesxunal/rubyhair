@@ -81,7 +81,7 @@ test("gift settlement and customer tender are not created on unverified purchase
  const finalize=read("src/lib/customer-order-finalize.ts");
  assert.ok(finalize.includes('order.totalCents-order.giftAppliedCents'));
  assert.ok(finalize.includes('tx.giftRedemption.updateMany'));
- const worker=read("src/lib/customer-automation.ts");
+ const worker=read("src/lib/stock-reservation-release.ts");
  assert.ok(worker.includes('state:"released"'));
  assert.ok(worker.includes('balanceCents:{increment:redemption.amountCents}'));
 });

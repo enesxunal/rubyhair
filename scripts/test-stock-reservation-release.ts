@@ -1,0 +1,42 @@
+import assert from "node:assert/strict";
+import {randomUUID} from "node:crypto";
+import {PrismaClient,Prisma} from "@prisma/client";
+import {releaseVerifiedUnpaidReservation as release} from "../src/lib/stock-reservation-release";
+import {reservationExpiresAt,paypalReservationReleasable,klarnaReservationReleasable} from "../src/lib/stock-reservation-policy";
+const url=new URL(process.env.DATABASE_URL||"");
+if(url.hostname!=="127.0.0.1"||!url.pathname.startsWith("/rubyhair_reservation_qa_")||process.env.RUBY_LOCAL_ORDER_TESTS!=="LOCAL_TEST_ONLY")throw Error("ISOLATED_QA_DB_REQUIRED");
+const db=new PrismaClient();
+async function main(){
+ const now=new Date(),past=new Date(now.getTime()-60000),future=reservationExpiresAt();
+ const product=await db.product.create({data:{slug:"reservation-qa-"+randomUUID(),name:"QA",originalName:"QA",intro:"QA",pack:"1",material:"QA",currency:"EUR",image:"/qa",active:true}});
+ const v=await db.variant.create({data:{productId:product.id,colorCode:"qa",colorLabel:"QA",lengthCode:"qa",lengthLabel:"QA",priceCents:1000,stockQuantity:10,image:"/qa"}});
+ const stock=async()=>(await db.variant.findUniqueOrThrow({where:{id:v.id}})).stockQuantity;
+ const fixture=(expiry:Date)=>db.$transaction(async tx=>{
+  await tx.variant.update({where:{id:v.id},data:{stockQuantity:{decrement:1}}});
+  return tx.order.create({data:{status:"pending_payment",totalCents:1000,subtotalCents:1000,paymentReference:randomUUID(),reservationExpiresAt:expiry,lines:{create:{variantId:v.id,quantity:1,unitPriceCents:1000,lineTotalCents:1000,stockReserved:true}}}});
+ });
+ const a=await fixture(past);assert.equal(await stock(),9);
+ assert.equal(await release(db,a.id,a.paymentReference!,now),true);assert.equal(await stock(),10);
+ assert.equal(await release(db,a.id,a.paymentReference!,now),false);assert.equal(await stock(),10);
+ console.log("PASS reserve, expired release, duplicate release");
+ const b=await fixture(future);assert.equal(await release(db,b.id,b.paymentReference!,now),false);assert.equal(await stock(),9);
+ const c=await fixture(past);await db.$transaction([db.order.update({where:{id:c.id},data:{status:"payment_confirmed",reservationExpiresAt:null}}),db.paymentEvent.create({data:{orderId:c.id,provider:"paypal",providerEventId:randomUUID(),eventType:"PAYMENT.CAPTURE.COMPLETED"}})]);
+ assert.equal(await release(db,c.id,c.paymentReference!,now),false);assert.equal(await stock(),8);
+ console.log("PASS active deadline and paid order protected");
+ const d=await fixture(past);const results=await Promise.allSettled([release(db,d.id,d.paymentReference!,now),release(db,d.id,d.paymentReference!,now)]);
+ assert.equal(results.filter(r=>r.status==="fulfilled"&&r.value===true).length,1);assert.equal(await stock(),8);
+ console.log("PASS simultaneous duplicate release");
+ const e=await fixture(past);
+ const payment=db.$transaction(async tx=>{const changed=await tx.order.updateMany({where:{id:e.id,status:"pending_payment"},data:{status:"payment_confirmed",reservationExpiresAt:null}});if(changed.count===1)await tx.paymentEvent.create({data:{orderId:e.id,provider:"paypal",providerEventId:randomUUID(),eventType:"PAYMENT.CAPTURE.COMPLETED"}});return changed.count===1},{isolationLevel:Prisma.TransactionIsolationLevel.Serializable});
+ await Promise.allSettled([payment,release(db,e.id,e.paymentReference!,now)]);
+ const after=await db.order.findUniqueOrThrow({where:{id:e.id},include:{payments:true}});
+ assert.ok(after.status==="cancelled"||after.status==="payment_confirmed");
+ assert.equal(after.payments.length,after.status==="payment_confirmed"?1:0);
+ assert.equal(await stock(),after.status==="payment_confirmed"?7:8);
+ assert.equal(await db.orderNotification.count(),0);assert.equal(await db.shippingJob.count(),0);assert.equal(await db.invoice.count(),0);
+ console.log("PASS atomic payment/release conflict, no notification/shipping/invoice");
+ assert.equal(paypalReservationReleasable({status:"CREATED"},"x","y",1000),false);
+ assert.equal(klarnaReservationReleasable({session_id:"s",status:"FAILED"},"s"),false);
+ console.log("PASS provider active/ambiguous holds");
+}
+main().catch(e=>{console.error(e);process.exitCode=1}).finally(()=>db.$disconnect());

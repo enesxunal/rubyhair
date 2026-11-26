@@ -56,7 +56,7 @@ export async function proxy(request:NextRequest){
  if(adminLoginPaths.has(path))return NextResponse.next();
  // Only these two automated endpoints may cross the public API gate.
  // Their own handlers enforce CRON_SECRET or PayPal signature verification.
- if((path==="/api/internal/customer-jobs"||path==="/api/internal/customer-account-cleanup"||path==="/api/internal/gift-card-jobs")&&(request.method==="GET"||request.method==="HEAD")){
+ if((path==="/api/internal/stock-reservations"||path==="/api/internal/customer-jobs"||path==="/api/internal/customer-account-cleanup"||path==="/api/internal/gift-card-jobs")&&(request.method==="GET"||request.method==="HEAD")){
   const r=NextResponse.next();r.headers.set("Cache-Control","private, no-store");return r;
  }
  if(path==="/api/payments/paypal/webhook"&&request.method==="POST"){

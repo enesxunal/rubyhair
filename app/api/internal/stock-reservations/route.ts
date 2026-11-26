@@ -9,6 +9,6 @@ export async function GET(req:NextRequest){
  const supplied=Buffer.from(req.headers.get("authorization")||"");
  const expected=Buffer.from("Bearer "+(secret||""));
  if(!secret||secret.length<32||supplied.length!==expected.length||!timingSafeEqual(supplied,expected))return NextResponse.json({error:"UNAUTHORIZED"},{status:401,headers});
- try{return NextResponse.json(await expireCustomerPaymentReservations(10,{releaseOnly:true}),{headers});}
+ try{const dryRun=req.nextUrl.searchParams.get("audit")==="1";return NextResponse.json(await expireCustomerPaymentReservations(dryRun?20:10,{releaseOnly:true,dryRun}),{headers});}
  catch{console.warn("STOCK_RESERVATION_SWEEP_RETRY");return NextResponse.json({error:"RETRY_LATER"},{status:503,headers});}
 }

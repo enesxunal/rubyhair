@@ -1,6 +1,6 @@
 import "server-only";
 import {getPrisma} from "@/lib/prisma";
-import {Prisma} from "@prisma/client";
+import {releaseVerifiedUnpaidReservation} from "@/lib/stock-reservation-release";
 import {revalidateTag} from "next/cache";
 import {paypalReservationReleasable,klarnaReservationReleasable} from "@/lib/stock-reservation-policy";
 import {getDhlIntegrationReadiness} from "@/lib/dhl-api";
@@ -181,38 +181,24 @@ export async function runCustomerJobs(limit=5){
 }
 
 async function cancelUnpaidCustomerOrder(orderId:string,reference:string,cutoff:Date,notify:boolean){
- const released=await db().$transaction(async tx=>{
-  const order=await tx.order.findUnique({where:{id:orderId},include:{lines:true}});
-  if(!order||order.testOnly||order.status!=="pending_payment"||order.paymentReference!==reference||!order.reservationExpiresAt||order.reservationExpiresAt>cutoff)return false;
-  if(await tx.paymentEvent.count({where:{orderId}})||await tx.invoice.count({where:{orderId}}))return false;
-  const changed=await tx.order.updateMany({where:{id:orderId,status:"pending_payment",testOnly:false,paymentReference:reference,reservationExpiresAt:{lte:cutoff}},data:{status:"cancelled",reservationExpiresAt:null}});
-  if(changed.count!==1)return false;
-  for(const line of order.lines){
-   // Only return units that were actually decremented when the order was placed.
-   if(!line.stockReserved)continue;
-   const restored=await tx.variant.updateMany({where:{id:line.variantId,stockQuantity:{not:null}},data:{stockQuantity:{increment:line.quantity}}});
-   if(restored.count!==1)throw new Error("RESERVED_STOCK_REQUIRES_REVIEW");
-  }
-  const redemption=await tx.giftRedemption.findUnique({where:{orderId}});
-  if(redemption?.state==="reserved"){
-   const released=await tx.giftRedemption.updateMany({where:{id:redemption.id,state:"reserved"},data:{state:"released"}});
-   if(released.count===1)await tx.giftCard.update({where:{id:redemption.cardId},data:{balanceCents:{increment:redemption.amountCents}}});
-  }
-  await tx.orderStatusEvent.create({data:{orderId,fromStatus:"pending_payment",toStatus:"cancelled",reason:"verified_unpaid_payment_timeout"}});
-  if(notify)await tx.orderNotification.upsert({where:{orderId_stage:{orderId,stage:"failed"}},create:{orderId,stage:"failed"},update:{}});
-  return true;
- },{isolationLevel:Prisma.TransactionIsolationLevel.Serializable,timeout:10000});
+ const released=await releaseVerifiedUnpaidReservation(db(),orderId,reference,cutoff,notify);
  if(released)try{revalidateTag("rubyhair-live-catalog","max")}catch{/* TTL remains the fallback */}
  return released;
 }
 
 /** Expire only provider-verified UNPAID reservations. Never infer no payment from a
  * timeout, a missing callback, a 500 response, or unavailable provider API. */
-export async function expireCustomerPaymentReservations(limit=10,options:{releaseOnly?:boolean}={}){
+export async function expireCustomerPaymentReservations(limit=10,options:{releaseOnly?:boolean;dryRun?:boolean}={}){
  const cutoff=new Date();
- const orders=await db().order.findMany({where:{testOnly:false,status:"pending_payment",paymentReference:{not:null},reservationExpiresAt:{lte:cutoff}},
-  take:Math.max(1,Math.min(limit,20)),orderBy:{reservationExpiresAt:"asc"}});
- let cancelled=0,reconciled=0,held=0;
+ const where={testOnly:false,status:"pending_payment",paymentReference:{not:null},...(!options.dryRun?{reservationExpiresAt:{lte:cutoff}}:{})};
+ const batchSize=Math.max(1,Math.min(limit,20));
+ // Rotate through expired orders so unresolved legacy rows cannot starve new ones.
+ const count=await db().order.count({where});
+ const pageCount=Math.max(1,Math.ceil(count/batchSize));
+ const skip=options.releaseOnly&&!options.dryRun?(Math.floor(cutoff.getTime()/300000)%pageCount)*batchSize:0;
+ const orders=await db().order.findMany({where,take:batchSize,skip,orderBy:[{reservationExpiresAt:"asc"},{id:"asc"}]});
+ let cancelled=0,reconciled=0,held=0,eligible=0;
+ const details:{order:string;provider:string;status:string;releasable:boolean}[]=[];
  for(const order of orders){
   if(!order.paymentReference)continue;
   try{
@@ -220,9 +206,12 @@ export async function expireCustomerPaymentReservations(limit=10,options:{releas
     const sessionId=order.paymentReference.slice("KLARNA-HPP:".length);
     const gateway=await providerForCheckout("klarna");
     const hpp=await gateway.api.readHostedPage(sessionId);
-    if(klarnaReservationReleasable(hpp,sessionId)){
-     if(await cancelUnpaidCustomerOrder(order.id,order.paymentReference,cutoff,!options.releaseOnly))cancelled++;else held++;
-    }else if(!options.releaseOnly&&["COMPLETE","COMPLETED"].includes(hpp.status)&&hpp.order_id){
+    const releasable=Boolean(order.reservationExpiresAt&&order.reservationExpiresAt<=cutoff&&klarnaReservationReleasable(hpp,sessionId));
+    details.push({order:"RH-"+order.orderNumber.toString(),provider:"klarna",status:hpp.status,releasable});
+    if(releasable){
+     eligible++;if(options.dryRun)continue;
+     if(await cancelUnpaidCustomerOrder(order.id,order.paymentReference,cutoff,false))cancelled++;else held++;
+    }else if(!options.releaseOnly&&!options.dryRun&&["COMPLETE","COMPLETED"].includes(hpp.status)&&hpp.order_id){
      // A buyer may close their browser after approval; reconcile without relying
      // on the return URL. This verifies HPP and the exact provider order amount.
      try{await (await import("@/lib/customer-order-finalize")).confirmKlarnaCheckout(order.id,sessionId,hpp.order_id);reconciled++}
@@ -232,13 +221,19 @@ export async function expireCustomerPaymentReservations(limit=10,options:{releas
    }
    const gateway=await providerForCheckout("paypal");
    const status=await gateway.api.getOrder(order.paymentReference) as {status?:string};
-   if(paypalReservationReleasable(status,order.id,order.paymentReference,order.totalCents-order.giftAppliedCents)){
-    if(await cancelUnpaidCustomerOrder(order.id,order.paymentReference,cutoff,!options.releaseOnly))cancelled++;else held++;
-   }else if(!options.releaseOnly&&["APPROVED","COMPLETED"].includes(status.status||"")){
+   const releasable=Boolean(order.reservationExpiresAt&&order.reservationExpiresAt<=cutoff&&paypalReservationReleasable(status,order.id,order.paymentReference,order.totalCents-order.giftAppliedCents));
+   details.push({order:"RH-"+order.orderNumber.toString(),provider:"paypal",status:status.status||"UNKNOWN",releasable});
+   if(releasable){
+    eligible++;if(options.dryRun)continue;
+    if(await cancelUnpaidCustomerOrder(order.id,order.paymentReference,cutoff,false))cancelled++;else held++;
+   }else if(!options.releaseOnly&&!options.dryRun&&["APPROVED","COMPLETED"].includes(status.status||"")){
     try{await (await import("@/lib/customer-order-finalize")).finalizePayPalCheckout(order.id,true);reconciled++}
     catch{held++;/* Hold the reservation; provider may be captured already. */}
    }else held++;
-  }catch{held++;/* External status unknown; never release a possibly paid reservation. */}
+  }catch(error){held++;/* External status unknown; never release a possibly paid reservation. */
+   const code=error instanceof Error?error.message:"UNKNOWN";
+   details.push({order:"RH-"+order.orderNumber.toString(),provider:order.paymentReference.startsWith("KLARNA-")?"klarna":"paypal",status:/^(PAYPAL_REQUEST_FAILED_[0-9]{3}|KLARNA_HTTP_[0-9]{3})$/.test(code)?code:"PROVIDER_UNAVAILABLE",releasable:false});
+  }
  }
- return {cancelled,reconciled,held,checked:orders.length};
+ return {cancelled,reconciled,held,eligible,checked:orders.length, ...(options.dryRun?{details}: {})};
 }
