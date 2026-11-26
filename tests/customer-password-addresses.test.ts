@@ -86,3 +86,13 @@ test("second customer migration adds only optional profile fields and saved addr
  assert.ok(sql.includes('ON DELETE CASCADE'));
  assert.ok(!/ALTER TABLE "orders"|ALTER TABLE "invoices"|ALTER TABLE "payment_events"|DROP TABLE|DELETE FROM "orders"|UPDATE "orders"/.test(sql));
 });
+
+test("checkout validates complete addresses automatically without a separate button",()=>{
+ const checkout=read("src/components/checkout-address-preview.tsx");
+ assert.match(checkout,/input\.validity\.valid&&input\.value\.trim\(\)\.length>0/);
+ assert.match(checkout,/onInput=\{syncAddress\} onChange=\{syncAddress\}/);
+ assert.match(checkout,/onValidated\?\.\(address\)/);
+ assert.match(checkout,/onValidated\?\.\(null\)/);
+ assert.doesNotMatch(checkout,/className="rh-checkout-validate"/);
+ assert.doesNotMatch(checkout,/fetch\("\/api\/checkout/);
+});

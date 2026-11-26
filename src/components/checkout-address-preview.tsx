@@ -1,5 +1,5 @@
 "use client";
-import {useEffect,useRef,useState,type FormEvent} from "react";
+import {useCallback,useEffect,useRef,useState,type FormEvent} from "react";
 import type {CustomerCheckoutInput} from "@/lib/customer-checkout";
 import {CheckCircle2,ShieldCheck} from "lucide-react";
 
@@ -26,19 +26,29 @@ export default function CheckoutAddressPreview({onValidated,digitalOnly=false}:{
    const input=formRef.current.elements.namedItem(name);
    if(input instanceof HTMLInputElement)input.value=value;
   }
-  setChecked(false);onValidated?.(null);
+  syncAddress();
  };
  const [checked,setChecked]=useState(false);
- const validate=(event:FormEvent<HTMLFormElement>)=>{
-  event.preventDefault();
-  const data=new FormData(event.currentTarget);
+ const lastAddress=useRef<string|null>(null);
+ const syncAddress=useCallback(()=>{
+  const form=formRef.current;
+  if(!form)return;
+  const valid=Array.from(form.querySelectorAll<HTMLInputElement>("input[required]")).every(input=>input.validity.valid&&input.value.trim().length>0);
+  if(!valid||(!digitalOnly&&otherBilling&&!form.elements.namedItem("billingFirst"))){
+   if(lastAddress.current!==null){lastAddress.current=null;setChecked(false);onValidated?.(null)}
+   return;
+  }
+  const data=new FormData(form);
   const shipping={firstName:String(data.get("givenName")||""),lastName:String(data.get("familyName")||""),
    street:String(data.get("street")||""),postalCode:String(data.get("zip")||""),city:String(data.get("city")||""),country:"DE" as const};
-  const billing=otherBilling?{firstName:String(data.get("billingFirst")||""),lastName:String(data.get("billingLast")||""),
+  const billing=!digitalOnly&&otherBilling?{firstName:String(data.get("billingFirst")||""),lastName:String(data.get("billingLast")||""),
    street:String(data.get("billingStreet")||""),postalCode:String(data.get("billingZip")||""),city:String(data.get("billingCity")||""),country:"DE" as const}:undefined;
-  setChecked(true);
-  onValidated?.({shipping,billing,email:String(data.get("email")||"")});
- };
+  const address={shipping,billing,email:String(data.get("email")||"")};
+  const signature=JSON.stringify(address);
+  if(signature!==lastAddress.current){lastAddress.current=signature;setChecked(true);onValidated?.(address)}
+ },[digitalOnly,otherBilling,onValidated]);
+ useEffect(()=>{syncAddress();const timer=window.setInterval(syncAddress,400);return()=>window.clearInterval(timer)},[syncAddress]);
+ const validate=(event:FormEvent<HTMLFormElement>)=>{event.preventDefault();syncAddress()};
  return <section className="rh-checkout-address" aria-label={digitalOnly?"Rechnungsadresse vorbereiten":"Liefer- und Rechnungsadresse vorbereiten"}>
   <div className="rh-checkout-address-heading"><span>02 / {digitalOnly?"RECHNUNG":"LIEFERUNG"}</span><h2>{digitalOnly?"Deine Rechnungsadresse.":"Deine Lieferadresse."}</h2>
    <p>{digitalOnly?"Wir benötigen deine Rechnungsdaten für die digitale Bestellung. Es erfolgt kein Paketversand.":"Trage deine Lieferadresse und bei Bedarf eine abweichende Rechnungsadresse ein."}</p></div>
@@ -48,7 +58,7 @@ export default function CheckoutAddressPreview({onValidated,digitalOnly=false}:{
     {savedAddresses.map(a=><option key={a.id} value={a.id}>{a.label} – {a.street}, {a.postalCode} {a.city}</option>)}
    </select>
   </div>}
-  <form ref={formRef} onSubmit={validate} onChange={()=>{setChecked(false);onValidated?.(null)}}>
+  <form ref={formRef} onSubmit={validate} onInput={syncAddress} onChange={syncAddress} onBlur={syncAddress}>
    <div className="rh-checkout-field-grid">
     <label>Vorname <input required autoComplete="given-name" name="givenName" maxLength={80} placeholder="Vorname"/></label>
     <label>Nachname <input required autoComplete="family-name" name="familyName" maxLength={80} placeholder="Nachname"/></label>
@@ -66,8 +76,7 @@ export default function CheckoutAddressPreview({onValidated,digitalOnly=false}:{
      <label>Postleitzahl <input required name="billingZip" pattern="[0-9]{5}" maxLength={5} inputMode="numeric"/></label>
      <label>Ort <input required name="billingCity" maxLength={100}/></label>
    </div></fieldset>}
-   <button type="submit" className="rh-checkout-validate">{digitalOnly?"Rechnungsdaten prüfen":"Adressen prüfen"} <CheckCircle2 size={16}/></button>
-   {checked&&<p role="status" className="rh-checkout-address-ok"><CheckCircle2 size={17}/> Deine Angaben sind vollständig. Noch keine Bestellung ausgelöst.</p>}
+   {checked&&<p role="status" className="rh-checkout-address-ok"><CheckCircle2 size={17}/> Deine Angaben sind vollständig. Du kannst jetzt bezahlen.</p>}
   </form>
   <p className="rh-checkout-private"><ShieldCheck size={16}/> Deine Adresse bleibt auf diesem Gerät, bis du eine Bestellung ausdrücklich bestätigst.</p>
  </section>;

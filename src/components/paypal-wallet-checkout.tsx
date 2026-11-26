@@ -156,7 +156,7 @@ export default function PayPalWalletCheckout({lines,address,cartReady,totalCents
       if(!canceled&&result&&googleHost.current){
        paymentMethod.current=client;
        const button=client.createButton({buttonSizeMode:"fill",buttonColor:"black",buttonType:"buy",onClick:()=>{
-        if(!canStart()){setError("Bitte Lieferadresse und AGB bestätigen.");return}
+        if(!canStart()){setError("Bitte Lieferadresse vollständig ausfüllen und AGB bestätigen.");return}
         setError("");
         // Must be called directly inside a genuine click for browser popup permission.
         void client.loadPaymentData({...config,transactionInfo:{countryCode:"DE",currencyCode:"EUR",
@@ -180,7 +180,7 @@ export default function PayPalWalletCheckout({lines,address,cartReady,totalCents
        button.setAttribute("buttonstyle","black");button.setAttribute("type","buy");
        button.setAttribute("locale","de-DE");button.style.cssText="display:block;width:100%;height:48px;cursor:pointer";
        button.addEventListener("click",()=>{
-        if(!canStart()){setError("Bitte Lieferadresse und AGB bestätigen.");return}
+        if(!canStart()){setError("Bitte Lieferadresse vollständig ausfüllen und AGB bestätigen.");return}
         setError("");lock.current=true;setProcessing(true);
         const native=new Apple(4,{countryCode:"DE",currencyCode:"EUR",
          merchantCapabilities:config.merchantCapabilities,supportedNetworks:config.supportedNetworks,

@@ -96,7 +96,7 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
           {!canPay&&paymentBlocker&&<p className="rh-checkout-unavailable-note" role={loading?"status":"alert"}>{paymentBlocker}</p>}
           {appliedGift&&<p className="rh-gift-only-paypal-note">Bei Gutscheinzahlung steht PayPal für einen möglichen Restbetrag zur Verfügung. Ist alles gedeckt, erfolgt keine weitere Zahlung.</p>}
           {checkoutMode!=="disabled"&&!liveTest&&<div className="rh-unified-payment-consent">
-            {!validatedAddress&&<p className="rh-checkout-unavailable-note" role="status">Bitte zuerst oben deine {digitalOnly?"Rechnungsadresse":"Liefer- und Rechnungsadresse"} bestätigen.</p>}
+            {!validatedAddress&&<p className="rh-checkout-unavailable-note" role="status">Bitte zuerst oben deine {digitalOnly?"Rechnungsadresse":"Liefer- und Rechnungsadresse"} vollständig ausfüllen.</p>}
             <label><input type="checkbox" checked={paymentConsent} onChange={e=>setPaymentConsent(e.target.checked)} required/>
               <span>Ich habe die <a href="/rechtliches/agb/" target="_blank" rel="noopener noreferrer">AGB</a> und die <a href="/rechtliches/widerruf/" target="_blank" rel="noopener noreferrer">Widerrufsbelehrung</a> gelesen und bestätige den kostenpflichtigen Kauf.</span>
             </label>
