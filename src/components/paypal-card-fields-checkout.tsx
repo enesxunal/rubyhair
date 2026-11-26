@@ -40,13 +40,18 @@ export default function PayPalCardFieldsCheckout({agreed,claimPayment,releasePay
  useEffect(()=>{
   let canceled=false;
   setCardValid(false);setPhase("loading");
+  // Shipping alone is not a verified order total while the cart quote loads.
+  if(!cartReady||totalCents<=0)return;
+  const controller=new AbortController();
   async function init(){
    try{
-    const response=await fetch("/api/payments/paypal/card-token",{cache:"no-store",credentials:"same-origin"});
+    const response=await fetch("/api/payments/paypal/card-token",{cache:"no-store",credentials:"same-origin",signal:controller.signal});
     if(!response.ok)throw new Error("TOKEN_UNAVAILABLE");
     const data=await response.json() as {clientToken?:string};
     if(!data.clientToken)throw new Error("TOKEN_UNAVAILABLE");
+    if(canceled)return;
     const sdk=await loadPaypal();
+    if(canceled)return;
     const app=await sdk.createInstance({clientToken:data.clientToken,components:["card-fields"],locale:"de-DE",pageType:"checkout"});
     const eligible=await app.findEligibleMethods({countryCode:"DE",currencyCode:"EUR",amount:(totalCents/100).toFixed(2)});
     if(!eligible.isEligible("advanced_cards"))throw new Error("NOT_ELIGIBLE");
@@ -63,8 +68,8 @@ export default function PayPalCardFieldsCheckout({agreed,claimPayment,releasePay
    }catch{if(!canceled)setPhase("unavailable")}
   }
   void init();
-  return ()=>{canceled=true;sessionRef.current=null;[numberRef,expiryRef,cvvRef].forEach(r=>r.current?.replaceChildren())};
- },[totalCents,sessionEpoch]);
+  return ()=>{canceled=true;controller.abort();sessionRef.current=null;[numberRef,expiryRef,cvvRef].forEach(r=>r.current?.replaceChildren())};
+ },[cartReady,totalCents,sessionEpoch]);
  const ready=phase==="ready"&&cardValid&&Boolean(address&&cartReady&&lines.length&&totalCents>0&&agreed&&!busy&&!locked);
  async function pay(){
   if(!ready||!address||!sessionRef.current)return;

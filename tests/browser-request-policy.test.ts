@@ -13,3 +13,10 @@ test("Payment SDK token accepts modern and legacy canonical same-origin requests
  assert.equal(allow({referer:"https://rubyhair.de/kasse"},"evil.example"),false);
  assert.equal(allow({"sec-fetch-site":"same-origin",referer:"https://www.rubyhair.de/kasse"},"www.rubyhair.de"),true);
 });
+
+import {readFileSync} from "node:fs";
+test("Payment SDKs do not start until the real cart price is available",()=>{
+ const card=readFileSync("src/components/paypal-card-fields-checkout.tsx","utf8");
+ const wallet=readFileSync("src/components/paypal-wallet-checkout.tsx","utf8");
+ for(const src of [card,wallet]){assert.ok(src.indexOf("if(!cartReady")<src.search(/fetch\("\/api\/payments\/paypal\/(card|wallet)-token"/));assert.match(src,/controller\.abort\(\)/);assert.match(src,/\[cartReady,totalCents,/)}
+});

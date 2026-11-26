@@ -110,16 +110,19 @@ export default function PayPalWalletCheckout({lines,address,cartReady,totalCents
  };
  useEffect(()=>{
   let canceled=false;
+  const controller=new AbortController();
   setAppleReady(false);setGoogleReady(false);
   appleHost.current?.replaceChildren();googleHost.current?.replaceChildren();
   const run=async()=>{
-   if(!appleEnabled&&!googleEnabled||totalCents<=0)return;
+   if(!cartReady||(!appleEnabled&&!googleEnabled)||totalCents<=0)return;
    try{
-    const token=await fetch("/api/payments/paypal/wallet-token",{cache:"no-store",credentials:"same-origin"});
+    const token=await fetch("/api/payments/paypal/wallet-token",{cache:"no-store",credentials:"same-origin",signal:controller.signal});
     if(!token.ok)return;
     const json=await token.json() as {clientToken?:string};
     if(!json.clientToken)return;
+    if(canceled)return;
     await loadScript(PAYPAL_URL,()=>Boolean(windowWallet().paypal?.createInstance));
+    if(canceled)return;
     const sdk=await windowWallet().paypal!.createInstance({clientToken:json.clientToken,
      components:[...(googleEnabled?["googlepay-payments"]:[]),...(appleEnabled?["applepay-payments"]:[])],
      locale:"de-DE",pageType:"checkout"});
@@ -217,8 +220,8 @@ export default function PayPalWalletCheckout({lines,address,cartReady,totalCents
    }catch{/* Never show unsupported wallets. */}
   };
   void run();
-  return()=>{canceled=true;appleHost.current?.replaceChildren();googleHost.current?.replaceChildren();paymentMethod.current=null};
- },[totalCents,appleEnabled,googleEnabled]);
+  return()=>{canceled=true;controller.abort();appleHost.current?.replaceChildren();googleHost.current?.replaceChildren();paymentMethod.current=null};
+ },[cartReady,totalCents,appleEnabled,googleEnabled]);
  if(!appleEnabled&&!googleEnabled)return null;
  return <section className="rh-payment-action-area rh-wallet-actions" aria-label="Digitale Wallets" hidden={!appleEnabled&&!googleEnabled&&!error&&!processing}>
   {appleEnabled&&<button type="button" className="rh-logo-wallet-tile" disabled={!appleReady} title={!appleReady?"Apple Pay ist auf diesem Gerät nicht verfügbar":"Apple Pay auswählen"} aria-label={appleReady?"Apple Pay auswählen":"Apple Pay auf diesem Gerät nicht verfügbar"} aria-expanded={chosenWallet==="apple_pay"} onClick={()=>setChosenWallet(v=>v==="apple_pay"?null:"apple_pay")}><img src="/assets/payment-brands/reference/apple_pay.svg" alt="Apple Pay"/></button>}
