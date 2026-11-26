@@ -106,3 +106,12 @@ test("Card-first checkout keeps wallet actions independent and guarded",()=>{
   const source=readFileSync(`src/components/${name}.tsx`,"utf8");assert.match(source,/if\(!claimPayment\(\)\)/);
  }
 });
+
+ test("Apple SDK loads before the cross-browser ApplePaySession capability check",()=>{
+ const source=readFileSync("src/components/paypal-wallet-checkout.tsx","utf8");
+ const init=source.indexOf("await loadAppleSdk()");
+ const capability=source.indexOf("Apple?.canMakePayments()");
+ assert.ok(init>=0&&capability>init);
+ assert.match(source,/ApplePaySession&&customElements.get\("apple-pay-button"\)/);
+ assert.match(source,/if\(appleEnabled&&eligible.isEligible\("applepay"\)\)/);
+ });

@@ -66,6 +66,23 @@ function loadScript(url:string,ready:()=>boolean):Promise<void>{
   document.head.appendChild(script);
  });
 }
+// Apple Pay's SDK registers its session and custom element asynchronously.
+function loadAppleSdk():Promise<void>{
+ const ready=()=>Boolean(windowWallet().ApplePaySession&&customElements.get("apple-pay-button"));
+ if(ready())return Promise.resolve();
+ return new Promise((resolve,reject)=>{
+  let script=document.querySelector<HTMLScriptElement>(`script[src="${APPLE_URL}"]`);
+  const fresh=!script;
+  if(!script){script=document.createElement("script");script.async=true;script.src=APPLE_URL}
+  const element=script;
+  const finish=(error?:Error)=>{clearInterval(interval);clearTimeout(timeout);element.removeEventListener("error",failed);error?reject(error):resolve()};
+  const failed=()=>{element.remove();finish(Error("APPLE_PAY_SDK_UNAVAILABLE"))};
+  const interval=window.setInterval(()=>{if(ready())finish()},50);
+  const timeout=window.setTimeout(()=>finish(Error("APPLE_PAY_SDK_TIMEOUT")),10000);
+  element.addEventListener("error",failed,{once:true});
+  if(fresh)document.head.appendChild(element);
+ });
+}
 function asError(e:unknown):string{return e instanceof Error?e.message:"UNKNOWN_WALLET_ERROR"}
 const money=(cents:number)=>(cents/100).toFixed(2);
 
@@ -172,11 +189,12 @@ export default function PayPalWalletCheckout({lines,address,cartReady,totalCents
       }
      }catch{/* Not eligible on this browser or Google Pay configuration not complete. */}
     }
-    const Apple=windowWallet().ApplePaySession;
-    if(appleEnabled&&eligible.isEligible("applepay")&&Apple?.canMakePayments()&&(Apple.supportsVersion?.(4)??true)){
+    if(appleEnabled&&eligible.isEligible("applepay")){
      try{
-      await loadScript(APPLE_URL,()=>Boolean(document.querySelector("apple-pay-button")||
-       customElements.get("apple-pay-button")));
+      // Third-party browsers expose ApplePaySession only after the Apple JS SDK loads.
+      await loadAppleSdk();
+      const Apple=windowWallet().ApplePaySession;
+      if(canceled||!Apple?.canMakePayments()||!(Apple.supportsVersion?.(4)??true))return;
       const session=await sdk.createApplePayOneTimePaymentSession();
       const config=await session.config();
       if(!canceled&&appleHost.current&&config.supportedNetworks.length){
@@ -186,6 +204,7 @@ export default function PayPalWalletCheckout({lines,address,cartReady,totalCents
        button.addEventListener("click",()=>{
         if(!canStart()){setError("Bitte Lieferadresse vollständig ausfüllen und AGB bestätigen.");return}
         setError("");lock.current=true;setProcessing(true);
+        try{
         const native=new Apple(4,{countryCode:"DE",currencyCode:"EUR",
          merchantCapabilities:config.merchantCapabilities,supportedNetworks:config.supportedNetworks,
          requiredBillingContactFields:["name","postalAddress"],requiredShippingContactFields:[],
@@ -212,10 +231,11 @@ export default function PayPalWalletCheckout({lines,address,cartReady,totalCents
         })()};
         native.oncancel=()=>{if(!orderKeys.current.apple_pay){lock.current=false;setProcessing(false)}};
         native.begin();
+        }catch{lock.current=false;setProcessing(false);setError("Apple Pay konnte nicht gestartet werden. Bitte versuche es erneut oder wähle eine andere Zahlungsart.")}
        });
        appleHost.current.replaceChildren(button);setAppleReady(true);
       }
-     }catch{/* Domain or Apple Pay configuration is unavailable; hide the button. */}
+     }catch{if(!canceled)setError("Apple Pay ist derzeit nicht verfügbar. Bitte wähle eine andere Zahlungsart.")}
     }
    }catch{/* Never show unsupported wallets. */}
   };
@@ -224,7 +244,7 @@ export default function PayPalWalletCheckout({lines,address,cartReady,totalCents
  },[cartReady,totalCents,appleEnabled,googleEnabled]);
  if(!appleEnabled&&!googleEnabled)return null;
  return <section className="rh-payment-action-area rh-wallet-actions" aria-label="Digitale Wallets" hidden={!appleEnabled&&!googleEnabled&&!error&&!processing}>
-  {appleEnabled&&<button type="button" className="rh-logo-wallet-tile" disabled={!appleReady} title={!appleReady?"Apple Pay ist auf diesem Gerät nicht verfügbar":"Apple Pay auswählen"} aria-label={appleReady?"Apple Pay auswählen":"Apple Pay auf diesem Gerät nicht verfügbar"} aria-expanded={chosenWallet==="apple_pay"} onClick={()=>setChosenWallet(v=>v==="apple_pay"?null:"apple_pay")}><img src="/assets/payment-brands/reference/apple_pay.svg" alt="Apple Pay"/></button>}
+  {appleEnabled&&<button type="button" className="rh-logo-wallet-tile" disabled={!appleReady} title={!appleReady?"Apple Pay wird geprüft oder ist auf diesem Gerät nicht verfügbar. Bitte wähle eine andere Zahlungsart.":"Apple Pay auswählen"} aria-label={appleReady?"Apple Pay auswählen":"Apple Pay auf diesem Gerät nicht verfügbar"} aria-expanded={chosenWallet==="apple_pay"} onClick={()=>setChosenWallet(v=>v==="apple_pay"?null:"apple_pay")}><img src="/assets/payment-brands/reference/apple_pay.svg" alt="Apple Pay"/></button>}
   {googleEnabled&&<button type="button" className="rh-logo-wallet-tile" disabled={!googleReady} title={!googleReady?"Google Pay ist auf diesem Gerät nicht verfügbar":"Google Pay auswählen"} aria-label={googleReady?"Google Pay auswählen":"Google Pay auf diesem Gerät nicht verfügbar"} aria-expanded={chosenWallet==="google_pay"} onClick={()=>setChosenWallet(v=>v==="google_pay"?null:"google_pay")}><img src="/assets/payment-brands/reference/google_pay.svg" alt="Google Pay"/></button>}
   <div ref={appleHost} className="rh-wallet-button-host" style={{display:appleReady&&chosenWallet==="apple_pay"?"block":"none"}}/>
   <div ref={googleHost} className="rh-wallet-button-host" style={{display:googleReady&&chosenWallet==="google_pay"?"block":"none"}}/>
