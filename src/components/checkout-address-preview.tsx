@@ -33,7 +33,7 @@ export default function CheckoutAddressPreview({onValidated,digitalOnly=false}:{
  const syncAddress=useCallback(()=>{
   const form=formRef.current;
   if(!form)return;
-  const valid=Array.from(form.querySelectorAll<HTMLInputElement>("input[required]")).every(input=>input.validity.valid&&input.value.trim().length>0);
+  const valid=Array.from(form.querySelectorAll<HTMLInputElement>("input[required]")).every(input=>input.validity.valid&&input.value.trim().length>0&&(input.type==="email"||input.name==="zip"||input.name==="billingZip"||(input.value.trim().length>=2&&input.value.trim().length<=85&&!/[<>\r\n\x00-\x1f]/.test(input.value))));
   if(!valid||(!digitalOnly&&otherBilling&&!form.elements.namedItem("billingFirst"))){
    if(lastAddress.current!==null){lastAddress.current=null;setChecked(false);onValidated?.(null)}
    return;
@@ -63,18 +63,18 @@ export default function CheckoutAddressPreview({onValidated,digitalOnly=false}:{
     <label>Vorname <input required autoComplete="given-name" name="givenName" maxLength={80} placeholder="Vorname"/></label>
     <label>Nachname <input required autoComplete="family-name" name="familyName" maxLength={80} placeholder="Nachname"/></label>
     <label className="rh-checkout-field-full">E-Mail <input required autoComplete="email" type="email" name="email" maxLength={254} placeholder="name@beispiel.de"/></label>
-    <label className="rh-checkout-field-full">Straße und Hausnummer <input required autoComplete="street-address" name="street" maxLength={160} placeholder="Straße und Hausnummer"/></label>
+    <label className="rh-checkout-field-full">Straße und Hausnummer <input required autoComplete="street-address" name="street" maxLength={85} placeholder="Straße und Hausnummer"/></label>
     <label>Postleitzahl <input required name="zip" inputMode="numeric" autoComplete="postal-code" pattern="[0-9]{5}" title="Bitte eine fünfstellige deutsche Postleitzahl eingeben" maxLength={5} placeholder="45130"/></label>
-    <label>Ort <input required autoComplete="address-level2" name="city" maxLength={100} placeholder="Essen"/></label>
+    <label>Ort <input required autoComplete="address-level2" name="city" maxLength={85} placeholder="Essen"/></label>
     <label className="rh-checkout-field-full">{digitalOnly?"Rechnungsland":"Lieferland"} <input disabled readOnly value="Deutschland" aria-label="Land: Deutschland"/></label>
    </div>
    {!digitalOnly&&<label className="rh-checkout-check"><input type="checkbox" checked={otherBilling} onChange={e=>setOtherBilling(e.target.checked)}/> Rechnungsadresse weicht ab</label>}
    {!digitalOnly&&otherBilling&&<fieldset className="rh-checkout-extra-address"><legend>Rechnungsadresse</legend><div className="rh-checkout-field-grid">
      <label>Vorname <input required name="billingFirst" autoComplete="billing given-name" maxLength={80}/></label>
      <label>Nachname <input required name="billingLast" autoComplete="billing family-name" maxLength={80}/></label>
-     <label className="rh-checkout-field-full">Straße und Hausnummer <input required name="billingStreet" autoComplete="billing street-address" maxLength={160}/></label>
+     <label className="rh-checkout-field-full">Straße und Hausnummer <input required name="billingStreet" autoComplete="billing street-address" maxLength={85}/></label>
      <label>Postleitzahl <input required name="billingZip" pattern="[0-9]{5}" maxLength={5} inputMode="numeric"/></label>
-     <label>Ort <input required name="billingCity" maxLength={100}/></label>
+     <label>Ort <input required name="billingCity" maxLength={85}/></label>
    </div></fieldset>}
    {checked&&<p role="status" className="rh-checkout-address-ok"><CheckCircle2 size={17}/> Deine Angaben sind vollständig. Du kannst jetzt bezahlen.</p>}
   </form>

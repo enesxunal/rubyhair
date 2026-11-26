@@ -19,7 +19,7 @@ export default async function Checkout({searchParams}:{searchParams:Promise<Quer
  const admin=await isAdmin();
  if(p.liveTest==="1"&&!admin)redirect("/admin/login");
  let test:LiveVariantTestView|null=null;
- if(admin){
+ if(admin&&(p.liveTest==="1"||publicCheckoutMode()==="disabled")){
   const s=await getVariantTestState();
   if(p.liveTest==="1"||(publicCheckoutMode()==="disabled"&&(s.ready||s.pending))){
   const supplied=typeof p.paypalToken==="string"&&/^[A-Za-z0-9_-]{8,60}$/.test(p.paypalToken)?p.paypalToken:null;

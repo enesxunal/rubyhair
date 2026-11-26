@@ -10,18 +10,26 @@ export function useCartQuote(lines:CartLine[],couponCode=""){
   useEffect(()=>{
     if(!lines.length)return;
     const controller=new AbortController();
-    fetch("/api/cart/quote",{
-      method:"POST",cache:"no-store",signal:controller.signal,
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({lines,...(couponCode?{couponCode}:{})})
-    }).then(response=>{
-      if(!response.ok)throw new Error("Serverseitige Preisprüfung nicht verfügbar");
-      return response.json() as Promise<CartQuote>;
-    }).then(data=>{
-      if(!controller.signal.aborted)setResult({key,quote:data});
-    }).catch(()=>{
-      if(!controller.signal.aborted)setErrorKey(key);
-    });
+    setErrorKey(null);
+    async function load(){
+      for(let attempt=0;attempt<2;attempt++){
+        try{
+          const response=await fetch("/api/cart/quote",{
+            method:"POST",cache:"no-store",signal:controller.signal,
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({lines,...(couponCode?{couponCode}:{})})
+          });
+          if(!response.ok){if(response.status<500){if(!controller.signal.aborted)setErrorKey(key);return;}throw new Error("QUOTE_UNAVAILABLE");}
+          const data=await response.json() as CartQuote;
+          if(!controller.signal.aborted){setErrorKey(null);setResult({key,quote:data})}return;
+        }catch{
+          if(controller.signal.aborted)return;
+          if(attempt===0){await new Promise(resolve=>setTimeout(resolve,800));if(controller.signal.aborted)return;}
+          else setErrorKey(key);
+        }
+      }
+    }
+    void load();
     return ()=>controller.abort();
   },[key]);
   const quote=result?.key===key?result.quote:null;

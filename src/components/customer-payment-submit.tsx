@@ -4,8 +4,8 @@ import type {CartLine} from "@/components/cart-context";
 import type {GiftCartItem} from "@/lib/gift-cards/cart-schema";
 import type {CheckoutAddressData} from "./checkout-address-preview";
 
-type Props={agreed:boolean;claimPayment:()=>boolean;method:"paypal"|"klarna";lines:CartLine[];gifts?:GiftCartItem[];address:CheckoutAddressData|null;cartReady:boolean;totalCents:number;giftCode?:string;couponCode?:string};
-export default function CustomerPaymentSubmit({agreed,claimPayment,method,lines,gifts=[],address,cartReady,totalCents,giftCode,couponCode}:Props){
+type Props={agreed:boolean;claimPayment:()=>boolean;releasePayment:()=>void;method:"paypal"|"klarna";lines:CartLine[];gifts?:GiftCartItem[];address:CheckoutAddressData|null;cartReady:boolean;totalCents:number;giftCode?:string;couponCode?:string};
+export default function CustomerPaymentSubmit({agreed,claimPayment,releasePayment,method,lines,gifts=[],address,cartReady,totalCents,giftCode,couponCode}:Props){
  const [loading,setLoading]=useState(false),[error,setError]=useState("");
  const key=useRef<string|null>(null);
  const ready=Boolean(address&&cartReady&&(lines.length||gifts.length)&&totalCents>=0&&!loading&&agreed&&(method==="paypal"||!giftCode)&&(!gifts.length||method==="paypal"));
@@ -20,7 +20,8 @@ export default function CustomerPaymentSubmit({agreed,claimPayment,method,lines,
      key:key.current,provider:method,lines,gifts,shipping:address.shipping,
      billing:address.billing,email:address.email,giftCode,couponCode,consent:true
     })});
-   const payload=await res.json() as {redirectUrl?:string;orderId?:string;error?:string};
+   const payload=await res.json() as {redirectUrl?:string;orderId?:string;error?:string;retrySafe?:boolean};
+   if(!res.ok&&payload.retrySafe===true){key.current=null;releasePayment();setLoading(false);setError("Bitte Angaben oder Warenkorb prüfen und erneut versuchen.");return}
    if(!res.ok||!payload.redirectUrl)throw new Error(payload.error||"CHECKOUT_FAILED");
    const target=new URL(payload.redirectUrl);
    const giftPaid=target.origin===window.location.origin&&target.pathname==="/kasse/gutschein/erfolg"&&totalCents===0;

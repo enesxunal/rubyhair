@@ -4,7 +4,7 @@ import type {CartLine} from "./cart-context";
 import type {CheckoutAddressData} from "./checkout-address-preview";
 
 type Method="apple_pay"|"google_pay";
-type CheckoutOrder={paymentExperience?:string;orderId?:string;paypalOrderId?:string;walletState?:string;amountCents?:number};
+type CheckoutOrder={paymentExperience?:string;orderId?:string;paypalOrderId?:string;walletState?:string;amountCents?:number;retrySafe?:boolean};
 type PayPalMethods={isEligible:(method:string)=>boolean;getDetails:(method:string)=>{config:Record<string,unknown>}};
 type GoogleWalletSession={
  formatConfigForPaymentRequest:(config:Record<string,unknown>)=>GooglePayConfig;
@@ -49,7 +49,7 @@ type AppleNativeConstructor={
 type WalletWindow=Window&{paypal?:PayPalSDK;google?:GooglePayAPI;ApplePaySession?:AppleNativeConstructor};
 type Props={
  lines:CartLine[];address:CheckoutAddressData|null;cartReady:boolean;totalCents:number;couponCode?:string;
- appleEnabled:boolean;googleEnabled:boolean;accepted:boolean;claimPayment:()=>boolean;
+ appleEnabled:boolean;googleEnabled:boolean;accepted:boolean;claimPayment:()=>boolean;releasePayment:()=>void;
 };
 const PAYPAL_URL="https://www.paypal.com/web-sdk/v6/core";
 const GOOGLE_URL="https://pay.google.com/gp/p/js/pay.js";
@@ -69,7 +69,7 @@ function loadScript(url:string,ready:()=>boolean):Promise<void>{
 function asError(e:unknown):string{return e instanceof Error?e.message:"UNKNOWN_WALLET_ERROR"}
 const money=(cents:number)=>(cents/100).toFixed(2);
 
-export default function PayPalWalletCheckout({lines,address,cartReady,totalCents,couponCode,appleEnabled,googleEnabled,accepted,claimPayment}:Props){
+export default function PayPalWalletCheckout({lines,address,cartReady,totalCents,couponCode,appleEnabled,googleEnabled,accepted,claimPayment,releasePayment}:Props){
  const appleHost=useRef<HTMLDivElement>(null),googleHost=useRef<HTMLDivElement>(null);
  const paymentMethod=useRef<GooglePayClient|null>(null);
  const [appleReady,setAppleReady]=useState(false),[googleReady,setGoogleReady]=useState(false);
@@ -92,6 +92,7 @@ export default function PayPalWalletCheckout({lines,address,cartReady,totalCents
     couponCode:current.couponCode,consent:true
    })});
   const data=await response.json() as CheckoutOrder;
+  if(!response.ok&&data.retrySafe===true){orderKeys.current[method]=null;lock.current=false;releasePayment();throw Error("Bitte Angaben oder Warenkorb prüfen und erneut versuchen.")}
   if(!response.ok||data.paymentExperience!==method||!data.orderId||!data.paypalOrderId||
      !data.walletState||data.amountCents!==current.totalCents)throw Error("WALLET_ORDER_REQUIRES_REVIEW");
   return data as Required<CheckoutOrder>;

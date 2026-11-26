@@ -37,8 +37,8 @@ function selfhostDatabaseUrl(){
     url.searchParams.set("sslidentity",identity);
     url.searchParams.set("sslpassword",config.identityPassword);
     url.searchParams.set("connection_limit","1");
-    url.searchParams.set("pool_timeout","8");
-    url.searchParams.set("connect_timeout","5");
+    url.searchParams.set("pool_timeout","20");
+    url.searchParams.set("connect_timeout","10");
     selfhostUrl=url.toString();
     return selfhostUrl;
   }catch{

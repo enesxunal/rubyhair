@@ -72,13 +72,13 @@ export class PaypalClient{
       method,headers,body:body===undefined?undefined:JSON.stringify(body),redirect:"error",signal:AbortSignal.timeout(13000)
     });}catch{throw new PaypalError("PAYPAL_NETWORK_UNAVAILABLE");}
     if(!response.ok){
-      if(path.endsWith("/capture")){
+      {
         const detail=await safeJson(response).catch(()=>null);
         const issues=isObject(detail)&&Array.isArray(detail.details)?detail.details:[];
         const first=issues.find((d:unknown)=>isObject(d)&&typeof d.issue==="string") as Record<string,unknown>|undefined;
         const issue=first&&typeof first.issue==="string"&&/^[A-Z0-9_]{3,75}$/.test(first.issue)?first.issue:"UNSPECIFIED";
         const debugId=isObject(detail)&&typeof detail.debug_id==="string"&&/^[a-zA-Z0-9]{8,30}$/.test(detail.debug_id)?detail.debug_id:null;
-        console.warn("RUBY_PAYPAL_CAPTURE_REJECTED",{httpStatus:response.status,issue,debugId});
+        console.warn(path.endsWith("/capture")?"RUBY_PAYPAL_CAPTURE_REJECTED":"RUBY_PAYPAL_REQUEST_REJECTED",{method,httpStatus:response.status,issue,debugId});
       }
       throw new PaypalError("PAYPAL_REQUEST_FAILED_"+response.status);
     }

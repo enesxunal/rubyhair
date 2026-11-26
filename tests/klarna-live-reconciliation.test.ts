@@ -8,8 +8,9 @@ test("Merchant can read live Klarna capture with the existing encrypted server-s
  const provider=read("src/lib/customer-checkout.ts");
  assert.match(api,/providerForCheckout\("klarna"\)/);
  assert.match(provider,/loadPaymentValues\("klarna","live",\["username","password","merchantId"\]\)/);
- assert.match(api,/gateway\.api\.readOrder\(match\[1\]\)/);
- assert.match(api,/gateway\.api\.readCaptures\(match\[1\]\)/);
+ assert.match(api,/gateway\.api\.readOrder\(providerOrderId\)/);
+ assert.match(api,/gateway\.api\.readCaptures\(providerOrderId\)/);
+ assert.match(api,/readHostedPage\(/);
  assert.match(api,/remote\.order_amount===order\.totalCents/);
  assert.match(api,/remote\.purchase_currency==="EUR"/);
  assert.match(api,/captures\.length===1&&captures\[0\]\.captured_amount===order\.totalCents/);
@@ -20,7 +21,7 @@ test("Reconcile only existing proven capture; no new Klarna charge",()=>{
  const action=read("app/admin/klarna-durum/actions.ts");
  const page=read("app/admin/klarna-durum/page.tsx");
  assert.match(api,/audit\.status!=="captured_verified"/);
- assert.match(api,/finishCapturedCustomerOrder\(internalId,"klarna",audit\.captureId,match\[1\]\)/);
+ assert.match(api,/finishCapturedCustomerOrder\(internalId,"klarna",audit\.captureId,audit\.providerOrderId\)/);
  assert.match(action,/if\(!await isAdmin\(\)\)/);
  assert.match(action,/confirmNoNewCharge/);
  assert.match(page,/if\(!await isAdmin\(\)\)/);

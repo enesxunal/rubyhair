@@ -7,7 +7,7 @@ type CardValidity={data:{number:{isValid:boolean};expiry:{isValid:boolean};cvv:{
 type CardSession={
  on:(event:"change"|"validitychange",callback:(event:CardValidity)=>void)=>Promise<void>;
  createCardFieldsComponent:(options:{type:"number"|"expiry"|"cvv";placeholder:string})=>HTMLElement;
- submit:(orderId:string,options:{billingAddress:{postalCode:string;addressLine1:string;adminArea2:string;countryCode:"DE"}})=>Promise<{state:string;data?:{orderId?:string;liabilityShift?:string}}>;
+ submit:(orderId:string,options:{billingAddress:{postalCode:string;streetAddress:string;city:string;countryCode:"DE"}})=>Promise<{state:string;data?:{orderId?:string;liabilityShift?:string}}>;
 };
 type PaypalSDK={createInstance:(o:{clientToken:string;components:string[];locale:string;pageType:string})=>Promise<{
  findEligibleMethods:(o:{countryCode:string;currencyCode:string;amount:string})=>Promise<{isEligible:(s:string)=>boolean}>;
@@ -77,13 +77,14 @@ export default function PayPalCardFieldsCheckout({agreed,claimPayment,releasePay
   try{
    const created=await fetch("/api/checkout",{method:"POST",credentials:"same-origin",cache:"no-store",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({key:keyRef.current,provider:"paypal",paymentExperience:"card",lines,gifts:[],shipping:address.shipping,billing:address.billing,email:address.email,couponCode,consent:true})});
-   const order=await created.json() as {orderId?:string;paypalOrderId?:string;cardState?:string;amountCents?:number;paymentExperience?:string};
+   const order=await created.json() as {orderId?:string;paypalOrderId?:string;cardState?:string;amountCents?:number;paymentExperience?:string;retrySafe?:boolean};
+   if(!created.ok&&order.retrySafe===true){keyRef.current=null;setLocked(false);releasePayment();setError("Bitte Angaben oder Warenkorb prüfen und erneut versuchen.");return}
    if(!created.ok||order.paymentExperience!=="card"||!order.orderId||!order.paypalOrderId||!order.cardState||order.amountCents!==totalCents)throw Error("ORDER_UNVERIFIED");
    reference=order.orderId;
    checkoutRef={orderId:order.orderId,paypalOrderId:order.paypalOrderId,cardState:order.cardState};
    cardStep="submit";
    const result=await sessionRef.current.submit(order.paypalOrderId,{billingAddress:{postalCode:(address.billing||address.shipping).postalCode,
-    addressLine1:(address.billing||address.shipping).street,adminArea2:(address.billing||address.shipping).city,countryCode:"DE"}});
+    streetAddress:(address.billing||address.shipping).street,city:(address.billing||address.shipping).city,countryCode:"DE"}});
    if(result.state==="canceled")throw Error("CARD_AUTH_CANCELLED");
    if(result.state==="failed")throw Error("CARD_AUTH_FAILED");
    if(result.state!=="succeeded"||result.data?.orderId!==order.paypalOrderId)throw Error("CARD_NOT_APPROVED");

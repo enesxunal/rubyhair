@@ -44,7 +44,7 @@ export default async function CustomerPayPalStatus({searchParams}:{searchParams:
    const capAmount=capture&&obj(capture.amount)?capture.amount:null;
    if(capAmount&&capAmount.currency_code==="EUR"&&typeof capAmount.value==="string")captureAmount=capAmount.value+" EUR";
    try{api.requireCompletedCapture(raw,order.id,order.totalCents-order.giftAppliedCents,order.paymentReference);verified=true}catch{}
-  }catch(e){providerError=e instanceof Error?e.name:"READ_FAILED"}
+  }catch(e){providerError=e instanceof Error&&/^PAYPAL_[A-Z0-9_]+$/.test(e.message)?e.message:"READ_FAILED"}
  }
  return <AdminShell current="orders" title="PayPal Kundenbestellung prüfen" description="Direkte Live-API-Abfrage. Nur lesen, keine neue Bestellung, keine Abbuchung und keine Rückerstattung.">
   <section className="rh-admin-panel-card" style={{padding:26,maxWidth:850}}>
