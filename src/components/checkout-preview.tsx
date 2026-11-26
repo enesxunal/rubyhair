@@ -110,11 +110,6 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
               <span><strong>Klarna</strong><small>{checkoutMode!=="disabled"?"Zahlung bei Versand":"Noch nicht freigeschaltet"}</small></span>
             </label>
           </div>
-          {activePaymentMethod==="paypal"&&(applePayEnabled||googlePayEnabled)&&checkoutMode!=="disabled"&&checkoutMode!=="klarna_public"&&
-           !liveTest&&!oneEuroCart&&lines.length>0&&!gifts.length&&!appliedGift&&
-           <PayPalWalletCheckout lines={lines} address={validatedAddress} cartReady={canPay}
-            totalCents={remainingCents} couponCode={couponCode||undefined}
-            appleEnabled={applePayEnabled} googleEnabled={googlePayEnabled}/>}
           {activePaymentMethod==="paypal_card"&&cardFieldsEnabled&&checkoutMode!=="disabled"&&!liveTest&&
            <PayPalCardFieldsCheckout lines={lines} address={validatedAddress} cartReady={canPay}
             totalCents={remainingCents} couponCode={lines.length?couponCode||undefined:undefined}/>}
@@ -127,6 +122,11 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
           </div>}
           {checkoutMode!=="disabled"&&!liveTest&&activePaymentMethod==="paypal"&&
             <CustomerPaymentSubmit method={activePaymentMethod} lines={lines} gifts={gifts} address={validatedAddress} cartReady={canPay} totalCents={remainingCents} giftCode={gifts.length?undefined:appliedGift?.code} couponCode={lines.length?couponCode||undefined:undefined}/>}
+          {activePaymentMethod==="paypal"&&(applePayEnabled||googlePayEnabled)&&checkoutMode!=="disabled"&&checkoutMode!=="klarna_public"&&
+           !liveTest&&!oneEuroCart&&lines.length>0&&!gifts.length&&!appliedGift&&
+           <PayPalWalletCheckout lines={lines} address={validatedAddress} cartReady={canPay}
+            totalCents={remainingCents} couponCode={couponCode||undefined}
+            appleEnabled={applePayEnabled} googleEnabled={googlePayEnabled}/>}
           {checkoutMode==="disabled"&&activePaymentMethod==="paypal"&&!liveTest&&!oneEuroCart&&<div className="rh-payment-action-area">
             <p>Die letzte Freigabe für den regulären Kauf steht noch aus. Bis dahin wird keine Bestellung ausgelöst.</p>
           </div>}

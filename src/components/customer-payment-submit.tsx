@@ -46,9 +46,9 @@ export default function CustomerPaymentSubmit({method,lines,gifts=[],address,car
    <a href="/rechtliches/widerruf/" target="_blank" rel="noopener noreferrer"> Widerrufsbelehrung</a> gelesen und bestätige den kostenpflichtigen Kauf.</span>
   </label>
   {error&&<p role="alert" style={{color:"#a13c50"}}>Bestellung konnte nicht gestartet werden ({error}). Bitte nicht erneut versuchen, bis der Vorgang geprüft ist.</p>}
-  <button type="button" className="rh-payment-primary-link" disabled={!ready} onClick={start}
+  <button type="button" className={"rh-payment-primary-link"+(method==="paypal"&&totalCents>0?" rh-paypal-branded-button":"")} disabled={!ready} onClick={start}
    style={{border:0,cursor:ready?"pointer":"not-allowed",opacity:ready?1:.48,width:"100%",fontSize:14}}>
-   {loading?"Zahlung wird sicher vorbereitet …":totalCents===0?"Mit Geschenkgutschein bezahlen – 0,00 € Restbetrag":`${(totalCents/100).toFixed(2).replace(".",",")} € zahlungspflichtig mit ${method==="paypal"?"PayPal":"Klarna"} bestellen`}
+   {loading?"Zahlung wird sicher vorbereitet …":totalCents===0?"Mit Geschenkgutschein bezahlen – 0,00 € Restbetrag":method==="paypal"?<><img src="/assets/payment-brands/paypal-mark.jpg" alt="" width={38} height={24}/><span>{`${(totalCents/100).toFixed(2).replace(".",",")} € zahlungspflichtig mit PayPal bestellen`}</span></>:`${(totalCents/100).toFixed(2).replace(".",",")} € zahlungspflichtig mit Klarna bestellen`}
   </button>
  </div>;
 }

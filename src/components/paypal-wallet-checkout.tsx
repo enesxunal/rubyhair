@@ -218,7 +218,7 @@ export default function PayPalWalletCheckout({lines,address,cartReady,totalCents
  },[totalCents,appleEnabled,googleEnabled]);
  if(!appleEnabled&&!googleEnabled)return null;
  return <section className="rh-payment-action-area" aria-label="Digitale Wallets">
-  <p>Apple Pay / Google Pay – die verfügbaren Zahlungsmethoden werden auf deinem Gerät angezeigt.</p>
+  <p>Weitere Zahlungsmethoden – verfügbare Wallets auf deinem Gerät.</p>
   {(appleReady||googleReady)&&<label style={{display:"flex",alignItems:"flex-start",gap:10,margin:"14px 0",fontSize:12}}>
    <input type="checkbox" checked={accepted} onChange={e=>setAccepted(e.target.checked)}/>
    <span>Ich habe die <a href="/rechtliches/agb/" target="_blank" rel="noreferrer">AGB</a> und
