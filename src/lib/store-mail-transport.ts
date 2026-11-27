@@ -36,3 +36,12 @@ export async function sendStoreSmtpTest(testRecipient?:string){
  if(!validMailAddress(recipient))throw new Error("INVALID_TEST_RECIPIENT");
  return sendStoreOrderMail("received",recipient,{orderNumber:"TEST-VORSCHAU",customerName:"Ruby Hair Team",totalCents:0});
 }
+
+// Separate operational recipient. Never modify shop/customer mail routing.
+export async function sendSystemAlertMail(subject:string,text:string,id:string){
+ const recipient="enesunal700@gmail.com";
+ const c=await loadStoreMailSettings();
+ if(!c.ready||!c.password)throw Error("SMTP_NOT_CONFIGURED");
+ const smtp=nodemailer.createTransport({host:storeMailDefaults.host,port:storeMailDefaults.port,secure:false,requireTLS:true,auth:{user:storeMailDefaults.user,pass:c.password},tls:{servername:storeMailDefaults.host,minVersion:"TLSv1.2",rejectUnauthorized:true},connectionTimeout:10000,greetingTimeout:10000,socketTimeout:12000});
+ try{const result=await smtp.sendMail({from:{name:"Ruby Hair System",address:storeMailDefaults.from},to:recipient,subject:"[Ruby Hair] "+subject,text,messageId:`<rubyhair-system-${id}@rubyhair.de>`});if(!(result.accepted||[]).some(x=>x.toLowerCase()===recipient)||result.rejected?.length)throw Error("SMTP_NOT_ACCEPTED");return true}finally{smtp.close()}
+}

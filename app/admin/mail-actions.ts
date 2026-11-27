@@ -87,3 +87,10 @@ export async function sendStoreMailTestAction(form:FormData){
    redirect("/admin/benachrichtigungen?status=test-failed");
  }
 }
+
+export async function sendSystemAlertTestAction(){
+ if(!await isAdmin())redirect("/admin/login");
+ const {testSystemAlertMail}=await import("@/lib/system-alerts");
+ let status="system-test-failed";try{await testSystemAlertMail();status="system-test-sent"}catch{console.warn("RUBY_SYSTEM_MAIL_TEST_FAILED")}
+ redirect("/admin/system?mail="+status);
+}
