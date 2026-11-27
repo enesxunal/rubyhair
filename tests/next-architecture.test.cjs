@@ -600,8 +600,8 @@ test("Ruby Hair blonde and brunette editorial photography keeps the approved hom
  assert.ok(frontend.includes('WARM BRUNETTE'));
  assert.ok(!frontend.includes('src="/assets/ruby-hair-platinum-detail.webp"'));
  assert.ok(frontend.includes('<TapeInAtelier/>'));
- assert.ok(frontend.includes("<ShadeSelector/>"));
- assert.ok(frontend.indexOf('<TapeInAtelier/>')>frontend.indexOf('<ShadeSelector/>'));
+ assert.ok(frontend.includes("<ShadeSelector product={tape} verified={verified}/>"));
+ assert.ok(frontend.indexOf('<TapeInAtelier/>')>frontend.indexOf('<ShadeSelector product={tape} verified={verified}/>'));
  assert.ok(frontend.indexOf('<TapeInAtelier/>')<frontend.indexOf('className="brand-story'));
  const homePage=fs.readFileSync(path.join(base,"app/page.tsx"),"utf8");
  assert.ok(homePage.includes('tape-atelier.css'));
@@ -621,7 +621,7 @@ test("Tape-in lengths have measured labels everywhere, with no Kurz or Lang cate
    "src/lib/tape-in-lengths.ts","app/ratgeber/page.tsx"];
  assert.ok(fs.readFileSync(path.join(base,"src/components/site-shell.tsx"),"utf8").includes('storefrontNav'));
  for(const name of files){
-  const text=fs.readFileSync(path.join(base,name),"utf8");
+  const text=fs.readFileSync(path.join(base,name),"utf8")+(name==="src/components/home-frontend.tsx"?fs.readFileSync(path.join(base,"src/lib/tape-in-lengths.ts"),"utf8"):"");
   assert.ok(text.includes("45–50"),name+" must show short measured range");
   assert.ok(text.includes("55–60"),name+" must show long measured range");
   assert.doesNotMatch(text,/Tape-in\\s+(?:Kurz|Lang)\\b/i,name+" must not use old short/long labels");
@@ -730,7 +730,7 @@ test("Ruby Hair homepage uses approved editorial copy and removes the redundant 
  for(const old of ['Beauty is better','className="studio"','id="studio"','href="/#studio"','TAPE-IN ENTDECKEN'])
   assert.ok(!home.includes(old),"obsolete homepage section/link: "+old);
  assert.ok(home.indexOf('<TapeInAtelier/>')<home.indexOf('className="brand-story'));
- assert.ok(home.indexOf('<ShadeSelector/>')<home.indexOf('<InstagramHome posts={instagramPosts}/>'));
+ assert.ok(home.indexOf('<ShadeSelector product={tape} verified={verified}/>')<home.indexOf('<InstagramHome posts={instagramPosts}/>'));
  assert.ok(home.indexOf('<InstagramHome posts={instagramPosts}/>')<home.indexOf('<TapeInAtelier/>'));
 });
 
@@ -739,6 +739,9 @@ test("Ruby Hair homepage shows three equally prominent collection cards and a fu
  const css=fs.readFileSync(path.join(base,"src/styles/styles.css"),"utf8");
  const asset=path.join(base,"public/assets/ruby-home-keratin-hq.webp");
  assert.ok(home.includes('collection-grid rh-collection-trio'));
+ assert.ok(home.includes('Math.min(...available.map(v=>v.price))'));
+ assert.ok(home.includes('CollectionPrice product={tape} length={choice.key} verified={verified}'));
+ assert.ok(home.includes('CollectionPrice product={keratin} length="55-60-cm" verified={verified}'));
  assert.ok(home.includes('Entdecke deine <i>Extensions.</i>'));
  assert.ok(home.includes('className="rh-collection-card rh-collection-card-keratin"'));
  assert.ok(home.includes('href="/kollektionen/keratin-bondings/"'));

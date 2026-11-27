@@ -5,7 +5,7 @@ import Link from "next/link";
 import {useEffect,useRef,useState} from "react";
 import {Search,ShoppingBag,Menu,X,ArrowUpRight,ArrowRight,Instagram,Sparkles} from "lucide-react";
 import {useCart} from "@/components/cart-context";
-import {type Product} from "@/lib/catalog";
+import {euros,type Product} from "@/lib/catalog";
 import {tapeInLengths,tapeInLengthHref} from "@/lib/tape-in-lengths";
 import {storefrontNav,storefrontShopLinks,storefrontInfoLinks} from "@/lib/store-navigation";
 import CookieSettingsLink from "@/components/cookie-settings-link";
@@ -97,32 +97,11 @@ function HomeNavigation(){
   </>;
 }
 
-function ShadeSelector(){
+function ShadeSelector({product,verified}:{product?:Product;verified:boolean}){
   const [index,setIndex]=useState(0);
-  const section=useRef<HTMLElement>(null);
-  const [product,setProduct]=useState<Product|undefined>();
-  const [verified,setVerified]=useState(false);
-  useEffect(()=>{
-    const controller=new AbortController();
-    let started=false;
-    const load=async()=>{
-      if(started)return;started=true;
-      try{
-        const response=await fetch("/api/catalog",{signal:controller.signal,cache:"no-store"});
-        if(!response.ok)return;
-        const data=await response.json() as {source:string;products:Product[]};
-        if(data.source!=="postgresql"||!Array.isArray(data.products)||controller.signal.aborted)return;
-        setProduct(data.products.find(p=>p.slug==="tape-in-extensions"));setVerified(true);
-      }catch{/* The product page remains available for a fresh stock check. */}
-    };
-    if(!section.current||typeof IntersectionObserver==="undefined"){void load();return ()=>controller.abort();}
-    const observer=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting)){observer.disconnect();void load();}},{rootMargin:"240px"});
-    observer.observe(section.current);
-    return ()=>{observer.disconnect();controller.abort();};
-  },[]);
   const active=shades[index];
   const canBuy=Boolean(product?.variations.some(v=>v.color===active.color&&v.available&&v.purchasable));
-  return <section ref={section} id="shade" className="shade section-pad">
+  return <section id="shade" className="shade section-pad">
     <div className="container shade-grid">
       <div className="shade-visual rh-shade-gallery">
         <div className="rh-shade-gallery-main">
@@ -214,7 +193,36 @@ function HomeFooter(){
     </footer>
   </>;
 }
+function CollectionPrice({product,length,verified}:{product?:Product;length?:string;verified:boolean}){
+  const available=product?.variations.filter(v=>v.available&&v.purchasable&&(!length||v.length===length)&&Number.isFinite(v.price)&&v.price>0)||[];
+  return <div className="rh-home-product-price" aria-live="polite">
+    {available.length?<><span>ab</span> <strong>{euros(Math.min(...available.map(v=>v.price)))}</strong><small> / Packung</small></>:
+      <span>{verified?"Derzeit ausverkauft":"Preis im Shop ansehen"}</span>}
+  </div>;
+}
 export default function HomeFrontend({instagramPosts=[]}:{instagramPosts?:InstagramFeedPost[]}){
+  const section=useRef<HTMLElement>(null);
+  const [products,setProducts]=useState<Product[]>([]);
+  const [verified,setVerified]=useState(false);
+  useEffect(()=>{
+    const controller=new AbortController();
+    let started=false;
+    const load=async()=>{
+      if(started)return;started=true;
+      try{
+        const response=await fetch("/api/catalog",{signal:controller.signal,cache:"no-store"});
+        if(!response.ok)return;
+        const data=await response.json() as {source:string;products:Product[]};
+        if(data.source!=="postgresql"||!Array.isArray(data.products)||controller.signal.aborted)return;
+        setProducts(data.products);setVerified(true);
+      }catch{/* No invented price or stock; collection links stay usable. */}
+    };
+    if(!section.current||typeof IntersectionObserver==="undefined"){void load();return ()=>controller.abort();}
+    const observer=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting)){observer.disconnect();void load();}},{rootMargin:"600px"});
+    observer.observe(section.current);
+    return ()=>{observer.disconnect();controller.abort();};
+  },[]);
+  const tape=products.find(p=>p.slug==="tape-in-extensions"),keratin=products.find(p=>p.slug==="keratin-bondings");
   return <>
     <HomeNavigation/>
     <main id="main">
@@ -230,18 +238,21 @@ export default function HomeFrontend({instagramPosts=[]}:{instagramPosts?:Instag
         </div>
       </Link>
       <InfluencerStories/>
-      <section id="collections" className="collections rh-length-collection section-pad" aria-labelledby="rh-home-lengths">
+      <section id="collections" ref={section} className="collections rh-length-collection section-pad" aria-labelledby="rh-home-lengths">
         <div className="container">
           <div className="section-heading"><h2 id="rh-home-lengths">Entdecke deine <i>Extensions.</i></h2></div>
           <div className="collection-grid rh-collection-trio">
             {tapeInLengths.map((choice,index)=><Link prefetch={false} href={tapeInLengthHref(choice.key)} className={"rh-collection-card rh-collection-card-tape rh-collection-card-"+(index+1)} key={choice.key}>
-              <div className="collection-media"><img src={choice.image} alt={choice.alt} loading="lazy" decoding="async"/>
+              <div className="collection-media"><img src={choice.image} srcSet={choice.imageSrcSet} sizes="(max-width: 550px) 48vw, (max-width: 1000px) 48vw, 33vw" alt={choice.alt} loading="lazy" decoding="async"/>
                 <span className="rh-length-tag">{choice.label}</span>
                 <BlackFridayBadge/>
               </div>
               <div className="collection-caption">
                 <div className="rh-collection-card-copy"><span className="rh-collection-card-kicker">TAPE-IN EXTENSIONS</span>
-                  <h3>{index===0?<>Tape-in <i>45–50 cm.</i></>:<>Tape-in <i>55–60 cm.</i></>}</h3>
+                  <h3>Tape-in Extensions</h3>
+                  <span className="rh-home-product-spec">{choice.label} · {tape?.pack||"10 Tape-ins"}</span>
+                  <CollectionPrice product={tape} length={choice.key} verified={verified}/>
+                  <span className="rh-home-product-cta">Farbe wählen <ArrowUpRight size={15}/></span>
                 </div>
                 <span className="round-arrow" aria-hidden="true"><ArrowUpRight size={20}/></span>
               </div>
@@ -253,12 +264,16 @@ export default function HomeFrontend({instagramPosts=[]}:{instagramPosts?:Instag
               </div>
               <div className="collection-caption">
                 <div className="rh-collection-card-copy"><span className="rh-collection-card-kicker">KERATIN EXTENSIONS</span>
-                  <h3>Keratin <i>Bondings.</i></h3>
+                  <h3>Keratin Bondings</h3>
+                  <span className="rh-home-product-spec">55–60 cm · {keratin?.pack||"25 Bondings"}</span>
+                  <CollectionPrice product={keratin} length="55-60-cm" verified={verified}/>
+                  <span className="rh-home-product-cta">Farbe wählen <ArrowUpRight size={15}/></span>
                 </div>
                 <span className="round-arrow" aria-hidden="true"><ArrowUpRight size={20}/></span>
               </div>
             </Link>
           </div>
+          <p className="rh-home-price-note">Alle Preise inkl. 19 % MwSt., zzgl. <Link href="/versand-zahlung/">Versandkosten</Link>.</p>
         </div>
       </section>
       <section className="rh-keratin-editorial" aria-labelledby="rh-keratin-editorial-title">
@@ -274,7 +289,7 @@ export default function HomeFrontend({instagramPosts=[]}:{instagramPosts?:Instag
           </div>
         </div>
       </section>
-      <ShadeSelector/>
+      <ShadeSelector product={tape} verified={verified}/>
       <section className="rh-tape-originals" aria-labelledby="rh-tape-originals-title">
        <div className="container">
         <div className="rh-tape-originals-heading">
