@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import {createFluidAdapter,selfhostPoolConfig} from "./fluid-db-pool";
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -53,6 +54,13 @@ function selfhostDatabaseUrl(){
 
 export function getPrisma(){
   if(!databaseConfigured()) throw new Error("Ruby Hair PostgreSQL DATABASE_URL is not configured");
+  if(globalWithPrisma.rubyPrisma)return globalWithPrisma.rubyPrisma;
+  // Use the platform-aware pool only for the approved self-hosted production runtime.
+  // Explicit legacy mode is retained for a controlled rollback, never an automatic fallback.
+  if(process.env.RUBY_SELFHOST_DB&&process.env.VERCEL&&process.env.RUBY_DB_FLUID_POOL==="enabled"){
+    const {adapter}=createFluidAdapter(selfhostPoolConfig(process.env.RUBY_SELFHOST_DB));
+    return globalWithPrisma.rubyPrisma=new PrismaClient({adapter,log:["error"]});
+  }
   return globalWithPrisma.rubyPrisma ||= new PrismaClient({
     // Vercel lambdas must not open five direct PostgreSQL sessions each.
     // Preserve the configured pooler URL and any explicit connection settings.
