@@ -53,7 +53,7 @@ export async function runMetaConversions(orderId?:string){
  for(const row of rows){
   const allowed=await db.metaMeasurementConsent.findFirst({where:{consentHash:row.consentHash,revokedAt:null,expiresAt:{gt:new Date()}},select:{consentHash:true}});
   if(!allowed){await db.metaConversionContext.updateMany({where:{orderId:row.orderId,status:"pending"},data:{status:"revoked",fbp:null,fbc:null,userAgent:""}});continue;}
-  const order=await db.order.findFirst({where:{id:row.orderId,testOnly:false},select:{id:true,status:true,currency:true,totalCents:true,giftAppliedCents:true,invoice:{select:{id:true}},payments:{where:{eventType:"PAYMENT.CAPTURE.COMPLETED",provider:{in:["paypal","klarna"]}},orderBy:{receivedAt:"asc"},take:1,select:{receivedAt:true}}}});
+  const order=await db.order.findFirst({where:{id:row.orderId,testOnly:false},select:{id:true,status:true,currency:true,totalCents:true,giftAppliedCents:true,invoice:{select:{id:true}},payments:{where:{eventType:{in:["PAYMENT.CAPTURE.COMPLETED","KLARNA.CAPTURE.COMPLETED"]},provider:{in:["paypal","klarna"]}},orderBy:{receivedAt:"asc"},take:1,select:{receivedAt:true}}}});
   if(!order||["cancelled","refunded"].includes(order.status)){await db.metaConversionContext.updateMany({where:{orderId:row.orderId,status:"pending"},data:{status:"closed",fbp:null,fbc:null,userAgent:""}});continue;}
   if(!order.invoice||!order.payments.length){held++;await db.metaConversionContext.updateMany({where:{orderId:row.orderId,status:"pending"},data:{nextAttempt:new Date(now.getTime()+300000)}});continue;}
   const payload=conversionPayload({...order,secret:process.env.SESSION_SECRET!,testOnly:false,captureAt:order.payments[0].receivedAt,contextCreated:row.createdAt,fbp:row.fbp,fbc:row.fbc,userAgent:row.userAgent,now});

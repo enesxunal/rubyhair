@@ -61,3 +61,17 @@ test("server checks scoped HttpOnly consent, active ledger, price and rate limit
  assert.ok(!route.includes("email:")&&!route.includes("orderId:")&&!route.includes("test_event_code"));
  assert.ok(consent.includes("httpOnly:true")&&consent.includes("input.funnel===true")&&consent.includes('META_FUNNEL_COOKIE,""'));
 });
+
+test("production proxy permits only POST for the consent-gated funnel endpoint",()=>{
+ const proxy=readFileSync("proxy.ts","utf8");
+ assert.ok(proxy.split("const publicPostApis=")[1].split("\n")[0].includes('"/api/meta/funnel"'));
+ assert.ok(!proxy.split("const publicGetApis=")[1].split("\n")[0].includes('"/api/meta/funnel"'));
+});
+test("verified Klarna capture counts, authorization alone does not; admin delivery has no secrets",()=>{
+ const purchase=readFileSync("src/lib/meta-conversions.ts","utf8"),journey=readFileSync("src/lib/admin-journey.ts","utf8");
+ assert.ok(purchase.includes("KLARNA.CAPTURE.COMPLETED"));
+ assert.ok(journey.includes("KLARNA.CAPTURE.COMPLETED")&&journey.includes("FROM invoices")&&journey.includes("payment_confirmed"));
+ const report=readFileSync("src/lib/admin-meta-delivery.ts","utf8");
+ assert.ok(report.includes('groupBy({by:["status"]')&&report.includes("Boolean(process.env.RUBY_META_CAPI_TOKEN)"));
+ assert.ok(readFileSync("app/admin/analytics/page.tsx","utf8").includes("<AdminMetaDeliveryPanel/>"));
+});

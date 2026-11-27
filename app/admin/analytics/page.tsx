@@ -13,6 +13,7 @@ import {
 import {loadAnalyticsReport} from "@/lib/admin-analytics-server";
 import {loadCommerceReportSafely} from "@/lib/admin-commerce-server";
 import {loadAttributionReport} from "@/lib/admin-purchase-attribution";
+import AdminMetaDeliveryPanel from "@/components/admin-meta-delivery-panel";
 import AdminJourneyPanel from "@/components/admin-journey-panel";
 import AdminCommercePanel from "@/components/admin-commerce-panel";
 import AdminAnalyticsRefresh from "@/components/admin-analytics-refresh";
@@ -201,6 +202,7 @@ export default async function AdminAnalytics({searchParams}:{searchParams:Promis
    </section>
    <EventFunnel report={report} enabled={enabled}/>
    <AdminJourneyPanel/>
+   <AdminMetaDeliveryPanel/>
   </div>
   <AdminAnalyticsChannels report={report} enabled={enabled}/>
   <section className="rh-adv-audit" aria-label="Datenqualität und Messmethode">

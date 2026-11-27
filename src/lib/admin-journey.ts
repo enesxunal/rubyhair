@@ -12,7 +12,7 @@ export async function loadRecentJourneys(){
  )
  SELECT e.session::text,e.event,e.method,e.stage,e.code,e.source,e.device,e."createdAt",
  CASE WHEN o."testOnly"=false THEN o.status END AS "orderStatus",
- CASE WHEN o."testOnly"=false THEN EXISTS(SELECT 1 FROM payment_events p WHERE p."orderId"=o.id AND p."eventType"='PAYMENT.CAPTURE.COMPLETED' AND p.provider<>'manual') END AS captured
+ CASE WHEN o."testOnly"=false THEN EXISTS(SELECT 1 FROM payment_events p WHERE p."orderId"=o.id AND p."eventType" IN ('PAYMENT.CAPTURE.COMPLETED','KLARNA.CAPTURE.COMPLETED') AND p.provider IN ('paypal','klarna') AND o.status IN ('payment_confirmed','preparing','shipped','delivered') AND EXISTS(SELECT 1 FROM invoices i WHERE i."orderId"=o.id)) END AS captured
  FROM recent r JOIN LATERAL (
  SELECT * FROM checkout_journey_events e WHERE e.session=r.session AND e."createdAt">=NOW()-INTERVAL '7 days' ORDER BY e."createdAt" DESC LIMIT 40
  ) e ON TRUE LEFT JOIN orders o ON o.id=e."orderId"
