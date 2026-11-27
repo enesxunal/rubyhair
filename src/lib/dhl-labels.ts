@@ -40,12 +40,10 @@ async function credentials():Promise<DhlCredentials>{
  return Object.fromEntries(fields.map((f,i)=>[f,parts[i]])) as DhlCredentials;
 }
 
-export async function createDhlShipmentLabel(input:{orderNumber:string;recipient:ShippingAddress},send:typeof fetch=fetch,manual=false){
+export async function createDhlShipmentLabel(input:{orderNumber:string;recipient:ShippingAddress;weightG:number},send:typeof fetch=fetch,manual=false){
  if(!manual&&process.env.RUBY_DHL_LIVE_LABELS_ENABLED!=="true")throw new DhlShipmentError("DHL_LABEL_CREATION_DISABLED");
  if(process.env.RUBY_DHL_SENDER_APPROVED!=="true")throw new DhlShipmentError("DHL_SENDER_NOT_APPROVED");
- const raw=process.env.RUBY_DHL_WEIGHT_G||"";
- if(!/^[1-9]\d{0,4}$/.test(raw))throw new DhlShipmentError("DHL_WEIGHT_NOT_CONFIGURED");
- const weightG=Number(raw),creds=await credentials();
+ const weightG=input.weightG,creds=await credentials();
  const date=new Intl.DateTimeFormat("en-CA",{year:"numeric",month:"2-digit",day:"2-digit",timeZone:"Europe/Berlin"}).format(new Date());
  const payload=buildDhlShipmentBody({billingNumber:creds.billingNumber,orderNumber:input.orderNumber,recipient:input.recipient,weightG,shipDate:date});
  const auth=buildDhlTokenRequest("live",creds);
@@ -81,7 +79,6 @@ export async function createDhlShipmentLabel(input:{orderNumber:string;recipient
  * The validate=true DHL endpoint is distinct from the chargeable POST /orders.
  */
 export async function validateDhlLiveTemplateOnly(send:typeof fetch=fetch):Promise<"valid"|"unauthorized"|"rejected"|"unavailable">{
- if(process.env.RUBY_DHL_WEIGHT_G!=="500")return "unavailable";
  try{
   const creds=await credentials();
   const auth=buildDhlTokenRequest("live",creds);

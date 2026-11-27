@@ -3,6 +3,7 @@ import {redirect} from "next/navigation";
 import {revalidatePath} from "next/cache";
 import {isAdmin} from "@/lib/admin-auth";
 import {getPrisma} from "@/lib/prisma";
+import {measuredPackageWeightG} from "@/lib/dhl-weight";
 import {createDhlShipmentLabel,cancelDhlShipment,type ShippingAddress} from "@/lib/dhl-labels";
 
 const orderUrl="/admin/bestellungen?dhl=";
@@ -22,16 +23,17 @@ export async function createOrderDhlLabelAction(form:FormData){
  const db=getPrisma();
  let result="review";
  try{
-  const order=await db.order.findUnique({where:{id},include:{payments:true,shippingJob:true,lines:{select:{id:true}}}});
-  if(!order||order.testOnly||!order.lines.length||!order.paymentReference||!["payment_confirmed","preparing"].includes(order.status)||order.trackingNumber||
-     !order.payments.some(p=>p.eventType==="PAYMENT.CAPTURE.COMPLETED"&&p.provider!=="manual"&&p.providerEventId.length>0))throw new Error("DHL_ORDER_NOT_ELIGIBLE");
+  const order=await db.order.findUnique({where:{id},include:{payments:true,shippingJob:true,lines:{select:{quantity:true}}}});
+  if(!order||order.testOnly||!order.lines.length||!order.paymentReference||order.trackingNumber||
+     !(order.status==="payment_authorized"?order.paymentReference.startsWith("KLARNA-HPP:")&&/^Klarna authorized: [0-9a-f-]{36}$/i.test(order.fulfillmentNote||""):["payment_confirmed","preparing"].includes(order.status)&&order.payments.some(p=>p.eventType==="PAYMENT.CAPTURE.COMPLETED"&&p.provider!=="manual"&&p.providerEventId.length>0)))throw new Error("DHL_ORDER_NOT_ELIGIBLE");
   const recipient=address(order.shippingAddress);
+  const weightG=measuredPackageWeightG(order.lines,form.get("weightG"));
   const job=order.shippingJob;
   if(!job||!["waiting_credentials","canceled"].includes(job.status)||job.trackingNumber||job.labelPdf)throw new Error("DHL_JOB_NOT_ELIGIBLE");
   const claim=await db.shippingJob.updateMany({where:{id:job.id,status:job.status,trackingNumber:null,labelPdf:null,order:{is:{status:order.status,trackingNumber:null,testOnly:false}}},data:{status:"submitting",attemptCount:{increment:1},lastError:null}});
   if(claim.count!==1)throw new Error("DHL_CONCURRENT_REQUEST");
   try{
-   const label=await createDhlShipmentLabel({orderNumber:String(order.orderNumber),recipient},fetch,true);
+   const label=await createDhlShipmentLabel({orderNumber:String(order.orderNumber),recipient,weightG},fetch,true);
    await db.$transaction(async tx=>{
     const changed=await tx.shippingJob.updateMany({where:{id:job.id,status:"submitting"},data:{status:"awaiting_handover",trackingNumber:label.trackingNumber,labelPdf:new Uint8Array(label.labelPdf),lastError:null}});
     if(changed.count!==1)throw new Error("DHL_CONCURRENT_UPDATE");
@@ -55,7 +57,7 @@ export async function cancelOrderDhlLabelAction(form:FormData){
  try{
   const order=await db.order.findUnique({where:{id},include:{shippingJob:true}});
   const job=order?.shippingJob;
-  if(!order||order.testOnly||!["payment_confirmed","preparing"].includes(order.status)||!job||!["label_created","awaiting_handover"].includes(job.status)||!job.trackingNumber||order.trackingNumber!==job.trackingNumber)throw new Error("DHL_CANCEL_NOT_ELIGIBLE");
+  if(!order||order.testOnly||!["payment_confirmed","preparing","payment_authorized"].includes(order.status)||!job||!["label_created","awaiting_handover"].includes(job.status)||!job.trackingNumber||order.trackingNumber!==job.trackingNumber)throw new Error("DHL_CANCEL_NOT_ELIGIBLE");
   const tracking=job.trackingNumber;
   const claim=await db.shippingJob.updateMany({where:{id:job.id,status:job.status,trackingNumber:tracking,order:{is:{status:order.status,trackingNumber:tracking,testOnly:false}}},data:{status:"canceling"}});
   if(claim.count!==1)throw new Error("DHL_CONCURRENT_CANCEL");

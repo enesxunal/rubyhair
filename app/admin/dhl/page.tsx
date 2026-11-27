@@ -4,6 +4,7 @@ import {redirect} from "next/navigation";
 import {ChevronDown, CircleAlert, CircleCheck, PackageCheck, ShieldCheck} from "lucide-react";
 import {isAdmin} from "@/lib/admin-auth";
 import {getPrisma} from "@/lib/prisma";
+import {packageTareG} from "@/lib/dhl-weight";
 import {getDhlIntegrationReadiness} from "@/lib/dhl-api";
 import {verifyDhlCredentialsAction,validateDhlTemplateAction} from "./actions";
 import AdminShell from "../admin-shell";
@@ -36,9 +37,8 @@ export default async function DhlStatus({searchParams}:{searchParams:Promise<{st
   getDhlIntegrationReadiness("live"),
   getPrisma().order.findFirst({where:{testOnly:false,invoice:{isNot:null}},orderBy:{createdAt:"desc"},select:{orderNumber:true,status:true,totalCents:true,trackingNumber:true,shippingJob:{select:{status:true,trackingNumber:true,labelPdf:true}},invoice:{select:{invoiceNumber:true}}}})
  ]);
- const liveEnabled=process.env.RUBY_DHL_LIVE_LABELS_ENABLED==="true";
- const weightGrams=Number(process.env.RUBY_DHL_WEIGHT_G||"0");
- const weightReady=Number.isSafeInteger(weightGrams)&&weightGrams>0&&weightGrams<=31500;
+ const tare=packageTareG();
+ const liveEnabled=process.env.RUBY_DHL_LIVE_LABELS_ENABLED==="true"&&process.env.RUBY_DHL_SENDER_APPROVED==="true"&&tare!==null;
  const senderApproved=process.env.RUBY_DHL_SENDER_APPROVED==="true";
  const validated=params.validation==="valid";
  const validationText=params.validation?validationStatuses[params.validation]:undefined;
@@ -59,7 +59,7 @@ export default async function DhlStatus({searchParams}:{searchParams:Promise<{st
    {loginText&&<p role="status" className={params.status==="authenticated"?"rh-admin-success":"rh-admin-warning"}>{loginText}</p>}
    {sandboxText&&<p role="status" className="rh-admin-warning">{sandboxText}</p>}
    <div className="rh-dhl-main-action">
-    <form action={validateDhlTemplateAction}><button type="submit" className="rh-dhl-primary-btn" disabled={!readiness.credentialsComplete||!weightReady}>DHL-Versand prüfen</button></form>
+    <form action={validateDhlTemplateAction}><button type="submit" className="rh-dhl-primary-btn" disabled={!readiness.credentialsComplete}>DHL-Versand prüfen</button></form>
     <p>Kostenloser Verbindungstest. Kein Versandlabel und keine Abbuchung.</p>
    </div>
    <nav className="rh-dhl-links" aria-label="DHL Weitere Aktionen"><Link href="/admin/zahlungen">Zugangsdaten bearbeiten</Link><Link href="/admin/bestellungen">Bestellungen öffnen</Link></nav>
@@ -83,7 +83,7 @@ export default async function DhlStatus({searchParams}:{searchParams:Promise<{st
     <div className="rh-dhl-test-item"><div><strong>Kostenloses Testetikett (Sandbox)</strong><p>Verwendet ausschließlich Testadressen, ohne Kundenauftrag. Die DHL-Sandbox kann den Test bei fehlender API-Freigabe ablehnen.</p></div><form action="/api/admin/dhl-test-label" method="post" target="_blank"><button type="submit" className="rh-dhl-secondary-btn" disabled={!readiness.credentialsComplete}>Test-PDF erstellen</button></form></div>
     <details className="rh-dhl-technical"><summary>Gespeicherte Einstellungen anzeigen <ChevronDown size={16}/></summary>
      <div className="rh-dhl-tech-grid"><div><strong>API-Zugang</strong><ul>{Object.keys(labels).map(field=><li key={field}>{labels[field]}: {readiness.missing.includes(field as typeof readiness.missing[number])?"Fehlt":"Gespeichert"}</li>)}</ul></div>
-      <div><strong>Sendungsvorlage</strong><p>Standardgewicht: {weightReady?weightGrams+" g (Schätzwert)":"Fehlt"}</p><p>Absender-Schalter: {senderApproved?"Freigegeben":"Nicht freigegeben"}</p><p>Automatikbeginn: {process.env.RUBY_DHL_AUTOMATION_START_AT||"Nicht festgelegt"}</p></div></div>
+      <div><strong>Sendungsvorlage</strong><p>Artikelgewicht: 25 g pro Stück. Verpackungsgewicht: {tare===null?"Nicht bestätigt – Automatik gesperrt":tare+" g"}</p><p>Absender-Schalter: {senderApproved?"Freigegeben":"Nicht freigegeben"}</p><p>Automatikbeginn: {process.env.RUBY_DHL_AUTOMATION_START_AT||"Nicht festgelegt"}</p></div></div>
      <p>Vorgesehener Absender: Ruby Hair, Klara Strasse 19, 45130 Essen. Tatsächliche Versand- und Retourenadresse vor realem Etikett bestätigen. API-Zugangsdaten bleiben verschlüsselt.</p>
      <p><a href="https://developer.dhl.com/" target="_blank" rel="noopener noreferrer">DHL Developer Portal</a> · <a href="https://geschaeftskunden.dhl.de/" target="_blank" rel="noopener noreferrer">Geschäftskundenportal</a></p>
     </details>

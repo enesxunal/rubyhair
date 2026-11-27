@@ -3,6 +3,7 @@ import {getPrisma} from "@/lib/prisma";
 import {releaseVerifiedUnpaidReservation} from "@/lib/stock-reservation-release";
 import {revalidateTag} from "next/cache";
 import {paypalReservationReleasable,klarnaReservationReleasable} from "@/lib/stock-reservation-policy";
+import {packageTareG,packageWeightG} from "@/lib/dhl-weight";
 import {getDhlIntegrationReadiness} from "@/lib/dhl-api";
 import {createDhlShipmentLabel,validateDhlLiveTemplateOnly,type ShippingAddress} from "@/lib/dhl-labels";
 import {sendStoreOrderMail} from "@/lib/store-mail-transport";
@@ -90,7 +91,8 @@ export async function captureAuthorizedKlarna(orderId:string){
  * only when merchant-supplied DHL contract credentials and package weight exist.
  * An ambiguous label response is held for manual reconciliation to avoid buying two labels. */
 export async function createQueuedDhlLabels(limit=5){
- if(process.env.RUBY_DHL_LIVE_LABELS_ENABLED!=="true"||process.env.RUBY_DHL_SENDER_APPROVED!=="true"||!process.env.RUBY_DHL_WEIGHT_G)return {created:0,skipped:"DHL_LABELS_DISABLED"};
+ if(process.env.RUBY_DHL_LIVE_LABELS_ENABLED!=="true"||process.env.RUBY_DHL_SENDER_APPROVED!=="true")return {created:0,skipped:"DHL_LABELS_DISABLED"};
+ const tare=packageTareG();if(tare===null)return {created:0,skipped:"DHL_PACKAGING_WEIGHT_NOT_CONFIGURED"};
  // No retrospective bookings for orders placed before the automation launch.
  // A live label can incur charges; old orders require manual reconciliation.
  const startAt=process.env.RUBY_DHL_AUTOMATION_START_AT||"";
@@ -103,19 +105,23 @@ export async function createQueuedDhlLabels(limit=5){
  // accepts the current contract and sender template.
  const validation=await validateDhlLiveTemplateOnly();
  if(validation!=="valid")return {created:0,skipped:"DHL_VALIDATION_"+validation.toUpperCase()};
- const rows=await db().shippingJob.findMany({where:{status:"waiting_credentials"},orderBy:{createdAt:"asc"},take:Math.max(1,Math.min(limit,10))});
+ const rows=await db().shippingJob.findMany({where:{status:"waiting_credentials",trackingNumber:null,labelPdf:null,order:{is:{testOnly:false,createdAt:{gte:new Date(startAt)},trackingNumber:null,status:{in:["payment_confirmed","payment_authorized","preparing"]}}}},orderBy:{createdAt:"asc"},take:Math.max(1,Math.min(limit,10))});
  let created=0;
  for(const job of rows){
-  const order=await db().order.findUnique({where:{id:job.orderId}});
+  const order=await db().order.findUnique({where:{id:job.orderId},include:{lines:{select:{quantity:true}},payments:true}});
   if(!order||order.testOnly||order.createdAt.getTime()<Date.parse(startAt)||
     !(["payment_confirmed","payment_authorized","preparing"].includes(order.status)))continue;
-  const claim=await db().shippingJob.updateMany({where:{id:job.id,status:"waiting_credentials",trackingNumber:null},data:{status:"submitting",attemptCount:{increment:1}}});
+  if(order.trackingNumber||!order.lines.length||!order.paymentReference||!(order.status==="payment_authorized"?order.paymentReference.startsWith("KLARNA-HPP:")&&/^Klarna authorized: [0-9a-f-]{36}$/i.test(order.fulfillmentNote||""):order.payments.some(p=>p.eventType==="PAYMENT.CAPTURE.COMPLETED"&&p.provider!=="manual"&&p.providerEventId.length>0)))continue;
+  let weightG:number;try{weightG=packageWeightG(order.lines,tare)}catch{continue}
+  const claim=await db().shippingJob.updateMany({where:{id:job.id,status:"waiting_credentials",trackingNumber:null,labelPdf:null,order:{is:{status:order.status,trackingNumber:null,testOnly:false}}},data:{status:"submitting",attemptCount:{increment:1}}});
   if(claim.count!==1)continue;
   try{
-   const label=await createDhlShipmentLabel({orderNumber:String(order.orderNumber),recipient:recipientAddress(order.shippingAddress)});
+   const label=await createDhlShipmentLabel({orderNumber:String(order.orderNumber),recipient:recipientAddress(order.shippingAddress),weightG});
    await db().$transaction(async tx=>{
-    await tx.shippingJob.update({where:{id:job.id},data:{status:"label_created",trackingNumber:label.trackingNumber,labelPdf:new Uint8Array(label.labelPdf),lastError:null}});
-    await tx.order.update({where:{id:order.id},data:{trackingCarrier:"DHL",trackingNumber:label.trackingNumber}});
+    const booked=await tx.shippingJob.updateMany({where:{id:job.id,status:"submitting",trackingNumber:null},data:{status:"label_created",trackingNumber:label.trackingNumber,labelPdf:new Uint8Array(label.labelPdf),lastError:null}});
+    if(booked.count!==1)throw new Error("DHL_CONCURRENT_UPDATE");
+    const updated=await tx.order.updateMany({where:{id:order.id,status:order.status,trackingNumber:null},data:{trackingCarrier:"DHL",trackingNumber:label.trackingNumber}});
+    if(updated.count!==1)throw new Error("DHL_ORDER_CHANGED");
    });
    created++;
   }catch(e){

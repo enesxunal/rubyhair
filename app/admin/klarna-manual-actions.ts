@@ -30,7 +30,7 @@ export async function confirmManualKlarnaHandoverAction(data:FormData){
      !/^Klarna authorized: [0-9a-f-]{36}$/i.test(before.fulfillmentNote||""))
     throw new Error("UNVERIFIED_KLARNA_ORDER");
   if(before.status==="shipped"&&before.trackingNumber===tracking)return;
-  if(!["payment_authorized","payment_confirmed"].includes(before.status)||
+  if(!["payment_authorized","payment_confirmed"].includes(before.status)||(before.trackingNumber&&before.trackingNumber!==tracking)||
      ["manual_shipped","submitting","canceling","needs_review"].includes(before.shippingJob?.status||"")||
      (["label_created","awaiting_handover"].includes(before.shippingJob?.status||"")&&before.shippingJob?.trackingNumber!==tracking))
     throw new Error("NOT_ELIGIBLE_FOR_MANUAL_HANDOVER");
@@ -47,7 +47,7 @@ export async function confirmManualKlarnaHandoverAction(data:FormData){
   requireOrderTransition("preparing","shipped","fulfillment");
   await db.$transaction(async tx=>{
    const prepared=await tx.order.updateMany({
-    where:{id,status:"payment_confirmed",testOnly:false,trackingNumber:null},
+    where:{id,status:"payment_confirmed",testOnly:false,trackingNumber:before.trackingNumber===tracking?tracking:null},
     data:{status:"preparing"}
    });
    if(prepared.count!==1)throw new Error("CONCURRENT_HANDOVER");

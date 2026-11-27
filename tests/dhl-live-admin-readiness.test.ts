@@ -53,7 +53,7 @@ test("DHL label creation never charges Klarna before physical handover",()=>{
  assert.match(orderUi,/readOnly=\{\["label_created","awaiting_handover"\]/);
 });
 
-test("DHL fulfillment defaults to 500g but never purchases old orders or books without explicit sender approval",()=>{
+test("DHL fulfillment validates a 500g template but never purchases old orders or books without explicit sender approval",()=>{
  const label=read("src/lib/dhl-labels.ts");
  const worker=read("src/lib/customer-automation.ts");
  const dhlAction=read("app/admin/dhl/actions.ts");
@@ -122,4 +122,17 @@ test("Manual DHL purchase and cancellation require admin approval and isolate am
  assert.match(view,/Versandetikett erstellen/);
  assert.match(view,/Versandetikett stornieren/);
  assert.doesNotMatch(action,/captureAuthorizedKlarna|deliverQueuedOrderEmails/);
+});
+
+test("DHL actual weights use 25g per item plus confirmed packaging",async()=>{
+ const {productWeightG,packageWeightG,packageTareG,measuredPackageWeightG}=await import("../src/lib/dhl-weight");
+ assert.equal(productWeightG([{quantity:6}]),150);
+ assert.equal(packageWeightG([{quantity:2},{quantity:4}],100),250);
+ assert.equal(packageTareG(""),null);
+ assert.equal(packageTareG("0"),null);
+ assert.equal(packageTareG("100"),100);
+ assert.equal(measuredPackageWeightG([{quantity:6}],"230"),230);
+ assert.throws(()=>measuredPackageWeightG([{quantity:6}],"150"));
+ assert.throws(()=>packageWeightG([{quantity:1260}],1));
+ assert.throws(()=>productWeightG([{quantity:0}]));
 });
