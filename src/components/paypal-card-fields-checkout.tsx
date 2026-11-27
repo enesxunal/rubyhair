@@ -1,4 +1,5 @@
 "use client";
+import {journeyHeaders,trackJourney} from "@/lib/journey-client";
 import {reportCheckoutDiagnostic} from "@/lib/checkout-diagnostics-client";
 import {useEffect,useRef,useState} from "react";
 import type {CartLine} from "@/components/cart-context";
@@ -81,7 +82,8 @@ export default function PayPalCardFieldsCheckout({agreed,claimPayment,releasePay
   let reference:""|string="";
   let checkoutRef:{orderId:string;paypalOrderId:string;cardState:string}|null=null;
   try{
-   const created=await fetch("/api/checkout",{method:"POST",credentials:"same-origin",cache:"no-store",headers:{"Content-Type":"application/json"},
+   trackJourney("payment_attempt",{method:"card"});
+   const created=await fetch("/api/checkout",{method:"POST",credentials:"same-origin",cache:"no-store",headers:{"Content-Type":"application/json",...journeyHeaders()},
     body:JSON.stringify({key:keyRef.current,provider:"paypal",paymentExperience:"card",lines,gifts:[],shipping:address.shipping,billing:address.billing,email:address.email,couponCode,consent:true})});
    const order=await created.json() as {orderId?:string;paypalOrderId?:string;cardState?:string;amountCents?:number;paymentExperience?:string;retrySafe?:boolean};
    if(!created.ok&&order.retrySafe===true){keyRef.current=null;setLocked(false);releasePayment();setError("Bitte Angaben oder Warenkorb prüfen und erneut versuchen.");return}

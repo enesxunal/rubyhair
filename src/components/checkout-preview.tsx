@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import {trackJourney} from "@/lib/journey-client";
 import {reportCheckoutDiagnostic} from "@/lib/checkout-diagnostics-client";
 import {useEffect,useRef,useState,type ReactNode} from "react";
 import {giftCartTotal} from "@/lib/gift-cards/cart-schema";
@@ -50,7 +51,10 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
   const releasePayment=()=>{paymentAttempt.current=false};
   const [paymentConsent,setPaymentConsent]=useState(false);
   const [paymentChoice,setPaymentChoice]=useState<PaymentChoice>(checkoutMode==="klarna_public"?"klarna":"paypal");
+  const selectPayment=(method:PaymentChoice)=>{setPaymentChoice(method);trackJourney("payment_selected",{method})};
   const [validatedAddress,setValidatedAddress]=useState<CheckoutAddressData|null>(null);
+  const addressReady=useRef(false);
+  useEffect(()=>{if(validatedAddress&&!addressReady.current){addressReady.current=true;trackJourney("address_ready")}},[validatedAddress]);
   const [giftInput,setGiftInput]=useState("");
   const [appliedGift,setAppliedGift]=useState<{code:string;balanceCents:number}|null>(null);
   const [giftError,setGiftError]=useState("");
@@ -130,16 +134,16 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
           </div>}
           {checkoutMode==="disabled"&&!liveTest&&!oneEuroCart&&<div className="rh-payment-action-area"><p>Die letzte Freigabe für den regulären Kauf steht noch aus. Bis dahin wird keine Bestellung ausgelöst.</p></div>}
           {regularCheckout&&<div className="rh-payment-method-list" aria-label="Zahlungsarten">
-            {checkoutMode!=="klarna_public"&&<PaymentRow name="PayPal" description="Sicher mit PayPal bezahlen" logos={[{src:"/assets/payment-brands/paypal-wordmark.svg",alt:"PayPal"}]} selected={effectiveChoice==="paypal"} onSelect={()=>setPaymentChoice("paypal")}>
+            {checkoutMode!=="klarna_public"&&<PaymentRow name="PayPal" description="Sicher mit PayPal bezahlen" logos={[{src:"/assets/payment-brands/paypal-wordmark.svg",alt:"PayPal"}]} selected={effectiveChoice==="paypal"} onSelect={()=>selectPayment("paypal")}>
               <CustomerPaymentSubmit agreed={paymentConsent} claimPayment={claimPayment} releasePayment={releasePayment} method="paypal" lines={lines} gifts={gifts} address={validatedAddress} cartReady={canPay} totalCents={remainingCents} giftCode={gifts.length?undefined:appliedGift?.code} couponCode={lines.length?couponCode||undefined:undefined}/>
             </PaymentRow>}
-            {cardAvailable&&<PaymentRow name="Kredit- / Debitkarte" description="Visa, Mastercard oder American Express" logos={[{src:"/assets/payment-brands/visa.svg",alt:"Visa"},{src:"/assets/payment-brands/reference/master.svg",alt:"Mastercard"},{src:"/assets/payment-brands/reference/american_express.svg",alt:"American Express"}]} selected={effectiveChoice==="card"} onSelect={()=>setPaymentChoice("card")}>
+            {cardAvailable&&<PaymentRow name="Kredit- / Debitkarte" description="Visa, Mastercard oder American Express" logos={[{src:"/assets/payment-brands/visa.svg",alt:"Visa"},{src:"/assets/payment-brands/reference/master.svg",alt:"Mastercard"},{src:"/assets/payment-brands/reference/american_express.svg",alt:"American Express"}]} selected={effectiveChoice==="card"} onSelect={()=>selectPayment("card")}>
               <PayPalCardFieldsCheckout agreed={paymentConsent} claimPayment={claimPayment} releasePayment={releasePayment} lines={lines} address={validatedAddress} cartReady={canPay} totalCents={remainingCents} couponCode={couponCode||undefined}/>
             </PaymentRow>}
-            {!gifts.length&&!appliedGift&&<PaymentRow name="Klarna" description="Zahlung mit Klarna" logos={[{src:"/assets/payment-brands/reference/klarna.svg",alt:"Klarna"}]} selected={effectiveChoice==="klarna"} onSelect={()=>setPaymentChoice("klarna")}>
+            {!gifts.length&&!appliedGift&&<PaymentRow name="Klarna" description="Zahlung mit Klarna" logos={[{src:"/assets/payment-brands/reference/klarna.svg",alt:"Klarna"}]} selected={effectiveChoice==="klarna"} onSelect={()=>selectPayment("klarna")}>
               <CustomerPaymentSubmit agreed={paymentConsent} claimPayment={claimPayment} releasePayment={releasePayment} method="klarna" lines={lines} address={validatedAddress} cartReady={canPay} totalCents={remainingCents} couponCode={couponCode||undefined}/>
             </PaymentRow>}
-            {(applePayEnabled||googlePayEnabled)&&checkoutMode!=="klarna_public"&&lines.length>0&&!gifts.length&&!appliedGift&&remainingCents>0&&<PayPalWalletCheckout accepted={paymentConsent} claimPayment={claimPayment} releasePayment={releasePayment} lines={lines} address={validatedAddress} cartReady={canPay} totalCents={remainingCents} couponCode={couponCode||undefined} appleEnabled={applePayEnabled} googleEnabled={googlePayEnabled} chosenWallet={effectiveChoice==="apple_pay"||effectiveChoice==="google_pay"?effectiveChoice:null} onSelectWallet={setPaymentChoice}/>}
+            {(applePayEnabled||googlePayEnabled)&&checkoutMode!=="klarna_public"&&lines.length>0&&!gifts.length&&!appliedGift&&remainingCents>0&&<PayPalWalletCheckout accepted={paymentConsent} claimPayment={claimPayment} releasePayment={releasePayment} lines={lines} address={validatedAddress} cartReady={canPay} totalCents={remainingCents} couponCode={couponCode||undefined} appleEnabled={applePayEnabled} googleEnabled={googlePayEnabled} chosenWallet={effectiveChoice==="apple_pay"||effectiveChoice==="google_pay"?effectiveChoice:null} onSelectWallet={selectPayment}/>}
           </div>}
           </div>
         </section>

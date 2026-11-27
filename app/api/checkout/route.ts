@@ -1,3 +1,4 @@
+import {recordJourneyCheckout} from "@/lib/journey-server";
 import {recordPurchaseAttribution} from "@/lib/purchase-attribution";
 import {rememberMetaCheckout} from "@/lib/meta-conversions";
 import {recordCheckoutDiagnostic} from "@/lib/checkout-diagnostics";
@@ -14,7 +15,7 @@ export const runtime="nodejs",dynamic="force-dynamic";
 const headers={"Cache-Control":"no-store","X-Content-Type-Options":"nosniff"};
 export async function POST(req:NextRequest){
  let diagnosticMethod:DiagnosticMethod="unknown";
- const reject=(code:string,status:number,retrySafe?:boolean)=>{after(()=>recordCheckoutDiagnostic(diagnosticMethod,"create",code,"server"));return NextResponse.json({error:code,retrySafe},{status,headers});};
+ const reject=(code:string,status:number,retrySafe?:boolean)=>{after(()=>recordCheckoutDiagnostic(diagnosticMethod,"create",code,"server"));after(()=>recordJourneyCheckout(req,diagnosticMethod,undefined,code));return NextResponse.json({error:code,retrySafe},{status,headers});};
  const mode=publicCheckoutMode();
  if(mode==="disabled"||mode==="admin_test"&&!await isAdmin())
   return NextResponse.json({error:"CHECKOUT_NOT_CONFIGURED",retrySafe:true},{status:503,headers});
@@ -55,6 +56,7 @@ export async function POST(req:NextRequest){
   const result=await createCustomerCheckout(input.data);
   if("orderId" in result&&typeof result.orderId==="string")after(async()=>{try{await rememberMetaCheckout(req,result.orderId)}catch{/* Measurement cannot affect payment. */}});
   if("orderId" in result&&typeof result.orderId==="string")after(async()=>{try{await recordPurchaseAttribution(req,"order",result.orderId)}catch{console.warn("RUBY_ATTRIBUTION_WRITE_UNAVAILABLE")}});
+  if("orderId" in result&&typeof result.orderId==="string")after(()=>recordJourneyCheckout(req,diagnosticMethod,result.orderId));
   console.info("RUBY_CHECKOUT_CREATED",{provider:input.data.provider,experience:input.data.paymentExperience||"redirect"});
   if("giftOnly" in result&&result.giftOnly)after(async()=>{try{await runCustomerJobs(2)}catch{}});
   return NextResponse.json(result,{status:201,headers});

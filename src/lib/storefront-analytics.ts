@@ -1,4 +1,5 @@
 "use client";
+import {trackJourney} from "@/lib/journey-client";
 import {storyAnalyticsPaths} from "@/data/story-analytics";
 import {classifyRubyTraffic,type RubyTrafficSource} from "@/lib/analytics-attribution";
 export type RubyEvent="page_view"|"add_to_cart"|"begin_checkout"|"story_view"|"story_section_seen"|"ai_tryon_start"|"ai_tryon_success"|"ai_to_cart";
@@ -27,7 +28,11 @@ export function trackRubyEvent(event:RubyEvent,pathOverride?:string){
  else if(event==="ai_tryon_start"||event==="ai_tryon_success"||event==="ai_to_cart"){if(path!=="/haar-anprobe")return;}
  else {if(!isTrackableRubyPath(path))return;}
  // Only whitelisted categorical metadata, never URL query strings, personal fields or photo data.
- const payload=JSON.stringify({event,path,source:source(),device:innerWidth<=767?"mobile":"desktop",consent:true});
+ const category=source(),device=innerWidth<=767?"mobile":"desktop";
+ if(event==="add_to_cart"||event==="begin_checkout")trackJourney(event,{source:category,device});
+ else if(event==="page_view"&&path.startsWith("/produkt/"))trackJourney("product_view",{source:category,device});
+ else if(event==="page_view"&&path==="/warenkorb")trackJourney("cart_view",{source:category,device});
+ const payload=JSON.stringify({event,path,source:category,device,consent:true});
  // A temporary 503 should not permanently lose a consented Story/AI click.
  // Never retry validation/consent rejections (400/403), and retry at most once.
  const send=(attempt:number)=>{

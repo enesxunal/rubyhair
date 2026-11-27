@@ -2,6 +2,8 @@
 import {useEffect,useState,useRef} from "react";
 import {usePathname} from "next/navigation";
 import Link from "next/link";
+import {journeyConsentKey,journeyConsentVersion} from "@/lib/journey-policy";
+import {revokeJourney} from "@/lib/journey-client";
 import {analyticsEnabled,isTrackableRubyPath,trackRubyEvent} from "@/lib/storefront-analytics";
 import {trackRubyMetaEvent,META_PURCHASE_CONSENT_VERSION} from "@/lib/meta-pixel";
 import {attributionChoiceKey,saveAttributionChoice,touchAttribution} from "@/lib/purchase-attribution-client";
@@ -31,6 +33,7 @@ export default function AnalyticsConsent(){
  const [statistics,setStatistics]=useState<Choice>(null);
  const [marketing,setMarketing]=useState<Choice>(null);
  const [googleChoice,setGoogleChoice]=useState<Choice>(null);
+ const [draftJourney,setDraftJourney]=useState(false);
  const [draftStatistics,setDraftStatistics]=useState(false);
  const [draftMarketing,setDraftMarketing]=useState(false);
  const [draftGoogle,setDraftGoogle]=useState(false);
@@ -47,6 +50,7 @@ export default function AnalyticsConsent(){
   const storedStats=readChoice(statsKey),ads=readChoice(marketingKey),ga=readChoice(gaKey);
   const stats=storedStats===readAnalyticsCookie()?storedStats:null;
   setStatistics(stats);setMarketing(ads);setGoogleChoice(ga);
+  try{const choice=localStorage.getItem(journeyConsentKey);setDraftJourney(choice===journeyConsentVersion);if(statsAvailable&&(choice===null||(choice===journeyConsentVersion&&!document.cookie.split(";").some(p=>p.trim()==="ruby_journey="+journeyConsentVersion))))setOpen(true)}catch{}
   setDraftStatistics(stats==="allow");setDraftMarketing(ads==="allow");setDraftGoogle(ga==="allow");
   const attr=readChoice(attributionChoiceKey);setDraftAttribution(attr==="allow");if(attr===null)setOpen(true);
   setDraftCapi(capiAvailable&&readChoice(capiKey)==="allow");
@@ -84,11 +88,14 @@ export default function AnalyticsConsent(){
   if(!initialized||!trackable||!capiAvailable||(()=>{try{return localStorage.getItem(capiKey)!=="revoke_pending"}catch{return true}})())return;
   fetch("/api/meta/consent",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({allow:false}),keepalive:true}).then(r=>{if(r.ok)localStorage.setItem(capiKey,"deny")}).catch(()=>{});
  },[initialized,trackable,path]);
- const save=async(stats:Choice,ads:Choice,ga:Choice,capi=false,attribution=false)=>{
+ const save=async(stats:Choice,ads:Choice,ga:Choice,capi=false,attribution=false,journey=false)=>{
   if(!stats||!ads||!ga)return;
   const oldMarketing=readChoice(marketingKey);
   const oldGA=readChoice(gaKey);
   try{
+   if(!journey)revokeJourney();
+   localStorage.setItem(journeyConsentKey,journey?journeyConsentVersion:"deny");
+   document.cookie="ruby_journey="+(journey?journeyConsentVersion:"deny")+"; Path=/; Max-Age=31536000; SameSite=Lax"+(location.protocol==="https:"?"; Secure":"");
    localStorage.setItem(statsKey,stats);
    localStorage.setItem(marketingKey,ads);
    if(ads==="allow")localStorage.setItem("ruby_meta_purchase_consent",META_PURCHASE_CONSENT_VERSION);else localStorage.removeItem("ruby_meta_purchase_consent");
@@ -124,9 +131,11 @@ export default function AnalyticsConsent(){
  return <>{open&&<aside className="rh-consent-panel rh-consent-simplified" role="dialog" aria-modal="false" aria-label="Datenschutz- und Cookie-Einstellungen">
     <header className="rh-consent-head"><span>RUBY HAIR / DATENSCHUTZ</span><strong>Deine Privatsphäre.</strong></header>
     <p>Wir verwenden notwendige Cookies, damit der Shop funktioniert. Statistik und Marketing sind freiwillig und bleiben ohne Zustimmung aus. Mit deiner freiwilligen Einwilligung können wir die Herkunft deiner Bestellung mit dem Kauf verknüpfen. Bei Marketing-Einwilligung kann Meta auch bestätigte Kaufbeträge messen.{capiAvailable&&" Optional können bestätigte Käufe auch serverseitig mit Browser- und Klickkennungen an Meta gemeldet werden."}</p>
+    <p>Optional: Wir können mit deiner Einwilligung den Warenkorb- und Kassenverlauf in einer pseudonymen Tab-Sitzung für 7 Tage auswerten, einschließlich Bestellstatus und technischer Fehler. Keine Adress- oder Kartendaten.</p>
     {detailsOpen&&<div className="rh-consent-preferences" role="group" aria-label="Optionale Cookie-Einstellungen">
      <div className="rh-consent-necessary"><b>Notwendig</b><span>Immer aktiv · Warenkorb und sicherer Checkout</span></div>
      {statsAvailable&&<label className="rh-consent-option"><input type="checkbox" checked={draftStatistics} onChange={e=>setDraftStatistics(e.target.checked)}/><span><b>Interne Statistik</b><small>Anonyme Seiten-, Story- und KI-Nutzungszahlen, keine Fotos und keine Personenprofile.</small></span></label>}
+     {statsAvailable&&<label className="rh-consent-option"><input type="checkbox" checked={draftJourney&&draftStatistics} disabled={!draftStatistics} onChange={e=>setDraftJourney(e.target.checked)}/><span><b>Interner Kaufverlauf</b><small>Pseudonyme Tab-Sitzung, Warenkorb, Kasse, Zahlungsart, Fehler und Bestellstatus. 7 Tage, freiwillig.</small></span></label>}
      <label className="rh-consent-option"><input type="checkbox" checked={draftGoogle} onChange={e=>setDraftGoogle(e.target.checked)}/><span><b>Google Analytics 4 (Statistik)</b><small>Freiwillige Shop-Nutzungsmessung durch Google, nur bei eigener Zustimmung.</small></span></label>
      <label className="rh-consent-option"><input type="checkbox" checked={draftMarketing} onChange={e=>setDraftMarketing(e.target.checked)}/><span><b>Marketing (Meta Pixel)</b><small>Freiwillige Werbungsmessung durch Meta; bei bestätigter Zahlung auch Betrag, Währung und pseudonyme Ereignis-ID, keine persönlichen Fotos.</small></span></label>
      <label className="rh-consent-option"><input type="checkbox" checked={draftAttribution} onChange={e=>setDraftAttribution(e.target.checked)}/><span><b>Bestellherkunft (interne Erfolgsmessung)</b><small>Ordnet freiwillig die erste und letzte erkennbare Quelle, Kampagnenkennungen und Geräteklasse deiner Bestellung zu. Keine Übermittlung an Werbeanbieter. Widerruf jederzeit.</small></span></label>
@@ -135,9 +144,9 @@ export default function AnalyticsConsent(){
     <div className="rh-consent-actions">
      <button type="button" className="rh-consent-reject" onClick={()=>save("deny","deny","deny")}>Alle ablehnen</button>
      {detailsOpen
-       ?<button type="button" className="rh-consent-manage" onClick={()=>save(draftStatistics&&statsAvailable?"allow":"deny",draftMarketing?"allow":"deny",draftGoogle?"allow":"deny",draftCapi,draftAttribution)}>Auswahl speichern</button>
+       ?<button type="button" className="rh-consent-manage" onClick={()=>save(draftStatistics&&statsAvailable?"allow":"deny",draftMarketing?"allow":"deny",draftGoogle?"allow":"deny",draftCapi,draftAttribution,draftJourney&&statsAvailable&&draftStatistics)}>Auswahl speichern</button>
        :<button type="button" className="rh-consent-manage" onClick={()=>setDetailsOpen(true)}>Anpassen</button>}
-     <button type="button" className="rh-consent-accept" onClick={()=>save(statsAvailable?"allow":"deny","allow","allow",capiAvailable,true)}>Alle akzeptieren</button>
+     <button type="button" className="rh-consent-accept" onClick={()=>save(statsAvailable?"allow":"deny","allow","allow",capiAvailable,true,statsAvailable)}>Alle akzeptieren</button>
     </div>
     <footer className="rh-consent-foot"><span>Du kannst deine Wahl jederzeit im Footer ändern.</span><Link href="/rechtliches/datenschutz/">Datenschutzerklärung</Link></footer>
    </aside>}</>;

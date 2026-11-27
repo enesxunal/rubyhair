@@ -1,4 +1,5 @@
 "use client";
+import {journeyHeaders,trackJourney} from "@/lib/journey-client";
 import {reportCheckoutDiagnostic} from "@/lib/checkout-diagnostics-client";
 import {diagnosticLabels,safeDiagnosticCode} from "@/lib/checkout-diagnostic-policy";
 import {useRef,useState} from "react";
@@ -17,8 +18,9 @@ export default function CustomerPaymentSubmit({agreed,claimPayment,releasePaymen
   setLoading(true);setError("");
   if(!key.current)key.current=crypto.randomUUID();
   try{
+   trackJourney("payment_attempt",{method:method});
    const res=await fetch("/api/checkout",{method:"POST",credentials:"same-origin",cache:"no-store",
-    headers:{"Content-Type":"application/json"},body:JSON.stringify({
+    headers:{"Content-Type":"application/json",...journeyHeaders()},body:JSON.stringify({
      key:key.current,provider:method,lines,gifts,shipping:address.shipping,
      billing:address.billing,email:address.email,giftCode,couponCode,consent:true
     })});

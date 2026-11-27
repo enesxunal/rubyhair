@@ -1,4 +1,5 @@
 "use client";
+import {journeyHeaders,trackJourney} from "@/lib/journey-client";
 import {reportCheckoutDiagnostic} from "@/lib/checkout-diagnostics-client";
 import {useEffect,useRef,useState} from "react";
 import type {CartLine} from "./cart-context";
@@ -103,8 +104,9 @@ export default function PayPalWalletCheckout({lines,address,cartReady,totalCents
   if(!current.address||!current.cartReady||!current.lines.length||current.totalCents<=0||!current.accepted)throw Error("WALLET_CHECKOUT_NOT_READY");
   if(!claimPayment()){lock.current=false;throw Error("ZAHLUNG_BEREITS_GESTARTET")}
   orderKeys.current[method]||=crypto.randomUUID();
+   trackJourney("payment_attempt",{method:method});
   const response=await fetch("/api/checkout",{method:"POST",credentials:"same-origin",cache:"no-store",
-   headers:{"Content-Type":"application/json"},body:JSON.stringify({
+   headers:{"Content-Type":"application/json",...journeyHeaders()},body:JSON.stringify({
     key:orderKeys.current[method],provider:"paypal",paymentExperience:method,lines:current.lines,gifts:[],
     shipping:current.address.shipping,billing:current.address.billing,email:current.address.email,
     couponCode:current.couponCode,consent:true

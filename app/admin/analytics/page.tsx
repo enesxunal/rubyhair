@@ -13,6 +13,7 @@ import {
 import {loadAnalyticsReport} from "@/lib/admin-analytics-server";
 import {loadCommerceReportSafely} from "@/lib/admin-commerce-server";
 import {loadAttributionReport} from "@/lib/admin-purchase-attribution";
+import AdminJourneyPanel from "@/components/admin-journey-panel";
 import AdminCommercePanel from "@/components/admin-commerce-panel";
 import AdminAnalyticsRefresh from "@/components/admin-analytics-refresh";
 import AdminAnalyticsTrend from "@/components/admin-analytics-trend";
@@ -199,6 +200,7 @@ export default async function AdminAnalytics({searchParams}:{searchParams:Promis
     <p className="rh-ops-muted">Vorherige {range.days} {range.days===1?"Tag":"Tage"}: {enabledValue(enabled,previous.views)} Seitenaufrufe. Keine eindeutigen Besucher.</p>
    </section>
    <EventFunnel report={report} enabled={enabled}/>
+   <AdminJourneyPanel/>
   </div>
   <AdminAnalyticsChannels report={report} enabled={enabled}/>
   <section className="rh-adv-audit" aria-label="Datenqualität und Messmethode">

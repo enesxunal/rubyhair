@@ -467,3 +467,19 @@ model MetaMeasurementConsent {
   @@index([expiresAt])
   @@map("meta_measurement_consents")
 }
+
+model CheckoutJourneyEvent {
+ id String @id @db.Uuid
+ session String @db.Uuid
+ event String
+ method String?
+ stage String?
+ code String?
+ source String?
+ device String?
+ orderId String? @db.Uuid
+ createdAt DateTime @default(now())
+ @@index([session,createdAt])
+ @@index([createdAt])
+ @@map("checkout_journey_events")
+}
