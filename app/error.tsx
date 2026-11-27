@@ -1,10 +1,12 @@
 "use client";
 import {useEffect} from "react";
+import {reportBrowserSystemError} from "@/components/system-browser-monitor";
 
 export default function StorefrontError({error,reset}:{error:Error&{digest?:string};reset:()=>void}){
  useEffect(()=>{
   // Display a stable customer-facing message. Server logs keep the diagnostic.
   console.error("RUBY_STOREFRONT_RENDER_FAILED",error.digest||error.name);
+  reportBrowserSystemError("BROWSER_RUNTIME_FAILED");
  },[error]);
  return <main style={{minHeight:"52vh",display:"grid",placeItems:"center",padding:"48px 20px",background:"#faf7f4",fontFamily:"Arial,sans-serif"}}>
   <section role="alert" style={{width:"100%",maxWidth:540,textAlign:"center",padding:"36px 20px",color:"#3d2834"}}>

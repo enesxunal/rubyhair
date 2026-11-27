@@ -4,6 +4,7 @@ import {safeDiagnosticCode,type DiagnosticMethod,type DiagnosticStage} from "@/l
 let lastCleanup=0;
 export async function recordCheckoutDiagnostic(method:DiagnosticMethod,stage:DiagnosticStage,code:unknown,origin:"server"|"browser",orderId?:string){
  const safe=safeDiagnosticCode(code);
+ console.warn("RUBY_CHECKOUT_EVENT",{method,stage,code:safe,origin});
  try{
   const db=getPrisma();
   await db.checkoutDiagnostic.create({data:{method,stage,code:safe,origin,orderId:origin==="server"&&orderId&&/^[0-9a-f-]{36}$/i.test(orderId)?orderId:undefined}});

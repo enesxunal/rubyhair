@@ -1,3 +1,5 @@
+import {classifySystemError} from "@/lib/system-diagnostic-policy";
+import {recordSystemDiagnostic} from "@/lib/system-diagnostics";
 import { NextResponse } from "next/server";
 import { getStoreCatalog } from "@/lib/catalog-server";
 export const dynamic="force-dynamic";
@@ -9,7 +11,8 @@ export async function GET() {
       headers:{"Cache-Control":"no-store","X-Content-Type-Options":"nosniff"}
     });
   } catch(error){
-    console.error("Ruby Hair catalog database request failed",error);
+    const code=classifySystemError(error,"catalog","route");
+    await recordSystemDiagnostic("catalog",code==="SERVER_API_FAILED"?"CATALOG_UNAVAILABLE":code,"server");
     return NextResponse.json(
       {error:"CATALOG_UNAVAILABLE"},
       {status:503,headers:{"Cache-Control":"no-store"}}

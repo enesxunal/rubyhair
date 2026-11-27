@@ -1,0 +1,17 @@
+[Unit]
+Description=Ruby Hair independent availability monitoring
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+DynamicUser=yes
+StateDirectory=rubyhair-monitor
+StateDirectoryMode=0700
+ExecStartPre=+/bin/sh /opt/rubyhair-monitor/unit-status.sh
+ExecStart=/usr/bin/python3 /opt/rubyhair-monitor/monitor.py
+TimeoutStartSec=90
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes

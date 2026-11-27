@@ -1,0 +1,8 @@
+[Unit]
+Description=Check Ruby Hair storefront and server every two minutes
+[Timer]
+OnCalendar=*:0/2
+AccuracySec=10s
+Persistent=true
+[Install]
+WantedBy=timers.target

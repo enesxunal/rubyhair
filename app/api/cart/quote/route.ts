@@ -1,3 +1,5 @@
+import {classifySystemError} from "@/lib/system-diagnostic-policy";
+import {recordSystemDiagnostic} from "@/lib/system-diagnostics";
 import { NextRequest,NextResponse } from "next/server";
 import {quoteRequestSchema,buildCartQuote} from "@/lib/cart-quote";
 export const dynamic="force-dynamic";
@@ -22,7 +24,8 @@ export async function POST(request:NextRequest){
     const quote=await buildCartQuote(parsed.data);
     return NextResponse.json(quote,{headers});
   }catch(error){
-    console.error("Ruby Hair cart quotation failed",error);
+    const code=classifySystemError(error,"cart","route");
+    await recordSystemDiagnostic("cart",code==="SERVER_API_FAILED"?"QUOTE_UNAVAILABLE":code,"server");
     return NextResponse.json({error:"QUOTE_UNAVAILABLE"},{status:503,headers});
   }
 }

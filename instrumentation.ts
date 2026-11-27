@@ -1,0 +1,2 @@
+import type {Instrumentation} from "next";
+export const onRequestError:Instrumentation.onRequestError=async(error,request,context)=>{if(process.env.NEXT_RUNTIME!=="nodejs")return;try{const {systemArea,classifySystemError}=await import("@/lib/system-diagnostic-policy");const area=systemArea(context.routePath||request.path);const code=classifySystemError(error,area,context.routeType==="route"?"route":"render");const {recordSystemDiagnostic}=await import("@/lib/system-diagnostics");await recordSystemDiagnostic(area,code,"server")}catch{console.warn("RUBY_SYSTEM_HOOK_FAILED")}};

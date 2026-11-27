@@ -1,0 +1,7 @@
+import {NextRequest,NextResponse} from "next/server";
+import {timingSafeEqual} from "node:crypto";
+import {getPrisma} from "@/lib/prisma";
+import {monitorSnapshotId,monitorSnapshotSchema} from "@/lib/system-monitor-schema";
+export const runtime="nodejs",dynamic="force-dynamic";
+const headers={"Cache-Control":"no-store"};
+export async function POST(req:NextRequest){const key=process.env.RUBY_SYSTEM_MONITOR_SECRET;const a=Buffer.from(req.headers.get("authorization")||""),b=Buffer.from("Bearer "+(key||""));if(!key||key.length<32||a.length!==b.length||!timingSafeEqual(a,b))return new NextResponse(null,{status:401,headers});try{if(Number(req.headers.get("content-length")||0)>4096)return new NextResponse(null,{status:413,headers});const raw=await req.text();if(raw.length>4096)return new NextResponse(null,{status:413,headers});const parsed=monitorSnapshotSchema.safeParse(JSON.parse(raw));if(!parsed.success||Math.abs(Date.now()-Date.parse(parsed.data.time))>600000)return new NextResponse(null,{status:400,headers});const value=JSON.stringify(parsed.data);console.info("RUBY_MONITOR_SNAPSHOT",{checks:parsed.data.checks.length,failed:parsed.data.checks.filter(c=>c.reason!=="OK").length});await getPrisma().checkoutDiagnostic.upsert({where:{id:monitorSnapshotId},create:{id:monitorSnapshotId,method:"unknown",stage:"system:monitor",origin:"server",code:value},update:{createdAt:new Date(),code:value}});return new NextResponse(null,{status:204,headers})}catch{console.warn("RUBY_MONITOR_SNAPSHOT_PERSIST_FAILED");return new NextResponse(null,{status:503,headers})}}

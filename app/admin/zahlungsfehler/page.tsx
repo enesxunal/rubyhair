@@ -12,7 +12,7 @@ export default async function PaymentDiagnostics(){
  if(!await isAdmin())redirect("/admin/login");
  const db=getPrisma();
  const since=new Date(Date.now()-30*86400000);
- const rows=await db.checkoutDiagnostic.findMany({where:{createdAt:{gte:since}},orderBy:{createdAt:"desc"},take:200}).catch(()=>null);
+ const rows=await db.checkoutDiagnostic.findMany({where:{createdAt:{gte:since},NOT:{stage:{startsWith:"system:"}}},orderBy:{createdAt:"desc"},take:200}).catch(()=>null);
  const orderIds=Array.from(new Set((rows||[]).flatMap(r=>r.orderId?[r.orderId]:[])));
  const orders=orderIds.length?await db.order.findMany({where:{id:{in:orderIds}},select:{id:true,orderNumber:true}}):[];
  const numbers=new Map(orders.map(o=>[o.id,String(o.orderNumber)]));
