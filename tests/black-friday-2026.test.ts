@@ -74,3 +74,9 @@ test("Campaign displays automatic prices and prefilled coupon",()=>{
  assert.ok(read("app/kollektionen/page.tsx").includes("BlackFridayBadge"));
  assert.ok(!read("src/components/product-detail.tsx").includes("<del aria-label=\"Preis vor Black Friday\""));
 });
+
+test("Campaign popup stays on homepage and never overlays product, cart or checkout",()=>{
+ const promo=read("src/components/black-friday-experience.tsx");
+ assert.ok(promo.includes('pathname!=="/"){setOpen(false);return;}'));
+ assert.ok(promo.includes('open&&pathname==="/"&&<div'));
+});

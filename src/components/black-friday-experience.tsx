@@ -34,7 +34,7 @@ export default function BlackFridayExperience(){
   if(previous!==null&&previous!==active)window.location.reload();
  },[active,now,storefront]);
  useEffect(()=>{
-  if(!storefront||!active||!/^\/$|^\/produkt\/|^\/kollektionen\/|^\/suche\//.test(pathname))return;
+  if(!storefront||!active||pathname!=="/"){setOpen(false);return;}
   const check=()=>{
    try{
     if(sessionStorage.getItem(SHOWN_KEY))return;
@@ -70,7 +70,7 @@ export default function BlackFridayExperience(){
     <Link className="rh-bf-bar-cta" href="/kollektionen/">Jetzt shoppen <span aria-hidden="true">↗</span></Link>
    </div>
   </div>
-  {open&&<div className="rh-bf-modal-layer" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setOpen(false)}}>
+  {open&&pathname==="/"&&<div className="rh-bf-modal-layer" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setOpen(false)}}>
    <section role="dialog" aria-modal="true" aria-labelledby="rh-bf-modal-title" aria-describedby="rh-bf-modal-desc"
     className="rh-bf-popup">
     <button className="rh-bf-close" type="button" aria-label="Black Friday Fenster schließen" autoFocus onClick={()=>setOpen(false)}>×</button>
