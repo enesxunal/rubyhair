@@ -536,8 +536,8 @@ body{background:#fcfaf7;color:#2f2829}
 
 /* Homepage collection cards: real storefront merchandising, no image-overlay price. */
 .rh-length-collection .rh-collection-trio>.rh-collection-card{display:flex;flex-direction:column;background:#fff;color:var(--wine);border:1px solid #e8dfe1;border-radius:6px}
-.rh-length-collection .rh-collection-trio .collection-media{height:auto;aspect-ratio:4/5;background:#f4f0ed;overflow:hidden}
-.rh-length-collection .rh-collection-trio .collection-media>img{object-fit:contain;object-position:center}
+.rh-length-collection .rh-collection-trio .collection-media{height:auto;aspect-ratio:2/3;background:#f4f0ed;overflow:hidden}
+.rh-length-collection .rh-collection-trio .collection-media>img{object-fit:cover;object-position:center}
 .rh-length-collection .rh-collection-trio .collection-caption{position:static;flex:1;display:flex;align-items:start;padding:18px 20px 20px;background:#fff;gap:0}
 .rh-length-collection .rh-collection-trio .rh-collection-card-copy{width:100%;gap:8px}
 .rh-length-collection .rh-collection-trio .rh-collection-card-kicker{color:#806477;font-size:9px;letter-spacing:1.1px}
@@ -553,7 +553,7 @@ body{background:#fcfaf7;color:#2f2829}
 .rh-home-price-note a{text-decoration:underline}
 @media(max-width:1000px){.rh-length-collection .rh-collection-trio .rh-collection-card-keratin .collection-media{height:auto;aspect-ratio:4/3}}
 @media(max-width:550px){
- .rh-length-collection .rh-collection-trio .rh-collection-card-tape .collection-media{height:auto;aspect-ratio:3/4}
+ .rh-length-collection .rh-collection-trio .rh-collection-card-tape .collection-media{height:auto;aspect-ratio:2/3}
  .rh-length-collection .rh-collection-trio .rh-collection-card-keratin .collection-media{height:auto;aspect-ratio:4/3}
  .rh-length-collection .rh-collection-trio .collection-caption{padding:12px 10px 13px}
  .rh-length-collection .rh-collection-trio .collection-caption h3{font-size:19px}
