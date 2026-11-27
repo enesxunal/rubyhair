@@ -4,3 +4,5 @@ VPS systemd timer checks storefront HTTP/content, catalog source, read-only cart
 The latest bounded snapshot is mirrored to the admin page via a dedicated secret-authenticated endpoint. The server stores it independently even when mirroring fails. Provision RUBY_SYSTEM_MONITOR_SECRET and root-owned /etc/rubyhair/system-monitor.secret with the same random secret; do not expose it in git.
 
 Optional admin mirror requires a systemd drop-in with `[Service]` and `LoadCredential=monitor-secret:/etc/rubyhair/system-monitor.secret` after the secret is provisioned. Until then the independent monitor continues without a credential.
+
+The authenticated mirror now feeds the existing IONOS SMTP operational alert job on its five-minute schedule (four-hour deduplication). Disk, service, HTTP and stale monitor alerts use only allowlisted codes. No new external mail provider or customer recipient. SMTP settings live in the application database; a complete database/app outage can prevent this mail path. Independent SQLite/journal remain available. A fully independent mail provider requires separately provisioned credentials.
