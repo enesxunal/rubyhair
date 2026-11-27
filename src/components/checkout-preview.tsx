@@ -1,5 +1,7 @@
 "use client";
 import Link from "next/link";
+import {trackRubyMetaFunnel,trackRubyMetaEvent,marketingConsent} from "@/lib/meta-pixel";
+import {META_FUNNEL_EVENT} from "@/lib/meta-funnel-policy";
 import {trackJourney} from "@/lib/journey-client";
 import {reportCheckoutDiagnostic} from "@/lib/checkout-diagnostics-client";
 import {useEffect,useRef,useState,type ReactNode} from "react";
@@ -38,6 +40,16 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
   const physicalCents=quote?.subtotalCents||0;
   const grossCents=physicalCents+giftSoldCents+shipping;
   const canPay=Boolean(hasItems&&!error&&!loading&&(!lines.length||quote&&!quote.needsReview));
+  const metaCheckout=useRef(false);
+  useEffect(()=>{
+    const track=()=>{
+      if(metaCheckout.current||!loaded||!canPay||liveTest||checkoutMode==="disabled"||!marketingConsent())return;
+      if(lines.length&&quote?.checkoutEnabled&&!gifts.length&&quote.lines.every(l=>l.unitCents!==null&&l.unitCents>100)){
+        metaCheckout.current=trackRubyMetaFunnel("InitiateCheckout",quote.lines.map(l=>({id:l.id,quantity:l.quantity,unitCents:l.unitCents!})),couponCode||undefined);
+      }else if(gifts.length){trackRubyMetaEvent("InitiateCheckout");metaCheckout.current=true;}
+    };
+    track();window.addEventListener(META_FUNNEL_EVENT,track);return ()=>window.removeEventListener(META_FUNNEL_EVENT,track);
+  },[loaded,canPay,liveTest,checkoutMode,lines,gifts,quote,couponCode]);
   const paymentBlocker=!loaded?"Warenkorb wird geladen. Bitte kurz warten.":
     !hasItems?"Der Warenkorb ist leer.":
     error?"Die Preisprüfung ist nicht erreichbar. Bitte die Seite neu laden.":

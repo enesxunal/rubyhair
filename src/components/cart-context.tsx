@@ -4,7 +4,7 @@ import { byVariation } from "@/lib/catalog";
 import {blackFridayActive,BLACK_FRIDAY_CODE} from "@/lib/black-friday";
 import {giftCartItemSchema,normaliseGiftCart,type GiftCartItem} from "@/lib/gift-cards/cart-schema";
 import {trackRubyEvent} from "@/lib/storefront-analytics";
-import {trackRubyMetaEvent} from "@/lib/meta-pixel";
+import {trackRubyMetaEvent,trackRubyMetaFunnel} from "@/lib/meta-pixel";
 import {trackRubyGA4Event} from "@/lib/google-analytics";
 
 export type CartLine = { id:number; quantity:number };
@@ -13,7 +13,7 @@ type CartState = {
   addGift:(gift:GiftCartItem)=>boolean;
   removeGift:(id:string)=>void;
   clearPurchased:(lines:CartLine[],giftIds:string[])=>void;
-  add:(id:number,quantity?:number)=>void;
+  add:(id:number,quantity?:number,unitCents?:number)=>void;
   update:(id:number,quantity:number)=>void;
   remove:(id:number)=>void;
   clear:()=>void;
@@ -66,10 +66,12 @@ export function CartProvider({children}:{children:React.ReactNode}){
         return line.quantity>bought?[{...line,quantity:line.quantity-bought}]:[];
       }));
     },
-    add(id,quantity=1){
-      if(!byVariation(id))return;
+    add(id,quantity=1,unitCents){
+      if(!byVariation(id)||!Number.isFinite(quantity))return;
+      const added=Math.min(99-(lines.find(x=>x.id===id)?.quantity||0),Math.max(1,Math.floor(quantity)));
+      if(added<=0)return;
       trackRubyEvent("add_to_cart");
-      trackRubyMetaEvent("AddToCart");
+      if(unitCents!==undefined){if(unitCents>100)trackRubyMetaFunnel("AddToCart",[{id,quantity:added,unitCents}],couponCode||undefined);}else trackRubyMetaEvent("AddToCart");
       trackRubyGA4Event("add_to_cart");
       setLines(prev=>{
         const rest=prev.filter(x=>x.id!==id);

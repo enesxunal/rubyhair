@@ -1,10 +1,12 @@
 "use client";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ZoomIn, Palette, Ruler, Info } from "lucide-react";
 import Link from "next/link";
 import { useCart } from "./cart-context";
 import { colorsFor, euros, type Product } from "@/lib/catalog";
 import {customerTapeAltImage} from "@/lib/customer-tape-images";
+import {trackRubyMetaFunnel} from "@/lib/meta-pixel";
+import {META_FUNNEL_EVENT} from "@/lib/meta-funnel-policy";
 import BlackFridayBadge from "@/components/black-friday-badge";
 
 export function ProductDetail({product,initialColor,initialLength}:{product:Product;initialColor?:string;initialLength?:string}){
@@ -23,6 +25,15 @@ export function ProductDetail({product,initialColor,initialLength}:{product:Prod
   const choices=groups.get(color)||[];
   const available=choices.filter(v=>v.available&&v.purchasable);
   const selected=choices.find(v=>v.length===length)||available[0]||choices[0];
+  const metaView=useRef("");
+  useEffect(()=>{
+    const track=()=>{
+      if(!selected||metaView.current===product.slug)return;
+      if(trackRubyMetaFunnel("ViewContent",[{id:selected.id,quantity:1,unitCents:Math.round(selected.price*100)}]))metaView.current=product.slug;
+    };
+    track();window.addEventListener(META_FUNNEL_EVENT,track);
+    return ()=>window.removeEventListener(META_FUNNEL_EVENT,track);
+  },[product.slug,selected?.id,selected?.price]);
   const otherLength=length==="45-50-cm"?"55-60-cm":"45-50-cm";
   const inStock=Boolean(selected?.available&&selected?.purchasable);
   const stockLimit=Math.min(99,selected?.stock_quantity??99);
@@ -128,7 +139,7 @@ export function ProductDetail({product,initialColor,initialLength}:{product:Prod
             onChange={e=>setQuantity(Math.max(1,Math.min(stockLimit,Number(e.target.value)||1)))}/>
           <button disabled={!inStock||quantity>=stockLimit} onClick={()=>setQuantity(v=>Math.min(stockLimit,v+1))} aria-label="Menge erhöhen" type="button">+</button></div>
         <button disabled={!inStock||quantity>stockLimit} className="rh-buy-button" type="button"
-          onClick={()=>{if(selected&&inStock&&stockLimit>0){add(selected.id,Math.min(quantity,stockLimit));setAdded(true)}}}>
+          onClick={()=>{if(selected&&inStock&&stockLimit>0){add(selected.id,Math.min(quantity,stockLimit),Math.round(selected.price*100));setAdded(true)}}}>
           {!inStock?"AUSVERKAUFT":added?"ZUM WARENKORB HINZUGEFÜGT":"IN DEN WARENKORB"}<span aria-hidden="true">↗</span>
         </button>
         {added&&<Link className="rh-cart-link" href="/warenkorb/">Warenkorb ansehen →</Link>}

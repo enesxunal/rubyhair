@@ -151,7 +151,7 @@ export default function HairTryonLab({products}:{products:Product[]}){
 
  const addLookToCart=()=>{
   if(!after||!selectedProduct||!canBuySelected||!cart.loaded)return;
-  cart.add(selectedProduct.variation.id,1);
+  cart.add(selectedProduct.variation.id,1,Math.round(selectedProduct.variation.price*100));
   trackRubyEvent("ai_to_cart");
   router.push("/warenkorb/");
  };

@@ -49,7 +49,7 @@ test("AI result displays exact selected variant and adds it to the established s
  const wizard=read("src/components/hair-tryon-lab.tsx");
  assert.ok(wizard.includes('const selectedProduct=Number.isInteger(selectedId)?byVariation(selectedId):null;'));
  assert.ok(wizard.includes('selectedProduct?.variation.available&&selectedProduct.variation.purchasable'));
- assert.ok(wizard.includes('cart.add(selectedProduct.variation.id,1)'));
+ assert.ok(wizard.includes('cart.add(selectedProduct.variation.id,1,Math.round(selectedProduct.variation.price*100))'));
  assert.ok(wizard.includes('trackRubyEvent("ai_to_cart")'));
  assert.ok(wizard.includes('trackRubyEvent("ai_tryon_start")'));
  assert.ok(wizard.includes('trackRubyEvent("ai_tryon_success")'));

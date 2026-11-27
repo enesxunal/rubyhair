@@ -21,7 +21,10 @@ test("Meta e-commerce events are restricted to marketing-consenting sessions",()
  const cart=read("src/components/cart-context.tsx");
  const gate=read("src/components/analytics-consent.tsx");
  assert.ok(cart.includes('trackRubyMetaEvent("AddToCart")'));
- for(const name of ["PageView","ViewContent","InitiateCheckout"]){assert.ok(gate.includes('trackRubyMetaEvent("'+name+'")'))}
+ assert.ok(gate.includes('trackRubyMetaEvent("PageView")'));
+ assert.ok(read("src/components/product-detail.tsx").includes('trackRubyMetaFunnel("ViewContent"'));
+ assert.ok(read("src/components/checkout-preview.tsx").includes('trackRubyMetaFunnel("InitiateCheckout"'));
+ assert.ok(cart.includes('trackRubyMetaFunnel("AddToCart"'));
  const privacy=read("app/rechtliches/[slug]/page.tsx");
  assert.ok(privacy.includes('Meta Pixel (freiwillige Marketing-Einwilligung)'));
 });
