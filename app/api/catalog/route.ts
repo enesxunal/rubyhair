@@ -1,13 +1,14 @@
 import {classifySystemError} from "@/lib/system-diagnostic-policy";
 import {recordSystemDiagnostic} from "@/lib/system-diagnostics";
 import { NextResponse } from "next/server";
+import {blackFridayCatalog} from "@/lib/black-friday";
 import { getStoreCatalog } from "@/lib/catalog-server";
 export const dynamic="force-dynamic";
 export const runtime="nodejs";
 export async function GET() {
   try {
     const catalog=await getStoreCatalog();
-    return NextResponse.json(catalog,{
+    return NextResponse.json({...catalog,products:blackFridayCatalog(catalog.products)},{
       headers:{"Cache-Control":"no-store","X-Content-Type-Options":"nosniff"}
     });
   } catch(error){

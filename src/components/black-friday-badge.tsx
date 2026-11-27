@@ -9,5 +9,5 @@ export default function BlackFridayBadge({hint=false,hero=false}:{hint?:boolean;
   const id=setInterval(tick,30000);
   return ()=>clearInterval(id);
  },[]);
- return active?<span className={hint?"rh-bf-coupon-hint":"rh-bf-card-badge"+(hero?" rh-bf-hero-label":"")}>{hint?"15 % mit Code BLACKFRIDAY im Warenkorb":"BLACK FRIDAY · 15 % MIT CODE"}</span>:null;
+ return active?<span className={hint?"rh-bf-coupon-hint":"rh-bf-card-badge"+(hero?" rh-bf-hero-label":"")}>{hint?"Black Friday Aktionspreis · 15 % automatisch":"BLACK FRIDAY · –15 %"}</span>:null;
 }

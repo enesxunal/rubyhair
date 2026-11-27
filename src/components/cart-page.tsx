@@ -4,6 +4,7 @@ import CartRecoveryForm from "@/components/cart-recovery-form";
 import { useEffect, useState } from "react";
 import { useCart } from "@/components/cart-context";
 import {byVariation, euros, type Product} from "@/lib/catalog";
+import {blackFridayActive,BLACK_FRIDAY_CODE} from "@/lib/black-friday";
 import {useCartQuote} from "@/hooks/use-cart-quote";
 import {Gift} from "lucide-react";
 import {giftCartTotal} from "@/lib/gift-cards/cart-schema";
@@ -91,17 +92,17 @@ export function CartPage({shippingCents,recoveryEnabled=false}:{shippingCents:nu
       <aside className="rh-order-summary"><h2>Zusammenfassung</h2>
         <p className="rh-cart-checking" aria-live="polite">{quoteLoading?"Preise werden auf dem Server geprüft":currentQuote?"Preisprüfung abgeschlossen":gifts.length&&!lines.length?"Digitale Gutscheine · keine Versandkosten":quoteError?"Preisprüfung derzeit nicht möglich":""}</p>
         {lines.length>0&&<div><span>Produkte</span><strong>{currentQuote?euros(currentQuote.regularSubtotalCents/100):"Wird geprüft"}</strong></div>}
-        {lines.length>0&&<section className="rh-bf-coupon-box" aria-label="Black Friday Rabattcode">
-          <label htmlFor="rh-bf-coupon">Black Friday Rabattcode</label>
+        {lines.length>0&&<section className="rh-bf-coupon-box" aria-label="Rabattcode">
+          <label htmlFor="rh-bf-coupon">Rabattcode</label>
           <div className="rh-bf-coupon-row">
-            <input id="rh-bf-coupon" type="text" autoComplete="off" maxLength={32} placeholder="BLACKFRIDAY" value={couponDraft} onChange={e=>setCouponDraft(e.target.value.toUpperCase())} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();setCouponCode(couponDraft)}}}/>
-            <button type="button" onClick={()=>setCouponCode(couponDraft)} disabled={!couponDraft.trim()}>Einlösen</button>
+            <input id="rh-bf-coupon" type="text" autoComplete="off" maxLength={32} placeholder="Rabattcode" value={couponDraft} onChange={e=>setCouponDraft(e.target.value.toUpperCase())} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();setCouponCode(couponDraft)}}}/>
+            <button type="button" onClick={()=>setCouponCode(couponDraft)} disabled={!couponDraft.trim()||couponDraft.trim()===couponCode}>Einlösen</button>
           </div>
           {couponCode&&<div className="rh-bf-coupon-status" role="status">
-            {currentQuote?.couponApplied?"BLACKFRIDAY eingelöst – 15 % auf Extensions.":
-              currentQuote?.couponError?"Code ungültig oder Aktion abgelaufen. Bitte entfernen.":
+            {currentQuote?.couponApplied?"BLACKFRIDAY automatisch angewendet – 15 % auf Extensions.":
+              currentQuote?.couponError?"Code ungültig oder Aktion abgelaufen. Bitte anderen Code entfernen.":
               quoteLoading?"Rabatt wird geprüft …":"Rabatt konnte nicht bestätigt werden."}
-            <button type="button" onClick={()=>{setCouponCode("");setCouponDraft("")}}>Entfernen</button>
+            {currentQuote?.couponError&&<button type="button" onClick={()=>{setCouponCode("");setCouponDraft(blackFridayActive()?BLACK_FRIDAY_CODE:"")}}>Zurücksetzen</button>}
           </div>}
         </section>}
         {(currentQuote?.discountCents??0)>0&&<div className="rh-bf-coupon-discount"><span>BLACKFRIDAY · 15 %</span><strong>− {euros((currentQuote?.discountCents??0)/100)}</strong></div>}

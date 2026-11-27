@@ -43,14 +43,14 @@ export function CartProvider({children}:{children:React.ReactNode}){
   useEffect(()=>{
     try{setLines(normalise(JSON.parse(localStorage.getItem(KEY)||"[]")))}catch{setLines([])}
     try{setGifts(normaliseGiftCart(JSON.parse(localStorage.getItem(GIFT_KEY)||"[]")))}catch{setGifts([])}
-    try{const saved=(localStorage.getItem(COUPON_KEY)||"").trim().toUpperCase().slice(0,32);setCouponCodeState(saved===BLACK_FRIDAY_CODE&&!blackFridayActive()?"":saved)}catch{setCouponCodeState("")}
+    try{const saved=(localStorage.getItem(COUPON_KEY)||"").trim().toUpperCase().slice(0,32);setCouponCodeState(blackFridayActive()?BLACK_FRIDAY_CODE:saved===BLACK_FRIDAY_CODE?"":saved)}catch{setCouponCodeState(blackFridayActive()?BLACK_FRIDAY_CODE:"")}
     setLoaded(true);
   },[]);
   useEffect(()=>{if(loaded)try{localStorage.setItem(KEY,JSON.stringify(lines))}catch{}},[lines,loaded]);
   useEffect(()=>{if(loaded)try{localStorage.setItem(GIFT_KEY,JSON.stringify(gifts))}catch{}},[gifts,loaded]);
   useEffect(()=>{if(loaded)try{localStorage.setItem(COUPON_KEY,couponCode)}catch{}},[couponCode,loaded]);
   const value=useMemo<CartState>(()=>({
-    lines,gifts,loaded,couponCode,setCouponCode(code){setCouponCodeState(code.trim().toUpperCase().slice(0,32))},count:lines.reduce((sum,line)=>sum+line.quantity,0)+gifts.length,
+    lines,gifts,loaded,couponCode,setCouponCode(code){setCouponCodeState(code.trim().toUpperCase().slice(0,32)||(blackFridayActive()?BLACK_FRIDAY_CODE:""))},count:lines.reduce((sum,line)=>sum+line.quantity,0)+gifts.length,
     addGift(gift){
       const parsed=giftCartItemSchema.safeParse(gift);
       if(!parsed.success||gifts.length>=5||gifts.some(g=>g.id===gift.id))return false;

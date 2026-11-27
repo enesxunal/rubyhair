@@ -44,11 +44,11 @@ const readLiveProducts=singleFlight(async ():Promise<Product[]>=>{
 });
 const liveProducts=unstable_cache(async()=>readLiveProducts(),["rubyhair-live-store-catalog-v3",process.env.RUBY_SELFHOST_DB?"selfhost":"managed"],{revalidate:60,tags:["rubyhair-live-catalog"]});
 export const getStoreCatalog=cache(async ():Promise<{source:"postgresql"|"imported-preview";products:Product[]}>=>{
-  if(!databaseConfigured())return {source:"imported-preview",products:blackFridayCatalog(importedProducts)};
+  if(!databaseConfigured())return {source:"imported-preview",products:importedProducts};
   // A failed database read still fails closed; never display fabricated stock.
-  return {source:"postgresql",products:blackFridayCatalog(await liveProducts())};
+  return {source:"postgresql",products:await liveProducts()};
 });
 export async function getStoreProduct(slug:string){
   const catalog=await getStoreCatalog();
-  return catalog.products.find(p=>p.slug===slug);
+  return blackFridayCatalog(catalog.products).find(p=>p.slug===slug);
 }

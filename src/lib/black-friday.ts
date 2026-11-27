@@ -1,7 +1,7 @@
 import type {Product} from "@/lib/catalog";
 import priceHistory from "../../scripts/price-change-20261117.json";
 
-/** Black Friday is a coupon-only campaign. Catalog and DB keep list prices. */
+/** Automatic sale during the campaign. Database keeps list prices. */
 export const BLACK_FRIDAY_START="2026-11-19T23:00:00.000Z";
 export const BLACK_FRIDAY_END="2026-11-30T23:00:00.000Z"; // exclusive, 01 Dec 00:00 CET
 export const BLACK_FRIDAY_PERCENT=15;
@@ -21,7 +21,7 @@ export function blackFridayEligible(slug:string,material?:string){
 }
 // Integer-cent rounding per physical product unit, matching order line/invoice/provider.
 export function blackFridayUnitCents(regularCents:number,slug:string,now:Date=new Date(),material?:string,couponCode?:string){
- if(!blackFridayCouponValid(couponCode,now)||!blackFridayEligible(slug,material))return regularCents;
+ if(!blackFridayActive(now)||(normalizedPromoCode(couponCode)&&!blackFridayCouponValid(couponCode,now))||!blackFridayEligible(slug,material))return regularCents;
  if(!Number.isSafeInteger(regularCents)||regularCents<=0)return regularCents;
  return Math.round(regularCents*(100-BLACK_FRIDAY_PERCENT)/100);
 }
@@ -32,5 +32,13 @@ export function documentedEarlierPriceCents(legacyId:number,slug:string,currentC
  const row=previousPriceByLegacyId.get(legacyId);
  return row?.slug===slug?Math.min(currentCents,row.beforeCents):null;
 }
-// Keep compatibility with existing store callers; no automatic catalog markdown.
-export function blackFridayCatalog(products:Product[],_now:Date=new Date()):Product[]{return products;}
+// Display-only projection. Cart and checkout must use the untouched list price.
+export function blackFridayCatalog(products:Product[],now:Date=new Date()):Product[]{
+ if(!blackFridayActive(now))return products;
+ return products.map(p=>{
+  if(!blackFridayEligible(p.slug,p.material))return p;
+  const variations=p.variations.map(v=>({...v,price:blackFridayUnitCents(Math.round(v.price*100),p.slug,now,p.material)/100}));
+  const prices=variations.filter(v=>v.available).map(v=>v.price);
+  return {...p,variations,min_price:prices.length?Math.min(...prices):0,max_price:prices.length?Math.max(...prices):0};
+ });
+}
