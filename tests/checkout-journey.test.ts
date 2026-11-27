@@ -24,3 +24,12 @@ test("payment routes attach only consented journey and remain asynchronous",()=>
  for(const file of ["customer-payment-submit","paypal-card-fields-checkout","paypal-wallet-checkout"])assert.match(r("src/components/"+file+".tsx"),/\.\.\.journeyHeaders\(\)/);
  assert.match(r("app/api/checkout/route.ts"),/after\(\(\)=>recordJourneyCheckout/);
 });
+
+test("public journey endpoint permits only POST and DELETE inside approved storefront",()=>{
+ const proxy=r("proxy.ts");
+ assert.match(proxy,/publicPostApis=new Set\([^\n]*"\/api\/analytics\/journey"/);
+ assert.ok(proxy.includes('(request.method==="DELETE"&&path==="/api/analytics/journey")'));
+ assert.ok(!proxy.split('const publicGetApis=')[1].split('\n')[0].includes('/api/analytics/journey'));
+ assert.match(proxy,/if\(storefrontPublic\(\)\)/);
+ assert.match(r("app/api/analytics/journey/route.ts"),/if\(!journeyAllowed\(req\)\)return response\(403\)/);
+});
