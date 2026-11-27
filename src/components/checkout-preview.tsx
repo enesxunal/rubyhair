@@ -14,7 +14,7 @@ import {euros} from "@/lib/catalog";
 import CheckoutAddressPreview from "./checkout-address-preview";
 import LiveVariantTestSection,{type LiveVariantTestView} from "./live-variant-test-section";
 
-const process=[
+const checkoutSteps=[
   {no:"01",label:"Warenkorb",description:"Produkte, Farbe und Menge prüfen",icon:ShoppingBag},
   {no:"02",label:"Lieferung / Rechnung",description:"Liefer- und Rechnungsadresse prüfen",icon:Truck},
   {no:"03",label:"Zahlung",description:"Zahlungsart und Bestellübersicht",icon:Wallet}
@@ -95,7 +95,7 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
         <h2>Dein Einkauf.</h2>
         <p>{digitalOnly?"Prüfe deine Gutscheine und die Rechnungsdaten. Es gibt keinen Paketversand.":"Prüfe deine Auswahl und die Lieferadresse."}</p>
         <div className="rh-checkout-steps">
-          {process.map((step,i)=><article key={step.no}>
+          {checkoutSteps.map((step,i)=><article key={step.no}>
             <div className="rh-checkout-number">{step.no}</div>
             <div><div className="rh-checkout-step-name"><step.icon size={19} strokeWidth={1.6}/><h3>{step.label}</h3></div>
               <p>{step.description}</p></div>
