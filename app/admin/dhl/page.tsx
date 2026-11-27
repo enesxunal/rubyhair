@@ -84,7 +84,7 @@ export default async function DhlStatus({searchParams}:{searchParams:Promise<{st
     <details className="rh-dhl-technical"><summary>Gespeicherte Einstellungen anzeigen <ChevronDown size={16}/></summary>
      <div className="rh-dhl-tech-grid"><div><strong>API-Zugang</strong><ul>{Object.keys(labels).map(field=><li key={field}>{labels[field]}: {readiness.missing.includes(field as typeof readiness.missing[number])?"Fehlt":"Gespeichert"}</li>)}</ul></div>
       <div><strong>Sendungsvorlage</strong><p>Artikelgewicht: 25 g pro Stück. Verpackungsgewicht: {tare===null?"Nicht bestätigt – Automatik gesperrt":tare+" g"}</p><p>Absender-Schalter: {senderApproved?"Freigegeben":"Nicht freigegeben"}</p><p>Automatikbeginn: {process.env.RUBY_DHL_AUTOMATION_START_AT||"Nicht festgelegt"}</p></div></div>
-     <p>Vorgesehener Absender: Ruby Hair, Klara Strasse 19, 45130 Essen. Tatsächliche Versand- und Retourenadresse vor realem Etikett bestätigen. API-Zugangsdaten bleiben verschlüsselt.</p>
+     <p>Vorgesehener Absender: Ruby Hair Extensions, Klara Strasse 19, 45130 Essen. Tatsächliche Versand- und Retourenadresse vor realem Etikett bestätigen. API-Zugangsdaten bleiben verschlüsselt.</p>
      <p><a href="https://developer.dhl.com/" target="_blank" rel="noopener noreferrer">DHL Developer Portal</a> · <a href="https://geschaeftskunden.dhl.de/" target="_blank" rel="noopener noreferrer">Geschäftskundenportal</a></p>
     </details>
    </div>

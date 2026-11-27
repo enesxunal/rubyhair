@@ -136,3 +136,15 @@ test("DHL actual weights use 25g per item plus confirmed packaging",async()=>{
  assert.throws(()=>packageWeightG([{quantity:1260}],1));
  assert.throws(()=>productWeightG([{quantity:0}]));
 });
+
+
+test("DHL sender is brand-only and invoice seller remains unchanged",()=>{
+ const labels=read("src/lib/dhl-labels.ts");
+ const page=read("app/admin/dhl/page.tsx");
+ const invoice=read("src/lib/qa-invoice.ts");
+ assert.ok(labels.includes('shipper:{name1:"Ruby Hair Extensions",...shipperStreet'));
+ assert.ok(!labels.includes('name1:RUBY_TEST_SELLER.name'));
+ assert.ok(labels.includes('splitGermanStreetAddress(RUBY_TEST_SELLER.street)'));
+ assert.ok(page.includes('Vorgesehener Absender: Ruby Hair Extensions, Klara Strasse 19'));
+ assert.ok(invoice.includes('name:"Ruby Hair / Herr Nazmi Bulganlar"'));
+});

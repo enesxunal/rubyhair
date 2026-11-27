@@ -23,7 +23,7 @@ export function buildDhlShipmentBody(input:{billingNumber:string;orderNumber:str
  return {profile:"STANDARD_GRUPPENPROFIL",shipments:[{
   product:"V01PAK",billingNumber:input.billingNumber,refNo:("RH-"+input.orderNumber).padStart(8,"0").slice(0,35),
   shipDate:input.shipDate,
-  shipper:{name1:RUBY_TEST_SELLER.name.slice(0,50),...shipperStreet,
+  shipper:{name1:"Ruby Hair Extensions",...shipperStreet,
    postalCode:RUBY_TEST_SELLER.postalCode,city:RUBY_TEST_SELLER.city,country:"DEU",email:RUBY_TEST_SELLER.email},
   consignee:{name1:(input.recipient.firstName+" "+input.recipient.lastName).slice(0,50),
    ...recipientStreet,postalCode:input.recipient.postalCode,
