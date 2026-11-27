@@ -1,6 +1,7 @@
 import "server-only";
 import {unstable_cache} from "next/cache";
 import {cache} from "react";
+import {retryReadOnly} from "@/lib/db-read-retry";
 import {singleFlight} from "@/lib/single-flight";
 import { databaseConfigured, getPrisma } from "@/lib/prisma";
 import { products as importedProducts, type Product, type Variation } from "@/lib/catalog";
@@ -14,9 +15,9 @@ import {blackFridayCatalog} from "@/lib/black-friday";
 // Checkout, reservations and payments NEVER use this read cache.
 // Administrator writes invalidate the tag immediately.
 const readLiveProducts=singleFlight(async ():Promise<Product[]>=>{
-  const dbProducts=await getPrisma().product.findMany({
+  const dbProducts=await retryReadOnly(()=>getPrisma().product.findMany({
     where:{active:true},include:{variants:{orderBy:{legacyId:"asc"}}},orderBy:{name:"asc"}
-  });
+  }),{report:code=>console.warn("RUBY_CATALOG_READ_RETRY",{code})});
   const products:Product[]=dbProducts.map(p=>{
     const variations:Variation[]=p.variants.map(v=>({
       id:v.legacyId ?? -1,

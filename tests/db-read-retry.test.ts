@@ -1,0 +1,10 @@
+import {test} from "node:test";
+import assert from "node:assert/strict";
+import {retryReadOnly,transientReadCode} from "../src/lib/db-read-retry";
+import {readFileSync} from "node:fs";
+const failure=(code:string)=>Object.assign(new Error("fixture"),{code});
+test("read-only retry recovers a stale or unreachable connection once",async()=>{for(const code of ["P1001","P1002","P1008","P1017","P2024"]){let calls=0;const reports:string[]=[];const result=await retryReadOnly(async()=>{if(++calls===1)throw failure(code);return 7;},{sleep:async()=>{},report:c=>reports.push(c)});assert.equal(result,7);assert.equal(calls,2);assert.deepEqual(reports,[code])}});
+test("initialization error code is recognized without logging raw message",()=>{assert.equal(transientReadCode({errorCode:"P1001"}),"P1001");assert.equal(transientReadCode({code:"P2002"}),null);assert.equal(transientReadCode(null),null)});
+test("unknown errors and slow pool exhaustion are never retried",async()=>{let n=0,t=0;await assert.rejects(retryReadOnly(async()=>{n++;throw failure("P2002")},{sleep:async()=>{}}));assert.equal(n,1);n=0;await assert.rejects(retryReadOnly(async()=>{n++;t=3000;throw failure("P2024")},{now:()=>t,sleep:async()=>{}}));assert.equal(n,1)});
+test("a failed retry propagates original failure class without a third attempt",async()=>{let n=0;await assert.rejects(retryReadOnly(async()=>{n++;throw failure("P1017")},{sleep:async()=>{}}));assert.equal(n,2)});
+test("retry remains inside coalesced catalog reads and never wraps payment mutations",()=>{const s=readFileSync("src/lib/catalog-server.ts","utf8");assert.match(s,/singleFlight\(async/);assert.match(s,/retryReadOnly\(\(\)=>getPrisma\(\).product.findMany/);for(const p of ["src/lib/customer-checkout.ts","app/api/payments/paypal/card-capture/route.ts","app/api/payments/paypal/wallet-capture/route.ts"])assert.doesNotMatch(readFileSync(p,"utf8"),/retryReadOnly/)});
