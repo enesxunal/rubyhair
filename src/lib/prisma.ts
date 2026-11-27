@@ -57,7 +57,7 @@ export function getPrisma(){
   if(globalWithPrisma.rubyPrisma)return globalWithPrisma.rubyPrisma;
   // Use the platform-aware pool only for the approved self-hosted production runtime.
   // Explicit legacy mode is retained for a controlled rollback, never an automatic fallback.
-  if(process.env.RUBY_SELFHOST_DB&&process.env.VERCEL&&process.env.RUBY_DB_FLUID_POOL==="enabled"){
+  if(process.env.RUBY_SELFHOST_DB&&process.env.VERCEL&&process.env.RUBY_DB_FLUID_POOL!=="legacy"){
     const {adapter}=createFluidAdapter(selfhostPoolConfig(process.env.RUBY_SELFHOST_DB));
     return globalWithPrisma.rubyPrisma=new PrismaClient({adapter,log:["error"]});
   }

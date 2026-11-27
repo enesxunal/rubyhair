@@ -15,6 +15,7 @@ export async function runSystemAlerts(){
   const failures=new Set(rows.map(r=>r.stage.slice(7)+": "+r.code));
   // Read-only HTTP/content checks. Do not create an order or call payment capture.
   await Promise.all([["checkout","/kasse","Almost"],["catalog","/api/catalog",'"source":"postgresql"']].map(async ([area,path,marker])=>{try{const response=await fetch("https://rubyhair.de"+path,{cache:"no-store",redirect:"error",signal:AbortSignal.timeout(6000),headers:{"User-Agent":"RubyHair-System-Check/1.0"}});const body=await response.text();if(response.status!==200||!body.includes(marker))failures.add(area+": HTTP_OR_CONTENT_FAILED")}catch{failures.add(area+": NETWORK_OR_TIMEOUT")}}));
+  console.info("RUBY_SYSTEM_ALERT_CHECK",{failures:failures.size});
   if(!failures.size)return;
   const id=alertId(String(Math.floor(now/(4*3600000))));
   try{await db.checkoutDiagnostic.create({data:{id,method:"unknown",stage,code:"MAIL_CLAIMED",origin:"server"}})}catch(e){if((e as {code?:string}).code==="P2002")return;throw e}
