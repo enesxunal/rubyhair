@@ -100,3 +100,17 @@ test("Klarna approval is a sale immediately, not a cash receipt; later capture d
  const policy=readFileSync("src/lib/admin-confirmed-orders.ts","utf8");
  assert.ok(policy.includes("klarna_hpp_verified_authorized")&&policy.includes("testOnly:false")&&policy.includes("invoice:{isNot:null}"));
 });
+
+import {orderListFilter,orderListWhere,orderListPresentation} from "../src/lib/admin-order-list-policy";
+test("order list defaults to verified successful orders; pending and closed attempts are separate",()=>{
+ const row={testOnly:false,status:"payment_authorized",currency:"EUR",totalCents:48099,invoice:null,payments:[],statusEvents:[{toStatus:"payment_authorized",reason:"klarna_hpp_verified_authorized"}]};
+ assert.equal(orderListFilter(undefined),"bestaetigt");
+ assert.equal(orderListFilter("ohne-testkennzeichen"),"bestaetigt");
+ assert.deepEqual(orderListPresentation(row),{label:"Bestätigt",tone:"confirmed",provider:"Klarna"});
+ assert.equal(orderListPresentation({...row,status:"pending_payment"}).tone,"pending");
+ assert.equal(orderListPresentation({...row,statusEvents:[]}).tone,"pending");
+ assert.equal(orderListPresentation({...row,status:"cancelled"}).tone,"closed");
+ assert.equal(orderListPresentation({...row,status:"refunded"}).tone,"closed");
+ assert.equal(orderListPresentation({...row,testOnly:true}).tone,"neutral");
+ assert.deepEqual(orderListWhere("offen").NOT,orderListWhere("bestaetigt"));
+});

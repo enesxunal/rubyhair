@@ -288,8 +288,8 @@ test("admin pages use authenticated separate dashboard, product and read-only or
  for(const href of ["/admin/produkte","/admin/bestellungen"]){assert.ok(shell.includes(href));}
  assert.ok(products.includes('aria-label="Bestandsfilter"'));
  assert.ok(products.includes('stockQuantity===null'));
- assert.ok(orders.includes('testOnly:false'));
- assert.ok(orders.includes('testOnly:true'));
+ assert.ok(orders.includes('orderListWhere(filter)'));
+ assert.ok(orders.includes('groups.filter(g=>g.testOnly)'));
  assert.ok(orders.includes('statusEvents'));
  assert.ok(!orders.includes('action={saveVariantAction}'));
  assert.ok(!orders.includes('payment_confirmed:['));
@@ -802,8 +802,8 @@ test("live merchant administration defaults to real orders and keeps test invent
  assert.ok(products.includes('products.filter(p=>p.active)'));
  assert.ok(products.includes('Inaktive & Testprodukte anzeigen'));
  assert.ok(products.includes('Bestand 0'));
- assert.ok(orders.includes('||"ohne-testkennzeichen"'));
- assert.ok(orders.includes('Kundenbestellungen'));
+ assert.ok(orders.includes('orderListFilter(params.filter)'));
+ assert.ok(orders.includes('Bestätigte Bestellungen'));
  assert.ok(orders.includes('rh-admin-advanced-tools'));
  assert.ok(shell.includes('rh-admin-advanced-nav'));
  assert.ok(css.includes('.rh-admin-filters{display:flex'));

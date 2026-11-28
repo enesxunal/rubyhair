@@ -3,6 +3,7 @@ import Link from "next/link";
 import {redirect} from "next/navigation";
 import {ClipboardList,Clock3,ArrowUpRight,ShieldCheck,WalletCards} from "lucide-react";
 import {isAdmin} from "@/lib/admin-auth";
+import {orderListFilter,orderListWhere,orderListPresentation} from "@/lib/admin-order-list-policy";
 import {getPrisma} from "@/lib/prisma";
 import {isKnownOrderState,orderStates} from "@/lib/order-lifecycle";
 import {publicCheckoutMode} from "@/lib/customer-checkout";
@@ -16,7 +17,7 @@ import {createOrderDhlLabelAction,cancelOrderDhlLabelAction} from "../dhl-order-
 export const metadata:Metadata={title:"Bestellungen | Ruby Hair Verwaltung",robots:{index:false,follow:false}};
 export const dynamic="force-dynamic";
 export const runtime="nodejs";
-const filters=["alle","tests","ohne-testkennzeichen","offen"] as const;
+
 const euro=(cents:number)=>new Intl.NumberFormat("de-DE",{style:"currency",currency:"EUR"}).format(cents/100);
 const date=(value:Date)=>new Intl.DateTimeFormat("de-DE",{dateStyle:"medium",timeStyle:"short",timeZone:"Europe/Berlin"}).format(value);
 const addressText=(value:unknown)=>{
@@ -29,17 +30,19 @@ const addressText=(value:unknown)=>{
 export default async function AdminOrders({searchParams}:{searchParams:Promise<{filter?:string;seite?:string;manualKlarna?:string;dhl?:string}>}){
  if(!await isAdmin())redirect("/admin/login");
  const params=await searchParams;
- const filter=filters.find(f=>f===params.filter)||"ohne-testkennzeichen";
+ const filter=orderListFilter(params.filter);
  const requestedPage=Number(params.seite);
  const page=Number.isSafeInteger(requestedPage)&&requestedPage>0?Math.min(requestedPage,10000):1;
- const where=filter==="tests"?{testOnly:true}:filter==="ohne-testkennzeichen"?{testOnly:false}:
-    filter==="offen"?{testOnly:true,status:"test_reserved"}:{};
+ const where=orderListWhere(filter);
  const db=getPrisma();
- // One grouped count and sequential reads keep the single-connection pool free.
+ // Count exactly the same predicate used by the list and analytics.
  const groups=await db.order.groupBy({by:["testOnly","status"],_count:{_all:true}});
+ const confirmedCount=await db.order.count({where:orderListWhere("bestaetigt")});
  const realCount=groups.filter(g=>!g.testOnly).reduce((n,g)=>n+g._count._all,0);
+ const closedCount=groups.filter(g=>!g.testOnly&&["cancelled","refunded"].includes(g.status)).reduce((n,g)=>n+g._count._all,0);
  const testCount=groups.filter(g=>g.testOnly).reduce((n,g)=>n+g._count._all,0);
- const count=filter==="alle"?realCount+testCount:filter==="tests"?testCount:filter==="offen"?groups.filter(g=>g.testOnly&&g.status==="test_reserved").reduce((n,g)=>n+g._count._all,0):realCount;
+ const openCount=Math.max(0,realCount-confirmedCount-closedCount);
+ const count=filter==="bestaetigt"?confirmedCount:filter==="offen"?openCount:filter==="storniert"?closedCount:filter==="tests"?testCount:filter==="alle"?confirmedCount+openCount+closedCount+testCount:await db.order.count({where});
  const orders=await db.order.findMany({where,orderBy:[{createdAt:"desc"},{id:"asc"}],skip:(page-1)*20,take:20,include:{
    lines:{select:{quantity:true,unitPriceCents:true,lineTotalCents:true,variant:{select:{colorLabel:true,lengthLabel:true,product:{select:{name:true}}}}}},
    giftPurchases:{select:{id:true,amountCents:true,recipientName:true,delivery:true,recipientEmail:true,status:true,buyerMailStatus:true,recipientMailStatus:true}},
@@ -55,8 +58,8 @@ export default async function AdminOrders({searchParams}:{searchParams:Promise<{
  const labelOrderIds=new Set(labels.map(l=>l.orderId));
  const totalPages=Math.max(1,Math.ceil(count/20));
  const link=(p:number)=>"/admin/bestellungen?filter="+filter+"&seite="+p;
- return <AdminShell current="orders" title="Bestellübersicht." description="Bestellungen, Sendungsnummern und Statusverlauf. Klarna-Einzug bei manuellem DHL-Versand nur nach bestätigter physischer Paketübergabe.">
-  <div className="rh-admin-warning"><strong>Checkout-Modus: {publicCheckoutMode()==="disabled"?"Nur Vorbereitung":publicCheckoutMode()==="admin_test"?"Admin-Test":publicCheckoutMode()==="klarna_public"?"Klarna live / DHL manuell":publicCheckoutMode()==="payments_public"?"PayPal + Klarna live / DHL manuell":"Kunden"}.</strong> Nur durch den Zahlungsanbieter verifizierte Transaktionen zählen als bezahlt. Testreservierungen zählen nicht als Umsatz.</div>
+ return <AdminShell current="orders" title="Bestellübersicht." description="Bestätigte Bestellungen auf einen Blick. Zahlungsversuche, Stornierungen und Testdaten sind getrennt.">
+  <div className="rh-admin-warning"><strong>Checkout-Modus: {publicCheckoutMode()==="disabled"?"Nur Vorbereitung":publicCheckoutMode()==="admin_test"?"Admin-Test":publicCheckoutMode()==="klarna_public"?"Klarna live / DHL manuell":publicCheckoutMode()==="payments_public"?"PayPal + Klarna live / DHL manuell":"Kunden"}.</strong> Klarna-Freigaben und bestätigte Zahlungen zählen als Bestellungen. Versand und Zahlungseinzug sind in den Bestelldetails sichtbar.</div>
   <details className="rh-admin-advanced-tools"><summary>Erweiterte Zahlungs- und Versandprüfung</summary><nav aria-label="Weitere Prüfwerkzeuge">
    <Link href="/admin/klarna-durum">Klarna-Zahlung prüfen (nur lesen)</Link>
    <Link href="/admin/dhl">DHL-Verbindung einrichten</Link>
@@ -64,18 +67,20 @@ export default async function AdminOrders({searchParams}:{searchParams:Promise<{
   </nav></details>
   {params.dhl&&<div className="rh-admin-warning">{params.dhl==="created"?"DHL-Versandetikett erstellt. PDF in der Bestellung herunterladen.":params.dhl==="canceled"?"DHL-Versandetikett storniert.": "DHL-Vorgang nicht abgeschlossen. Bitte Status prüfen; nicht erneut buchen, solange das Ergebnis unklar ist."}</div>}
   <div className="rh-admin-pill-row">
-   <span className="rh-admin-stat-pill">{realCount} Kundenbestellungen</span>
+   <span className="rh-admin-stat-pill">{confirmedCount} bestätigte Bestellungen</span>
    <span className="rh-admin-stat-pill">{testCount} Testdatensätze</span>
   </div>
   <nav className="rh-admin-filters" aria-label="Bestellfilter">
    {[
-    {value:"ohne-testkennzeichen",label:"Kundenbestellungen"},
-    {value:"tests",label:"Testbestellungen"},
-    {value:"alle",label:"Alle anzeigen"}
+    {value:"bestaetigt",label:"Bestätigte Bestellungen",count:confirmedCount},
+    {value:"offen",label:"Nicht bestätigte Versuche",count:openCount},
+    {value:"storniert",label:"Storniert / Erstattet",count:closedCount},
+    {value:"tests",label:"Testbestellungen",count:testCount},
+    {value:"alle",label:"Alle Datensätze",count:confirmedCount+openCount+closedCount+testCount}
    ].map(item=><Link key={item.value} href={"/admin/bestellungen?filter="+item.value}
-       aria-current={filter===item.value?"page":undefined} className={filter===item.value?"is-active":undefined}>{item.label}</Link>)}
+       aria-current={filter===item.value?"page":undefined} className={filter===item.value?"is-active":undefined}>{item.label} ({item.count})</Link>)}
   </nav>
-  {filter==="tests"&&<p className="rh-admin-muted"><Link href="/admin/bestellungen?filter=offen">Nur offene Testreservierungen</Link></p>}
+  {filter==="tests"&&<p className="rh-admin-muted"><Link href="/admin/bestellungen?filter=test-offen">Nur offene Testreservierungen</Link></p>}
   {orders.length===0?<div className="rh-admin-panel-card rh-admin-empty rh-studio-orders-empty">
       <span className="rh-studio-orders-empty-icon"><ClipboardList size={27}/></span><h2>Noch keine Bestelldatensätze</h2>
       <p>In diesem Filter liegen keine Bestellungen vor. Testdaten und Kundenbestellungen werden getrennt angezeigt.</p>
@@ -85,16 +90,17 @@ export default async function AdminOrders({searchParams}:{searchParams:Promise<{
       </div>
      </div>:
    <section className="rh-admin-panel-card rh-admin-orders-card">
-    <div className="rh-admin-card-title"><div><span>DATENBANK / LESEN</span><h2>{count} Einträge</h2></div><span>Seite {page} von {totalPages}</span></div>
+    <div className="rh-admin-card-title"><div><span>BESTELLÜBERSICHT</span><h2>{count} {filter==="bestaetigt"?"bestätigte Bestellungen":"Einträge"}</h2></div><span>Seite {page} von {totalPages}</span></div>
     <div className="rh-admin-orders-list">
-     {orders.map(order=><details key={order.id} className="rh-admin-order-item">
-      <summary><span className="rh-admin-order-number">#{order.orderNumber.toString()} <small>{order.testOnly?"TESTDATENSATZ":order.payments.some(p=>p.eventType==="PAYMENT.CAPTURE.COMPLETED")?"BEZAHLT":order.status==="payment_authorized"?"AUTORISIERT":"OFFEN"}</small></span>
-       <span className="rh-admin-order-status">{isKnownOrderState(order.status)?orderStates[order.status]:order.status}</span>
-       <span>{date(order.createdAt)}<small style={{display:"block"}}>{attribution?.get(order.id)?.last.source?<AdminPurchaseSource value={attribution.get(order.id)}/>:attribution?"Quelle: unbekannt":"Quelle: nicht verfügbar"}</small></span>
-       <strong>{euro(order.totalCents)}</strong>
+     {orders.map(order=>{const presentation=orderListPresentation(order);return <details key={order.id} className="rh-admin-order-item">
+      <summary><span className="rh-admin-order-number">#{order.orderNumber.toString()}<small>{date(order.createdAt)}</small></span>
+       <span className={"rh-admin-order-status rh-admin-order-state-"+presentation.tone}>{presentation.label}{presentation.provider&&<small>{presentation.provider}</small>}</span>
+       <span className="rh-admin-order-source"><small>Herkunft</small><AdminPurchaseSource value={attribution?.get(order.id)} unavailable={attribution===null} compact/></span>
+       <span className="rh-admin-order-total"><strong>{euro(order.totalCents)}</strong><small>Details ansehen ↗</small></span>
       </summary>
       <div className="rh-admin-order-expanded">
        <div className="rh-admin-order-meta"><p><strong>Datensatz-ID:</strong> {order.id}</p>
+        <p><strong>Zahlungs- und Versandstatus:</strong> {isKnownOrderState(order.status)?orderStates[order.status]:order.status}</p>
         <p><strong>Bestellherkunft:</strong> <AdminPurchaseSource value={attribution?.get(order.id)} unavailable={attribution===null}/></p>
         <p><strong>Reservierung bis:</strong> {order.reservationExpiresAt?date(order.reservationExpiresAt):"Keine"}</p>
         <p><strong>Artikelwert:</strong> {euro(order.subtotalCents)} · <strong>Erfasster Versand:</strong> {euro(order.shippingCents)}</p>
@@ -158,7 +164,7 @@ export default async function AdminOrders({searchParams}:{searchParams:Promise<{
           <span>{date(event.createdAt)} — {isKnownOrderState(event.toStatus)?orderStates[event.toStatus]:event.toStatus}
            <small>{event.reason}</small></span></li>)}</ol>:<p className="rh-admin-muted">Kein Statusverlauf aufgezeichnet.</p>}
       </div>
-     </details>)}
+     </details>})}
     </div>
    </section>}
   {totalPages>1&&<nav className="rh-admin-pagination" aria-label="Bestellseiten">

@@ -550,3 +550,17 @@
 @media(max-width:580px){.rh-dhl-topline,.rh-dhl-order-heading,.rh-dhl-test-item{flex-direction:column;align-items:flex-start}.rh-dhl-order-facts,.rh-dhl-tech-grid{grid-template-columns:1fr}.rh-dhl-advanced>summary{padding:18px}.rh-dhl-advanced-body{padding:4px 18px 20px}.rh-dhl-main-action form,.rh-dhl-main-action button{width:100%}.rh-dhl-test-item form,.rh-dhl-test-item button{width:100%}.rh-dhl-step{padding:14px}}
 
 .rh-adv-refresh-group{display:flex;flex-direction:column;gap:8px;align-items:flex-end;max-width:100%}.rh-adv-refresh-group small{font-size:11px;line-height:1.45;opacity:.85;text-align:right}.rh-adv-refresh-group button{font:inherit;cursor:pointer}.rh-adv-refresh-group button:disabled{cursor:wait;opacity:.7}.rh-adv-refresh-spinning{animation:rh-refresh-spin 1s linear infinite}@keyframes rh-refresh-spin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.rh-adv-refresh-spinning{animation:none}}@media(max-width:720px){.rh-adv-refresh-group{align-items:flex-start}.rh-adv-refresh-group small{text-align:left}}
+
+/* Order success, payment processing and acquisition are separate concepts. */
+.rh-admin-order-item summary{grid-template-columns:minmax(100px,1fr) minmax(130px,1fr) minmax(110px,1fr) auto}
+.rh-admin-order-number small{color:#817078;font-weight:400;letter-spacing:0;font-size:11px}
+.rh-admin-order-status{width:fit-content;min-width:110px;border-radius:6px;font-weight:650;padding:10px 12px}
+.rh-admin-order-status small,.rh-admin-order-source small,.rh-admin-order-total small{display:block;font-size:10px;font-weight:400;margin-top:4px;color:#75646d}
+.rh-admin-order-state-confirmed{background:#e8f1e9;color:#315c3d}
+.rh-admin-order-state-pending{background:#f8efdd;color:#775417}
+.rh-admin-order-state-closed,.rh-admin-order-state-neutral{background:#eee9e8;color:#75646d}
+.rh-admin-order-source{min-width:0;overflow-wrap:anywhere}
+.rh-admin-order-source small{margin:0 0 4px}
+.rh-admin-order-total{text-align:right;white-space:nowrap}
+.rh-admin-order-total strong{font-size:16px}
+@media(max-width:720px){.rh-admin-order-item summary{grid-template-columns:minmax(0,1fr) auto;gap:10px;padding:14px 4px}.rh-admin-order-source{grid-column:1;grid-row:2}.rh-admin-order-total{grid-column:2;grid-row:2}.rh-admin-order-status{min-width:0;justify-self:end}}
