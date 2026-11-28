@@ -10,7 +10,9 @@ test("out-of-stock shades cannot link to a product or purchase",()=>{
  assert.match(grid,/card.status==="unavailable"\?"AUSVERKAUFT"/);
  assert.match(grid,/card.status!=="unavailable"&&<Link/);
  assert.match(product,/!inStock\?"Ausverkauft"/);
- assert.match(product,/disabled={!inStock\|\|quantity>stockLimit}/);
+ assert.match(product,/disabled={!canAdd}/);
+ assert.match(product,/const canAdd=loaded&&inStock&&stockLimit>0/);
+ assert.match(product,/remainingCartStock\(selected,already\)/);
  assert.match(product,/selected\?\.stock_quantity/);
  assert.match(home,/canBuy\?<Link/);
  assert.match(home,/AUSVERKAUFT/);

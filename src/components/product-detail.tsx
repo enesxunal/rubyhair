@@ -4,6 +4,7 @@ import { ZoomIn, Palette, Ruler, Info } from "lucide-react";
 import Link from "next/link";
 import { useCart } from "./cart-context";
 import { colorsFor, euros, type Product } from "@/lib/catalog";
+import {buyableVariant,initialProductVariant,variantAfterColorChange,remainingCartStock} from "@/lib/product-selection";
 import {customerTapeAltImage} from "@/lib/customer-tape-images";
 import {trackRubyMetaFunnel} from "@/lib/meta-pixel";
 import {META_FUNNEL_EVENT} from "@/lib/meta-funnel-policy";
@@ -12,18 +13,24 @@ import BlackFridayBadge from "@/components/black-friday-badge";
 export function ProductDetail({product,initialColor,initialLength}:{product:Product;initialColor?:string;initialLength?:string}){
   const groups=useMemo(()=>colorsFor(product),[product]);
   const colors=Array.from(groups.keys());
-  const starting=initialColor&&groups.has(initialColor)?initialColor:(groups.has("ruby")?"ruby":colors[0]);
-  const [color,setColor]=useState(starting);
-  const [length,setLength]=useState(
-    initialLength&&groups.get(starting)?.some(v=>v.length===initialLength)?initialLength:""
-  );
+  const starting=initialProductVariant(product.variations,initialColor&&groups.has(initialColor)?initialColor:undefined,initialLength);
+  const [color,setColor]=useState(starting?.color||colors[0]);
+  const [length,setLength]=useState(starting?.length||"");
   const [quantity,setQuantity]=useState(1);
   const [added,setAdded]=useState(false);
   const [galleryIndex,setGalleryIndex]=useState(0);
   const lightbox=useRef<HTMLDialogElement>(null);
-  const {add}=useCart();
+  const {add,lines,loaded}=useCart();
+  const purchasePanel=useRef<HTMLDivElement>(null);
+  const [purchaseVisible,setPurchaseVisible]=useState(true);
+  useEffect(()=>{
+    const node=purchasePanel.current;
+    if(!node||typeof IntersectionObserver==="undefined")return;
+    const observer=new IntersectionObserver(([entry])=>setPurchaseVisible(entry.isIntersecting),{threshold:0.05});
+    observer.observe(node);return ()=>observer.disconnect();
+  },[]);
   const choices=groups.get(color)||[];
-  const available=choices.filter(v=>v.available&&v.purchasable);
+  const available=choices.filter(buyableVariant);
   const selected=choices.find(v=>v.length===length)||available[0]||choices[0];
   const metaView=useRef("");
   useEffect(()=>{
@@ -34,9 +41,17 @@ export function ProductDetail({product,initialColor,initialLength}:{product:Prod
     track();window.addEventListener(META_FUNNEL_EVENT,track);
     return ()=>window.removeEventListener(META_FUNNEL_EVENT,track);
   },[product.slug,selected?.id,selected?.price]);
-  const otherLength=length==="45-50-cm"?"55-60-cm":"45-50-cm";
-  const inStock=Boolean(selected?.available&&selected?.purchasable);
-  const stockLimit=Math.min(99,selected?.stock_quantity??99);
+  const otherLength=selected?.length==="45-50-cm"?"55-60-cm":"45-50-cm";
+  const inStock=Boolean(selected&&buyableVariant(selected));
+  const already=lines.find(line=>line.id===selected?.id)?.quantity||0;
+  const stockLimit=remainingCartStock(selected,already);
+  const safeQuantity=Math.max(1,Math.min(quantity,stockLimit||1));
+  const canAdd=loaded&&inStock&&stockLimit>0;
+  const addSelected=()=>{
+    if(!selected||!canAdd)return;
+    add(selected.id,safeQuantity,Math.round(selected.price*100));
+    setAdded(true);
+  };
   const extraCustomerPhoto=selected?customerTapeAltImage(product.slug,selected.color):null;
   const slides=[
     {src:selected?.image||product.image,label:"Ausgewählter Farbton",alt:product.name+" – Farbton "+(selected?.color_label||"")},
@@ -46,7 +61,7 @@ export function ProductDetail({product,initialColor,initialLength}:{product:Prod
     ]:[])
   ];
   const slide=slides[Math.min(galleryIndex,slides.length-1)];
-  return <div className="rh-detail rh-shell">
+  return <div className="rh-detail rh-shell rh-detail-purchase-ready">
     <nav className="rh-breadcrumb" aria-label="Breadcrumb"><Link href="/">Startseite</Link><span>/</span>
       <Link href="/kollektionen/">Extensions</Link><span>/</span><span>{product.name}</span></nav>
     <div className="rh-detail-layout">
@@ -79,20 +94,21 @@ export function ProductDetail({product,initialColor,initialLength}:{product:Prod
         <div className="rh-eyebrow">RUBY HAIR · 100 % ECHTHAAR</div>
         <h1>{product.name}</h1>
         <p className="rh-detail-summary">{product.intro}</p>
-        <div className="rh-price" aria-live="polite">{selected?euros(selected.price):"Preis auf Anfrage"}</div>
+        <div className="rh-price" aria-live="polite">{selected?euros(selected.price):"Preis auf Anfrage"}{selected&&<small className="rh-unit-price-label"> / Packung</small>}</div>
         <BlackFridayBadge hint/>
         <p className="rh-price-note">Alle Preise inkl. 19 % MwSt., zzgl. 4,99 € DHL-Versand innerhalb Deutschlands. Preis und Verfügbarkeit werden an der Kasse nochmals geprüft. <Link href="/versand-zahlung/">Versand & Zahlung ↗</Link></p>
         <div className="rh-product-summary-tags"><span>{product.material}</span><span>{product.pack} / Packung</span></div>
-        <fieldset className="rh-choice"><legend>01 / WÄHLE DEINE FARBE <span>· {selected?.color_label}</span></legend>
+        <fieldset id="rh-product-options" className="rh-choice"><legend>01 / WÄHLE DEINE FARBE <span>· {selected?.color_label}</span></legend>
           <div className="rh-color-options">
             {colors.map(value=>{
               const options=groups.get(value)||[];
-              const first=options.find(v=>v.available&&v.purchasable)||options[0];
+              const first=options.find(buyableVariant)||options[0];
+              const next=variantAfterColorChange(options,selected?.length);
               return <button key={value} className="rh-color-choice" type="button"
                 aria-label={"Farbe "+first.color_label} aria-pressed={color===value}
-                disabled={!options.some(v=>v.available&&v.purchasable)}
-                onClick={()=>{setColor(value);setLength("");setQuantity(1);setAdded(false);setGalleryIndex(0)}}>
-                <img src={first.image} alt="" loading="lazy"/><span>{first.color_label}</span>
+                disabled={!options.some(buyableVariant)}
+                onClick={()=>{setColor(value);setLength(next?.length||"");setQuantity(1);setAdded(false);setGalleryIndex(0)}}>
+                <img src={first.image} alt="" loading="lazy"/><span>{first.color_label}</span>{!options.some(buyableVariant)&&<small>Ausverkauft</small>}
               </button>;
             })}
           </div>
@@ -101,13 +117,37 @@ export function ProductDetail({product,initialColor,initialLength}:{product:Prod
           <div className="rh-length-options">
             {Array.from(new Map(choices.map(v=>[v.length,v])).values()).map(v=>
               <button key={v.length} type="button" className="rh-length-choice"
-                disabled={!choices.some(x=>x.length===v.length&&x.available&&x.purchasable)}
+                disabled={!choices.some(x=>x.length===v.length&&buyableVariant(x))}
                 aria-pressed={selected?.length===v.length} onClick={()=>{setLength(v.length);setQuantity(1);setAdded(false)}}>
-                {v.length_label}
+                {v.length_label}{!buyableVariant(v)&&<small>Ausverkauft</small>}
               </button>
             )}
           </div>
         </fieldset>
+        <div className="rh-product-purchase" ref={purchasePanel} id="rh-product-purchase">
+          <p className={"rh-availability"+(!inStock?" rh-not-available":"")} aria-live="polite">
+            {!inStock?"Ausverkauft":stockLimit===0?"Verfügbare Menge bereits im Warenkorb":selected?.stock_quantity!=null?`Noch ${selected.stock_quantity} Packungen verfügbar`:"Verfügbar"}
+          </p>
+          <div className="rh-product-current-choice"><strong>{selected?.color_label||"Farbe"} · {selected?.length_label||"Länge"}</strong><small>{product.pack} / Packung</small></div>
+          <div className="rh-product-purchase-row">
+            <div><label className="rh-qty-label" htmlFor="rh-quantity">Packungen</label>
+              <div className="rh-qty-control"><button disabled={!canAdd||safeQuantity<=1} onClick={()=>{setQuantity(Math.max(1,safeQuantity-1));setAdded(false)}} aria-label="Menge verringern" type="button">−</button>
+                <input id="rh-quantity" inputMode="numeric" type="number" min="1" max={Math.max(1,stockLimit)} disabled={!canAdd} value={safeQuantity}
+                  onChange={e=>{setQuantity(Math.max(1,Math.min(stockLimit,Math.floor(Number(e.target.value)||1))));setAdded(false)}}/>
+                <button disabled={!canAdd||safeQuantity>=stockLimit} onClick={()=>{setQuantity(safeQuantity+1);setAdded(false)}} aria-label="Menge erhöhen" type="button">+</button></div>
+            </div>
+            <div className="rh-product-subtotal" aria-live="polite"><small>Artikelpreis gesamt</small><strong>{selected?euros(Math.round(selected.price*100)*safeQuantity/100):"—"}</strong><small>inkl. MwSt., zzgl. Versand</small></div>
+          </div>
+          <button disabled={!canAdd} className="rh-buy-button" type="button" onClick={addSelected}>
+            {!inStock?"AUSVERKAUFT":stockLimit===0?"MAXIMALE MENGE IM WARENKORB":"IN DEN WARENKORB"}<span aria-hidden="true">↗</span>
+          </button>
+          {added&&<div className="rh-product-added" role="status">Zum Warenkorb hinzugefügt. <Link className="rh-cart-link" href="/warenkorb">Warenkorb ansehen →</Link></div>}
+          <p className="rh-shop-explain">PayPal · Klarna · Karte · DHL Versand innerhalb Deutschlands</p>
+        </div>
+        {!purchaseVisible&&loaded&&selected&&<div className="rh-mobile-product-bar">
+          <div><small>{selected.color_label} · {selected.length_label}</small><strong>{euros(selected.price)} <small>/ Packung</small></strong></div>
+          {added?<Link href="/warenkorb">Zum Warenkorb <span aria-hidden="true">↗</span></Link>:<a href="#rh-product-options">Auswahl ansehen <span aria-hidden="true">↗</span></a>}
+        </div>}
         <div className="rh-guidance" aria-label="Hilfe bei Farb- und Längenauswahl">
           <details className="rh-guidance-item">
             <summary><Palette size={18} aria-hidden="true"/><span><strong>Farbberatung</strong><small>So findest du einen passenden Farbton</small></span><span className="rh-guidance-plus" aria-hidden="true">+</span></summary>
@@ -130,20 +170,6 @@ export function ProductDetail({product,initialColor,initialLength}:{product:Prod
             </div>
           </details>
         </div>
-        <p className={"rh-availability"+(!inStock?" rh-not-available":"")}>
-          {!inStock?"Ausverkauft":selected?.stock_quantity!=null?`Noch ${selected.stock_quantity} Stück verfügbar`:"Verfügbar"}
-        </p>
-        <label className="rh-qty-label" htmlFor="rh-quantity">Menge</label>
-        <div className="rh-qty-control"><button disabled={!inStock} onClick={()=>setQuantity(v=>Math.max(1,v-1))} aria-label="Menge verringern" type="button">−</button>
-          <input id="rh-quantity" inputMode="numeric" type="number" min="1" max={stockLimit} disabled={!inStock} value={Math.min(quantity,Math.max(1,stockLimit))}
-            onChange={e=>setQuantity(Math.max(1,Math.min(stockLimit,Number(e.target.value)||1)))}/>
-          <button disabled={!inStock||quantity>=stockLimit} onClick={()=>setQuantity(v=>Math.min(stockLimit,v+1))} aria-label="Menge erhöhen" type="button">+</button></div>
-        <button disabled={!inStock||quantity>stockLimit} className="rh-buy-button" type="button"
-          onClick={()=>{if(selected&&inStock&&stockLimit>0){add(selected.id,Math.min(quantity,stockLimit),Math.round(selected.price*100));setAdded(true)}}}>
-          {!inStock?"AUSVERKAUFT":added?"ZUM WARENKORB HINZUGEFÜGT":"IN DEN WARENKORB"}<span aria-hidden="true">↗</span>
-        </button>
-        {added&&<Link className="rh-cart-link" href="/warenkorb/">Warenkorb ansehen →</Link>}
-        <p className="rh-shop-explain">Verfügbare Varianten kannst du sicher mit PayPal oder Klarna bezahlen. Ausverkaufte Varianten sind gesperrt.</p>
         <div className="rh-product-facts">
           <details open><summary>Produktdetails</summary>
             <ul><li>Material: {product.material}</li><li>Packungsinhalt: {product.pack}</li><li>Gewicht laut bisherigem Shop: 25 g</li><li>Farbe und Länge individuell auswählbar</li></ul>
@@ -170,6 +196,6 @@ export function ProductDetail({product,initialColor,initialLength}:{product:Prod
       </div>
     </section>
     <div className="rh-related-inline"><div className="rh-eyebrow">NOCH MEHR ENTDECKEN</div>
-      <Link href={product.slug==="tape-in-extensions"?"/kollektionen/tape-in-extensions/?laenge="+otherLength:"/kollektionen/"}>Weitere Tape-in Längen ansehen →</Link></div>
+      <Link href={product.slug==="tape-in-extensions"?"/kollektionen/tape-in-extensions/?laenge="+otherLength:"/kollektionen/"}>{product.slug==="tape-in-extensions"?"Weitere Tape-in Längen ansehen →":"Alle Extensions ansehen →"}</Link></div>
   </div>;
 }
