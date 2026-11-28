@@ -95,3 +95,13 @@ test("cancellation page offers DHL label cancellation only before physical shipm
  assert.ok(action.includes('order.shippedAt||order.deliveredAt'));
  assert.ok(action.includes('redirect("/admin/stornierung?order="+orderNumber+"&dhl="+result)'));
 });
+
+test("cancellation workspace always shows the three actions with clear availability",()=>{
+ const page=readFileSync("app/admin/stornierung/page.tsx","utf8");
+ assert.ok(page.includes("Verfügbare Aktionen"));
+ assert.ok(page.includes("DHL-Etikett stornieren")&&page.includes("Bestellung stornieren")&&page.includes("Zahlung erstatten"));
+ assert.ok(page.includes('disabled className="rh-cancel-primary"'));
+ assert.ok(page.includes('Zuerst DHL-Etikett stornieren.'));
+ assert.ok(page.includes('name="confirmed" required')&&page.includes('name="confirm" required'));
+ assert.ok(page.includes("Keine automatische Rückzahlung."));
+});

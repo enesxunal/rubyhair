@@ -14,7 +14,7 @@ export default async function RefundReadiness({searchParams}:{searchParams:Promi
  const q=await searchParams;
  const recent=await getPrisma().order.findMany({where:{testOnly:false},orderBy:{createdAt:"desc"},take:15,
   select:{id:true,orderNumber:true,status:true,totalCents:true,invoice:{select:{invoiceNumber:true}}}});
- const selected=recent.find(o=>String(o.orderNumber)===q.order);
+ const selected=q.order&&/^[1-9][0-9]{0,12}$/.test(q.order)?await getPrisma().order.findFirst({where:{orderNumber:BigInt(q.order),testOnly:false},select:{id:true,orderNumber:true,status:true,totalCents:true,invoice:{select:{invoiceNumber:true}}}}):null;
  const status=selected?await readCustomerRefundStatus(selected.id):null;
  return <AdminShell current="orders" title="Erstattungen – sicher prüfen" description="Nur Leserechte beim Zahlungsanbieter. Es wird keine PayPal- oder Klarna-Erstattung ausgelöst.">
   <section className="rh-admin-panel-card" style={{padding:24}}>
