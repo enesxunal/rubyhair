@@ -39,7 +39,7 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
   const shipping=lines.length?shippingCents:0;
   const physicalCents=quote?.subtotalCents||0;
   const grossCents=physicalCents+giftSoldCents+shipping;
-  const canPay=Boolean(hasItems&&!error&&!loading&&(!lines.length||quote&&!quote.needsReview));
+  const canPay=Boolean(hasItems&&!error&&!loading&&(!lines.length||quote?.checkoutEnabled&&!quote.needsReview));
   const metaCheckout=useRef(false);
   useEffect(()=>{
     const track=()=>{
@@ -57,7 +57,8 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
     quote?.couponError?"Der Rabattcode ist ungültig. Bitte im Warenkorb entfernen.":
     quote?.lines.some(line=>line.status==="out-of-stock")?"Ein Artikel ist nicht in der gewünschten Menge verfügbar. Bitte Warenkorb prüfen.":
     quote?.lines.some(line=>line.status==="unknown-variation")?"Ein Artikel ist nicht mehr verfügbar. Bitte Warenkorb prüfen.":
-    quote?.needsReview?"Ein Artikel muss vor der Zahlung geprüft werden. Bitte Warenkorb prüfen.":null;
+    quote?.needsReview?"Ein Artikel muss vor der Zahlung geprüft werden. Bitte Warenkorb prüfen.":
+    lines.length&&!quote?.checkoutEnabled?"Die verbindliche Preisprüfung ist derzeit nicht verfügbar.":null;
   const paymentAttempt=useRef(false);
   const claimPayment=()=>{if(paymentAttempt.current)return false;paymentAttempt.current=true;return true};
   const releasePayment=()=>{paymentAttempt.current=false};
@@ -106,27 +107,28 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
     <div className="rh-eyebrow">RUBY HAIR / CHECKOUT</div>
     <p className="rh-checkout-account-note">Du kannst ohne Registrierung bestellen. <Link href="/konto/anmelden/">Optionales Kundenkonto erstellen</Link> – für Bestellungen, Rechnungen und Versandstatus.</p>
     <h1>Almost <em>yours.</em></h1>
+    {loaded&&hasItems&&<div className="rh-checkout-mobile-total"><span>Gesamt inkl. MwSt. und Versand</span><strong>{canPay?euros(grossCents/100):"Wird geprüft"}</strong><a href="#rh-checkout-order-summary">Bestellung ansehen ↗</a></div>}
     <div className="rh-checkout-grid">
       <section className="rh-checkout-process">
         <h2>Dein Einkauf.</h2>
         <p>{digitalOnly?"Prüfe deine Gutscheine und die Rechnungsdaten. Es gibt keinen Paketversand.":"Prüfe deine Auswahl und die Lieferadresse."}</p>
-        <div className="rh-checkout-steps">
+        <div className="rh-checkout-steps rh-checkout-compact-steps" aria-label="Bestellschritte">
           {checkoutSteps.map((step,i)=><article key={step.no}>
             <div className="rh-checkout-number">{step.no}</div>
             <div><div className="rh-checkout-step-name"><step.icon size={19} strokeWidth={1.6}/><h3>{step.label}</h3></div>
               <p>{step.description}</p></div>
-            <span className="rh-checkout-step-state">{i===0?<Check size={18}/>:<span aria-hidden="true">{step.no}</span>}</span>
+            <span className="rh-checkout-step-state">{(i===0&&canPay)||(i===1&&validatedAddress)?<Check size={18}/>:<span aria-hidden="true">{step.no}</span>}</span>
           </article>)}
         </div>
         {loaded&&hasItems&&<CheckoutAddressPreview onValidated={setValidatedAddress} digitalOnly={digitalOnly}/>}
-        {loaded&&lines.length>0&&!gifts.length&&<section className="rh-gift-redeem-box" aria-label="Geschenkgutschein einlösen">
-         <div className="rh-gift-redeem-heading"><Gift size={21}/><div><span>GESCHENKGUTSCHEIN</span><h3>Du hast einen Gutschein?</h3></div></div>
+        {loaded&&lines.length>0&&!gifts.length&&<details className="rh-gift-redeem-box" aria-label="Geschenkgutschein einlösen">
+         <summary className="rh-gift-redeem-heading"><Gift size={21}/><div><span>GESCHENKGUTSCHEIN</span><h3>Gutschein einlösen</h3></div></summary>
          <p>Gib deinen Ruby Hair Gutscheincode ein. Das Guthaben wird vor der Zahlung verrechnet.</p>
          <div className="rh-gift-redeem-row"><input aria-label="Gutscheincode" placeholder="RH-XXXX-XXXX-XXXX-XXXX-XXXX" value={giftInput} maxLength={45} onChange={e=>{setGiftInput(e.target.value);setAppliedGift(null);setGiftError("")}}/>
          <button type="button" onClick={verifyGift} disabled={!giftInput.trim()||giftLoading}>{giftLoading?"Prüfen …":"Einlösen"}</button></div>
          {giftError&&<p role="alert" className="rh-gift-form-error">{giftError}</p>}
          {appliedGift&&<p className="rh-gift-applied" role="status">Gutschein erkannt: {euros(appliedGift.balanceCents/100)} verfügbar. Angerechnet werden {euros(giftUsed/100)}.</p>}
-        </section>}
+        </details>}
         <section className="rh-checkout-payment-preview" aria-label="Zahlungsart auswählen">
           <h3>03 / ZAHLUNG</h3>
           <p className="rh-payment-preview-heading">{gifts.length?"Gemeinsame Zahlung für Waren und Gutscheine mit PayPal":"Wähle deine Zahlungsart"}</p>
@@ -159,11 +161,11 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
           </div>}
           </div>
         </section>
-        <div className="rh-gift-checkout-upsell"><Gift size={22}/><div><strong>Auch einer Freundin eine Freude machen?</strong><p>Verschenke Beauty mit einem persönlichen Ruby Hair Geschenkgutschein.</p><Link href="/geschenkgutschein/">Gutschein gestalten ↗</Link></div></div>
+
         <Link className="rh-continue-shop" href="/versand-zahlung/">Versand, Zahlung & Widerruf ansehen ↗</Link>
         <Link className="rh-checkout-return" href="/warenkorb/">← ZURÜCK ZUM WARENKORB</Link>
       </section>
-      <aside className="rh-checkout-summary">
+      <aside className="rh-checkout-summary" id="rh-checkout-order-summary">
         <div className="rh-checkout-summary-head"><div className="rh-eyebrow">DEINE AUSWAHL</div><h2>Zusammenfassung.</h2></div>
         {!loaded?<p role="status">Warenkorb wird geladen …</p>:
           !hasItems?<div className="rh-checkout-empty"><p>Dein Warenkorb ist noch leer.</p>

@@ -24,7 +24,7 @@ test("live active product markup uses actual availability and not fabricated rat
  const page=read("app/produkt/[slug]/page.tsx");
  assert.ok(page.includes('"@type":"ProductGroup"'));
  assert.ok(page.includes('"@type":"Offer"'));
- assert.ok(page.includes('v.purchasable?'));
+ assert.ok(page.includes('buyableVariant(v)?'));
  assert.ok(!page.includes('product?.slug==="keratin-bondings"?{robots'));
  assert.ok(!page.includes('"aggregateRating"'));
  const collection=read("app/kollektionen/[slug]/page.tsx");

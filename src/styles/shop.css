@@ -1167,3 +1167,34 @@ button.rh-editorial-cta{cursor:pointer}
 }
 
 #rh-product-options{scroll-margin-top:100px}
+
+/* Make totals and payment progress easy to find without changing payment logic. */
+.rh-cart-grand-total{padding:12px 0;border-top:1px solid #d9cbd1;align-items:center}
+.rh-cart-grand-total strong{font-size:21px;color:var(--wine);white-space:nowrap}
+.rh-cart-qty button:disabled{opacity:.4;cursor:not-allowed}
+.rh-cart-missing{padding:14px;border:1px solid #ddc5ca;color:#693748;margin:10px 0}
+.rh-checkout-mobile-total{display:none}
+.rh-checkout-compact-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;border-top:0;margin:14px 0 24px}
+.rh-checkout-compact-steps article{display:flex;flex-direction:column;position:relative;gap:6px;padding:9px 7px;border:1px solid #e1d5d1}
+.rh-checkout-compact-steps article p{display:none}
+.rh-checkout-compact-steps .rh-checkout-number{font-size:11px}
+.rh-checkout-compact-steps .rh-checkout-step-name{gap:4px}
+.rh-checkout-compact-steps .rh-checkout-step-name h3{font-size:11px;line-height:1.3}
+.rh-checkout-compact-steps .rh-checkout-step-name svg{display:none}
+.rh-checkout-compact-steps .rh-checkout-step-state{position:absolute;right:6px;top:5px;font-size:10px}
+.rh-gift-redeem-box>summary{cursor:pointer;list-style:none}
+.rh-gift-redeem-box>summary::-webkit-details-marker{display:none}
+.rh-gift-redeem-box>summary::after{content:"+";margin-left:auto;color:var(--wine);font-size:20px}
+.rh-gift-redeem-box[open]>summary::after{content:"−"}
+#rh-checkout-order-summary{scroll-margin-top:100px}
+@media(min-width:761px){.rh-order-summary{position:sticky;top:110px}}
+@media(max-width:750px){
+ .rh-checkout-mobile-total{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 12px;padding:14px;background:#f6efea;margin:0 0 18px;color:var(--wine)}
+ .rh-checkout-mobile-total span,.rh-checkout-mobile-total a{font-size:11px}
+ .rh-checkout-mobile-total strong{font-size:21px}
+ .rh-checkout-mobile-total a{grid-column:1/-1;text-decoration:underline}
+ .rh-checkout-compact-steps article{display:flex;padding:8px 6px;gap:4px}
+ .rh-checkout-compact-steps .rh-checkout-step-name h3{font-size:10px}
+ .rh-checkout-compact-steps .rh-checkout-step-state{right:4px;top:4px}
+ .rh-cart-grand-total strong{font-size:19px}
+}

@@ -5,21 +5,22 @@ import {products} from "@/lib/catalog";
 import {getStoreProduct} from "@/lib/catalog-server";
 export const dynamic="force-dynamic";
 import {ProductDetail} from "@/components/product-detail";
+import {buyableVariant} from "@/lib/product-selection";
 import {absoluteSiteUrl} from "@/lib/seo";
 type Params={params:Promise<{slug:string}>,searchParams:Promise<{farbe?:string;laenge?:string}>};
 export function generateStaticParams(){return products.map(p=>({slug:p.slug}));}
 export async function generateMetadata({params}:Params):Promise<Metadata>{
   const product=await getStoreProduct((await params).slug);
-  return {title:product?.name||"Produkt",
+  return {title:product?product.name+" aus Echthaar": "Produkt",
     description:product?.intro,
-    alternates:{canonical:`/produkt/${product?.slug||""}/`},
+    alternates:{canonical:`/produkt/${product?.slug||""}`},
     openGraph:{title:product?.name||"Ruby Hair Extensions",description:product?.intro||"Ruby Hair Echthaar Extensions",images:product?[{url:product.image}]:[]}};
 }
 export default async function ProductPage({params,searchParams}:Params){
   const product=await getStoreProduct((await params).slug);
   if(!product)notFound();
   const {farbe,laenge}=await searchParams;
-  const productUrl=absoluteSiteUrl(`/produkt/${product.slug}/`);
+  const productUrl=absoluteSiteUrl(`/produkt/${product.slug}`);
   const structured={
     "@context":"https://schema.org", "@type":"ProductGroup",
     "name":product.name,"description":product.intro,
@@ -29,12 +30,12 @@ export default async function ProductPage({params,searchParams}:Params){
     "material":product.material,
     "url":productUrl,
     "variesBy":["https://schema.org/color","https://schema.org/size"],
-    "hasVariant":product.variations.filter(v=>v.id>0).map(v=>({
+    "hasVariant":product.variations.filter(v=>v.id>0&&v.id!==886&&Number.isFinite(v.price)&&v.price>0).map(v=>({
       "@type":"Product","name":`${product.name} – ${v.color_label} – ${v.length_label}`,
-      "sku":`RH-${v.id}`,"color":v.color_label,"size":v.length_label,
-      "image":absoluteSiteUrl(v.image),
+      "sku":`RH-${v.id}`,"description":product.intro+" "+v.color_label+" · "+v.length_label+" · "+product.pack,"url":productUrl+`?farbe=${encodeURIComponent(v.color)}&laenge=${encodeURIComponent(v.length)}`,"color":v.color_label,"size":v.length_label,
+      "image":new URL(v.image,productUrl).href,
       "offers":{"@type":"Offer","priceCurrency":"EUR","price":v.price.toFixed(2),
-       "availability":v.purchasable?"https://schema.org/InStock":"https://schema.org/OutOfStock",
+       "availability":buyableVariant(v)?"https://schema.org/InStock":"https://schema.org/OutOfStock",
        "itemCondition":"https://schema.org/NewCondition",
        "url":productUrl+`?farbe=${encodeURIComponent(v.color)}&laenge=${encodeURIComponent(v.length)}`}
     }))

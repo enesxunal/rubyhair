@@ -360,7 +360,7 @@ test("SEO is guarded until merchant-approved launch and uses live inventory for 
  assert.ok(robots.includes('disallow:"/"'));
  assert.ok(productPage.includes('"@type":"ProductGroup"'));
  assert.ok(productPage.includes('"@type":"Offer"'));
- assert.ok(productPage.includes('v.purchasable?'));
+ assert.ok(productPage.includes('buyableVariant(v)?'));
 });
 
 test("fulfillment writes require admin and verified provider evidence, never mark payment paid",()=>{
