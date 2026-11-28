@@ -294,7 +294,7 @@ test("admin pages use authenticated separate dashboard, product and read-only or
  assert.ok(!orders.includes('action={saveVariantAction}'));
  assert.ok(!orders.includes('payment_confirmed:['));
  assert.ok(dash.includes('Ausverkaufte Varianten'));
- assert.ok(dash.includes('db.order.count({where:{testOnly:false}})'));
+ assert.ok(dash.includes('db.order.count({where:confirmedOrderWhere})'));
  assert.ok(dash.includes('Ruby Hair ist live.'));
  assert.ok(actions.includes('redirect("/admin/produkte?updated=1")'));
  assert.ok(actions.includes('redirect("/admin/produkte?productUpdated=1")'));

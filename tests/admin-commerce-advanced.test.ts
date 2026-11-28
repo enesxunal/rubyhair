@@ -22,7 +22,7 @@ test('Berlin midnight bounds are correct for winter and both DST changes',()=>{
 });
 test('Verified payments only: do not count refunds, uncollected gift balance or pending orders as cash',()=>{
  const current=[capture('paid',22000,4000,'payment_confirmed'),capture('refunded',12500,0,'refunded'),capture('cancel',5000,0,'cancelled'),capture('second',12000,0,'shipped')];
- const result=createCommerceReport({captured:current,previous:[capture('previous',30000,0,'delivered')],
+ const result=createCommerceReport({confirmed:current,previousConfirmed:[],captured:current,previous:[capture('previous',30000,0,'delivered')],
   cohorts:[{status:'pending_payment',count:5},{status:'payment_authorized',count:2},{status:'preparing',count:1}],stock,truncated:false},range);
  assert.equal(result.verifiedOrders,2);
  assert.equal(result.collectedCents,30000);
@@ -71,7 +71,7 @@ test('Advanced page uses admin authentication, safe independent verified payment
  assert.ok(!service.includes('shippingAddress'));
  assert.ok(pure.includes('Math.max(0,o.totalCents-o.giftAppliedCents)'));
  assert.ok(exportCSV.includes('if(!await isAdmin())'));
- assert.ok(exportCSV.includes('Bestaetigte_Bestellungen;Eingegangene_EUR'));
+ assert.ok(exportCSV.includes('Bestaetigte_Bestellungen;Bestellwert_EUR;Eingegangene_EUR'));
  for(const style of ['rh-adv-commerce-kpis','rh-adv-hero','rh-adv-inventory','rh-adv-two-col','rh-analytics-trend-toolbar','@media(max-width:720px)'])assert.ok(styles.includes(style),style);
 });
 
@@ -86,4 +86,17 @@ test('Analytics refresh retains current view and reports actual cached snapshot 
  assert.match(service,/revalidate:30/);
  assert.doesNotMatch(service,/Promise\.all\(/);
  assert.match(service,/loadedAt:new Date\(\).toISOString\(\)/);
+});
+
+test("Klarna approval is a sale immediately, not a cash receipt; later capture does not double count",()=>{
+ const approved=capture("klarna",48099,0,"payment_authorized");
+ const yesterday=capture("klarna-previous",84649,0,"payment_authorized","2026-11-21T14:00:00Z");
+ const pending=capture("abandoned",48099,0,"pending_payment");
+ const data=createCommerceReport({confirmed:[approved,approved,yesterday,pending],previousConfirmed:[],captured:[],previous:[],cohorts:[{status:"pending_payment",count:1}],stock,truncated:false},range);
+ assert.equal(data.confirmedOrders,2);assert.equal(data.orderCents,132748);assert.equal(data.collectedCents,0);assert.equal(data.verifiedOrders,0);
+ assert.equal(data.daily.reduce((sum,d)=>sum+d.confirmedOrders,0),2);
+ const later=createCommerceReport({confirmed:[{...approved,status:"payment_confirmed"},yesterday],previousConfirmed:[],captured:[{...approved,status:"payment_confirmed"}],previous:[],cohorts:[],stock,truncated:false},range);
+ assert.equal(later.confirmedOrders,2);assert.equal(later.orderCents,132748);assert.equal(later.collectedCents,48099);
+ const policy=readFileSync("src/lib/admin-confirmed-orders.ts","utf8");
+ assert.ok(policy.includes("klarna_hpp_verified_authorized")&&policy.includes("testOnly:false")&&policy.includes("invoice:{isNot:null}"));
 });

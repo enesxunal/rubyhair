@@ -16,8 +16,8 @@ export async function GET(request:NextRequest){
  // Finish the analytics query before commerce to avoid exhausting the Vercel pool.
  const report=await loadAnalyticsReport(range);
  const commerce=await loadCommerceReportSafely(range);
- const csv=["Datum;Seitenaufrufe;Warenkorb_Aktionen;Kassenaufrufe;Story_Aufrufe;KI_Gestartet;KI_Ergebnisse;KI_zum_Warenkorb;Bestaetigte_Bestellungen;Eingegangene_EUR",
-   ...report.daily.map(d=>[d.day,d.views,d.added,d.checkouts,d.storyViews,d.aiStarts,d.aiSuccess,d.aiAdds,commerce?.daily.find(x=>x.day===d.day)?.paidOrders??"",commerce?(commerce.daily.find(x=>x.day===d.day)?.cashCents||0)/100:""] .join(";"))].join("\r\n");
+ const csv=["Datum;Seitenaufrufe;Warenkorb_Aktionen;Kassenaufrufe;Story_Aufrufe;KI_Gestartet;KI_Ergebnisse;KI_zum_Warenkorb;Bestaetigte_Bestellungen;Bestellwert_EUR;Eingegangene_EUR",
+   ...report.daily.map(d=>[d.day,d.views,d.added,d.checkouts,d.storyViews,d.aiStarts,d.aiSuccess,d.aiAdds,commerce?.daily.find(x=>x.day===d.day)?.confirmedOrders??"",commerce?(commerce.daily.find(x=>x.day===d.day)?.orderCents||0)/100:"",commerce?(commerce.daily.find(x=>x.day===d.day)?.cashCents||0)/100:""] .join(";"))].join("\r\n");
  return new NextResponse("\ufeff"+csv+"\r\n",{
   status:200,
   headers:{

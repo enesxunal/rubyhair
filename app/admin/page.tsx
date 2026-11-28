@@ -3,6 +3,7 @@ import Link from "next/link";
 import {redirect} from "next/navigation";
 import {ArrowRight,ArrowUpRight,Boxes,Package,AlertCircle,ShoppingCart,Clock3,CheckCircle2} from "lucide-react";
 import {isAdmin} from "@/lib/admin-auth";
+import {confirmedOrderWhere} from "@/lib/admin-confirmed-orders";
 import {getPrisma} from "@/lib/prisma";
 import {isKnownOrderState,orderStates} from "@/lib/order-lifecycle";
 import AdminShell from "./admin-shell";
@@ -18,7 +19,7 @@ export default async function AdminHome(){
  // Never mix hidden QA products or technical test orders into merchant KPIs.
  const products=await db.product.findMany({where:{active:true},select:{id:true,name:true,variants:{select:{stockQuantity:true,active:true}}}});
  const recentOrders=await db.order.findMany({where:{testOnly:false},select:{id:true,orderNumber:true,status:true,createdAt:true},orderBy:{createdAt:"desc"},take:5});
- const realOrders=await db.order.count({where:{testOnly:false}});
+ const realOrders=await db.order.count({where:confirmedOrderWhere});
  const variants=products.flatMap(product=>product.variants);
  const unknown=variants.filter(v=>v.stockQuantity===null).length;
  const soldOut=variants.filter(v=>v.stockQuantity===0).length;
@@ -29,7 +30,7 @@ export default async function AdminHome(){
   {label:"Aktive Produkte",value:number(products.length),note:"Im Live-Shop sichtbar",icon:Package},
   {label:"Ausverkaufte Varianten",value:number(soldOut),note:"Bestand 0 · nicht kaufbar",icon:AlertCircle},
   {label:"Wenig Bestand",value:number(low),note:"1 bis 5 Stück verfügbar",icon:Boxes},
-  {label:"Kundenbestellungen",value:number(realOrders),note:"Ohne interne Testbestellungen",icon:ShoppingCart}
+  {label:"Bestätigte Bestellungen",value:number(realOrders),note:"Zahlung freigegeben oder eingegangen",icon:ShoppingCart}
  ];
  return <AdminShell current="dashboard" title="Shop-Übersicht." description="Bestellungen und Bestände auf einen Blick. Interne Testdaten werden nicht mitgezählt.">
   <section className="rh-studio-hero rh-studio-hero-live">
@@ -39,8 +40,8 @@ export default async function AdminHome(){
     <p>PayPal und Klarna sind für Kunden verfügbar. DHL-Versandetiketten werden direkt in den Bestellungen verwaltet.</p>
     <Link href="/admin/bestellungen">Bestellungen öffnen <ArrowUpRight size={17}/></Link>
    </div>
-   <div className="rh-studio-live-summary" aria-label={realOrders+" Kundenbestellungen"}>
-    <strong>{number(realOrders)}</strong><span>Kundenbestellungen</span><small>Technische Testkäufe nicht enthalten</small>
+   <div className="rh-studio-live-summary" aria-label={realOrders+" bestätigte Bestellungen"}>
+    <strong>{number(realOrders)}</strong><span>Bestätigte Bestellungen</span><small>Auch Klarna-Freigaben, ohne Testkäufe</small>
    </div>
   </section>
   <section className="rh-admin-kpi-grid rh-studio-kpis" aria-label="Shop-Kennzahlen">

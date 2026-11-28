@@ -1,5 +1,6 @@
 import "server-only";
 import {unstable_cache} from "next/cache";
+import {confirmedOrderWhere} from "@/lib/admin-confirmed-orders";
 import {getPrisma} from "@/lib/prisma";
 import {commerceRangeUTC,createCommerceReport,type CapturedOrder,type StockSnapshot} from "@/lib/admin-commerce-report";
 import type {AnalyticsRange} from "@/lib/admin-analytics-report";
@@ -18,6 +19,8 @@ export async function loadCommerceReport(range:AnalyticsRange){
    select:eventSelect,orderBy:{receivedAt:"desc"},take:1501});
  const previous=await db.paymentEvent.findMany({where:{eventType:{in:captureEvents},receivedAt:{gte:bounds.previousStart,lt:bounds.start},order:{testOnly:false}},
    select:eventSelect,orderBy:{receivedAt:"desc"},take:1501});
+ const approved=await db.order.findMany({where:{...confirmedOrderWhere,createdAt:{gte:bounds.previousStart,lt:bounds.endExclusive}},select:eventSelect.order.select,orderBy:{createdAt:"desc"},take:3001});
+ const confirmed=approved.map(o=>({id:o.id,status:o.status,totalCents:o.totalCents,giftAppliedCents:o.giftAppliedCents,createdAt:o.createdAt,lines:o.lines.map(l=>({productName:l.variant.product.name,quantity:l.quantity,lineTotalCents:l.lineTotalCents}))}));
  const cohorts=await db.order.groupBy({by:["status"],where:{testOnly:false,createdAt:{gte:bounds.start,lt:bounds.endExclusive}},_count:{_all:true}});
  const variants=await db.variant.findMany({where:{active:true,product:{active:true}},select:{stockQuantity:true}});
  const mapEvents=(events:typeof captures):CapturedOrder[]=>{
@@ -38,16 +41,16 @@ export async function loadCommerceReport(range:AnalyticsRange){
   if(v.stockQuantity===0)stock.outOfStock++;
   else if(v.stockQuantity<=5)stock.lowStock++;
  }
- return createCommerceReport({captured:mapEvents(captures),previous:mapEvents(previous),
+ return createCommerceReport({confirmed:confirmed.filter(o=>o.createdAt>=bounds.start),previousConfirmed:confirmed.filter(o=>o.createdAt<bounds.start),captured:mapEvents(captures),previous:mapEvents(previous),
   cohorts:cohorts.map(x=>({status:x.status,count:x._count._all})),stock,
-  truncated:captures.length>1500||previous.length>1500},range);
+  truncated:captures.length>1500||previous.length>1500||approved.length>3000},range);
 }
 
 // Only the derived aggregate report is cached, never orders or credentials.
 const cachedCommerce=unstable_cache(async(start:string,end:string,days:number)=>{
  const report=await loadCommerceReport({start:new Date(start),end:new Date(end),days,mode:"frei",label:""});
  return {...report,loadedAt:new Date().toISOString()};
-},["rubyhair-commerce-summary-v1"],{revalidate:30});
+},["rubyhair-commerce-summary-v2-approved"],{revalidate:30});
 
 /** Do not turn transient pool errors into false zero revenue. Retry once, then
  * show an explicit unavailable state. Logs contain only Prisma error codes.

@@ -109,8 +109,8 @@ export default async function AdminAnalytics({searchParams}:{searchParams:Promis
   </section>
   <section className="rh-adv-hero" aria-label="Kennzahlen-Übersicht">
    <div><span>RUBY HAIR · PERFORMANCE STUDIO</span><h2>Alle Zahlen. Ein klarer Überblick.</h2>
-    <p>Black Friday 2026 · Anzeigen, Kundeninteresse und bezahlte Bestellungen auf einen Blick.</p>
-    <div className="rh-adv-hero-tags"><span>Europe/Berlin</span><span>{enabled?"Statistik mit Einwilligung aktiv":"Besucherstatistik deaktiviert"}</span><span>Bezahlte Bestellungen aus verifizierten Zahlungen</span><a href="#story-analytics">Story-Statistiken</a></div>
+    <p>Black Friday 2026 · Anzeigen, Kundeninteresse und bestätigte Bestellungen auf einen Blick.</p>
+    <div className="rh-adv-hero-tags"><span>Europe/Berlin</span><span>{enabled?"Statistik mit Einwilligung aktiv":"Besucherstatistik deaktiviert"}</span><span>Bestellungen ab verifizierter Zahlungsfreigabe</span><a href="#story-analytics">Story-Statistiken</a></div>
    </div>
    <AdminAnalyticsRefresh trafficAt={report.loadedAt} commerceAt={commerce?.loadedAt}/>
   </section>
@@ -126,9 +126,9 @@ export default async function AdminAnalytics({searchParams}:{searchParams:Promis
   </section>
   <AdminCommercePanel data={commerce}/>
   <section className="rh-admin-panel-card" style={{marginTop:22}}>
-   <div className="rh-admin-card-title"><div><span>BESTELLHERKUNFT / LETZTE ERKENNBARE QUELLE</span><h2>Bezahlte Bestellungen nach Herkunft</h2></div></div>
-   <p className="rh-admin-muted">Nur verifizierte Zahlungen; Gutscheinkäufe im Warenkorb werden nicht doppelt gezählt. Gezahlter Betrag nach Gutschein-Einlösung. Keine geschätzte Attribution. Unbekannt umfasst ältere, nicht zuordenbare und nicht consentierte Käufe; vollständige URLs werden nicht gespeichert.</p>
-   {attributed===null?<p>Auswertung derzeit nicht verfügbar.</p>:attributed.length===0?<p>Keine passenden bestätigten Zahlungen im Zeitraum.</p>:<div className="rh-admin-table-wrap"><table><thead><tr><th>Herkunft</th><th>Käufe</th><th>Gezahlter Betrag</th></tr></thead><tbody>{attributed.map(r=><tr key={r.source}><td>{r.label}</td><td>{number(r.count)}</td><td>{new Intl.NumberFormat("de-DE",{style:"currency",currency:"EUR"}).format(r.cents/100)}</td></tr>)}</tbody></table></div>}
+   <div className="rh-admin-card-title"><div><span>BESTELLHERKUNFT / LETZTE ERKENNBARE QUELLE</span><h2>Bestätigte Bestellungen nach Herkunft</h2></div></div>
+   <p className="rh-admin-muted">Verifizierte Zahlungsfreigaben und Zahlungen; Gutscheinkäufe im Warenkorb werden nicht doppelt gezählt. Bestellwert, nicht Zahlungseingang. Keine geschätzte Attribution. Unbekannt umfasst ältere, nicht zuordenbare und nicht consentierte Käufe; vollständige URLs werden nicht gespeichert.</p>
+   {attributed===null?<p>Auswertung derzeit nicht verfügbar.</p>:attributed.length===0?<p>Keine passenden bestätigten Bestellungen im Zeitraum.</p>:<div className="rh-admin-table-wrap"><table><thead><tr><th>Herkunft</th><th>Käufe</th><th>Bestellwert</th></tr></thead><tbody>{attributed.map(r=><tr key={r.source}><td>{r.label}</td><td>{number(r.count)}</td><td>{new Intl.NumberFormat("de-DE",{style:"currency",currency:"EUR"}).format(r.cents/100)}</td></tr>)}</tbody></table></div>}
   </section>
   <section className="rh-adv-story-dashboard" id="story-analytics" aria-labelledby="rh-adv-story-title">
    <div className="rh-adv-section-title"><div><span>04 / COMMUNITY PERFORMANCE</span><h2 id="rh-adv-story-title">Story-Statistiken</h2>

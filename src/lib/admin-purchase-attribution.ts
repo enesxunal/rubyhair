@@ -1,4 +1,5 @@
 import "server-only";
+import {confirmedOrderWhere} from "@/lib/admin-confirmed-orders";
 import {getPrisma} from "@/lib/prisma";
 import {commerceRangeUTC} from "@/lib/admin-commerce-report";
 import type {AnalyticsRange} from "@/lib/admin-analytics-report";
@@ -14,11 +15,11 @@ export async function loadAttributionReport(range:AnalyticsRange){
  try{
  const db=getPrisma(),b=commerceRangeUTC(range);
  const start=b.start,end=b.endExclusive;
- // Count actual captures, not visits, authorizations or duplicated cart gifts.
- const captures=await db.paymentEvent.findMany({where:{eventType:{in:["PAYMENT.CAPTURE.COMPLETED","KLARNA.CAPTURE.COMPLETED"]},provider:{in:["paypal","klarna"]},receivedAt:{gte:start,lt:end},order:{testOnly:false,status:{in:["payment_confirmed","preparing","shipped","delivered"]},currency:"EUR",invoice:{isNot:null}}},select:{orderId:true,order:{select:{totalCents:true,giftAppliedCents:true}}},take:1501});
+ // Use the same approved order cohort as the commerce KPIs.
+ const approved=await db.order.findMany({where:{...confirmedOrderWhere,createdAt:{gte:start,lt:end}},select:{id:true,totalCents:true},take:1501});
  const gifts=await db.giftPurchase.findMany({where:{cartOrderId:null,status:"captured",provider:"paypal",capturedAt:{gte:start,lt:end},card:{isNot:null}},select:{id:true,amountCents:true},take:1501});
- if(captures.length>1500||gifts.length>1500)return null;
- const orders=new Map(captures.map(r=>[r.orderId,r.order]));
+ if(approved.length>1500||gifts.length>1500)return null;
+ const orders=new Map(approved.map(o=>[o.id,o]));
  const orderAttr=await loadPurchaseAttributions("order",[...orders.keys()]);
  const giftAttr=await loadPurchaseAttributions("gift",gifts.map(g=>g.id));
  const totals=new Map<string,{source:string,count:number,cents:number}>();
@@ -26,7 +27,7 @@ export async function loadAttributionReport(range:AnalyticsRange){
   if(cents<=0)return;
   const row=totals.get(source)||{source,count:0,cents:0};row.count++;row.cents+=cents;totals.set(source,row);
  };
- for(const [id,o] of orders)add(orderAttr.get(id)?.last.source||"unknown",o.totalCents-o.giftAppliedCents);
+ for(const [id,o] of orders)add(orderAttr.get(id)?.last.source||"unknown",o.totalCents);
  for(const g of gifts)add(giftAttr.get(g.id)?.last.source||"unknown",g.amountCents);
  return [...totals.values()].sort((a,b)=>b.cents-a.cents).map(row=>({...row,label:purchaseSourceLabels[row.source as keyof typeof purchaseSourceLabels]||purchaseSourceLabels.unknown}));
  }catch{console.warn("RUBY_ATTRIBUTION_REPORT_UNAVAILABLE");return null}
