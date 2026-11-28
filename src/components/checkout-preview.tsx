@@ -11,6 +11,7 @@ import CustomerPaymentSubmit from "./customer-payment-submit";
 import PayPalCardFieldsCheckout from "./paypal-card-fields-checkout";
 import PayPalWalletCheckout from "./paypal-wallet-checkout";
 import {Check,Truck,Wallet,ArrowUpRight,ShoppingBag,Gift} from "lucide-react";
+import {orderShippingCents,pickupAddress,type DeliveryMethod} from "@/lib/delivery-method";
 import {useCart} from "@/components/cart-context";
 import {useCartQuote} from "@/hooks/use-cart-quote";
 import {euros} from "@/lib/catalog";
@@ -36,7 +37,11 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
   const {quote,error,loading}=useCartQuote(lines,couponCode);
   const digitalOnly=!lines.length&&gifts.length>0,hasItems=lines.length>0||gifts.length>0;
   const giftSoldCents=giftCartTotal(gifts);
-  const shipping=lines.length?shippingCents:0;
+  const [delivery,setDelivery]=useState<DeliveryMethod>("dhl");
+  const pickupEligible=lines.length>0&&!liveTest&&!lines.some(l=>l.id===886);
+  const deliveryMethod=pickupEligible?delivery:"dhl";
+  const pickup=deliveryMethod==="pickup";
+  const shipping=orderShippingCents(deliveryMethod,lines.length,shippingCents);
   const physicalCents=quote?.subtotalCents||0;
   const grossCents=physicalCents+giftSoldCents+shipping;
   const canPay=Boolean(hasItems&&!error&&!loading&&(!lines.length||quote?.checkoutEnabled&&!quote.needsReview));
@@ -65,7 +70,8 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
   const [paymentConsent,setPaymentConsent]=useState(false);
   const [paymentChoice,setPaymentChoice]=useState<PaymentChoice>(checkoutMode==="klarna_public"?"klarna":"paypal");
   const selectPayment=(method:PaymentChoice)=>{setPaymentChoice(method);trackJourney("payment_selected",{method})};
-  const [validatedAddress,setValidatedAddress]=useState<CheckoutAddressData|null>(null);
+  const [addressData,setValidatedAddress]=useState<CheckoutAddressData|null>(null);
+  const validatedAddress=addressData?{...addressData,deliveryMethod,...(pickup?{billing:addressData.shipping}:{})}:null;
   const addressReady=useRef(false);
   useEffect(()=>{if(validatedAddress&&!addressReady.current){addressReady.current=true;trackJourney("address_ready")}},[validatedAddress]);
   const [giftInput,setGiftInput]=useState("");
@@ -107,11 +113,11 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
     <div className="rh-eyebrow">RUBY HAIR / CHECKOUT</div>
     <p className="rh-checkout-account-note">Du kannst ohne Registrierung bestellen. <Link href="/konto/anmelden/">Optionales Kundenkonto erstellen</Link> – für Bestellungen, Rechnungen und Versandstatus.</p>
     <h1>Almost <em>yours.</em></h1>
-    {loaded&&hasItems&&<div className="rh-checkout-mobile-total"><span>Gesamt inkl. MwSt. und Versand</span><strong>{canPay?euros(grossCents/100):"Wird geprüft"}</strong><a href="#rh-checkout-order-summary">Bestellung ansehen ↗</a></div>}
+    {loaded&&hasItems&&<div className="rh-checkout-mobile-total"><span>Gesamt inkl. MwSt.{pickup?"":" und Versand"}</span><strong>{canPay?euros(grossCents/100):"Wird geprüft"}</strong><a href="#rh-checkout-order-summary">Bestellung ansehen ↗</a></div>}
     <div className="rh-checkout-grid">
       <section className="rh-checkout-process">
         <h2>Dein Einkauf.</h2>
-        <p>{digitalOnly?"Prüfe deine Gutscheine und die Rechnungsdaten. Es gibt keinen Paketversand.":"Prüfe deine Auswahl und die Lieferadresse."}</p>
+        <p>{digitalOnly?"Prüfe deine Gutscheine und die Rechnungsdaten. Es gibt keinen Paketversand.":"Prüfe deine Auswahl und wähle die Lieferart."}</p>
         <div className="rh-checkout-steps rh-checkout-compact-steps" aria-label="Bestellschritte">
           {checkoutSteps.map((step,i)=><article key={step.no}>
             <div className="rh-checkout-number">{step.no}</div>
@@ -120,7 +126,12 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
             <span className="rh-checkout-step-state">{(i===0&&canPay)||(i===1&&validatedAddress)?<Check size={18}/>:<span aria-hidden="true">{step.no}</span>}</span>
           </article>)}
         </div>
-        {loaded&&hasItems&&<CheckoutAddressPreview onValidated={setValidatedAddress} digitalOnly={digitalOnly}/>}
+        {loaded&&pickupEligible&&<fieldset className="rh-delivery-options"><legend>02 / LIEFERART</legend>
+          <label data-selected={!pickup}><input type="radio" name="deliveryMethod" value="dhl" checked={!pickup} onChange={()=>{if(!paymentAttempt.current)setDelivery("dhl")}}/><Truck size={21}/><span><strong>DHL Versand</strong><small>Lieferung innerhalb Deutschlands</small></span><b>{euros(shippingCents/100)}</b></label>
+          <label data-selected={pickup}><input type="radio" name="deliveryMethod" value="pickup" checked={pickup} onChange={()=>{if(!paymentAttempt.current)setDelivery("pickup")}}/><ShoppingBag size={21}/><span><strong>Abholung vor Ort</strong><small>{pickupAddress}</small></span><b>Kostenlos</b></label>
+          {pickup&&<p>Online bezahlen und persönlich abholen. Bitte den Abholtermin mit Ruby Hair abstimmen.</p>}
+        </fieldset>}
+        {loaded&&hasItems&&<CheckoutAddressPreview onValidated={setValidatedAddress} digitalOnly={digitalOnly} pickup={pickup}/>}
         {loaded&&lines.length>0&&!gifts.length&&<details className="rh-gift-redeem-box" aria-label="Geschenkgutschein einlösen">
          <summary className="rh-gift-redeem-heading"><Gift size={21}/><div><span>GESCHENKGUTSCHEIN</span><h3>Gutschein einlösen</h3></div></summary>
          <p>Gib deinen Ruby Hair Gutscheincode ein. Das Guthaben wird vor der Zahlung verrechnet.</p>
@@ -135,7 +146,7 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
           {!canPay&&paymentBlocker&&<p className="rh-checkout-unavailable-note" role={loading?"status":"alert"}>{paymentBlocker}</p>}
           {appliedGift&&<p className="rh-gift-only-paypal-note">Bei Gutscheinzahlung steht PayPal für einen möglichen Restbetrag zur Verfügung. Ist alles gedeckt, erfolgt keine weitere Zahlung.</p>}
           {checkoutMode!=="disabled"&&!liveTest&&<div className="rh-unified-payment-consent">
-            {!validatedAddress&&<p className="rh-checkout-unavailable-note" role="status">Bitte zuerst oben deine {digitalOnly?"Rechnungsadresse":"Liefer- und Rechnungsadresse"} vollständig ausfüllen.</p>}
+            {!validatedAddress&&<p className="rh-checkout-unavailable-note" role="status">Bitte zuerst oben deine {digitalOnly||pickup?"Rechnungsadresse":"Liefer- und Rechnungsadresse"} vollständig ausfüllen.</p>}
             <label><input type="checkbox" checked={paymentConsent} onChange={e=>setPaymentConsent(e.target.checked)} required/>
               <span>Ich habe die <a href="/rechtliches/agb/" target="_blank" rel="noopener noreferrer">AGB</a> und die <a href="/rechtliches/widerruf/" target="_blank" rel="noopener noreferrer">Widerrufsbelehrung</a> gelesen und bestätige den kostenpflichtigen Kauf.</span>
             </label>
@@ -198,7 +209,7 @@ export default function CheckoutPreview({liveTest,checkoutMode="disabled",shippi
             {liveTest?<><div className="rh-checkout-sum"><span>Versand (interner Test)</span><strong>{euros(0)}</strong></div>
               <div className="rh-checkout-sum"><span>Inkl. 19 % MwSt.</span><strong>{euros(0.16)}</strong></div>
               <div className="rh-checkout-sum"><span>Gesamtbetrag</span><strong>{euros(grossCents/100)}</strong></div></>:
-              <><div className="rh-checkout-sum"><span>{lines.length?"DHL Versand Deutschland":"Digitaler Versand"}</span><strong>{shipping?euros(shipping/100):"Kostenlos"}</strong></div>
+              <><div className="rh-checkout-sum"><span>{lines.length?(pickup?"Abholung vor Ort":"DHL Versand Deutschland"):"Digitaler Versand"}</span><strong>{shipping?euros(shipping/100):"Kostenlos"}</strong></div>
               <div className="rh-checkout-sum"><span>Enthaltene 19 % USt.</span><strong>{euros(Math.round(grossCents*19/119)/100)}</strong></div>
               <div className="rh-checkout-sum"><span>Gesamtbetrag</span><strong>{euros(grossCents/100)}</strong></div>
               {appliedGift&&<><div className="rh-checkout-sum rh-gift-summary-deduction"><span>Geschenkgutschein</span><strong>- {euros(giftUsed/100)}</strong></div>

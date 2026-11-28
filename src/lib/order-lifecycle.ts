@@ -14,15 +14,15 @@ export const orderStates={
   test_expired:"Testreservierung abgelaufen"
 } as const;
 export type OrderState=keyof typeof orderStates;
-export type OrderActor="checkout"|"payment_provider"|"fulfillment"|"system"|"local_test";
+export type OrderActor="checkout"|"payment_provider"|"fulfillment"|"system"|"local_test"|"pickup_fulfillment";
 
 /** A payment confirmation can only originate from a future verified provider callback. */
 const rules:Partial<Record<OrderState,Partial<Record<OrderState,OrderActor[]>>>>={
   draft:{pending_payment:["checkout"],cancelled:["system"]},
   pending_payment:{payment_confirmed:["payment_provider"],payment_authorized:["payment_provider"],cancelled:["system"]},
   payment_authorized:{payment_confirmed:["payment_provider"],cancelled:["system"]},
-  payment_confirmed:{preparing:["fulfillment"],refunded:["payment_provider"]},
-  preparing:{shipped:["fulfillment"],cancelled:["fulfillment"],refunded:["payment_provider"]},
+  payment_confirmed:{preparing:["fulfillment"],delivered:["pickup_fulfillment"],refunded:["payment_provider"]},
+  preparing:{shipped:["fulfillment"],delivered:["pickup_fulfillment"],cancelled:["fulfillment"],refunded:["payment_provider"]},
   shipped:{delivered:["fulfillment"],refunded:["payment_provider"]},
   delivered:{refunded:["payment_provider"]},
   test_reserved:{test_cancelled:["local_test"],test_expired:["local_test"]}

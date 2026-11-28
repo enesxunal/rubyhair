@@ -14,7 +14,7 @@ export default async function KlarnaReturn({searchParams}:{searchParams:Promise<
   title="Ungültiger Zahlungslink";message="Bitte kontaktiere Ruby Hair.";
  }else if(p.result==="success"&&p.sid&&p.order_id){
   try{const out=await confirmKlarnaCheckout(p.orderId,p.sid,p.order_id);
-   if(out.authorized){title="Klarna-Bestellung bestätigt";message="Deine Zahlung ist autorisiert. Sie wird beim Versand automatisch eingezogen und du erhältst dann deine Rechnung per E-Mail.";
+   if(out.authorized){title="Klarna-Bestellung bestätigt";message="Deine Zahlung ist autorisiert. Sie wird bei bestätigtem Versand oder persönlicher Abholung eingezogen und du erhältst dann deine Rechnung per E-Mail.";
     after(async()=>{try{await runCustomerJobs(2)}catch{}});
    }
   }catch{after(()=>recordCheckoutDiagnostic("klarna","return","RETURN_REVIEW","server",p.orderId));message="Die Klarna-Bestellung wird noch mit dem Zahlungsanbieter abgeglichen. Bitte nicht erneut bezahlen.";}

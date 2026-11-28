@@ -26,7 +26,7 @@ export async function confirmManualKlarnaHandoverAction(data:FormData){
  const db=getPrisma();
  try{
   const before=await db.order.findUnique({where:{id},include:{shippingJob:true}});
-  if(!before||before.testOnly||!before.paymentReference?.startsWith("KLARNA-HPP:")||
+  if(!before||before.testOnly||before.deliveryMethod!=="dhl"||!before.paymentReference?.startsWith("KLARNA-HPP:")||
      !/^Klarna authorized: [0-9a-f-]{36}$/i.test(before.fulfillmentNote||""))
     throw new Error("UNVERIFIED_KLARNA_ORDER");
   if(before.status==="shipped"&&before.trackingNumber===tracking)return;

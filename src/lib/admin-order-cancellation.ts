@@ -3,7 +3,7 @@ import {Prisma} from "@prisma/client";
 import {getPrisma} from "@/lib/prisma";
 import {providerForCheckout} from "@/lib/customer-checkout";
 import {cancelHold,cancellationLocalReason,remoteCancellationState,cancelIdempotencyKey} from "@/lib/order-cancellation-policy";
-const select={id:true,orderNumber:true,testOnly:true,status:true,currency:true,totalCents:true,giftAppliedCents:true,trackingNumber:true,shippedAt:true,deliveredAt:true,paymentReference:true,fulfillmentNote:true,invoice:{select:{id:true}},payments:{select:{id:true}},giftPurchases:{select:{id:true}},shippingJob:{select:{id:true,status:true,trackingNumber:true}}} as const;
+const select={id:true,orderNumber:true,testOnly:true,status:true,currency:true,totalCents:true,deliveryMethod:true,giftAppliedCents:true,trackingNumber:true,shippedAt:true,deliveredAt:true,paymentReference:true,fulfillmentNote:true,invoice:{select:{id:true}},payments:{select:{id:true}},giftPurchases:{select:{id:true}},shippingJob:{select:{id:true,status:true,trackingNumber:true}}} as const;
 export async function readCancellationOrder(number:bigint){
  const db=getPrisma();
  const row=await db.order.findUnique({where:{orderNumber:number},select});

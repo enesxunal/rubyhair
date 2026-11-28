@@ -189,7 +189,7 @@ export async function updateFulfillmentAction(formData:FormData){
     const order=await tx.order.findUnique({where:{id:data.id},include:{
       payments:{select:{eventType:true,provider:true,providerEventId:true}}
     }});
-    if(!order||order.testOnly)throw new Error("Eine echte Bestellung ist nicht vorhanden");
+    if(!order||order.testOnly||order.deliveryMethod!=="dhl")throw new Error("Eine echte Versandbestellung ist nicht vorhanden");
     // A status field alone cannot establish payment. Only the future verified
     // payment webhook may append the provider payment-confirmation event.
     const providerPaid=order.paymentReference&&order.payments.some(p=>

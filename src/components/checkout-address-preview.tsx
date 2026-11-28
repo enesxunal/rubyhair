@@ -4,9 +4,10 @@ import {useCallback,useEffect,useRef,useState,type FormEvent} from "react";
 import type {CustomerCheckoutInput} from "@/lib/customer-checkout";
 import {CheckCircle2,ShieldCheck} from "lucide-react";
 
-export type CheckoutAddressData={shipping:CustomerCheckoutInput["shipping"];billing?:CustomerCheckoutInput["billing"];email:string};
+export type CheckoutAddressData={shipping:CustomerCheckoutInput["shipping"];billing?:CustomerCheckoutInput["billing"];email:string;deliveryMethod?:import("@/lib/delivery-method").DeliveryMethod};
 /** Validation is local; a purchase sends data only on explicit confirmation. */
-export default function CheckoutAddressPreview({onValidated,digitalOnly=false}:{onValidated?:(data:CheckoutAddressData|null)=>void;digitalOnly?:boolean}){
+export default function CheckoutAddressPreview({onValidated,digitalOnly=false,pickup=false}:{onValidated?:(data:CheckoutAddressData|null)=>void;digitalOnly?:boolean;pickup?:boolean}){
+ const billingOnly=digitalOnly||pickup;
  const [otherBilling,setOtherBilling]=useState(false);
  const formRef=useRef<HTMLFormElement>(null);
  const [savedAddresses,setSavedAddresses]=useState<{id:string;label:string;firstName:string;lastName:string;street:string;postalCode:string;city:string}[]>([]);
@@ -37,24 +38,24 @@ export default function CheckoutAddressPreview({onValidated,digitalOnly=false}:{
   if(!form)return;
   const valid=Array.from(form.querySelectorAll<HTMLInputElement>("input[required]")).every(input=>input.validity.valid&&input.value.trim().length>0&&(input.type==="email"||input.name==="zip"||input.name==="billingZip"||(input.value.trim().length>=2&&input.value.trim().length<=85&&!/[<>\r\n\x00-\x1f]/.test(input.value))));
   if(valid)setFieldError("");
-  if(!valid||(!digitalOnly&&otherBilling&&!form.elements.namedItem("billingFirst"))){
+  if(!valid||(!billingOnly&&otherBilling&&!form.elements.namedItem("billingFirst"))){
    if(lastAddress.current!==null){lastAddress.current=null;setChecked(false);onValidated?.(null)}
    return;
   }
   const data=new FormData(form);
   const shipping={firstName:String(data.get("givenName")||""),lastName:String(data.get("familyName")||""),
    street:String(data.get("street")||""),postalCode:String(data.get("zip")||""),city:String(data.get("city")||""),country:"DE" as const};
-  const billing=!digitalOnly&&otherBilling?{firstName:String(data.get("billingFirst")||""),lastName:String(data.get("billingLast")||""),
+  const billing=!billingOnly&&otherBilling?{firstName:String(data.get("billingFirst")||""),lastName:String(data.get("billingLast")||""),
    street:String(data.get("billingStreet")||""),postalCode:String(data.get("billingZip")||""),city:String(data.get("billingCity")||""),country:"DE" as const}:undefined;
   const address={shipping,billing,email:String(data.get("email")||"")};
   const signature=JSON.stringify(address);
   if(signature!==lastAddress.current){lastAddress.current=signature;setChecked(true);onValidated?.(address)}
- },[digitalOnly,otherBilling,onValidated]);
+ },[billingOnly,otherBilling,onValidated]);
  useEffect(()=>{syncAddress();const timer=window.setInterval(syncAddress,400);return()=>window.clearInterval(timer)},[syncAddress]);
  const validate=(event:FormEvent<HTMLFormElement>)=>{event.preventDefault();syncAddress()};
- return <section className="rh-checkout-address" aria-label={digitalOnly?"Rechnungsadresse vorbereiten":"Liefer- und Rechnungsadresse vorbereiten"}>
-  <div className="rh-checkout-address-heading"><span>02 / {digitalOnly?"RECHNUNG":"LIEFERUNG"}</span><h2>{digitalOnly?"Deine Rechnungsadresse.":"Deine Lieferadresse."}</h2>
-   <p>{digitalOnly?"Wir benötigen deine Rechnungsdaten für die digitale Bestellung. Es erfolgt kein Paketversand.":"Trage deine Lieferadresse und bei Bedarf eine abweichende Rechnungsadresse ein."}</p></div>
+ return <section className="rh-checkout-address" aria-label={billingOnly?"Rechnungsadresse vorbereiten":"Liefer- und Rechnungsadresse vorbereiten"}>
+  <div className="rh-checkout-address-heading"><span>02 / {billingOnly?"RECHNUNG":"LIEFERUNG"}</span><h2>{billingOnly?"Deine Rechnungsadresse.":"Deine Lieferadresse."}</h2>
+   <p>{pickup?"Für die Abholung benötigen wir nur deine Rechnungsdaten. Es erfolgt kein Paketversand.":digitalOnly?"Wir benötigen deine Rechnungsdaten für die digitale Bestellung. Es erfolgt kein Paketversand.":"Trage deine Lieferadresse und bei Bedarf eine abweichende Rechnungsadresse ein."}</p></div>
   {savedAddresses.length>0&&<div className="rh-checkout-saved-address"><label htmlFor="rh-checkout-saved-address">Gespeicherte Adresse verwenden</label>
    <select id="rh-checkout-saved-address" defaultValue="" onChange={e=>applySavedAddress(e.target.value)}>
     <option value="">Adresse auswählen …</option>
@@ -73,10 +74,10 @@ export default function CheckoutAddressPreview({onValidated,digitalOnly=false}:{
     <label className="rh-checkout-field-full">Straße und Hausnummer <input required autoComplete="street-address" name="street" maxLength={85} placeholder="Straße und Hausnummer"/></label>
     <label>Postleitzahl <input required name="zip" inputMode="numeric" autoComplete="postal-code" pattern="[0-9]{5}" title="Bitte eine fünfstellige deutsche Postleitzahl eingeben" maxLength={5} placeholder="45130"/></label>
     <label>Ort <input required autoComplete="address-level2" name="city" maxLength={85} placeholder="Essen"/></label>
-    <label className="rh-checkout-field-full">{digitalOnly?"Rechnungsland":"Lieferland"} <input disabled readOnly value="Deutschland" aria-label="Land: Deutschland"/></label>
+    <label className="rh-checkout-field-full">{billingOnly?"Rechnungsland":"Lieferland"} <input disabled readOnly value="Deutschland" aria-label="Land: Deutschland"/></label>
    </div>
-   {!digitalOnly&&<label className="rh-checkout-check"><input type="checkbox" checked={otherBilling} onChange={e=>setOtherBilling(e.target.checked)}/> Rechnungsadresse weicht ab</label>}
-   {!digitalOnly&&otherBilling&&<fieldset className="rh-checkout-extra-address"><legend>Rechnungsadresse</legend><div className="rh-checkout-field-grid">
+   {!billingOnly&&<label className="rh-checkout-check"><input type="checkbox" checked={otherBilling} onChange={e=>setOtherBilling(e.target.checked)}/> Rechnungsadresse weicht ab</label>}
+   {!billingOnly&&otherBilling&&<fieldset className="rh-checkout-extra-address"><legend>Rechnungsadresse</legend><div className="rh-checkout-field-grid">
      <label>Vorname <input required name="billingFirst" autoComplete="billing given-name" maxLength={80}/></label>
      <label>Nachname <input required name="billingLast" autoComplete="billing family-name" maxLength={80}/></label>
      <label className="rh-checkout-field-full">Straße und Hausnummer <input required name="billingStreet" autoComplete="billing street-address" maxLength={85}/></label>

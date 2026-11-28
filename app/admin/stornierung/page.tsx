@@ -33,8 +33,8 @@ export default async function CancelPage({searchParams}:{searchParams:Promise<{o
  const hasPayment=Boolean(order?.invoice||order?.payments.length);
  const provider=order?.paymentReference?.startsWith("KLARNA-HPP:")?"Klarna":hasPayment?"PayPal / Zahlungsanbieter":"Nicht bestätigt";
  const status=terminal?(order?.status==="refunded"?"Erstattet":"Storniert"):order?.status==="payment_authorized"||hasPayment?"Bestätigt":"Nicht bestätigt";
- const shipping=hasShipment?"Übergeben / versendet":hasLabel?"Etikett erstellt":order?.shippingJob?.status==="canceled"?"Etikett storniert":order?.shippingJob?.status==="order_cancel_review"?"Prüfsperre":"Kein aktives Etikett";
- const dhlReason=hasShipment?"Paket bereits übergeben.":terminal?"Bestellung bereits abgeschlossen.":hasLabel?"DHL-Status muss geprüft werden.":"Kein aktives DHL-Etikett.";
+ const shipping=order?.deliveryMethod==="pickup"?(order.status==="delivered"?"Abgeholt":"Abholung vor Ort"):hasShipment?"Übergeben / versendet":hasLabel?"Etikett erstellt":order?.shippingJob?.status==="canceled"?"Etikett storniert":order?.shippingJob?.status==="order_cancel_review"?"Prüfsperre":"Kein aktives Etikett";
+ const dhlReason=order?.deliveryMethod==="pickup"?"Abholung vor Ort – kein DHL-Etikett.":hasShipment?"Paket bereits übergeben.":terminal?"Bestellung bereits abgeschlossen.":hasLabel?"DHL-Status muss geprüft werden.":"Kein aktives DHL-Etikett.";
  const orderReason=terminal?"Bestellung bereits abgeschlossen.":labelCanCancel?"Zuerst DHL-Etikett stornieren.":hasShipment?"Paket bereits versendet.":reasons[audit?.state||""]||"Keine bestätigte Stornierung möglich.";
  return <AdminShell current="orders" title="Bestellung stornieren" description="Bestellnummer eingeben und verfügbare Aktionen auswählen.">
  <div className="rh-cancel-layout">

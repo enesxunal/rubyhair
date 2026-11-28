@@ -5,7 +5,7 @@ export type PaypalEnvironment="sandbox"|"live";
 export type PaypalCredentials={clientId:string;clientSecret:string;webhookId:string};
 export type PaypalMoney={currency_code:"EUR";value:string};
 export type PaypalCreateInput={
-  orderId:string;invoiceId:string;totalCents:number;shippingCents:number;
+  orderId:string;invoiceId:string;totalCents:number;shippingCents:number;pickup?:boolean;
   returnUrl:string;cancelUrl:string;requestId:string;
   shipping:{fullName:string;street:string;postalCode:string;city:string;country:"DE"};
 };
@@ -92,20 +92,20 @@ export class PaypalClient{
     if(!address||address.country!=="DE"||!/^[0-9]{5}$/.test(address.postalCode)||
       ![address.fullName,address.street,address.city].every(v=>typeof v==="string"&&v.trim().length>=2&&v.length<=120))
       throw new PaypalError("INVALID_SHIPPING_ADDRESS");
-    if(input.totalCents<=0||input.shippingCents>input.totalCents)throw new PaypalError("INVALID_AMOUNT");
+    if(input.totalCents<=0||input.shippingCents>input.totalCents||(input.pickup&&input.shippingCents!==0))throw new PaypalError("INVALID_AMOUNT");
     const data=await this.api("POST","/v2/checkout/orders",{
       intent:"CAPTURE",
       purchase_units:[{reference_id:orderId,custom_id:orderId,invoice_id:invoiceId,
-        shipping:{name:{full_name:address.fullName.trim()},address:{
+        ...(!input.pickup?{shipping:{name:{full_name:address.fullName.trim()},address:{
           address_line_1:address.street.trim(),admin_area_2:address.city.trim(),
           postal_code:address.postalCode,country_code:"DE"
-        }},
+        }}}:{}),
         amount:{currency_code:"EUR",value:total,breakdown:{
           item_total:{currency_code:"EUR",value:centsToEuro(input.totalCents-input.shippingCents)},
           shipping:{currency_code:"EUR",value:shipping}
         }}}],
       payment_source:{paypal:{experience_context:{brand_name:"Ruby Hair",user_action:"PAY_NOW",landing_page:"GUEST_CHECKOUT",
-        shipping_preference:"SET_PROVIDED_ADDRESS",return_url:httpsUrl(input.returnUrl),cancel_url:httpsUrl(input.cancelUrl)}}}
+        shipping_preference:input.pickup?"NO_SHIPPING":"SET_PROVIDED_ADDRESS",return_url:httpsUrl(input.returnUrl),cancel_url:httpsUrl(input.cancelUrl)}}}
     },input.requestId);
     if(!isObject(data)||typeof data.id!=="string"||!Array.isArray(data.links))throw new PaypalError("PAYPAL_ORDER_INVALID");
     const approve=data.links.find((link:unknown)=>isObject(link)&&
@@ -128,14 +128,14 @@ export class PaypalClient{
     if(!address||address.country!=="DE"||!/^[0-9]{5}$/.test(address.postalCode)||
       ![address.fullName,address.street,address.city].every(v=>typeof v==="string"&&v.trim().length>=2&&v.length<=120))
       throw new PaypalError("INVALID_SHIPPING_ADDRESS");
-    if(input.totalCents<=0||input.shippingCents>input.totalCents)throw new PaypalError("INVALID_AMOUNT");
+    if(input.totalCents<=0||input.shippingCents>input.totalCents||(input.pickup&&input.shippingCents!==0))throw new PaypalError("INVALID_AMOUNT");
     const data=await this.api("POST","/v2/checkout/orders",{
       intent:"CAPTURE",
       purchase_units:[{reference_id:orderId,custom_id:orderId,invoice_id:invoiceId,
-        shipping:{name:{full_name:address.fullName.trim()},address:{
+        ...(!input.pickup?{shipping:{name:{full_name:address.fullName.trim()},address:{
           address_line_1:address.street.trim(),admin_area_2:address.city.trim(),
           postal_code:address.postalCode,country_code:"DE"
-        }},
+        }}}:{}),
         amount:{currency_code:"EUR",value:total,breakdown:{
           item_total:{currency_code:"EUR",value:centsToEuro(input.totalCents-input.shippingCents)},
           shipping:{currency_code:"EUR",value:shipping}
@@ -143,7 +143,7 @@ export class PaypalClient{
       ],
       payment_source:{card:{
         attributes:{verification:{method:"SCA_ALWAYS"}},
-        experience_context:{return_url:httpsUrl(input.returnUrl),cancel_url:httpsUrl(input.cancelUrl)}
+        experience_context:{...(input.pickup?{shipping_preference:"NO_SHIPPING"}:{}),return_url:httpsUrl(input.returnUrl),cancel_url:httpsUrl(input.cancelUrl)}
       }}
     },input.requestId);
     if(!isObject(data)||typeof data.id!=="string")throw new PaypalError("PAYPAL_ORDER_INVALID");
@@ -158,13 +158,13 @@ export class PaypalClient{
     if(!address||address.country!=="DE"||!/^[0-9]{5}$/.test(address.postalCode)||
       ![address.fullName,address.street,address.city].every(v=>typeof v==="string"&&v.trim().length>=2&&v.length<=120))
       throw new PaypalError("INVALID_SHIPPING_ADDRESS");
-    if(input.totalCents<=0||input.shippingCents>input.totalCents)throw new PaypalError("INVALID_AMOUNT");
+    if(input.totalCents<=0||input.shippingCents>input.totalCents||(input.pickup&&input.shippingCents!==0))throw new PaypalError("INVALID_AMOUNT");
     const data=await this.api("POST","/v2/checkout/orders",{
       intent:"CAPTURE",
       purchase_units:[{reference_id:orderId,custom_id:orderId,invoice_id:invoiceId,
-        shipping:{name:{full_name:address.fullName.trim()},address:{
+        ...(!input.pickup?{shipping:{name:{full_name:address.fullName.trim()},address:{
           address_line_1:address.street.trim(),admin_area_2:address.city.trim(),
-          postal_code:address.postalCode,country_code:"DE"}},
+          postal_code:address.postalCode,country_code:"DE"}}}:{}),
         amount:{currency_code:"EUR",value:total,breakdown:{
           item_total:{currency_code:"EUR",value:centsToEuro(input.totalCents-input.shippingCents)},
           shipping:{currency_code:"EUR",value:shipping}

@@ -42,6 +42,7 @@ export default async function MyAccount(){
       <div className="rh-account-order-top"><div><span>BESTELLUNG</span><strong>#{o.orderNumber.toString()}</strong><small>{o.createdAt.toLocaleDateString("de-DE",{timeZone:"Europe/Berlin",dateStyle:"medium"})}</small></div><div><span>STATUS</span><strong>{statusText[o.status]||"In Bearbeitung"}</strong><small>{euro(o.totalCents)}</small></div></div>
       <div className="rh-account-order-lines">{o.lines.map(l=><div key={l.id}><span>{l.variant.product.name} · {l.variant.colorLabel} · {l.variant.lengthLabel} × {l.quantity}</span><strong>{euro(l.lineTotalCents)}</strong></div>)}
        {o.giftPurchases.map(g=><div key={g.id}><span>Ruby Hair Geschenkgutschein für {g.recipientName} · {g.status==="captured"?"Bezahlt":"Zahlung ausstehend"}</span><strong>{euro(g.amountCents)}</strong></div>)}</div>
+      {o.deliveryMethod==="pickup"&&<p>Abholung vor Ort · {o.status==="delivered"?"Abgeholt":"Klara Straße 19, 45130 Essen – Termin abstimmen"}</p>}
       <div className="rh-account-order-actions">{o.invoice&&<a href={`/api/konto/rechnung/${o.id}`} download><FileText size={16}/> Rechnung als PDF</a>}
       {tracking&&<a href={tracking} target="_blank" rel="noopener noreferrer"><Truck size={16}/> DHL-Sendung verfolgen <ArrowUpRight size={14}/></a>}
       {!o.invoice&&!tracking&&<span>Updates erhältst du auch per E-Mail.</span>}</div>

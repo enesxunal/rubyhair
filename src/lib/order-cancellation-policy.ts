@@ -4,7 +4,7 @@ type Local={testOnly:boolean;status:string;currency:string;totalCents:number;gif
 export function cancellationLocalReason(o:Local){
  if(o.testOnly||o.status!=="payment_authorized"||o.currency!=="EUR"||o.totalCents<=0||!o.paymentReference?.startsWith("KLARNA-HPP:")||!/^Klarna authorized: [0-9a-f-]{36}$/i.test(o.fulfillmentNote||""))return "NOT_UNCAPTURED_KLARNA";
  if(o.invoice||o.payments.length||o.giftAppliedCents||o.giftPurchases.length)return "PAYMENT_OR_GIFT_REVIEW";
- if(o.trackingNumber||o.shippedAt||o.deliveredAt||!o.shippingJob||o.shippingJob.trackingNumber||o.shippingJob.hasLabel||!["waiting_credentials","canceled",cancelHold].includes(o.shippingJob.status))return "SHIPPING_REVIEW";
+ if(o.trackingNumber||o.shippedAt||o.deliveredAt||!o.shippingJob||o.shippingJob.trackingNumber||o.shippingJob.hasLabel||!["waiting_credentials","pickup_waiting","canceled",cancelHold].includes(o.shippingJob.status))return "SHIPPING_REVIEW";
  return null;
 }
 export function remoteCancellationState(o:{order_id:string;order_amount:number;purchase_currency:string;status?:string;captured_amount?:number;refunded_amount?:number},id:string,cents:number,captures:unknown[]){

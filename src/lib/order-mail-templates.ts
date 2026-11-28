@@ -1,7 +1,7 @@
 // Pure presentation functions: safe to test without SMTP or a production database.
 export const orderMailStages=["received","received_admin","awaiting_payment","paid","paid_admin","processing","shipped","delivered","cancelled","failed"] as const;
 export type OrderMailStage=(typeof orderMailStages)[number];
-export type OrderMailData={orderNumber:string;customerName?:string;customerEmail?:string;totalCents?:number;trackingNumber?:string;carrier?:string;digitalOnly?:boolean;items?:{name:string;quantity:number;totalCents:number}[]};
+export type OrderMailData={orderNumber:string;customerName?:string;customerEmail?:string;totalCents?:number;trackingNumber?:string;carrier?:string;digitalOnly?:boolean;pickup?:boolean;items?:{name:string;quantity:number;totalCents:number}[]};
 const stages:Record<OrderMailStage,{label:string;subject:string;heading:string;lead:string;action:string}>={
   received:{label:"Bestellung eingegangen",subject:"Deine Bestellung ist bei uns eingegangen",heading:"Danke für deine Bestellung.",lead:"Deine Klarna-Zahlung wurde autorisiert. Der Betrag wird erst nach bestätigtem Versand eingezogen.",action:"Wir halten dich per E-Mail auf dem Laufenden. Die Rechnung erhältst du nach der Zahlung."},
   received_admin:{label:"Neue Bestellung",subject:"Neue Klarna-Bestellung – Zahlung autorisiert",heading:"Neue Bestellung eingegangen.",lead:"Eine neue Kundenbestellung ist bestätigt. Klarna hat die Zahlung nur autorisiert; sie wurde noch nicht eingezogen.",action:"Bitte Bestellung und Versand im Admin prüfen. Erst nach bestätigtem Versand wird die Zahlung eingezogen."},
@@ -20,7 +20,10 @@ const euro=(cents:number)=>new Intl.NumberFormat("de-DE",{style:"currency",curre
 export function renderOrderMail(stage:OrderMailStage,data:OrderMailData){
   if(!orderMailStages.includes(stage))throw new Error("INVALID_MAIL_STAGE");
   const base=stages[stage];
-  const card=data.digitalOnly&&stage==="paid"?{...base,
+  const card=data.pickup&&["received","received_admin","paid","paid_admin","delivered"].includes(stage)?{...base,
+   lead:stage==="received"?"Deine Klarna-Zahlung ist autorisiert. Der Einzug erfolgt bei bestätigter Abholung.":stage==="received_admin"?"Neue Abholbestellung mit Klarna-Freigabe.":stage==="delivered"?"Deine Bestellung wurde persönlich übergeben.":base.lead,
+   action:stage==="delivered"?"Vielen Dank für deine Abholung.":stage.endsWith("_admin")?"Abholtermin abstimmen und Übergabe im Admin bestätigen. Kein DHL-Versand.":"Abholung: Klara Straße 19, 45130 Essen. Bitte stimme deinen Abholtermin mit uns ab."}:
+   data.digitalOnly&&stage==="paid"?{...base,
    lead:"Vielen Dank – deine digitalen Geschenkgutscheine sind bezahlt.",
    action:"Deine Rechnung ist angehängt. Die persönlichen Geschenkkarten erhältst du per E-Mail und kannst sie als Bild teilen."}:
    data.digitalOnly&&stage==="paid_admin"?{...base,

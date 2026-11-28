@@ -31,7 +31,7 @@ test("gift-only, physical+gift, legacy physical purchase use one secure checkout
 });
 test("customer checkout amount includes all gift lines, charges physical shipping only once",()=>{
  const source=read("src/lib/customer-checkout.ts");
- assert.ok(source.includes('const shipping=items.length?shippingDeCents():0'));
+ assert.ok(source.includes('const shipping=orderShippingCents(input.deliveryMethod,items.length,shippingDeCents())'));
  assert.ok(source.includes('gross=subtotal+digitalTotal+shipping'));
  assert.ok(source.includes('cartOrderId:created.id'));
  assert.ok(source.includes('digitalTotal=giftCartTotal(giftItems)'));
@@ -59,7 +59,7 @@ test("gift cart does not redirect directly to PayPal and works in the same cart"
  assert.ok(cart.includes('rubyhair-gift-cart-v1'));
  assert.ok(cart.includes('setGifts(prev=>prev.filter'));
  const address=read("src/components/checkout-address-preview.tsx");
- assert.ok(address.includes('digitalOnly?"Deine Rechnungsadresse."'));
+ assert.ok(address.includes('billingOnly?"Deine Rechnungsadresse."'));
 });
 test("PayPal gift-only aggregated basket uses NO_SHIPPING and exact total",async()=>{
  const calls:any[]=[];
@@ -74,4 +74,32 @@ test("PayPal gift-only aggregated basket uses NO_SHIPPING and exact total",async
  assert.equal(calls[0].purchase_units[0].amount.value,"2500.00");
  assert.equal(calls[0].payment_source.paypal.experience_context.shipping_preference,"NO_SHIPPING");
  assert.equal(calls[0].purchase_units[0].custom_id,id);
+});
+
+import {orderShippingCents,deliveryJobStatus} from "../src/lib/delivery-method";
+import {canTransitionOrder} from "../src/lib/order-lifecycle";
+import {renderOrderMail} from "../src/lib/order-mail-templates";
+test("pickup is explicit, free, physical-only, and defaults preserve shipping",()=>{
+ const input={...base,lines:[{id:1782,quantity:1}],gifts:[]};
+ assert.equal(checkoutInput.parse(input).deliveryMethod,"dhl");
+ assert.equal(checkoutInput.parse({...input,deliveryMethod:"pickup"}).deliveryMethod,"pickup");
+ assert.equal(checkoutInput.safeParse({...base,deliveryMethod:"pickup"}).success,false);
+ assert.equal(checkoutInput.safeParse({...input,lines:[{id:886,quantity:1}],deliveryMethod:"pickup"}).success,false);
+ assert.equal(checkoutInput.safeParse({...input,deliveryMethod:"fake"}).success,false);
+ assert.equal(orderShippingCents("dhl",2,499),499);
+ assert.equal(orderShippingCents("pickup",2,499),0);
+ assert.equal(orderShippingCents("dhl",0,499),0);
+ assert.equal(deliveryJobStatus("pickup"),"pickup_waiting");
+ assert.equal(deliveryJobStatus("dhl"),"waiting_credentials");
+ assert.equal(canTransitionOrder("payment_confirmed","delivered","fulfillment"),false);
+ assert.equal(canTransitionOrder("payment_confirmed","delivered","pickup_fulfillment"),true);
+ assert.equal(canTransitionOrder("payment_authorized","delivered","pickup_fulfillment"),false);
+ const mail=renderOrderMail("received",{orderNumber:"RH-1",pickup:true});
+ assert.ok(mail.text.includes("Abholung")&&mail.text.includes("45130 Essen"));
+ assert.ok(!mail.text.includes("bestätigtem Versand eingezogen"));
+ const worker=read("src/lib/customer-automation.ts");
+ assert.ok(worker.includes('deliveryMethod:"dhl"')&&worker.includes("PICKUP_HANDOVER_REQUIRED"));
+ const action=read("app/admin/pickup-actions.ts");
+ assert.ok(action.includes('data.get("handedOver")!=="on"')&&action.includes('if(!await isAdmin())'));
+ assert.ok(action.indexOf("pickup_handover")<action.indexOf("await captureAuthorizedKlarna(id)"));
 });

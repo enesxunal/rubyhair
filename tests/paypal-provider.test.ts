@@ -86,3 +86,16 @@ test("live internal 1-EUR purchase is non-shippable, uses exact amount and does 
  assert.ok(requests.every(r=>!r.path.includes("/capture")));
  assert.ok(!JSON.stringify(req).includes('shipping_address'));
 });
+
+test("pickup PayPal requests exclude shipping address and use the exact no-shipping total",async()=>{
+ const input={orderId:"ORDER_1234",invoiceId:"RH-1234",totalCents:15000,shippingCents:0,pickup:true,requestId:"idempotency_12345678",shipping,returnUrl:"https://rubyhair.de/kasse?status=return",cancelUrl:"https://rubyhair.de/kasse?status=cancel"};
+ for(const method of ["createOrder","createCardOrder","createWalletOrder"] as const){
+  const requests:{path:string;method:string;body:unknown;requestId:string|null}[]=[];
+  const api=new PaypalClient("sandbox",credentials,fakeFetch(requests));await api[method](input);
+  const b=JSON.parse(requests[1].body as string);assert.equal(b.purchase_units[0].amount.value,"150.00");
+  assert.equal(b.purchase_units[0].amount.breakdown.shipping.value,"0.00");assert.equal(b.purchase_units[0].shipping,undefined);
+  if(method==="createOrder")assert.equal(b.payment_source.paypal.experience_context.shipping_preference,"NO_SHIPPING");
+  if(method==="createCardOrder")assert.equal(b.payment_source.card.experience_context.shipping_preference,"NO_SHIPPING");
+  await assert.rejects(()=>api[method]({...input,shippingCents:499}),PaypalError);
+ }
+});

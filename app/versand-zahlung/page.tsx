@@ -12,13 +12,14 @@ const cards=[
  {icon:Truck,no:"01",title:"Versand & Lieferung",facts:[
   "Wir versenden innerhalb Deutschlands mit DHL.",
   "Versandkosten: 4,99 € pro Bestellung.",
+  "Kostenlose Abholung nach Terminabsprache: Ruby Hair, Klara Straße 19, 45130 Essen. Wähle Abholung an der Kasse und bezahle online.",
   "Die Lieferzeit beträgt im Regelfall bis zu fünf Werktage. Über den Versand informieren wir dich per E-Mail.",
   "Der Versand wird aktuell manuell bearbeitet; eine DHL-Sendungsnummer erhältst du nach der Übergabe."
  ]},
  {icon:Wallet,no:"02",title:"Sicher bezahlen",facts:[
   "Wähle an der Kasse zwischen PayPal und Klarna.",
   "Du bestätigst deine Zahlung direkt beim jeweiligen Zahlungsanbieter.",
-  "Bei Klarna wird der Betrag zunächst autorisiert und erst bei bestätigtem Versand eingezogen.",
+  "Bei Klarna wird der Betrag zunächst autorisiert und erst bei bestätigtem Versand oder persönlicher Abholung eingezogen.",
   "Alle Endpreise enthalten die gesetzliche Umsatzsteuer; die Versandkosten werden vor Bestellabschluss ausgewiesen."
  ]},
  {icon:RotateCcw,no:"03",title:"Widerruf & Rücksendung",facts:[

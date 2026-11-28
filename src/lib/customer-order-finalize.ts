@@ -2,6 +2,7 @@ import "server-only";
 import {after} from "next/server";
 import {runMetaConversions} from "@/lib/meta-conversions";
 import {Prisma} from "@prisma/client";
+import {deliveryJobStatus} from "@/lib/delivery-method";
 import {getPrisma} from "@/lib/prisma";
 import {providerForCheckout,CustomerCheckoutError} from "@/lib/customer-checkout";
 import {requireOrderTransition} from "@/lib/order-lifecycle";
@@ -85,7 +86,7 @@ export async function finishCapturedCustomerOrder(orderId:string,provider:"paypa
     seller:RUBY_TEST_SELLER,buyer:{name:buyerName,email:order.customerEmail,street:billing.street,zip:billing.postalCode,city:billing.city},
     lines:invoiceLines as Prisma.InputJsonValue,taxRate:19,taxCents:order.taxCents,totalCents:order.totalCents,pdf:new Uint8Array(pdf)}});
    await tx.orderNotification.createMany({data:[{orderId:order.id,stage:"paid"},{orderId:order.id,stage:"paid_admin"}]});
-   if(order.lines.length)await tx.shippingJob.upsert({where:{orderId:order.id},create:{orderId:order.id,status:"waiting_credentials"},update:{}});
+   if(order.lines.length)await tx.shippingJob.upsert({where:{orderId:order.id},create:{orderId:order.id,status:deliveryJobStatus(order.deliveryMethod)},update:{}});
   },{isolationLevel:Prisma.TransactionIsolationLevel.Serializable,timeout:12000});
  }catch(e){
   const existing=await db.invoice.findUnique({where:{orderId:order.id}});
@@ -179,7 +180,7 @@ export async function confirmKlarnaCheckout(orderId:string,hppSessionId:string,p
   requireOrderTransition("pending_payment","payment_authorized","payment_provider");
   await tx.orderStatusEvent.create({data:{orderId:order.id,fromStatus:"pending_payment",toStatus:"payment_authorized",reason:"klarna_hpp_verified_authorized"}});
   await tx.orderNotification.createMany({data:[{orderId:order.id,stage:"received"},{orderId:order.id,stage:"received_admin"}],skipDuplicates:true});
-  await tx.shippingJob.upsert({where:{orderId:order.id},create:{orderId:order.id,status:"waiting_credentials"},update:{}});
+  await tx.shippingJob.upsert({where:{orderId:order.id},create:{orderId:order.id,status:deliveryJobStatus(order.deliveryMethod)},update:{}});
  },{isolationLevel:Prisma.TransactionIsolationLevel.Serializable,timeout:10000});
  return {authorized:true};
 }

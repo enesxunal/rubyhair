@@ -1,6 +1,7 @@
 import "server-only";
 import {createHmac,createHash,timingSafeEqual,randomUUID} from "node:crypto";
 import {Prisma} from "@prisma/client";
+import {orderShippingCents,deliveryJobStatus} from "@/lib/delivery-method";
 import {reservationExpiresAt} from "@/lib/stock-reservation-policy";
 import {getPrisma} from "@/lib/prisma";
 import {loadPaymentValues} from "@/lib/payment-secrets";
@@ -27,7 +28,7 @@ export class CustomerCheckoutError extends Error{
  constructor(public readonly reason:string,public readonly http=400){super(reason);this.name="CustomerCheckoutError"}
 }
 const hash=(input:CustomerCheckoutInput)=>createHash("sha256").update(JSON.stringify({
- provider:input.provider,paymentExperience:input.paymentExperience||"redirect",giftCode:input.giftCode?giftCodeHash(input.giftCode):null,couponCode:normalizedPromoCode(input.couponCode)||null,lines:[...input.lines].sort((a,b)=>a.id-b.id),
+ ...(input.deliveryMethod==="pickup"?{deliveryMethod:"pickup"}:{}),provider:input.provider,paymentExperience:input.paymentExperience||"redirect",giftCode:input.giftCode?giftCodeHash(input.giftCode):null,couponCode:normalizedPromoCode(input.couponCode)||null,lines:[...input.lines].sort((a,b)=>a.id-b.id),
  gifts:[...input.gifts].sort((a,b)=>a.id.localeCompare(b.id)),
  shipping:input.shipping,billing:input.billing||input.shipping,email:input.email.toLowerCase()
 })).digest("hex");
@@ -121,7 +122,7 @@ export async function createCustomerCheckout(input:CustomerCheckoutInput){
    const updated=await tx.variant.updateMany({where:{id:v.id,active:true,stockQuantity:{gte:l.quantity}},data:{stockQuantity:{decrement:l.quantity}}});
    if(updated.count!==1)throw new CustomerCheckoutError("STOCK_CHANGED",409);
   }
-  const shipping=items.length?shippingDeCents():0;
+  const shipping=orderShippingCents(input.deliveryMethod,items.length,shippingDeCents());
   const gross=subtotal+digitalTotal+shipping,tax=grossTax19(gross);
   if(gross>2500000)throw new CustomerCheckoutError("ORDER_TOO_LARGE",400);
   let cardId:string|null=null,giftApplied=0;
@@ -133,9 +134,9 @@ export async function createCustomerCheckout(input:CustomerCheckoutInput){
    if(spent.count!==1)throw new CustomerCheckoutError("GIFT_BALANCE_CHANGED",409);
   }
   const created=await tx.order.create({data:{
-   testOnly:false,status:"pending_payment",currency:"EUR",subtotalCents:subtotal+digitalTotal,shippingCents:shipping,taxCents:tax,totalCents:gross,giftAppliedCents:giftApplied,
+   testOnly:false,status:"pending_payment",currency:"EUR",deliveryMethod:input.deliveryMethod,subtotalCents:subtotal+digitalTotal,shippingCents:shipping,taxCents:tax,totalCents:gross,giftAppliedCents:giftApplied,
    customerEmail:input.email.toLowerCase(),billingAddress:{...(input.billing||input.shipping),consentToTermsAt:new Date().toISOString()} as Prisma.InputJsonValue,
-   shippingAddress:input.shipping as Prisma.InputJsonValue,reservationKey:input.key,requestDigest:digest,
+   shippingAddress:input.deliveryMethod==="pickup"?Prisma.JsonNull:input.shipping as Prisma.InputJsonValue,reservationKey:input.key,requestDigest:digest,
    reservationExpiresAt:reservationExpiresAt(),
    lines:{create:lines},statusEvents:{create:{fromStatus:null,toStatus:"pending_payment",reason:useCard?"customer_card_checkout_reserved":"customer_checkout_reserved"}}
   }});
@@ -172,7 +173,7 @@ export async function createCustomerCheckout(input:CustomerCheckoutInput){
     buyer:{name:bill.firstName+" "+bill.lastName,email:input.email,street:bill.street,zip:bill.postalCode,city:bill.city},
     lines:invoiceLines as Prisma.InputJsonValue,taxRate:19,taxCents:tax,totalCents:gross,pdf:new Uint8Array(pdf)}});
    await tx.orderNotification.createMany({data:[{orderId:created.id,stage:"paid"},{orderId:created.id,stage:"paid_admin"}]});
-   await tx.shippingJob.create({data:{orderId:created.id,status:"waiting_credentials"}});
+   await tx.shippingJob.create({data:{orderId:created.id,status:deliveryJobStatus(input.deliveryMethod)}});
   }
   return created;
  },{isolationLevel:Prisma.TransactionIsolationLevel.Serializable,timeout:12000});
@@ -188,7 +189,7 @@ export async function createCustomerCheckout(input:CustomerCheckoutInput){
   if(verifiedGateway.provider==="paypal"){
    const details={
     orderId:order.id,invoiceId:"RH-"+order.orderNumber.toString(),requestId:"RH-CREATE-"+order.id,
-    totalCents:cashDue,shippingCents:Math.min(order.shippingCents,cashDue),
+    totalCents:cashDue,shippingCents:Math.min(order.shippingCents,cashDue),pickup:input.deliveryMethod==="pickup",
     shipping:{fullName:input.shipping.firstName+" "+input.shipping.lastName,street:input.shipping.street,
       postalCode:input.shipping.postalCode,city:input.shipping.city,country:"DE" as const},
     returnUrl:base,cancelUrl:base+"&cancel=1"

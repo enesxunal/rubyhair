@@ -108,7 +108,7 @@ export default function PayPalWalletCheckout({lines,address,cartReady,totalCents
   const response=await fetch("/api/checkout",{method:"POST",credentials:"same-origin",cache:"no-store",
    headers:{"Content-Type":"application/json",...journeyHeaders()},body:JSON.stringify({
     key:orderKeys.current[method],provider:"paypal",paymentExperience:method,lines:current.lines,gifts:[],
-    shipping:current.address.shipping,billing:current.address.billing,email:current.address.email,
+    deliveryMethod:current.address.deliveryMethod,shipping:current.address.shipping,billing:current.address.billing,email:current.address.email,
     couponCode:current.couponCode,consent:true
    })});
   const data=await response.json() as CheckoutOrder;

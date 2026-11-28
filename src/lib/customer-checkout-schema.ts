@@ -6,10 +6,12 @@ const postal=z.string().regex(/^\d{5}$/);
 const address=z.object({firstName:simple,lastName:simple,street:simple.max(120),postalCode:postal,city:simple,country:z.literal("DE")}).strict();
 export const checkoutInput=z.object({
  key:z.string().uuid(),provider:z.enum(["paypal","klarna"]),paymentExperience:z.enum(["card","apple_pay","google_pay"]).optional(),
+ deliveryMethod:z.enum(["dhl","pickup"]).default("dhl"),
  lines:z.array(z.object({id:z.number().int().positive(),quantity:z.number().int().min(1).max(99)}).strict()).max(30),
  gifts:z.array(giftCartItemSchema).max(5).default([]),
  shipping:address,billing:address.optional(),email:z.email().max(254),giftCode:z.string().min(10).max(45).optional(),couponCode:z.string().trim().min(1).max(32).optional(),consent:z.literal(true)
 }).strict().superRefine((v,ctx)=>{
+ if(v.deliveryMethod==="pickup"&&(!v.lines.length||v.lines.some(l=>l.id===886)))ctx.addIssue({code:"custom",path:["deliveryMethod"],message:"Pickup requires physical customer products"});
  if(!v.lines.length&&!v.gifts.length)ctx.addIssue({code:"custom",path:["lines"],message:"Cart is empty"});
  if(v.gifts.length&&v.provider!=="paypal")ctx.addIssue({code:"custom",path:["provider"],message:"Digital gift cards require PayPal"});
  if(v.paymentExperience&&(v.provider!=="paypal"||v.gifts.length>0||Boolean(v.giftCode)))ctx.addIssue({code:"custom",path:["paymentExperience"],message:"Card fields currently support PayPal-funded physical checkout only"});

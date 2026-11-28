@@ -11,6 +11,7 @@ import {loadPurchaseAttributions} from "@/lib/admin-purchase-attribution";
 import AdminPurchaseSource from "@/components/admin-purchase-source";
 import AdminShell from "../admin-shell";
 import {updateFulfillmentAction} from "../actions";
+import {confirmPickupAction} from "../pickup-actions";
 import {confirmManualKlarnaHandoverAction} from "../klarna-manual-actions";
 import {createOrderDhlLabelAction,cancelOrderDhlLabelAction} from "../dhl-order-actions";
 
@@ -27,7 +28,7 @@ const addressText=(value:unknown)=>{
    .map(key=>typeof a[key]==="string"?a[key]:"").filter(Boolean).join(", ")||null;
 };
 
-export default async function AdminOrders({searchParams}:{searchParams:Promise<{filter?:string;seite?:string;manualKlarna?:string;dhl?:string}>}){
+export default async function AdminOrders({searchParams}:{searchParams:Promise<{filter?:string;seite?:string;manualKlarna?:string;dhl?:string;pickup?:string}>}){
  if(!await isAdmin())redirect("/admin/login");
  const params=await searchParams;
  const filter=orderListFilter(params.filter);
@@ -65,6 +66,7 @@ export default async function AdminOrders({searchParams}:{searchParams:Promise<{
    <Link href="/admin/dhl">DHL-Verbindung einrichten</Link>
    <Link href="/admin/erstattungen">Erstattungsstatus prüfen (nur lesen)</Link>
   </nav></details>
+  {params.pickup&&<div className="rh-admin-warning">{params.pickup==="completed"?"Persönliche Abholung bestätigt.":"Abholung nicht abgeschlossen. Bitte Zahlungsstatus prüfen und erneut abgleichen."}</div>}
   {params.dhl&&<div className="rh-admin-warning">{params.dhl==="created"?"DHL-Versandetikett erstellt. PDF in der Bestellung herunterladen.":params.dhl==="canceled"?"DHL-Versandetikett storniert.": "DHL-Vorgang nicht abgeschlossen. Bitte Status prüfen; nicht erneut buchen, solange das Ergebnis unklar ist."}</div>}
   <div className="rh-admin-pill-row">
    <span className="rh-admin-stat-pill">{confirmedCount} bestätigte Bestellungen</span>
@@ -93,7 +95,7 @@ export default async function AdminOrders({searchParams}:{searchParams:Promise<{
     <div className="rh-admin-card-title"><div><span>BESTELLÜBERSICHT</span><h2>{count} {filter==="bestaetigt"?"bestätigte Bestellungen":"Einträge"}</h2></div><span>Seite {page} von {totalPages}</span></div>
     <div className="rh-admin-orders-list">
      {orders.map(order=>{const presentation=orderListPresentation(order);return <details key={order.id} className="rh-admin-order-item">
-      <summary><span className="rh-admin-order-number">#{order.orderNumber.toString()}<small>{date(order.createdAt)}</small></span>
+      <summary><span className="rh-admin-order-number">#{order.orderNumber.toString()}<small>{date(order.createdAt)}</small>{order.deliveryMethod==="pickup"&&<small>Abholung vor Ort</small>}</span>
        <span className={"rh-admin-order-status rh-admin-order-state-"+presentation.tone}>{presentation.label}{presentation.provider&&<small>{presentation.provider}</small>}</span>
        <span className="rh-admin-order-source"><small>Herkunft</small><AdminPurchaseSource value={attribution?.get(order.id)} unavailable={attribution===null} compact/></span>
        <span className="rh-admin-order-total"><strong>{euro(order.totalCents)}</strong><small>Details ansehen ↗</small></span>
@@ -106,21 +108,22 @@ export default async function AdminOrders({searchParams}:{searchParams:Promise<{
         <p><strong>Artikelwert:</strong> {euro(order.subtotalCents)} · <strong>Erfasster Versand:</strong> {euro(order.shippingCents)}</p>
         <p><strong>Kunde:</strong> {order.customerEmail||"Nicht erfasst"}</p>
         <p><strong>Rechnungsadresse:</strong> {addressText(order.billingAddress)||"Nicht erfasst"}</p>
-        <p><strong>Lieferadresse:</strong> {addressText(order.shippingAddress)||"Nicht erfasst"}</p>
-        <p><strong>Versand:</strong> {order.lines.length?`${order.trackingCarrier||"Noch nicht versendet"} ${order.trackingNumber||""}`:"Rein digital – kein DHL-Paket"}</p>
+        <p><strong>Lieferart:</strong> {order.deliveryMethod==="pickup"?"Abholung vor Ort · Klara Straße 19, 45130 Essen":order.lines.length?"DHL Versand":"Digital"}</p>
+        {order.deliveryMethod!=="pickup"&&<p><strong>Lieferadresse:</strong> {addressText(order.shippingAddress)||"Nicht erfasst"}</p>}
+        <p><strong>{order.deliveryMethod==="pickup"?"Abholung:":"Versand:"}</strong> {order.deliveryMethod==="pickup"?(order.status==="delivered"?"Persönlich abgeholt":"Abholung ausstehend"):order.lines.length?`${order.trackingCarrier||"Noch nicht versendet"} ${order.trackingNumber||""}`:"Rein digital – kein DHL-Paket"}</p>
         {order.invoice&&<p><a href={`/api/admin/customer-document?orderId=${order.id}&type=invoice`} target="_blank" rel="noopener noreferrer">Rechnung {order.invoice.invoiceNumber} herunterladen</a></p>}
-        {order.shippingJob&&<p><strong>DHL Automatik:</strong> {order.shippingJob.status} {order.shippingJob.trackingNumber||""}</p>}
+        {order.deliveryMethod!=="pickup"&&order.shippingJob&&<p><strong>DHL Automatik:</strong> {order.shippingJob.status} {order.shippingJob.trackingNumber||""}</p>}
         {labelOrderIds.has(order.id)&&<p><a href={`/api/admin/customer-document?orderId=${order.id}&type=label`} target="_blank" rel="noopener noreferrer">DHL Paketlabel PDF herunterladen</a></p>}
         {order.notifications.length>0&&<p><strong>Automatische E-Mails:</strong> {order.notifications.map(n=>n.stage+": "+n.status).join(" · ")}</p>}
         {order.fulfillmentNote&&<p><strong>Interne Notiz:</strong> {order.fulfillmentNote}</p>}</div>
-       {!order.testOnly&&order.lines.length>0&&order.paymentReference&&(order.status==="payment_authorized"?order.paymentReference.startsWith("KLARNA-HPP:")&&/^Klarna authorized: [0-9a-f-]{36}$/i.test(order.fulfillmentNote||""):["payment_confirmed","preparing"].includes(order.status)&&order.payments.some(p=>p.eventType==="PAYMENT.CAPTURE.COMPLETED"&&p.provider!=="manual"&&p.providerEventId.length>0))&&!order.trackingNumber&&["waiting_credentials","canceled"].includes(order.shippingJob?.status||"")&&<form action={createOrderDhlLabelAction} className="rh-admin-fulfillment-form">
+       {!order.testOnly&&order.deliveryMethod==="dhl"&&order.lines.length>0&&order.paymentReference&&(order.status==="payment_authorized"?order.paymentReference.startsWith("KLARNA-HPP:")&&/^Klarna authorized: [0-9a-f-]{36}$/i.test(order.fulfillmentNote||""):["payment_confirmed","preparing"].includes(order.status)&&order.payments.some(p=>p.eventType==="PAYMENT.CAPTURE.COMPLETED"&&p.provider!=="manual"&&p.providerEventId.length>0))&&!order.trackingNumber&&["waiting_credentials","canceled"].includes(order.shippingJob?.status||"")&&<form action={createOrderDhlLabelAction} className="rh-admin-fulfillment-form">
         <h3>DHL Versandetikett erstellen</h3><p>Artikelgewicht: {order.lines.reduce((sum,l)=>sum+l.quantity*25,0)} g. Bitte das tatsächliche Gesamtgewicht inklusive Verpackung eingeben. Kostenpflichtige Buchung; noch keine Versandbestätigung.</p>
         <input type="hidden" name="id" value={order.id}/><label>Paketgewicht inkl. Verpackung (g)<input type="number" name="weightG" min={order.lines.reduce((sum,l)=>sum+l.quantity*25,0)+1} max={31500} step={1} required/></label><label><input type="checkbox" name="confirmed" required/> Kostenpflichtiges DHL-Etikett erstellen</label><button type="submit">Versandetikett erstellen</button>
        </form>}
-       {!order.testOnly&&["payment_confirmed","preparing","payment_authorized"].includes(order.status)&&["label_created","awaiting_handover"].includes(order.shippingJob?.status||"")&&order.shippingJob?.trackingNumber&&<form action={cancelOrderDhlLabelAction} className="rh-admin-fulfillment-form">
+       {!order.testOnly&&order.deliveryMethod==="dhl"&&["payment_confirmed","preparing","payment_authorized"].includes(order.status)&&["label_created","awaiting_handover"].includes(order.shippingJob?.status||"")&&order.shippingJob?.trackingNumber&&<form action={cancelOrderDhlLabelAction} className="rh-admin-fulfillment-form">
         <h3>DHL Versandetikett stornieren</h3><p>Nur vor Tagesabschluss und tatsächlicher Paketübergabe. Stornierung wird bei DHL geprüft.</p><input type="hidden" name="id" value={order.id}/><label><input type="checkbox" name="confirmed" required/> Dieses Etikett stornieren</label><button type="submit">Versandetikett stornieren</button>
        </form>}
-       {!order.testOnly&&order.status==="payment_authorized"&&order.shippingJob?.status!=="order_cancel_review"&&order.paymentReference?.startsWith("KLARNA-HPP:")&&
+       {!order.testOnly&&order.deliveryMethod==="dhl"&&order.status==="payment_authorized"&&order.shippingJob?.status!=="order_cancel_review"&&order.paymentReference?.startsWith("KLARNA-HPP:")&&
          <form action={confirmManualKlarnaHandoverAction} className="rh-admin-fulfillment-form">
           <h3>{["label_created","awaiting_handover"].includes(order.shippingJob?.status||"")?"DHL-Label vorhanden – reale Paketübergabe bestätigen":"Klarna: DHL-Versand manuell abschließen"}</h3>
           <p>Nur wenn du das echte Paket bereits bei DHL abgegeben hast. Bei Klarna wird ein noch nicht eingezogener Betrag erst nach der bestätigten Übergabe eingezogen und verifiziert. Niemals nur wegen eines gedruckten Labels bestätigen.</p>
@@ -132,6 +135,10 @@ export default async function AdminOrders({searchParams}:{searchParams:Promise<{
           </label>
           <button type="submit">Paketübergabe bestätigen und Klarna-Einzug prüfen</button>
          </form>}
+       {order.deliveryMethod==="pickup"&&!order.testOnly&&["payment_authorized","payment_confirmed","preparing"].includes(order.status)&&["pickup_waiting","pickup_handover"].includes(order.shippingJob?.status||"")&&<form action={confirmPickupAction} className="rh-admin-fulfillment-form">
+        <h3>Persönliche Abholung</h3><p>Nur nach tatsächlicher Übergabe der Ware bestätigen. Bei Klarna wird der Einzug erst dann geprüft.</p>
+        <input type="hidden" name="id" value={order.id}/><label><input type="checkbox" name="handedOver" required/> Ware wurde persönlich an den Kunden übergeben.</label><button type="submit">Abholung bestätigen</button>
+       </form>}
        <h3>Positionen</h3>
        <div className="rh-admin-table-wrap"><table><thead><tr><th>Artikel</th><th>Variante</th><th>Menge</th><th>Einzelpreis</th><th>Summe</th></tr></thead>
         <tbody>{order.lines.map((line,i)=><tr key={i}>
@@ -148,7 +155,7 @@ export default async function AdminOrders({searchParams}:{searchParams:Promise<{
        {(()=>{
         const paid= !order.testOnly&&Boolean(order.paymentReference)&&order.payments.some(p=>p.eventType==="PAYMENT.CAPTURE.COMPLETED"&&p.provider!=="manual"&&p.providerEventId.length>0);
         const next=order.status==="payment_confirmed"&&(!order.shippingJob||order.shippingJob.status!=="label_created")?"preparing":order.status==="preparing"?"shipped":order.status==="shipped"?"delivered":null;
-        return paid&&next&&order.lines.length>0&&!["submitting","canceling","needs_review"].includes(order.shippingJob?.status||"")?<form action={updateFulfillmentAction} className="rh-admin-fulfillment-form">
+        return order.deliveryMethod==="dhl"&&paid&&next&&order.lines.length>0&&!["submitting","canceling","needs_review"].includes(order.shippingJob?.status||"")?<form action={updateFulfillmentAction} className="rh-admin-fulfillment-form">
           <h3>Versandstatus bearbeiten</h3><p>Nur nach verifiziertem Zahlungseingang. Statusänderungen werden protokolliert.</p>
           <input type="hidden" name="id" value={order.id}/>
           <input type="hidden" name="next" value={next}/>

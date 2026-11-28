@@ -47,7 +47,7 @@ export async function deliverQueuedOrderEmails(limit=10){
     customerName:name.trim(),customerEmail:order.customerEmail,totalCents:order.totalCents,
     items:[...order.lines.map(line=>({name:line.variant.product.name+" "+line.variant.colorLabel+" "+line.variant.lengthLabel,quantity:line.quantity,totalCents:line.lineTotalCents})),
      ...order.giftPurchases.map(g=>({name:"Digitaler Geschenkgutschein für "+g.recipientName,quantity:1,totalCents:g.amountCents}))],
-    digitalOnly:order.lines.length===0&&order.giftPurchases.length>0,
+    pickup:order.deliveryMethod==="pickup",digitalOnly:order.lines.length===0&&order.giftPurchases.length>0,
     trackingNumber:order.trackingNumber||undefined,carrier:order.trackingCarrier||undefined},
     item.stage.startsWith("paid")&&order.invoice?{filename:order.invoice.invoiceNumber+".pdf",content:Buffer.from(order.invoice.pdf)}:undefined);
    await db().orderNotification.updateMany({where:{id:item.id,status:"sending"},data:{status:"sent",sentAt:new Date(),lastError:null}});
@@ -70,6 +70,7 @@ function recipientAddress(v:unknown):ShippingAddress{
 export async function captureAuthorizedKlarna(orderId:string){
  const order=await db().order.findUnique({where:{id:orderId},include:{shippingJob:{select:{status:true}}}});
  if(!order||order.status!=="payment_authorized"||order.testOnly)return;
+ if(order.deliveryMethod==="pickup"&&order.shippingJob?.status!=="pickup_handover")throw new Error("PICKUP_HANDOVER_REQUIRED");
  if(order.shippingJob?.status==="order_cancel_review")throw new Error("ORDER_CANCELLATION_IN_REVIEW");
  const m=/^Klarna authorized: ([0-9a-f-]{36})$/i.exec(order.fulfillmentNote||"");
  if(!m)throw new Error("KLARNA_ORDER_ID_MISSING");
@@ -107,15 +108,15 @@ export async function createQueuedDhlLabels(limit=5){
  // accepts the current contract and sender template.
  const validation=await validateDhlLiveTemplateOnly();
  if(validation!=="valid")return {created:0,skipped:"DHL_VALIDATION_"+validation.toUpperCase()};
- const rows=await db().shippingJob.findMany({where:{status:"waiting_credentials",trackingNumber:null,labelPdf:null,order:{is:{testOnly:false,createdAt:{gte:new Date(startAt)},trackingNumber:null,status:{in:["payment_confirmed","payment_authorized","preparing"]}}}},orderBy:{createdAt:"asc"},take:Math.max(1,Math.min(limit,10))});
+ const rows=await db().shippingJob.findMany({where:{status:"waiting_credentials",trackingNumber:null,labelPdf:null,order:{is:{testOnly:false,deliveryMethod:"dhl",createdAt:{gte:new Date(startAt)},trackingNumber:null,status:{in:["payment_confirmed","payment_authorized","preparing"]}}}},orderBy:{createdAt:"asc"},take:Math.max(1,Math.min(limit,10))});
  let created=0;
  for(const job of rows){
   const order=await db().order.findUnique({where:{id:job.orderId},include:{lines:{select:{quantity:true}},payments:true}});
-  if(!order||order.testOnly||order.createdAt.getTime()<Date.parse(startAt)||
+  if(!order||order.testOnly||order.deliveryMethod!=="dhl"||order.createdAt.getTime()<Date.parse(startAt)||
     !(["payment_confirmed","payment_authorized","preparing"].includes(order.status)))continue;
   if(order.trackingNumber||!order.lines.length||!order.paymentReference||!(order.status==="payment_authorized"?order.paymentReference.startsWith("KLARNA-HPP:")&&/^Klarna authorized: [0-9a-f-]{36}$/i.test(order.fulfillmentNote||""):order.payments.some(p=>p.eventType==="PAYMENT.CAPTURE.COMPLETED"&&p.provider!=="manual"&&p.providerEventId.length>0)))continue;
   let weightG:number;try{weightG=packageWeightG(order.lines,tare)}catch{continue}
-  const claim=await db().shippingJob.updateMany({where:{id:job.id,status:"waiting_credentials",trackingNumber:null,labelPdf:null,order:{is:{status:order.status,trackingNumber:null,testOnly:false}}},data:{status:"submitting",attemptCount:{increment:1}}});
+  const claim=await db().shippingJob.updateMany({where:{id:job.id,status:"waiting_credentials",trackingNumber:null,labelPdf:null,order:{is:{status:order.status,trackingNumber:null,testOnly:false,deliveryMethod:"dhl"}}},data:{status:"submitting",attemptCount:{increment:1}}});
   if(claim.count!==1)continue;
   try{
    const label=await createDhlShipmentLabel({orderNumber:String(order.orderNumber),recipient:recipientAddress(order.shippingAddress),weightG});
@@ -141,7 +142,7 @@ export async function finalizePreparedShippingJobs(limit=5){
  for(const job of jobs){
   try{
    const order=await db().order.findUnique({where:{id:job.orderId}});
-   if(!order||order.testOnly||!job.trackingNumber)continue;
+   if(!order||order.testOnly||order.deliveryMethod!=="dhl"||!job.trackingNumber)continue;
    if(!["payment_authorized","payment_confirmed","preparing"].includes(order.status))continue;
    await db().$transaction(async tx=>{
     if(order.status==="payment_confirmed"){
