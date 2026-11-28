@@ -54,3 +54,35 @@ test("rejects forged Klarna redirect destinations",()=>{
  assert.equal(requireKlarnaRedirect("https://pay.klarna.com/eu/hpp/payments/example"),"https://pay.klarna.com/eu/hpp/payments/example");
  for(const url of ["http://pay.klarna.com/eu","https://evil.example/pay","https://pay.klarna.com.evil.example/"])assert.throws(()=>requireKlarnaRedirect(url),KlarnaProviderError);
 });
+
+import {cancelIdempotencyKey,cancellationLocalReason,remoteCancellationState} from "../src/lib/order-cancellation-policy";
+import {readFileSync} from "node:fs";
+test("merchant cancellation requires a verified uncaptured Klarna order and uses its own stable idempotency key",async()=>{
+ const key=cancelIdempotencyKey(om);
+ assert.match(key,/^[0-9a-f-]{36}$/);
+ assert.equal(key,cancelIdempotencyKey(om));assert.notEqual(key,om);
+ const {api,calls}=mockClient();await api.cancelUncapturedOrder(om,key);
+ assert.deepEqual(calls[0],{path:"/ordermanagement/v1/orders/"+om+"/cancel",method:"POST",body:null,idempotency:key});
+ const valid={order_id:om,order_amount:48099,purchase_currency:"EUR",status:"AUTHORIZED",captured_amount:0,refunded_amount:0};
+ assert.equal(remoteCancellationState(valid,om,48099,[]),"authorized");
+ assert.equal(remoteCancellationState({...valid,status:"CANCELLED"},om,48099,[]),"cancelled");
+ for(const bad of [{...valid,captured_amount:1},{...valid,captured_amount:undefined},{...valid,status:"CAPTURED"},{...valid,order_amount:1},{...valid,order_id:hpp}])assert.equal(remoteCancellationState(bad,om,48099,[]),"review");
+ assert.equal(remoteCancellationState(valid,om,48099,[{}]),"review");
+ const row={testOnly:false,status:"payment_authorized",currency:"EUR",totalCents:48099,giftAppliedCents:0,trackingNumber:null,shippedAt:null,deliveredAt:null,paymentReference:"KLARNA-HPP:"+hpp,fulfillmentNote:"Klarna authorized: "+om,invoice:null,payments:[],giftPurchases:[],shippingJob:{status:"waiting_credentials",trackingNumber:null,hasLabel:false}};
+ assert.equal(cancellationLocalReason(row),null);
+ assert.equal(cancellationLocalReason({...row,testOnly:true}),"NOT_UNCAPTURED_KLARNA");
+ assert.equal(cancellationLocalReason({...row,payments:[{}]}),"PAYMENT_OR_GIFT_REVIEW");
+ assert.equal(cancellationLocalReason({...row,shippingJob:{...row.shippingJob,hasLabel:true}}),"SHIPPING_REVIEW");
+ assert.equal(cancellationLocalReason({...row,shippingJob:{...row.shippingJob,status:"submitting"}}),"SHIPPING_REVIEW");
+ assert.equal(cancellationLocalReason({...row,shippingJob:{...row.shippingJob,status:"order_cancel_review"}}),null);
+});
+test("private cancellation route has server authorization, explicit confirmation and verified provider before atomic stock release",()=>{
+ const page=readFileSync("app/admin/stornierung/page.tsx","utf8"),action=readFileSync("app/admin/stornierung/actions.ts","utf8"),service=readFileSync("src/lib/admin-order-cancellation.ts","utf8");
+ assert.ok(page.includes('if(!await isAdmin())redirect'));
+ assert.ok(action.includes('if(!await isAdmin())redirect'));
+ assert.ok(action.includes('data.get("confirm")!=="on"'));
+ assert.ok(service.indexOf('if(state!=="cancelled")throw')<service.indexOf('await db.$transaction'));
+ assert.ok(service.includes('if(!line.stockReserved)continue'));
+ assert.ok(service.includes('TransactionIsolationLevel.Serializable'));
+ assert.ok(!readFileSync("app/admin/admin-shell.tsx","utf8").includes("/admin/stornierung"));
+});

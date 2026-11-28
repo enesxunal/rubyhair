@@ -33,7 +33,8 @@ export async function deliverQueuedOrderEmails(limit=10){
    const order=await db().order.findUnique({where:{id:item.orderId},include:{invoice:{select:{invoiceNumber:true,pdf:true}},lines:{include:{variant:{include:{product:{select:{name:true}}}}}},giftPurchases:{where:{status:"captured"},select:{recipientName:true,amountCents:true}}}});
    const isReceived=item.stage==="received"||item.stage==="received_admin";
    if(!order||order.testOnly||!order.customerEmail||!orderMailStages.includes(item.stage as OrderMailStage)||
-      !isReceived&&item.stage!=="failed"&&!order.invoice||
+      !isReceived&&item.stage!=="failed"&&item.stage!=="cancelled"&&!order.invoice||
+      item.stage==="cancelled"&&order.status!=="cancelled"||
       isReceived&&!["payment_authorized","payment_confirmed","preparing","shipped","delivered"].includes(order.status))
     throw new Error("ORDER_NOTIFICATION_NOT_READY");
    const adminCopy=item.stage==="paid_admin"||item.stage==="received_admin";
@@ -67,8 +68,9 @@ function recipientAddress(v:unknown):ShippingAddress{
 }
 
 export async function captureAuthorizedKlarna(orderId:string){
- const order=await db().order.findUnique({where:{id:orderId}});
+ const order=await db().order.findUnique({where:{id:orderId},include:{shippingJob:{select:{status:true}}}});
  if(!order||order.status!=="payment_authorized"||order.testOnly)return;
+ if(order.shippingJob?.status==="order_cancel_review")throw new Error("ORDER_CANCELLATION_IN_REVIEW");
  const m=/^Klarna authorized: ([0-9a-f-]{36})$/i.exec(order.fulfillmentNote||"");
  if(!m)throw new Error("KLARNA_ORDER_ID_MISSING");
  const gateway=await providerForCheckout("klarna");

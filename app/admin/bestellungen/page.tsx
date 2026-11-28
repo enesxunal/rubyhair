@@ -120,7 +120,7 @@ export default async function AdminOrders({searchParams}:{searchParams:Promise<{
        {!order.testOnly&&["payment_confirmed","preparing","payment_authorized"].includes(order.status)&&["label_created","awaiting_handover"].includes(order.shippingJob?.status||"")&&order.shippingJob?.trackingNumber&&<form action={cancelOrderDhlLabelAction} className="rh-admin-fulfillment-form">
         <h3>DHL Versandetikett stornieren</h3><p>Nur vor Tagesabschluss und tatsächlicher Paketübergabe. Stornierung wird bei DHL geprüft.</p><input type="hidden" name="id" value={order.id}/><label><input type="checkbox" name="confirmed" required/> Dieses Etikett stornieren</label><button type="submit">Versandetikett stornieren</button>
        </form>}
-       {!order.testOnly&&order.status==="payment_authorized"&&order.paymentReference?.startsWith("KLARNA-HPP:")&&
+       {!order.testOnly&&order.status==="payment_authorized"&&order.shippingJob?.status!=="order_cancel_review"&&order.paymentReference?.startsWith("KLARNA-HPP:")&&
          <form action={confirmManualKlarnaHandoverAction} className="rh-admin-fulfillment-form">
           <h3>{["label_created","awaiting_handover"].includes(order.shippingJob?.status||"")?"DHL-Label vorhanden – reale Paketübergabe bestätigen":"Klarna: DHL-Versand manuell abschließen"}</h3>
           <p>Nur wenn du das echte Paket bereits bei DHL abgegeben hast. Bei Klarna wird ein noch nicht eingezogener Betrag erst nach der bestätigten Übergabe eingezogen und verifiziert. Niemals nur wegen eines gedruckten Labels bestätigen.</p>

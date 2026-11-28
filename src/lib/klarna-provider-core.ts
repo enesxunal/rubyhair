@@ -118,6 +118,9 @@ export class KlarnaClient{
    {captured_amount:totalCents,description:"Ruby Hair customer parcel shipped",reference:"RH-CUSTOMER"},
    {"Klarna-Idempotency-Key":requireKlarnaUuid(idempotencyKey)});
  }
+ async cancelUncapturedOrder(orderId:string,idempotencyKey:string){
+  await this.request("POST","/ordermanagement/v1/orders/"+requireKlarnaUuid(orderId)+"/cancel",undefined,{"Klarna-Idempotency-Key":requireKlarnaUuid(idempotencyKey)});
+ }
  async disableHostedPage(sessionId:string){
   await this.request("DELETE","/hpp/v1/sessions/"+requireKlarnaUuid(sessionId));
  }

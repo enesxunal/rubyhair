@@ -37,7 +37,7 @@ test("customer confirmation uses the real buyer email, never a fixed test addres
  assert.match(worker,/adminCopy\?adminOrderNotificationRecipients\(store.recipient\):order.customerEmail/);
  assert.match(worker,/!order.customerEmail/);
  assert.match(worker,/isReceived&&!\["payment_authorized"/);
- assert.match(worker,/!isReceived&&item.stage!=="failed"&&!order.invoice/);
+ assert.match(worker,/!isReceived&&item.stage!=="failed"&&item.stage!=="cancelled"&&!order.invoice/);
  assert.match(worker,/status:"queued"/);
  assert.match(worker,/orderNotification.updateMany/);
 });
