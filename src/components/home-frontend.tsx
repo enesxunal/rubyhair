@@ -3,8 +3,9 @@ import BlackFridayBadge from "@/components/black-friday-badge";
 
 import Link from "next/link";
 import {useEffect,useRef,useState} from "react";
-import {Search,ShoppingBag,Menu,X,ArrowUpRight,ArrowRight,Instagram,Sparkles} from "lucide-react";
+import {Search,ShoppingBag,Menu,X,ArrowUpRight,ArrowRight,Instagram,Sparkles,Truck,Wallet,MessageCircle} from "lucide-react";
 import {useCart} from "@/components/cart-context";
+import {availableHomeVariants,homeCollectionSummary} from "@/lib/home-discovery";
 import {euros,type Product} from "@/lib/catalog";
 import {tapeInLengths,tapeInLengthHref} from "@/lib/tape-in-lengths";
 import {storefrontNav,storefrontShopLinks,storefrontInfoLinks} from "@/lib/store-navigation";
@@ -100,7 +101,12 @@ function HomeNavigation(){
 function ShadeSelector({product,verified}:{product?:Product;verified:boolean}){
   const [index,setIndex]=useState(0);
   const active=shades[index];
-  const canBuy=Boolean(product?.variations.some(v=>v.color===active.color&&v.available&&v.purchasable));
+  const [preferredLength,setPreferredLength]=useState("");
+  const options=availableHomeVariants(product,undefined,active.color);
+  const selectedLength=options.some(v=>v.length===preferredLength)?preferredLength:options[0]?.length||"";
+  const selected=options.find(v=>v.length===selectedLength);
+  const canBuy=Boolean(selected);
+  const productHref="/produkt/"+active.slug+"?farbe="+encodeURIComponent(active.color)+(selectedLength?"&laenge="+encodeURIComponent(selectedLength):"");
   return <section id="shade" className="shade section-pad">
     <div className="container shade-grid">
       <div className="shade-visual rh-shade-gallery">
@@ -126,10 +132,14 @@ function ShadeSelector({product,verified}:{product?:Product;verified:boolean}){
             <b style={{background:shade.background}}/> {shade.title}
           </button>)}
         </div>
+        {verified&&options.length>0&&<div className="rh-home-shade-lengths" role="group" aria-label="Haarlänge auswählen">
+          {tapeInLengths.filter(l=>options.some(v=>v.length===l.key)).map(l=><button type="button" key={l.key} aria-pressed={selectedLength===l.key} onClick={()=>setPreferredLength(l.key)}>{l.label}</button>)}
+        </div>}
+        {selected&&<p className="rh-home-shade-price"><strong>{euros(selected.price)}</strong> / Packung · verfügbar</p>}
         <p className="shade-disclaimer">Farbdarstellung kann je nach Bildschirm abweichen. Die Auswahl dient als Inspiration.</p>
-        {canBuy?<Link prefetch={false} className="solid-button shade-button" href={"/produkt/"+active.slug+"/?farbe="+active.color}>
+        {canBuy?<Link prefetch={false} className="solid-button shade-button" href={productHref}>
           FARBE ANSEHEN <ArrowUpRight size={17}/>
-        </Link>:verified?<span className="solid-button shade-button" aria-disabled="true" style={{opacity:.65,cursor:"not-allowed"}}>AUSVERKAUFT</span>:<Link prefetch={false} className="solid-button shade-button" href={"/produkt/"+active.slug+"/?farbe="+active.color}>VERFÜGBARKEIT PRÜFEN <ArrowUpRight size={17}/></Link>}
+        </Link>:verified?<span className="solid-button shade-button" aria-disabled="true" style={{opacity:.65,cursor:"not-allowed"}}>AUSVERKAUFT</span>:<Link prefetch={false} className="solid-button shade-button" href={productHref}>VERFÜGBARKEIT PRÜFEN <ArrowUpRight size={17}/></Link>}
       </div>
     </div>
   </section>;
@@ -194,11 +204,12 @@ function HomeFooter(){
   </>;
 }
 function CollectionPrice({product,length,verified}:{product?:Product;length?:string;verified:boolean}){
-  const available=product?.variations.filter(v=>v.available&&v.purchasable&&(!length||v.length===length)&&Number.isFinite(v.price)&&v.price>0)||[];
-  return <div className="rh-home-product-price" aria-live="polite">
-    {available.length?<><span>ab</span> <strong>{euros(Math.min(...available.map(v=>v.price)))}</strong><small> / Packung</small></>:
+  const {colors,minPrice}=homeCollectionSummary(product,length);
+  return <><div className="rh-home-product-price" aria-live="polite">
+    {minPrice!==null?<><span>ab</span> <strong>{euros(minPrice)}</strong><small> / Packung</small></>:
       <span>{verified?"Derzeit ausverkauft":"Preis im Shop ansehen"}</span>}
-  </div>;
+  </div>
+  {verified&&colors>0&&<span className="rh-home-stock-note">{colors} {colors===1?"Farbe verfügbar":"Farben verfügbar"}</span>}</>;
 }
 export default function HomeFrontend({instagramPosts=[]}:{instagramPosts?:InstagramFeedPost[]}){
   const section=useRef<HTMLElement>(null);
@@ -226,7 +237,7 @@ export default function HomeFrontend({instagramPosts=[]}:{instagramPosts?:Instag
   return <>
     <HomeNavigation/>
     <main id="main">
-      <Link prefetch={false} className="hero rh-hero-product" id="home" href="/produkt/tape-in-extensions/?farbe=6&laenge=55-60-cm" aria-label="Tape-in Extensions entdecken, zum Produkt">
+      <Link prefetch={false} className="hero rh-hero-product" id="home" href="/kollektionen/tape-in-extensions" aria-label="Tape-in Extensions entdecken, zur Kollektion">
         <BlackFridayBadge hero/>
         <div className="hero-photo">
           <img className="hero-primary" src="/assets/hero-brunette.webp" alt="Model mit langen braunen Haaren" width={1672} height={941} fetchPriority="high"/>
@@ -274,6 +285,16 @@ export default function HomeFrontend({instagramPosts=[]}:{instagramPosts?:Instag
             </Link>
           </div>
           <p className="rh-home-price-note">Alle Preise inkl. 19 % MwSt., zzgl. <Link href="/versand-zahlung/">Versandkosten</Link>.</p>
+          <div className="rh-home-shopping-info" aria-label="Informationen zum Einkauf">
+            <Link prefetch={false} href="/versand-zahlung"><Truck size={22} aria-hidden="true"/><span><strong>DHL Versand</strong><small>4,99 € innerhalb Deutschlands</small></span></Link>
+            <Link prefetch={false} href="/versand-zahlung"><Wallet size={22} aria-hidden="true"/><span><strong>Bequem bezahlen</strong><small>PayPal · Klarna · Karte</small></span></Link>
+            <Link prefetch={false} href="/kontakt"><MessageCircle size={22} aria-hidden="true"/><span><strong>Farbberatung</strong><small>Persönliche Beratung in Essen</small></span></Link>
+          </div>
+          <div className="rh-home-method-guide">
+            <div><span>DEINE METHODE</span><h3>Tape-in oder Keratin?</h3><p>Wähle die passende Befestigung für deinen Look.</p></div>
+            <Link prefetch={false} href="/kollektionen/tape-in-extensions"><strong>Tape-in Extensions</strong><small>Klebestreifen · 10 Tape-ins pro Packung</small><ArrowUpRight size={16}/></Link>
+            <Link prefetch={false} href="/kollektionen/keratin-bondings"><strong>Keratin Bondings</strong><small>Einzelsträhnen · 25 Bondings pro Packung</small><ArrowUpRight size={16}/></Link>
+          </div>
         </div>
       </section>
       <section className="rh-keratin-editorial" aria-labelledby="rh-keratin-editorial-title">

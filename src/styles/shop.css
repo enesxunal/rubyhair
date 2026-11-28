@@ -1133,3 +1133,5 @@ button.rh-editorial-cta{cursor:pointer}
 .rh-stacked-payment-actions .rh-payment-row-panel .rh-payment-primary-link{font-weight:650;line-height:1.4;padding:11px 12px;min-height:48px}
 .rh-stacked-payment-actions .rh-payment-row-panel .rh-paypal-branded-button:not(:disabled),.rh-stacked-payment-actions .rh-payment-row-panel .rh-klarna-branded-button:not(:disabled){background:#593746;color:#fff!important}
 .rh-stacked-payment-actions .rh-payment-row-panel .rh-paypal-branded-button:disabled,.rh-stacked-payment-actions .rh-payment-row-panel .rh-klarna-branded-button:disabled{background:#e8e0e2;color:#877781!important;opacity:1!important}
+
+@media(min-width:1031px){.rh-desktop-nav{gap:clamp(9px,1.25vw,22px)}.rh-desktop-nav a{letter-spacing:.6px;font-size:9px}}

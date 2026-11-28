@@ -739,7 +739,8 @@ test("Ruby Hair homepage shows three equally prominent collection cards and a fu
  const css=fs.readFileSync(path.join(base,"src/styles/styles.css"),"utf8");
  const asset=path.join(base,"public/assets/ruby-home-keratin-hq.webp");
  assert.ok(home.includes('collection-grid rh-collection-trio'));
- assert.ok(home.includes('Math.min(...available.map(v=>v.price))'));
+ assert.ok(home.includes('homeCollectionSummary(product,length)'));
+ assert.ok(fs.readFileSync(path.join(base,'src/lib/home-discovery.ts'),'utf8').includes('Math.min(...available.map(v=>v.price))'));
  assert.ok(home.includes('CollectionPrice product={tape} length={choice.key} verified={verified}'));
  assert.ok(home.includes('CollectionPrice product={keratin} length="55-60-cm" verified={verified}'));
  assert.ok(home.includes('Entdecke deine <i>Extensions.</i>'));

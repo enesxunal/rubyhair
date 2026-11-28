@@ -5,6 +5,7 @@ export const storefrontNav=[
  {href:"/kollektionen/",label:"Alle Extensions",homeLabel:"ALLE EXTENSIONS"},
  {href:tapeInLengthHref("45-50-cm"),label:"Tape-in 45–50 cm",homeLabel:"TAPE-IN 45–50 CM"},
  {href:tapeInLengthHref("55-60-cm"),label:"Tape-in 55–60 cm",homeLabel:"TAPE-IN 55–60 CM"},
+ {href:"/kollektionen/keratin-bondings",label:"Keratin Bondings",homeLabel:"KERATIN BONDINGS"},
  {href:"/suche/",label:"Haarfarben",homeLabel:"HAARFARBEN"},
  {href:"/kontakt/",label:"Beratung",homeLabel:"BERATUNG"},
  {href:"/geschenkgutschein/",label:"Geschenkgutschein",homeLabel:"GUTSCHEIN"}
@@ -13,6 +14,7 @@ export const storefrontShopLinks=[
  {href:"/kollektionen/",label:"Alle Extensions"},
  {href:tapeInLengthHref("45-50-cm"),label:"Tape-in 45–50 cm"},
  {href:tapeInLengthHref("55-60-cm"),label:"Tape-in 55–60 cm"},
+ {href:"/kollektionen/keratin-bondings",label:"Keratin Bondings"},
  {href:"/suche/",label:"Haarfarben entdecken"},
  {href:"/geschenkgutschein/",label:"Geschenkgutschein"}
 ] as const;
