@@ -86,3 +86,12 @@ test("private cancellation route has server authorization, explicit confirmation
  assert.ok(service.includes('TransactionIsolationLevel.Serializable'));
  assert.ok(!readFileSync("app/admin/admin-shell.tsx","utf8").includes("/admin/stornierung"));
 });
+
+test("cancellation page offers DHL label cancellation only before physical shipment and returns to selected order",()=>{
+ const page=readFileSync("app/admin/stornierung/page.tsx","utf8"),action=readFileSync("app/admin/dhl-order-actions.ts","utf8");
+ assert.ok(page.includes('!order.shippedAt&&!order.deliveredAt'));
+ assert.ok(page.includes('action={cancelOrderDhlLabelAction}'));
+ assert.ok(page.includes('name="returnTo" value="stornierung"'));
+ assert.ok(action.includes('order.shippedAt||order.deliveredAt'));
+ assert.ok(action.includes('redirect("/admin/stornierung?order="+orderNumber+"&dhl="+result)'));
+});

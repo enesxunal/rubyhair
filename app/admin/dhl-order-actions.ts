@@ -53,11 +53,14 @@ export async function cancelOrderDhlLabelAction(form:FormData){
  const id=form.get("id");
  if(!validId(id)||form.get("confirmed")!=="on")redirect(orderUrl+"invalid");
  const db=getPrisma();
+ const fromCancellation=form.get("returnTo")==="stornierung";
+ let orderNumber:string|null=null;
  let result="review";
  try{
   const order=await db.order.findUnique({where:{id},include:{shippingJob:true}});
   const job=order?.shippingJob;
-  if(!order||order.testOnly||!["payment_confirmed","preparing","payment_authorized"].includes(order.status)||!job||!["label_created","awaiting_handover"].includes(job.status)||!job.trackingNumber||order.trackingNumber!==job.trackingNumber)throw new Error("DHL_CANCEL_NOT_ELIGIBLE");
+  if(order&&!order.testOnly)orderNumber=String(order.orderNumber);
+  if(!order||order.testOnly||!["payment_confirmed","preparing","payment_authorized"].includes(order.status)||order.shippedAt||order.deliveredAt||!job||!["label_created","awaiting_handover"].includes(job.status)||!job.trackingNumber||order.trackingNumber!==job.trackingNumber)throw new Error("DHL_CANCEL_NOT_ELIGIBLE");
   const tracking=job.trackingNumber;
   const claim=await db.shippingJob.updateMany({where:{id:job.id,status:job.status,trackingNumber:tracking,order:{is:{status:order.status,trackingNumber:tracking,testOnly:false}}},data:{status:"canceling"}});
   if(claim.count!==1)throw new Error("DHL_CONCURRENT_CANCEL");
@@ -74,5 +77,7 @@ export async function cancelOrderDhlLabelAction(form:FormData){
    await db.shippingJob.updateMany({where:{id:job.id,status:"canceling"},data:{status:"needs_review",lastError:"DHL_CANCEL_REQUIRES_REVIEW"}});
   }
  }catch(e){console.warn("DHL_MANUAL_CANCEL_REVIEW",e instanceof Error?e.name:"UNKNOWN")}
- refresh();redirect(orderUrl+result);
+ refresh();
+ if(fromCancellation&&orderNumber){revalidatePath("/admin/stornierung");redirect("/admin/stornierung?order="+orderNumber+"&dhl="+result);}
+ redirect(orderUrl+result);
 }
